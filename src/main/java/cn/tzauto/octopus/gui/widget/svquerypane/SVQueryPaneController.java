@@ -73,12 +73,12 @@ public class SVQueryPaneController implements Initializable {
     public void init() {
         // TODO String : deviceId, String : deviceCode
         Stage stage = new Stage();
-        Image image = new Image(SVQueryPaneController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("SV数据查询");
 
         try {
-            root = FXMLLoader.load(getClass().getResource("SVQueryPane.fxml"));
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("SVQueryPane.fxml"));
         } catch (IOException ex) {
 
         }
