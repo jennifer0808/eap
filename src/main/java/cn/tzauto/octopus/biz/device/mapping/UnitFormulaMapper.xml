@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.UnitFormulaMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.UnitFormula" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="SRC_UNIT_ID" property="srcUnitId" jdbcType="VARCHAR" />
+        <result column="SRC_UNIT_CODE" property="srcUnitCode" jdbcType="VARCHAR" />
+        <result column="TGT_UNIT_ID" property="tgtUnitId" jdbcType="VARCHAR" />
+        <result column="TGT_UNIT_CODE" property="tgtUnitCode" jdbcType="VARCHAR" />
+        <result column="FORMULA_DESC" property="formulaDesc" jdbcType="VARCHAR" />
+        <result column="ACTIVE_FLAG" property="activeFlag" jdbcType="CHAR" />
+        <result column="INURE_DATE" property="inureDate" jdbcType="DATE" />
+        <result column="ABATE_DATE" property="abateDate" jdbcType="DATE" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+        <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, SRC_UNIT_ID, SRC_UNIT_CODE, TGT_UNIT_ID, TGT_UNIT_CODE, FORMULA_DESC, ACTIVE_FLAG, 
+        INURE_DATE, ABATE_DATE, REMARKS, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+        DEL_FLAG, VER_NO
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_unit_formula
+        where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="selectByUnitCode" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_unit_formula       
+        where del_flag='0'
+        <if test="srcUnitCode != null" >
+            and SRC_UNIT_CODE= #{srcUnitCode,jdbcType=VARCHAR}
+        </if>
+        <if test="tgtUnitCode != null" >
+            and TGT_UNIT_CODE= #{tgtUnitCode,jdbcType=VARCHAR}
+        </if>
+    </select>
+    <select id="getAllUnitFormula"  resultMap="BaseResultMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_unit_formula       
+        where del_flag='0'     
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from md_unit_formula
+        where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.UnitFormula" >
+        insert into md_unit_formula (ID, SRC_UNIT_ID, SRC_UNIT_CODE, 
+        TGT_UNIT_ID, TGT_UNIT_CODE, FORMULA_DESC, 
+        ACTIVE_FLAG, INURE_DATE, ABATE_DATE, 
+        REMARKS, CREATE_BY, CREATE_DATE, 
+        UPDATE_BY, UPDATE_DATE, DEL_FLAG, 
+        VER_NO)
+        values (#{id,jdbcType=VARCHAR}, #{srcUnitId,jdbcType=VARCHAR}, #{srcUnitCode,jdbcType=VARCHAR}, 
+        #{tgtUnitId,jdbcType=VARCHAR}, #{tgtUnitCode,jdbcType=VARCHAR}, #{formulaDesc,jdbcType=VARCHAR}, 
+        #{activeFlag,jdbcType=CHAR}, #{inureDate,jdbcType=DATE}, #{abateDate,jdbcType=DATE}, 
+        #{remarks,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+        #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}, 
+        #{verNo,jdbcType=DECIMAL})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.UnitFormula" >
+        insert into md_unit_formula
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="srcUnitId != null" >
+                SRC_UNIT_ID,
+            </if>
+            <if test="srcUnitCode != null" >
+                SRC_UNIT_CODE,
+            </if>
+            <if test="tgtUnitId != null" >
+                TGT_UNIT_ID,
+            </if>
+            <if test="tgtUnitCode != null" >
+                TGT_UNIT_CODE,
+            </if>
+            <if test="formulaDesc != null" >
+                FORMULA_DESC,
+            </if>
+            <if test="activeFlag != null" >
+                ACTIVE_FLAG,
+            </if>
+            <if test="inureDate != null" >
+                INURE_DATE,
+            </if>
+            <if test="abateDate != null" >
+                ABATE_DATE,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+            <if test="verNo != null" >
+                VER_NO,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="srcUnitId != null" >
+                #{srcUnitId,jdbcType=VARCHAR},
+            </if>
+            <if test="srcUnitCode != null" >
+                #{srcUnitCode,jdbcType=VARCHAR},
+            </if>
+            <if test="tgtUnitId != null" >
+                #{tgtUnitId,jdbcType=VARCHAR},
+            </if>
+            <if test="tgtUnitCode != null" >
+                #{tgtUnitCode,jdbcType=VARCHAR},
+            </if>
+            <if test="formulaDesc != null" >
+                #{formulaDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="activeFlag != null" >
+                #{activeFlag,jdbcType=CHAR},
+            </if>
+            <if test="inureDate != null" >
+                #{inureDate,jdbcType=DATE},
+            </if>
+            <if test="abateDate != null" >
+                #{abateDate,jdbcType=DATE},
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                #{verNo,jdbcType=DECIMAL},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.UnitFormula" >
+        update md_unit_formula
+        <set >
+            <if test="srcUnitId != null" >
+                SRC_UNIT_ID = #{srcUnitId,jdbcType=VARCHAR},
+            </if>
+            <if test="srcUnitCode != null" >
+                SRC_UNIT_CODE = #{srcUnitCode,jdbcType=VARCHAR},
+            </if>
+            <if test="tgtUnitId != null" >
+                TGT_UNIT_ID = #{tgtUnitId,jdbcType=VARCHAR},
+            </if>
+            <if test="tgtUnitCode != null" >
+                TGT_UNIT_CODE = #{tgtUnitCode,jdbcType=VARCHAR},
+            </if>
+            <if test="formulaDesc != null" >
+                FORMULA_DESC = #{formulaDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="activeFlag != null" >
+                ACTIVE_FLAG = #{activeFlag,jdbcType=CHAR},
+            </if>
+            <if test="inureDate != null" >
+                INURE_DATE = #{inureDate,jdbcType=DATE},
+            </if>
+            <if test="abateDate != null" >
+                ABATE_DATE = #{abateDate,jdbcType=DATE},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                VER_NO = #{verNo,jdbcType=DECIMAL},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.UnitFormula" >
+        update md_unit_formula
+        set SRC_UNIT_ID = #{srcUnitId,jdbcType=VARCHAR},
+        SRC_UNIT_CODE = #{srcUnitCode,jdbcType=VARCHAR},
+        TGT_UNIT_ID = #{tgtUnitId,jdbcType=VARCHAR},
+        TGT_UNIT_CODE = #{tgtUnitCode,jdbcType=VARCHAR},
+        FORMULA_DESC = #{formulaDesc,jdbcType=VARCHAR},
+        ACTIVE_FLAG = #{activeFlag,jdbcType=CHAR},
+        INURE_DATE = #{inureDate,jdbcType=DATE},
+        ABATE_DATE = #{abateDate,jdbcType=DATE},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+        VER_NO = #{verNo,jdbcType=DECIMAL}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

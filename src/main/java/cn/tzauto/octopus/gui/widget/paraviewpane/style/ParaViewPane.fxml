@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:id="ParaViewPane" maxHeight="500.0" maxWidth="800.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" stylesheets="@ParaViewPane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.paraviewpane.ParaViewPaneController">
+   <children>
+      <Label layoutX="8.0" layoutY="20.0" text="RecipeName" />
+      <TextField fx:id="JTF_RcpName" layoutX="99.0" layoutY="16.0" />
+      <Label contentDisplay="CENTER" layoutX="316.0" layoutY="20.0" prefHeight="15.0" prefWidth="87.0" text="%deviceCode" />
+      <TextField fx:id="JTF_DvcCode" layoutX="400.0" layoutY="16.0" />
+      <Label layoutX="8.0" layoutY="67.0" prefHeight="15.0" prefWidth="78.0" text="%deviceCode" />
+      <TextField fx:id="JTF_CreateBy" layoutX="99.0" layoutY="63.0" />
+      <Label contentDisplay="CENTER" layoutX="317.0" layoutY="67.0" prefHeight="15.0" prefWidth="80.0" text="%createDate" />
+      <TextField fx:id="JTF_CreateTime" layoutX="400.0" layoutY="63.0" />
+      <Label layoutX="8.0" layoutY="122.0" text="%paraList" />
+      <TableView fx:id="dataTable" layoutX="8.0" layoutY="137.0" prefHeight="300.0" prefWidth="777.0">
+        <columns>
+          <TableColumn fx:id="paraCodeCol" prefWidth="81.0" text="%paraID" />
+          <TableColumn fx:id="paraNameCol" prefWidth="123.0" text="%paraName" />
+            <TableColumn fx:id="paraShotNameCol" prefWidth="105.0" text="%paraShotName" />
+            <TableColumn fx:id="setValueCol" prefWidth="117.0" text="%setValue" />
+            <TableColumn fx:id="minValueCol" prefWidth="104.0" text="%minValue" />
+            <TableColumn fx:id="maxValueCol" prefWidth="106.0" text="%maxValue" />
+            <TableColumn fx:id="paraMeasureCol" prefWidth="163.0" text="%paraMeasure" />
+        </columns>
+      </TableView>
+      <Button layoutX="644.0" layoutY="443.0" mnemonicParsing="false" onAction="#closeClick" prefHeight="27.0" prefWidth="80.0" style="-fx-background-color: #0069CC;" text="%close" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font name="Calibri Light" size="14.0" />
+         </font>
+      </Button>
+   </children>
+</AnchorPane>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.DeviceTypeMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.DeviceType" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="MANUFACTURER_NAME" property="manufacturerName" jdbcType="VARCHAR" />
+        <result column="TYPE_CODE" property="typeCode" jdbcType="VARCHAR" />
+        <result column="TYPE_DESC" property="typeDesc" jdbcType="VARCHAR" />
+        <result column="SML_PATH" property="smlPath" jdbcType="VARCHAR" />
+        <result column="HOST_JAVA_CLASS" property="hostJavaClass" jdbcType="VARCHAR" />
+        <result column="ICON_PATH" property="iconPath" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+        <result column="RECIPE_TYPE" property="recipeType" jdbcType="CHAR" />
+        <result column="PROTOCOL_TYPE" property="protocolType" jdbcType="CHAR" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, MANUFACTURER_NAME, TYPE_CODE, TYPE_DESC, SML_PATH, HOST_JAVA_CLASS,ICON_PATH, CREATE_BY, 
+        CREATE_DATE, UPDATE_BY, UPDATE_DATE, REMARKS, DEL_FLAG, RECIPE_TYPE,PROTOCOL_TYPE
+    </sql>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_type
+        where del_flag = '0'
+        <if test="typeCode != null">
+            and type_code=#{typeCode}
+        </if>
+        <if test="deviceTypeId != null">
+            and type_type_id=#{deviceTypeId}
+        </if>
+    </select>
+    <select id="searchByPaMap" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_type
+        where del_flag = '0'
+        <if test="manufacturerName!= null">
+            and MANUFACTURER_NAME=#{manufacturerName}
+        </if>
+        <if test="typeCode != null">
+            and type_code=#{typeCode}
+        </if>
+    </select>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_type
+        where ID = #{id,jdbcType=VARCHAR} and del_flag = '0'
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from md_device_type
+        where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceType" >
+        insert into md_device_type (ID, MANUFACTURER_NAME, TYPE_CODE, 
+        TYPE_DESC, SML_PATH, HOST_JAVA_CLASS,ICON_PATH, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, REMARKS, DEL_FLAG, 
+        RECIPE_TYPE，PROTOCOL_TYPE)
+        values (#{id,jdbcType=VARCHAR}, #{manufacturerName,jdbcType=VARCHAR}, #{typeCode,jdbcType=VARCHAR}, 
+        #{typeDesc,jdbcType=VARCHAR}, #{smlPath,jdbcType=VARCHAR}, #{hostJavaClass,jdbcType=VARCHAR}, #{iconPath,jdbcType=VARCHAR}, 
+        '1',sysdate(),'1', 
+        sysdate(), #{remarks,jdbcType=VARCHAR}, '0', 
+        #{recipeType,jdbcType=CHAR}, #{protocolType,jdbcType=CHAR})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceType" >
+        insert into md_device_type
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="manufacturerName != null" >
+                MANUFACTURER_NAME,
+            </if>
+            <if test="typeCode != null" >
+                TYPE_CODE,
+            </if>
+            <if test="typeDesc != null" >
+                TYPE_DESC,
+            </if>
+            <if test="smlPath != null" >
+                SML_PATH,
+            </if>
+            <if test="hostJavaClass != null" >
+                HOST_JAVA_CLASS,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+            <if test="recipeType != null" >
+                RECIPE_TYPE,
+            </if>
+            <if test="protocolType != null" >
+                PROTOCOL_TYPE,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                UUID(),
+            </if>
+            <if test="manufacturerName != null" >
+                #{manufacturerName,jdbcType=VARCHAR},
+            </if>
+            <if test="typeCode != null" >
+                #{typeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="typeDesc != null" >
+                #{typeDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="smlPath != null" >
+                #{smlPath,jdbcType=VARCHAR},
+            </if>
+            <if test="hostJavaClass != null" >
+                #{hostJavaClass,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                sysdate(),
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                sysdate(),
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                '0',
+            </if>
+            <if test="recipeType != null" >
+                #{recipeType,jdbcType=CHAR},
+            </if>
+            <if test="protocolType != null" >
+                #{protocolType,jdbcType=CHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceType" >
+        update md_device_type
+        <set >
+            <if test="manufacturerName != null" >
+                MANUFACTURER_NAME = #{manufacturerName,jdbcType=VARCHAR},
+            </if>
+            <if test="typeCode != null" >
+                TYPE_CODE = #{typeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="typeDesc != null" >
+                TYPE_DESC = #{typeDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="smlPath != null" >
+                SML_PATH = #{smlPath,jdbcType=VARCHAR},
+            </if>
+            <if test="hostJavaClass != null" >
+                HOST_JAVA_CLASS = #{hostJavaClass,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="recipeType != null" >
+                RECIPE_TYPE = #{recipeType,jdbcType=CHAR},
+            </if>
+            <if test="recipeType != null" >
+                PROTOCOL_TYPE = #{protocolType,jdbcType=CHAR},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceType" >
+        update md_device_type
+        set MANUFACTURER_NAME = #{manufacturerName,jdbcType=VARCHAR},
+        TYPE_CODE = #{typeCode,jdbcType=VARCHAR},
+        TYPE_DESC = #{typeDesc,jdbcType=VARCHAR},
+        SML_PATH = #{smlPath,jdbcType=VARCHAR},
+        HOST_JAVA_CLASS = #{hostJavaClass,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+        RECIPE_TYPE = #{recipeType,jdbcType=CHAR},
+        PROTOCOL_TYPE = #{protocolType,jdbcType=CHAR}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

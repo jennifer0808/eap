@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.DeviceInfoExtMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.DeviceInfoExt">
+        <id column="id" jdbcType="VARCHAR" property="id" />
+        <result column="device_rowid" jdbcType="VARCHAR" property="deviceRowid" />
+        <result column="recipe_id" jdbcType="VARCHAR" property="recipeId" />
+        <result column="recipe_name" jdbcType="VARCHAR" property="recipeName" />
+        <result column="lock_flag" jdbcType="CHAR" property="lockFlag" />
+        <result column="lot_id" jdbcType="VARCHAR" property="lotId" />
+        <result column="device_status" jdbcType="VARCHAR" property="deviceStatus" />
+        <result column="edc_cron" jdbcType="VARCHAR" property="edcCron" />
+        <result column="recipe_download_mod" jdbcType="VARCHAR" property="recipeDownloadMod" />
+        <result column="recipe_auto_check_flag" jdbcType="CHAR" property="recipeAutoCheckFlag" />
+        <result column="recipe_auto_check_cron" jdbcType="VARCHAR" property="recipeAutoCheckCron" />
+        <result column="connection_status" jdbcType="VARCHAR" property="connectionStatus" />
+        <result column="remarks" jdbcType="VARCHAR" property="remarks" />
+        <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+        <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+        <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+        <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+        <result column="ver_no" jdbcType="DECIMAL" property="verNo" />
+        <result column="recipe_analysis_mod" jdbcType="VARCHAR" property="recipeAnalysisMod" />
+        <result column="lock_switch" jdbcType="CHAR" property="lockSwitch" />
+        <result column="start_check_mod" jdbcType="VARCHAR" property="startCheckMod" />
+        <result column="business_mod" property="businessMod" jdbcType="VARCHAR" />
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, device_rowid, recipe_id, recipe_name, lock_flag, lot_id, device_status, edc_cron, 
+        recipe_download_mod, recipe_auto_check_flag, recipe_auto_check_cron, connection_status, 
+        remarks, create_by, create_date, update_by, update_date, del_flag, ver_no, recipe_analysis_mod,
+        lock_switch, start_check_mod, business_mod
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_info_ext
+        where id = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="selectByDeviceRowid" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_info_ext
+        where del_flag='0' 
+        and  device_rowid = #{deviceRowid}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from md_device_info_ext
+        where id = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoExt" >
+        insert into md_device_info_ext (id, device_rowid, recipe_id, 
+        recipe_name, lock_flag, lot_id, 
+        device_status, edc_cron, recipe_download_mod, 
+        recipe_auto_check_flag, recipe_auto_check_cron, 
+        connection_status, remarks, create_by, 
+        create_date, update_by, update_date, 
+        del_flag, ver_no, recipe_analysis_mod,
+        lock_switch, start_check_mod, business_mod)
+        values (UUID(), #{deviceRowid,jdbcType=VARCHAR}, #{recipeId,jdbcType=VARCHAR}, 
+        #{recipeName,jdbcType=VARCHAR}, #{lockFlag,jdbcType=CHAR}, #{lotId,jdbcType=VARCHAR}, 
+        #{deviceStatus,jdbcType=VARCHAR}, #{edcCron,jdbcType=VARCHAR}, #{recipeDownloadMod,jdbcType=VARCHAR}, 
+        #{recipeAutoCheckFlag,jdbcType=CHAR}, #{recipeAutoCheckCron,jdbcType=VARCHAR}, #{connectionStatus,jdbcType=VARCHAR}, 
+        #{remarks,jdbcType=VARCHAR},'system', sysdate(), 
+        'system', sysdate(), '0', 
+        #{verNo,jdbcType=DECIMAL}, #{recipeAnalysisMod,jdbcType=VARCHAR},
+        #{lockSwitch,jdbcType=CHAR}, #{startCheckMod,jdbcType=VARCHAR}, #{businessMod,jdbcType=VARCHAR})
+    </insert>
+ 
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoExt">
+        insert into md_device_info_ext
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="deviceRowid != null">
+                device_rowid,
+            </if>
+            <if test="recipeId != null">
+                recipe_id,
+            </if>
+            <if test="recipeName != null">
+                recipe_name,
+            </if>
+            <if test="lockFlag != null">
+                lock_flag,
+            </if>
+            <if test="lotId != null">
+                lot_id,
+            </if>
+            <if test="deviceStatus != null">
+                device_status,
+            </if>
+            <if test="edcCron != null">
+                edc_cron,
+            </if>
+            <if test="recipeDownloadMod != null">
+                recipe_download_mod,
+            </if>
+            <if test="recipeAutoCheckFlag != null">
+                recipe_auto_check_flag,
+            </if>
+            <if test="recipeAutoCheckCron != null">
+                recipe_auto_check_cron,
+            </if>
+            <if test="connectionStatus != null">
+                connection_status,
+            </if>
+            <if test="remarks != null">
+                remarks,
+            </if>
+            <if test="createBy != null">
+                create_by,
+            </if>
+            <if test="createDate != null">
+                create_date,
+            </if>
+            <if test="updateBy != null">
+                update_by,
+            </if>
+            <if test="updateDate != null">
+                update_date,
+            </if>
+            <if test="delFlag != null">
+                del_flag,
+            </if>
+            <if test="verNo != null">
+                ver_no,
+            </if>
+            <if test="recipeAnalysisMod != null">
+                recipe_analysis_mod,
+            </if>
+            <if test="lockSwitch != null">
+                lock_switch,
+            </if>
+            <if test="startCheckMod != null">
+                start_check_mod,
+            </if>
+            <if test="businessMod != null">
+                business_mod,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceRowid != null">
+                #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeId != null">
+                #{recipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeName != null">
+                #{recipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="lockFlag != null">
+                #{lockFlag,jdbcType=CHAR},
+            </if>
+            <if test="lotId != null">
+                #{lotId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceStatus != null">
+                #{deviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="edcCron != null">
+                #{edcCron,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeDownloadMod != null">
+                #{recipeDownloadMod,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeAutoCheckFlag != null">
+                #{recipeAutoCheckFlag,jdbcType=CHAR},
+            </if>
+            <if test="recipeAutoCheckCron != null">
+                #{recipeAutoCheckCron,jdbcType=VARCHAR},
+            </if>
+            <if test="connectionStatus != null">
+                #{connectionStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="remarks != null">
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null">
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null">
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null">
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null">
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null">
+                #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null">
+                #{verNo,jdbcType=DECIMAL},
+            </if>
+            <if test="recipeAnalysisMod != null">
+                #{recipeAnalysisMod,jdbcType=VARCHAR},
+            </if>
+            <if test="lockSwitch != null">
+                #{lockSwitch,jdbcType=CHAR},
+            </if>
+            <if test="startCheckMod != null">
+                #{startCheckMod,jdbcType=VARCHAR},
+            </if>
+            <if test="businessMod != null">
+                #{businessMod,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoExt" >
+        update md_device_info_ext
+        <set >
+            <if test="deviceRowid != null" >
+                device_rowid = #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeId != null" >
+                recipe_id = #{recipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeName != null" >
+                recipe_name = #{recipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="lockFlag != null" >
+                lock_flag = #{lockFlag,jdbcType=CHAR},
+            </if>
+            <if test="lotId != null" >
+                lot_id = #{lotId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceStatus != null" >
+                device_status = #{deviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="edcCron != null" >
+                edc_cron = #{edcCron,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeDownloadMod != null" >
+                recipe_download_mod = #{recipeDownloadMod,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeAutoCheckFlag != null" >
+                recipe_auto_check_flag = #{recipeAutoCheckFlag,jdbcType=CHAR},
+            </if>
+            <if test="recipeAutoCheckCron != null" >
+                recipe_auto_check_cron = #{recipeAutoCheckCron,jdbcType=VARCHAR},
+            </if>
+            <if test="connectionStatus != null" >
+                connection_status = #{connectionStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="remarks != null" >
+                remarks = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                create_by = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                create_date = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            update_by = 'system',
+            update_date = sysdate(),
+            <if test="delFlag != null" >
+                del_flag = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                ver_no = #{verNo,jdbcType=DECIMAL},
+            </if>
+            <if test="recipeAnalysisMod != null">
+                recipe_analysis_mod = #{recipeAnalysisMod,jdbcType=VARCHAR},
+            </if>
+            <if test="lockSwitch != null">
+                lock_switch = #{lockSwitch,jdbcType=CHAR},
+            </if>
+            <if test="startCheckMod != null">
+                start_check_mod = #{startCheckMod,jdbcType=VARCHAR},
+            </if>
+            <if test="businessMod != null">
+                business_mod= #{businessMod,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoExt" >
+        update md_device_info_ext
+        set device_rowid = #{deviceRowid,jdbcType=VARCHAR},
+        recipe_id = #{recipeId,jdbcType=VARCHAR},
+        recipe_name = #{recipeName,jdbcType=VARCHAR},
+        lock_flag = #{lockFlag,jdbcType=CHAR},
+        lot_id = #{lotId,jdbcType=VARCHAR},
+        device_status = #{deviceStatus,jdbcType=VARCHAR},
+        edc_cron = #{edcCron,jdbcType=VARCHAR},
+        recipe_download_mod = #{recipeDownloadMod,jdbcType=VARCHAR},
+        recipe_auto_check_flag = #{recipeAutoCheckFlag,jdbcType=CHAR},
+        recipe_auto_check_cron = #{recipeAutoCheckCron,jdbcType=VARCHAR},
+        connection_status = #{connectionStatus,jdbcType=VARCHAR},
+        remarks = #{remarks,jdbcType=VARCHAR},
+        create_by = #{createBy,jdbcType=VARCHAR},
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+        update_by = 'system',
+        update_date = sysdate(),
+        del_flag = #{delFlag,jdbcType=CHAR},
+        ver_no = #{verNo,jdbcType=DECIMAL},
+        recipe_analysis_mod = #{recipeAnalysisMod,jdbcType=VARCHAR},
+        lock_switch = #{lockSwitch,jdbcType=CHAR},
+        start_check_mod = #{startCheckMod,jdbcType=VARCHAR},
+        business_mod= #{businessMod,jdbcType=VARCHAR}
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+    <insert id="saveDeviceInfoExtBatch" parameterType="java.util.List" >
+        insert into md_device_info_ext (id, device_rowid, recipe_id, 
+        recipe_name, lock_flag, lot_id, 
+        device_status, edc_cron, recipe_download_mod, 
+        recipe_auto_check_flag, recipe_auto_check_cron, 
+        connection_status, remarks, create_by, 
+        create_date, update_by, update_date, 
+        del_flag, ver_no, recipe_analysis_mod,
+        lock_switch, start_check_mod,business_mod)
+        values 
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.id}, #{item.deviceRowid}, #{item.recipeId}, 
+            #{item.recipeName}, #{item.lockFlag}, #{item.lotId}, 
+            #{item.deviceStatus}, #{item.edcCron}, #{item.recipeDownloadMod}, 
+            #{item.recipeAutoCheckFlag}, #{item.recipeAutoCheckCron}, #{item.connectionStatus}, 
+            #{item.remarks},'System', sysdate(), 
+            'System', sysdate(), '0', 
+            #{item.verNo}, #{item.recipeAnalysisMod},
+            #{item.lockSwitch}, #{item.startCheckMod}, #{item.businessMod})
+        </foreach>
+    </insert>
+    <delete id="deleteDeviceInfoExtByIdBatch" parameterType="java.util.List" >
+        delete from md_device_info_ext where id in
+        <foreach collection="list" item="item" open="(" separator="," close=")" >
+            #{item.id}  
+        </foreach>
+    </delete>
+    <delete id="deleteDeviceInfoExtByDeviceRowIdBatch" parameterType="java.util.List" >
+        delete from md_device_info_ext where device_rowid in
+        <foreach collection="list" item="item" open="(" separator="," close=")" >
+            #{item.deviceRowid}  
+        </foreach>
+    </delete>
+    <select id="getAllDeviceInfoExts" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_info_ext
+        where del_flag='0'    
+    </select>
+</mapper>

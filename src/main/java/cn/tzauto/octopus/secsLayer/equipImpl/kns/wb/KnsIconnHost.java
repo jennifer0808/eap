@@ -1,0 +1,833 @@
+package cn.tzauto.octopus.secsLayer.equipImpl.kns.wb;
+
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.resolver.asm.AsmAD8312RecipeUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.common.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
+import cn.tzinfo.smartSecsDriver.userapi.MessageArrivedEvent;
+import cn.tzinfo.smartSecsDriver.userapi.MsgDataHashtable;
+import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
+import com.alibaba.fastjson.JSONArray;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+
+public class KnsIconnHost extends EquipHost {
+
+    private static final long serialVersionUID = -8427516257654563776L;
+    private static final Logger logger = Logger.getLogger(KnsIconnHost.class.getName());
+    public String Installation_Date;
+    public String Lot_Id;
+    public String Left_Epoxy_Id;
+    public String Lead_Frame_Type_Id;
+    public String Datelength;
+
+    private volatile boolean isInterrupted = false;
+
+    public KnsIconnHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
+            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPath) {
+        super(devId, equipmentId, smlFileFullPath, localIpAddress,
+                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPath);
+    }
+
+    public KnsIconnHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
+            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
+            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPath) {
+        super(devId, equipmentId, smlFileFullPath, localIpAddress,
+                localTcpPort, remoteIpAddress, remoteTcpPort,
+                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath);
+    }
+
+    @Override
+    public void interrupt() {
+        isInterrupted = true;
+        super.interrupt();
+    }
+
+    @Override
+    public void run() {
+        threadUsed = true;
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipId);
+        while (!isInterrupted) {
+            try {
+                while (!this.isJsipReady()) {
+                    this.sleep(500);
+                }
+                if (this.getCommState() != this.COMMUNICATING) {
+                    sendS1F13out();
+                }
+                if (rptDefineNum < 1) {
+                    sendS1F1out();
+                    //为了能调整为online remote
+//                    sendS1F17out();
+                    super.findDeviceRecipe();
+                    initRptPara();
+                    rptDefineNum++;
+
+                }
+                MsgDataHashtable msg = null;
+                msg = this.inputMsgQueue.take();
+                if (msg.getMsgTagName() != null) {
+                    if (msg.getMsgTagName().equalsIgnoreCase("s14f1in")) {
+                        processS14F1in(msg);
+                    } else if (msg.getMsgTagName().equalsIgnoreCase("s6f11inStripMapUpload")) {
+                        long ceid = msg.getSingleNumber("CollEventID");
+                        if (ceid != 3) {
+                            processS6F11inStripMapUpload(msg);
+                        } else {
+                            byte[] ack = new byte[1];
+                            ack[0] = 0;
+                            replyS6F12WithACK(msg, ack);
+                        }
+                    } else if (msg.getMsgTagName().equalsIgnoreCase("s6f11equipstate")) {
+                        processS6F11EquipStatus(msg);
+                    } else if (msg.getMsgTagName().equals("s6f11EquipStatusChange")) {
+                        processS6F11EquipStatusChange(msg);
+                    } else if (msg.getMsgTagName().equals("s6f11ControlStateChange")) {
+                        processS6F11ControlStateChange(msg);
+                    } else if (msg.getMsgTagName().equals("s6f11LoginUserChange")) {
+                        processS6F11LoginUserChange(msg);
+                    } else if (msg.getMsgTagName().contains("s6f11incommon")) {
+                        processS6F11RecipeChange(msg);
+                    } else if (msg.getMsgTagName().equalsIgnoreCase("s5f1in")) {
+                        this.processS5F1in(msg);
+                    } else {
+                        System.out.println("A message in queue with tag = " + msg.getMsgTagName()
+                                + " which I do not want to process! ");
+                    }
+                }
+            } catch (InterruptedException e) {
+                logger.info(getName() + "从阻塞中退出...");
+                logger.info("this.isInterrupted()=" + this.isInterrupted() + " is interrupt=" + isInterrupted);
+                logger.fatal("Caught Interruption", e);
+            } catch (Exception e) {
+
+                logger.fatal("Caught Interruption", e);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void processS1F1in(MsgDataHashtable data) {
+        try {
+            MsgDataHashtable s1f2out = new MsgDataHashtable("s1f2outListZero", mli.getDeviceId());
+
+            s1f2out.setTransactionId(data.getTransactionId());
+            mli.sendSecondaryOutputMessage(s1f2out);
+            setCommState(1);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    @Override
+    public void inputMessageArrived(MessageArrivedEvent event) {
+        String tagName = event.getMessageTag();
+        if (tagName == null) {
+            return;
+        }
+        try {
+            LastComDate = new Date().getTime();
+            secsMsgTimeoutTime = 0;
+            MsgDataHashtable data = event.removeMessageFromQueue();
+            if (tagName.equalsIgnoreCase("s1f1in")) {
+                processS1F1in(data);
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+                processS1F2in(data);
+            } else if (tagName.equalsIgnoreCase("s1f13in")) {
+                processS1F13in(data);
+            } else if (tagName.equalsIgnoreCase("s1f14in")) {
+                processS1F14in(data);
+            } else if (tagName.equalsIgnoreCase("s1f4in")) {
+                putDataIntoWaitMsgValueMap(data);
+            } else if (tagName.equalsIgnoreCase("s7f20in")) {
+                putDataIntoWaitMsgValueMap(data);
+            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+                processS6F11in(data);
+                try {
+                    long ceid = data.getSingleNumber("CollEventID");
+                    if (ceid == 8 || ceid == 9) {
+                        this.inputMsgQueue.put(data);
+                    }
+                } catch (Exception e) {
+                }
+            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
+//                processS6F11inStripMapUpload(data);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equals("s6f11EquipStatusChange")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equals("s6f11ControlStateChange")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equals("s6f11LoginUserChange")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equals("s6f11PPExecName")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
+                //回复s6f11消息
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s6f12in")) {
+                processS6F12in(data);
+            } else if (tagName.equalsIgnoreCase("s14f1in")) {
+//                processS14F1in(data); 
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s5f1in")) {
+                replyS5F2Directly(data);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s10fin")) {
+                processS10F1in(data);
+            } else if (tagName.equalsIgnoreCase("s7f4in")) {
+                logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
+                putDataIntoWaitMsgValueMap(data);
+            } else {
+                logger.info("Received a message with tag = " + tagName
+                        + " which I do not want to process! ");
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map sendS1F3Check() {
+        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3statecheck", mli.getDeviceId());
+        long transactionId = mli.getNextAvailableTransactionId();
+        s1f3out.setTransactionId(transactionId);
+        long[] equipStatuss = new long[1];
+        long[] pPExecNames = new long[1];
+        long[] controlStates = new long[1];
+        MsgDataHashtable data = null;
+        try {
+            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            RecipeService recipeService = new RecipeService(sqlSession);
+            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
+            sqlSession.close();
+            s1f3out.put("EquipStatus", equipStatuss);
+            s1f3out.put("PPExecName", pPExecNames);
+            s1f3out.put("ControlState", controlStates);
+            data = sendMsg2Equip(s1f3out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (data == null || data.get("RESULT") == null) {
+            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+
+        }
+        if (data == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+
+            return null;
+        }
+        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
+        ppExecName = (String) listtmp.get(1);
+        ppExecName = ppExecName.replace(".rcp", "");
+        Map panelMap = new HashMap();
+        panelMap.put("EquipStatus", equipStatus);
+        panelMap.put("PPExecName", ppExecName);
+        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        panelMap.put("ControlState", controlState);
+        changeEquipPanel(panelMap);
+        return panelMap;
+    }
+
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
+    @Override
+    protected void processS6F11EquipStatusChange(MsgDataHashtable data) {
+        long ceid = 0L;
+        try {
+            ceid = data.getSingleNumber("CollEventID");
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            findDeviceRecipe();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        //将设备的当前状态显示在界面上
+        Map map = new HashMap();
+        map.put("EquipStatus", equipStatus);
+        changeEquipPanel(map);
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
+        RecipeService recipeService = new RecipeService(sqlSession);
+        try {
+            //从数据库中获取当前设备模型信息
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+            boolean dataReady = false;
+            // 更新设备模型
+            if (deviceInfoExt == null) {
+                logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
+                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+            } else {
+                deviceInfoExt.setDeviceStatus(equipStatus);
+                deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                sqlSession.commit();
+                dataReady = true;
+            }
+
+            //保存到设备操作记录数据库
+            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
+            sqlSession.commit();
+            if (equipStatus.equalsIgnoreCase("run") && holdFlag) {
+                holdDevice();
+            }
+            boolean checkResult = false;
+            //获取设备当前运行状态，如果是Run，执行开机检查逻辑
+            if (dataReady && equipStatus.equalsIgnoreCase("ready")) {
+                //首先从服务端获取机台是否处于锁机状态
+                //如果设备应该是锁机，那么首先发送锁机命令给机台
+                if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                } else {
+                    //1、获取设备需要校验的信息类型,
+                    String startCheckMod = deviceInfoExt.getStartCheckMod();
+                    boolean hasGoldRecipe = true;
+                    if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                        return;
+                    }
+                    //查询trackin时的recipe和GoldRecipe
+                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
+
+                    //查询客户端数据库是否存在GoldRecipe
+                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
+                        hasGoldRecipe = false;
+                    }
+
+                    //根据检查模式执行开机检查逻辑
+                    //1、A1-检查recipe名称是否一致
+                    //2、A-检查recipe名称和参数
+                    //3、B-检查SV
+                    //4、AB都检查
+                    if (startCheckMod != null && !"".equals(startCheckMod)) {
+                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
+                        if (!checkResult) {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            //不允许开机
+                            holdDeviceAndShowDetailInfo("The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + deviceInfoExt.getRecipeName() + ">,equipment will be locked.");
+                            return;
+                        } else {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            releaseDevice();
+                        }
+                        logger.info("设备[" + deviceCode + "]的开机检查模式为:" + startCheckMod);
+                        if (startCheckMod.contains("B")) {
+                            startSVcheckPass = false;
+                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
+                            startSVcheck();
+                        }
+                        if (startCheckMod.contains("A")) {
+                            //首先判断下载的Recipe类型
+                            //1、如果下载的是Unique版本，那么执行完全比较
+                            String downloadRcpVersionType = downLoadRecipe.getVersionType();
+                            if ("Unique".equals(downloadRcpVersionType)) {
+                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                                //这里要把设备上recipe的后缀加上，否则获取不到
+                                downLoadRecipe.setRecipeName(downLoadRecipe.getRecipeName() + ".rcp");
+                                this.startCheckRecipePara(downLoadRecipe, "abs");
+                            } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
+                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                                if (!hasGoldRecipe) {
+                                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                    //不允许开机
+                                    this.holdDeviceAndShowDetailInfo("There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.");
+                                } else {
+                                    UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                    //这里要把设备上recipe的后缀加上，否则获取不到
+                                    downLoadGoldRecipe.get(0).setRecipeName(downLoadGoldRecipe.get(0).getRecipeName() + ".rcp");
+                                    this.startCheckRecipePara(downLoadGoldRecipe.get(0), startCheckMod);
+                                }
+                            }
+                        } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            sqlSession.rollback();
+        } finally {
+            sqlSession.close();
+        }
+    }
+
+    protected void processS6F11RecipeChange(MsgDataHashtable data) {
+        try {
+            long ceid = 0l;
+            ceid = data.getSingleNumber("CollEventID");
+            if (ceid == 8 || ceid == 9) {
+                findDeviceRecipe();
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    protected void processS6F11ControlStateChange(MsgDataHashtable data) {
+        //回复s6f11消息
+        MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
+        long ceid = 0l;
+        long reportID = 0l;
+        long controlStateTmp = 0l;
+        try {
+            out.setTransactionId(data.getTransactionId());
+            ceid = data.getSingleNumber("CollEventID");
+            reportID = data.getSingleNumber("ReportID");
+            controlStateTmp = data.getSingleNumber("ControlState");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (ceid == 1 && reportID == 1) {
+            Map panelMap = new HashMap();
+            if (controlStateTmp == 0) {
+                controlState = FengCeConstant.CONTROL_OFFLINE;
+                panelMap.put("ControlState", controlState);
+                UiLogUtil.appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
+            }
+            if (controlStateTmp == 1) {
+                controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                panelMap.put("ControlState", controlState);
+                UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
+            }
+            if (controlStateTmp == 2) {
+                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                panelMap.put("ControlState", controlState);
+                UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
+            }
+            changeEquipPanel(panelMap);
+        }
+    }
+
+    protected void processS6F11LoginUserChange(MsgDataHashtable data) {
+        MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
+        long ceid = 0l;
+        long reportID = 0l;
+        String loginUserName = "";
+        try {
+            out.setTransactionId(data.getTransactionId());
+            ceid = data.getSingleNumber("CollEventID");
+            reportID = data.getSingleNumber("ReportId");
+            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
+            if (ceid == 9L) {
+                Map map = new HashMap();
+                map.put("PPExecName", loginUserName);
+                changeEquipPanel(map);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (ceid == 120 && reportID == 120) {
+            UiLogUtil.appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户:" + loginUserName);
+        }
+    }
+
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+    @Override
+    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        long[] length = new long[1];
+        length[0] = TransferUtil.getPPLength(localFilePath);
+        MsgDataHashtable s7f1out = new MsgDataHashtable("s7f1out", mli.getDeviceId());
+        s7f1out.setTransactionId(mli.getNextAvailableTransactionId());
+        s7f1out.put("ProcessprogramID", targetRecipeName + ".rcp");
+        s7f1out.put("Length", length);
+        MsgDataHashtable data = null;
+        byte[] ppgnt = new byte[1];
+        try {
+            data = mli.sendPrimaryWsetMessage(s7f1out);
+            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f2");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ppgnt", ppgnt[0]);
+        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        return resultMap;
+    }
+
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        MsgDataHashtable data = null;
+        MsgDataHashtable s7f3out = new MsgDataHashtable("s7f3out", mli.getDeviceId());
+        long transactionId = mli.getNextAvailableTransactionId();
+        s7f3out.setTransactionId(transactionId);
+        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+        s7f3out.put("ProcessprogramID", targetRecipeName + ".rcp");
+        s7f3out.put("Processprogram", secsItem);
+        try {
+            data = sendMsg2Equip(s7f3out);
+//            data = mli.sendPrimaryWsetMessage(s7f3out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (data == null) {
+            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+        }
+        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ACKC7", ackc7[0]);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        return resultMap;
+    }
+
+    @Override
+    public MsgDataHashtable getMsgDataFromWaitMsgValueMapByTransactionId(long transactionId) {
+        int i = 0;
+        logger.info("Can not get value directly,will try to get value from message queue");
+        while (i < 25) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                logger.error("Exception occur，Exception info：从WaitMsgValueMap中获取消息时，线程中断。设备编号：" + deviceCode);
+                ex.printStackTrace();
+            }
+            MsgDataHashtable msgDataHashtable = this.waitMsgValueMap.get(transactionId);
+            logger.info("try===>" + i);
+            if (msgDataHashtable != null) {
+                logger.info("Had get value from message queue ===>" + JSONArray.toJSON(msgDataHashtable));
+                return msgDataHashtable;
+            }
+            i++;
+        }
+        if (i >= 5) {
+            UiLogUtil.appendLog2SecsTab(deviceCode, "从设备获取数据失败，请检查设备通讯状态！");
+            logger.error("从设备获取数据失败，设备编号：" + deviceCode);
+            return null;
+        }
+        waitMsgValueMap.remove(transactionId);
+        if (waitMsgValueMap.entrySet().size() > 1000) {
+            waitMsgValueMap.clear();
+        }
+        return null;
+    }
+
+    @Override
+    public Map sendS7F5out(String recipeName) {
+        MsgDataHashtable s7f5out = new MsgDataHashtable("s7f5out", mli.getDeviceId());
+        s7f5out.setTransactionId(mli.getNextAvailableTransactionId());
+        s7f5out.put("ProcessprogramID", recipeName);
+        recipeName = recipeName.replace(".rcp", "");
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = super.getRecipePathByConfig(recipe);
+        MsgDataHashtable data = null;
+        try {
+            logger.info("START CHECK: ready to upload recipe :" + new Date());
+            data = mli.sendPrimaryWsetMessage(s7f5out);
+            logger.info("START CHECK: upload recipe over:" + new Date());
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        List<RecipePara> recipeParaList = null;
+        if (data != null && !data.isEmpty()) {
+            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            //Recipe解析  
+            logger.info("START CHECK: ready to transfer recipe :" + new Date());
+            recipeParaList = new AsmAD8312RecipeUtil().transferRecipeParaFromDB(recipePath, deviceType);
+            logger.info("START CHECK: transfer recipe over:" + new Date());
+        }
+
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f6");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipe", recipe);
+        resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+        return resultMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map sendS7F17out(String recipeName) {
+        MsgDataHashtable s7f17out = new MsgDataHashtable("s7f17out", mli.getDeviceId());
+        s7f17out.setTransactionId(mli.getNextAvailableTransactionId());
+        if (!recipeName.contains(".rcp")) {
+            recipeName = recipeName + ".rcp";
+        }
+        s7f17out.put("ProcessprogramID", recipeName);
+        byte[] ackc7 = new byte[1];
+        try {
+            MsgDataHashtable data = mli.sendPrimaryWsetMessage(s7f17out);
+            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
+            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            if (ackc7[0] == 0) {
+                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
+            } else {
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f18");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipeName", recipeName);
+        resultMap.put("ACKC7", ackc7[0]);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        return resultMap;
+    }
+// </editor-fold> 
+    // <editor-fold defaultstate="collapsed" desc="processS14FXin Code">
+
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="sendS1FXout Code">
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
+    //释放机台
+    @Override
+    public Map releaseDevice() {
+        this.setAlarmState(0);
+        holdFlag = false;
+        Map map = new HashMap();// this.sendS2f41Cmd("START");
+//        if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
+//            this.setAlarmState(0);
+//        }
+        map.put("HCACK", 0);
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Map sendS2F41outPPselect(String recipeName) {
+        MsgDataHashtable s2f41out = new MsgDataHashtable("s2f41outPPSelect", mli.getDeviceId());
+        s2f41out.setTransactionId(mli.getNextAvailableTransactionId());
+        s2f41out.put("PPID", recipeName + ".rcp");
+        byte[] hcack = new byte[1];
+        try {
+            MsgDataHashtable data = mli.sendPrimaryWsetMessage(s2f41out);
+            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("HCACK", hcack[0]);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        return resultMap;
+    }
+
+    // </editor-fold>
+    /*
+     * (non-Javadoc) It only copies field member values except Mli.
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public Object clone() {
+        KnsIconnHost newEquip = new KnsIconnHost(deviceId, this.equipId,
+                this.smlFilePath, this.localIPAddress,
+                this.localTCPPort, this.remoteIPAddress,
+                this.remoteTCPPort, this.connectMode,
+                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.mli = this.mli;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.mli.addInputMessageListenerToAll(newEquip);
+        this.setIsRestarting(isRestarting);
+        this.clear();
+        return newEquip;
+    }
+
+    @Override
+    public void initRemoteCommand() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void initRptPara() {
+        sendS2F37outAll();
+        sendS2F37outClose(23L);
+        sendS2F37outClose(24L);
+        sendS2F37outClose(132L);
+        sendS5F3out(true);
+        sendStatus2Server(equipStatus);
+        sendS1F11out();
+    }
+
+    @Override
+    public void startCheckRecipePara(Recipe checkRecipe, String type) {
+        logger.info("START CHECK: BEGIN" + new Date());
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        MonitorService monitorService = new MonitorService(sqlSession);
+        logger.info("START CHECK: ready to upload recipe:" + new Date());
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) sendS7F5out(checkRecipe.getRecipeName()).get("recipeParaList");
+        if (equipRecipeParas == null || equipRecipeParas.isEmpty()) {
+            if (type.equalsIgnoreCase("AB") && startSVcheckPass) {
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机SVcheck已通过,RecipePara check获取recipePara失败,但默认通过.");
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+                sqlSession.close();
+                return;
+            }
+            UiLogUtil.appendLog2EventTab(deviceCode, "从设备获取Recipe数据失败,请确认涉笔设备上是否存在Recipe[" + checkRecipe.getRecipeName() + "]");
+            sqlSession.close();
+            return;
+        }
+        logger.info("START CHECK: transfer recipe over :" + new Date());
+        logger.info("START CHECK: ready to check recipe para:" + new Date());
+        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        logger.info("START CHECK: check recipe para over :" + new Date());
+        try {
+            Map mqMap = new HashMap();
+            mqMap.put("msgName", "eqpt.StartCheckWI");
+            mqMap.put("deviceCode", deviceCode);
+            mqMap.put("recipeName", ppExecName);
+            mqMap.put("EquipStatus", equipStatus);
+            mqMap.put("lotId", lotId);
+            String eventDesc = "";
+            String eventDescEng = "";
+            if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
+
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机Recipe参数检查未通过!");
+                for (RecipePara recipePara : recipeParasdiff) {
+                    eventDesc += "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue()
+                            + "]其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]";
+                    UiLogUtil.appendLog2EventTab(deviceCode, "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue()
+                            + "]其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]");
+                    eventDescEng = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
+                    eventDescEng += eventDescEng;
+                }
+                this.holdDeviceAndShowDetailInfo("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:" + eventDescEng);
+//                monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
+            } else {
+                this.releaseDevice();
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机Recipe参数检查通过！");
+                eventDesc = "设备：" + deviceCode + " 开机Recipe参数没有异常";
+                logger.info("设备：" + deviceCode + " 开机Check成功");
+            }
+            mqMap.put("eventDesc", eventDesc);
+            GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+            sqlSession.commit();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        } finally {
+            sqlSession.close();
+        }
+    }
+
+    @Override
+    public Map sendS1F3SingleCheck(String svidName) {
+        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3singleout", mli.getDeviceId());
+        long transactionId = mli.getNextAvailableTransactionId();
+        s1f3out.setTransactionId(transactionId);
+        long[] svid = new long[1];
+        svid[0] = Long.parseLong(svidName);
+        s1f3out.put("SVID", svid);
+        MsgDataHashtable data = null;
+        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
+        try {
+            data = sendMsg2Equip(s1f3out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (data == null || data.get("RESULT") == null) {
+            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+        }
+        if (data == null || data.get("RESULT") == null) {
+            return null;
+        }
+        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        if (list == null) {
+            return null;
+        }
+        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        Map resultMap = new HashMap();
+        String svValue = String.valueOf(listtmp.get(0));
+        resultMap.put("msgType", "s1f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("Value", svValue);
+        logger.info("resultMap=" + resultMap);
+//         sendS2f41Cmd("STOP_PROCESSING");
+//        sendS2f41Cmd("START");
+//        sendS2f41Cmd1("PROCESS_MAGAZINE");
+//        try {
+//            Thread.sleep(30000);
+//        } catch (InterruptedException ex) {
+//            java.util.logging.Logger.getLogger(AsmAD8312FCHost.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        sendS2f41Cmd("STOP");
+//         sendS2f41Cmd("PROCESS_START");
+//        sendTerminalMsg2EqpSingle("TEST STOP AND MESSAGE");
+        //PROCESS_MA GAZINE 
+        return resultMap;
+    }
+    @SuppressWarnings("unchecked")
+    public Map sendS2f41Cmd1(String Remotecommand) {
+        MsgDataHashtable s2f41out = new MsgDataHashtable("s2f41stopStart", mli.getDeviceId());
+        s2f41out.setTransactionId(mli.getNextAvailableTransactionId());
+        s2f41out.put("RemComCode", Remotecommand);
+        s2f41out.put("CPname", "MAGAZINEID");
+        s2f41out.put("CPval", "TEST123");
+        MsgDataHashtable msgdata = null;
+        Map resultMap = new HashMap();
+
+        byte[] hcack = new byte[1];
+        try {
+            msgdata = mli.sendPrimaryWsetMessage(s2f41out);
+            logger.info("The equip " + deviceCode + " request to " + Remotecommand);
+            hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
+            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack[0]);
+            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+        }
+        return resultMap;
+    }
+}

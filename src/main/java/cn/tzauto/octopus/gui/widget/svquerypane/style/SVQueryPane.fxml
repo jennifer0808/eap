@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="340.0" prefWidth="380.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.mainpane.MainPaneController">
+    <stylesheets>
+        <URL value="@svquery.css" />
+    </stylesheets>
+   <children>
+      <Label layoutX="27.0" layoutY="72.0" text="设备编号">
+         <font>
+            <Font name="Calibri Light" size="13.0" />
+         </font>
+      </Label>
+      <Label layoutX="27.0" layoutY="133.0" text="SVID">
+         <font>
+            <Font name="Calibri Light" size="13.0" />
+         </font>
+      </Label>
+      <Label layoutX="27.0" layoutY="192.0" text="VALUE">
+         <font>
+            <Font name="Calibri Light" size="13.0" />
+         </font>
+      </Label>
+      <Label fx:id="deviceCodeField" layoutX="116.0" layoutY="72.0" prefHeight="17.0" prefWidth="109.0">
+         <font>
+            <Font name="Calibri Light" size="13.0" />
+         </font>
+      </Label>
+      <TextField fx:id="JTF_SVID" layoutX="116.0" layoutY="130.0" prefHeight="23.0" prefWidth="109.0" />
+      <RadioButton fx:id="JRB_EC" layoutX="251.0" layoutY="134.0" mnemonicParsing="false" text="EC" />
+      <Button fx:id="svQuery" layoutX="314.0" layoutY="130.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" style="-fx-background-color: #0069CC;" text="查询" />
+      <TextField fx:id="JTF_SVValue" layoutX="116.0" layoutY="198.0" />
+      <Button fx:id="button" layoutX="169.0" layoutY="259.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" style="-fx-background-color: #0069CC;" text="确定" />
+   </children>
+</AnchorPane>

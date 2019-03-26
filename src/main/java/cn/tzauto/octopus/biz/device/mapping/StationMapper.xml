@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.StationMapper" >
+  <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.Station" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="STEP_CODE" property="stepCode" jdbcType="VARCHAR" />
+    <result column="STEP_NAME" property="stepName" jdbcType="VARCHAR" />
+    <result column="PAR_STEP_ID" property="parStepId" jdbcType="VARCHAR" />
+    <result column="ACTIVE_FLAG" property="activeFlag" jdbcType="VARCHAR" />
+    <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+    <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+    <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+    <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, STEP_CODE, STEP_NAME, PAR_STEP_ID, ACTIVE_FLAG, REMARKS, CREATE_BY, CREATE_DATE, 
+    UPDATE_BY, UPDATE_DATE, DEL_FLAG, VER_NO
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from md_station
+    where ID = #{id,jdbcType=VARCHAR}
+    and DEL_FLAG='0'
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from md_station
+    where ID = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.Station" >
+    insert into md_station (ID, STEP_CODE, STEP_NAME, 
+      PAR_STEP_ID, ACTIVE_FLAG, REMARKS, 
+      CREATE_BY, CREATE_DATE, UPDATE_BY, 
+      UPDATE_DATE, DEL_FLAG, VER_NO
+      )
+    values (#{id,jdbcType=VARCHAR}, #{stepCode,jdbcType=VARCHAR}, #{stepName,jdbcType=VARCHAR}, 
+      #{parStepId,jdbcType=VARCHAR}, #{activeFlag,jdbcType=VARCHAR}, #{remarks,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}, #{verNo,jdbcType=DECIMAL}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.Station" >
+    insert into md_station
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="stepCode != null" >
+        STEP_CODE,
+      </if>
+      <if test="stepName != null" >
+        STEP_NAME,
+      </if>
+      <if test="parStepId != null" >
+        PAR_STEP_ID,
+      </if>
+      <if test="activeFlag != null" >
+        ACTIVE_FLAG,
+      </if>
+      <if test="remarks != null" >
+        REMARKS,
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY,
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE,
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY,
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE,
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG,
+      </if>
+      <if test="verNo != null" >
+        VER_NO,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="stepCode != null" >
+        #{stepCode,jdbcType=VARCHAR},
+      </if>
+      <if test="stepName != null" >
+        #{stepName,jdbcType=VARCHAR},
+      </if>
+      <if test="parStepId != null" >
+        #{parStepId,jdbcType=VARCHAR},
+      </if>
+      <if test="activeFlag != null" >
+        #{activeFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="verNo != null" >
+        #{verNo,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.Station" >
+    update md_station
+    <set >
+      <if test="stepCode != null" >
+        STEP_CODE = #{stepCode,jdbcType=VARCHAR},
+      </if>
+      <if test="stepName != null" >
+        STEP_NAME = #{stepName,jdbcType=VARCHAR},
+      </if>
+      <if test="parStepId != null" >
+        PAR_STEP_ID = #{parStepId,jdbcType=VARCHAR},
+      </if>
+      <if test="activeFlag != null" >
+        ACTIVE_FLAG = #{activeFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="verNo != null" >
+        VER_NO = #{verNo,jdbcType=DECIMAL},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.Station" >
+    update md_station
+    set STEP_CODE = #{stepCode,jdbcType=VARCHAR},
+      STEP_NAME = #{stepName,jdbcType=VARCHAR},
+      PAR_STEP_ID = #{parStepId,jdbcType=VARCHAR},
+      ACTIVE_FLAG = #{activeFlag,jdbcType=VARCHAR},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      VER_NO = #{verNo,jdbcType=DECIMAL}
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

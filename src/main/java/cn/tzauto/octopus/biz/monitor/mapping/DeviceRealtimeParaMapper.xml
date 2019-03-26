@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.monitor.dao.DeviceRealtimeParaMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="DEVICE_ID" property="deviceId" jdbcType="VARCHAR" />
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_NAME" property="deviceName" jdbcType="VARCHAR" />
+        <result column="RECIPE_ROW_ID" property="recipeRowId" jdbcType="VARCHAR" />
+        <result column="PARA_CODE" property="paraCode" jdbcType="VARCHAR" />
+        <result column="PARA_NAME" property="paraName" jdbcType="VARCHAR" />
+        <result column="PARA_SHOT_NAME" property="paraShotName" jdbcType="VARCHAR" />
+        <result column="PARA_MEASURE" property="paraMeasure" jdbcType="VARCHAR" />
+        <result column="VALUE_TYPE" property="valueType" jdbcType="VARCHAR" />
+        <result column="REALTIME_VALUE" property="realtimeValue" jdbcType="VARCHAR" />
+        <result column="SET_VALUE" property="setValue" jdbcType="VARCHAR" />
+        <result column="MIN_VALUE" property="minValue" jdbcType="VARCHAR" />
+        <result column="MAX_VALUE" property="maxValue" jdbcType="VARCHAR" />
+        <result column="PARA_DESC" property="paraDesc" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_CNT" property="updateCnt" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    </resultMap>
+    <resultMap id="DcUcResultMap" type="java.util.HashMap">
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="MAX(UPDATE_CNT)" property="updateCnt" jdbcType="DECIMAL" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, DEVICE_ID, DEVICE_CODE, DEVICE_NAME, RECIPE_ROW_ID, PARA_CODE, PARA_NAME, PARA_SHOT_NAME, 
+        PARA_MEASURE, VALUE_TYPE, REALTIME_VALUE, SET_VALUE, MIN_VALUE, MAX_VALUE, PARA_DESC, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, UPDATE_CNT, REMARKS, DEL_FLAG
+    </sql>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_device_realtime_para
+        where del_flag='0'
+        <if test="deviceCode != null">
+            and DEVICE_CODE = #{deviceCode}
+        </if>      
+        <if test="updateCnt != null">
+            and UPDATE_CNT = #{updateCnt}
+        </if>
+        <if test="remarks != null">
+            and REMARKS = #{remarks}
+        </if>        
+        order by update_date desc
+    </select>
+    <select id="searchByParaMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_device_realtime_para
+        where del_flag='0'
+        <if test="deviceCode != null">
+            and DEVICE_CODE = #{deviceCode}
+        </if>      
+        <if test="paraName != null" >
+            and  PARA_NAME = #{paraName}
+        </if>
+        <if test="recipeRowId != null" >
+            and  RECIPE_ROW_ID = #{recipeRowId}
+        </if>
+        <if test="remarks != null" >
+            and  REMARKS = #{remarks}
+        </if>
+        order by create_date desc
+    </select>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_device_realtime_para
+        where ID = #{id,jdbcType=VARCHAR} 
+        and DEL_FLAG = '0'
+    </select>
+    <select id="getMaxUpdateCnt" resultType="java.lang.Long" parameterType="java.lang.String" >
+        select max(update_cnt) 
+        from ar_device_realtime_para
+        where 1=1
+        <if test="_parameter != null">
+            and DEVICE_CODE = #{_parameter}
+        </if>
+        and DEL_FLAG = '0'
+    </select>
+    <select id="getDeviceCodeAndMaxUpdateCnt" resultMap="DcUcResultMap" parameterType="java.lang.String" >
+        select DEVICE_CODE, MAX(UPDATE_CNT)
+        from ar_device_realtime_para
+        where DEL_FLAG = '0' 
+        and DEVICE_CODE in (SELECT DEVICE_CODE FROM md_device_info where CLIENT_ID= #{_parameter})
+        GROUP BY DEVICE_CODE
+    </select>
+    <select id="selectOldData" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List" />
+        from ar_device_realtime_para
+        where DEL_FLAG='0'
+        and TO_DAYS(create_date)<![CDATA[<]]> TO_DAYS(NOW())- CONVERT(#{savedDays},DECIMAL)
+    </select>
+    
+    <select id="getParasInTime" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+      select 
+        <include refid="Base_Column_List" />
+      from ar_device_realtime_para
+      where DEL_FLAG = '0' 
+          <if test="deviceCode != null">
+          and DEVICE_CODE = #{deviceCode}
+          </if>
+          <if test="paraName != null" >
+          and  PARA_NAME = #{paraName}
+          </if>
+      and CREATE_DATE  &gt; DATE_SUB(NOW(), INTERVAL #{minuteValue} MINUTE)
+      order by CREATE_DATE DESC
+    </select>
+    
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from ar_device_realtime_para
+        where ID = #{id,jdbcType=VARCHAR}
+    </delete>    
+    <delete id="deleteRealtimeParaBatch" parameterType="java.util.List">
+        delete from ar_device_realtime_para where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <update id="deleteRealTimeErro"  >
+        update ar_device_realtime_para
+        set
+        DEL_FLAG = '1'
+        where REMARKS = 'RealTimeErro'
+    </update>
+    <update id="deleteStartErro" parameterType="java.util.HashMap">
+        update ar_device_realtime_para
+        set
+        DEL_FLAG = '1'
+        where REMARKS = 'StartErro'
+    </update>
+    
+    <update id="deleteErro" >
+        update ar_device_realtime_para
+        set
+        DEL_FLAG = '1'
+        where DEL_FLAG = '0'
+        <if test="deviceCode != null">
+            and DEVICE_CODE = #{deviceCode}
+        </if> 
+        <if test="remarks != null">
+            and REMARKS = #{remarks}
+        </if> 
+    </update>
+    
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara" >
+        insert into ar_device_realtime_para (ID, DEVICE_ID, DEVICE_CODE, 
+        DEVICE_NAME, RECIPE_ROW_ID, PARA_CODE, 
+        PARA_NAME, PARA_SHOT_NAME, PARA_MEASURE, 
+        VALUE_TYPE, REALTIME_VALUE, SET_VALUE, 
+        MIN_VALUE, MAX_VALUE, PARA_DESC, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, UPDATE_CNT, REMARKS, 
+        DEL_FLAG)
+        values (UUID(), #{deviceId,jdbcType=VARCHAR}, #{deviceCode,jdbcType=VARCHAR}, 
+        #{deviceName,jdbcType=VARCHAR}, #{recipeRowId,jdbcType=VARCHAR}, #{paraCode,jdbcType=VARCHAR}, 
+        #{paraName,jdbcType=VARCHAR}, #{paraShotName,jdbcType=VARCHAR}, #{paraMeasure,jdbcType=VARCHAR}, 
+        #{valueType,jdbcType=VARCHAR}, #{realtimeValue,jdbcType=VARCHAR}, #{setValue,jdbcType=VARCHAR}, 
+        #{minValue,jdbcType=VARCHAR}, #{maxValue,jdbcType=VARCHAR}, #{paraDesc,jdbcType=VARCHAR}, 
+        'SYSTEM', sysdate(), 'SYSTEM', sysdate(), #{updateCnt,jdbcType=DECIMAL}, #{remarks,jdbcType=VARCHAR}, '0')
+    </insert>
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into ar_device_realtime_para (ID, DEVICE_ID, DEVICE_CODE, 
+        DEVICE_NAME, RECIPE_ROW_ID, PARA_CODE, 
+        PARA_NAME, PARA_SHOT_NAME, PARA_MEASURE, 
+        VALUE_TYPE, REALTIME_VALUE, SET_VALUE, 
+        MIN_VALUE, MAX_VALUE, PARA_DESC, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, UPDATE_CNT, REMARKS, 
+        DEL_FLAG)
+        <foreach collection="list" item="item" index="index" separator="union all">
+            select #{item.id,jdbcType=VARCHAR}, #{item.deviceId,jdbcType=VARCHAR}, #{item.deviceCode,jdbcType=VARCHAR}, 
+            #{item.deviceName,jdbcType=VARCHAR}, #{item.recipeRowId,jdbcType=VARCHAR}, #{item.paraCode,jdbcType=VARCHAR}, 
+            #{item.paraName,jdbcType=VARCHAR}, #{item.paraShotName,jdbcType=VARCHAR}, #{item.paraMeasure,jdbcType=VARCHAR}, 
+            #{item.valueType,jdbcType=VARCHAR}, #{item.realtimeValue,jdbcType=VARCHAR}, #{item.setValue,jdbcType=VARCHAR}, 
+            #{item.minValue,jdbcType=VARCHAR},#{item.maxValue,jdbcType=VARCHAR},#{item.paraDesc,jdbcType=VARCHAR}, 
+            'SYSTEM', sysdate(), 'SYSTEM', sysdate(), #{item.updateCnt,jdbcType=DECIMAL},
+            #{item.remarks,jdbcType=VARCHAR},'0' from dual
+        </foreach>
+    </insert>
+    
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara" >
+        insert into ar_device_realtime_para
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="deviceId != null" >
+                DEVICE_ID,
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE,
+            </if>
+            <if test="deviceName != null" >
+                DEVICE_NAME,
+            </if>
+            <if test="recipeRowId != null" >
+                RECIPE_ROW_ID,
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE,
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME,
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME,
+            </if>
+            <if test="paraMeasure != null" >
+                PARA_MEASURE,
+            </if>
+            <if test="valueType != null" >
+                VALUE_TYPE,
+            </if>
+            <if test="realtimeValue != null" >
+                REALTIME_VALUE,
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE,
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE,
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE,
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="updateCnt != null" >
+                UPDATE_CNT,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+                #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+                #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeRowId != null" >
+                #{recipeRowId,jdbcType=VARCHAR},
+            </if>
+            <if test="paraCode != null" >
+                #{paraCode,jdbcType=VARCHAR},
+            </if>
+            <if test="paraName != null" >
+                #{paraName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraShotName != null" >
+                #{paraShotName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraMeasure != null" >
+                #{paraMeasure,jdbcType=VARCHAR},
+            </if>
+            <if test="valueType != null" >
+                #{valueType,jdbcType=VARCHAR},
+            </if>
+            <if test="realtimeValue != null" >
+                #{realtimeValue,jdbcType=VARCHAR},
+            </if>
+            <if test="setValue != null" >
+                #{setValue,jdbcType=VARCHAR},
+            </if>
+            <if test="minValue != null" >
+                #{minValue,jdbcType=VARCHAR},
+            </if>
+            <if test="maxValue != null" >
+                #{maxValue,jdbcType=VARCHAR},
+            </if>
+            <if test="paraDesc != null" >
+                #{paraDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateCnt != null" >
+                #{updateCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                #{delFlag,jdbcType=CHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara" >
+        update ar_device_realtime_para
+        <set >
+            <if test="deviceId != null" >
+                DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+                DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeRowId != null" >
+                RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME = #{paraName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraMeasure != null" >
+                PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+            </if>
+            <if test="valueType != null" >
+                VALUE_TYPE = #{valueType,jdbcType=VARCHAR},
+            </if>
+            <if test="realtimeValue != null" >
+                REALTIME_VALUE = #{realtimeValue,jdbcType=VARCHAR},
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE = #{setValue,jdbcType=VARCHAR},
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE = #{minValue,jdbcType=VARCHAR},
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE = #{maxValue,jdbcType=VARCHAR},
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateCnt != null" >
+                UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara" >
+        update ar_device_realtime_para
+        set DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+        DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+        DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+        RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+        PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+        PARA_NAME = #{paraName,jdbcType=VARCHAR},
+        PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+        PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+        VALUE_TYPE = #{valueType,jdbcType=VARCHAR},
+        REALTIME_VALUE = #{realtimeValue,jdbcType=VARCHAR},
+        SET_VALUE = #{setValue,jdbcType=VARCHAR},
+        MIN_VALUE = #{minValue,jdbcType=VARCHAR},
+        MAX_VALUE = #{maxValue,jdbcType=VARCHAR},
+        PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+        UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        DEL_FLAG = #{delFlag,jdbcType=CHAR}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

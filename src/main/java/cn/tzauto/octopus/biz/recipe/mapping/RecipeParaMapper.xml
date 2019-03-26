@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.recipe.dao.RecipeParaMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.recipe.domain.RecipePara" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="RECIPE_ROW_ID" property="recipeRowId" jdbcType="VARCHAR" />
+        <result column="PARA_CODE" property="paraCode" jdbcType="VARCHAR" />
+        <result column="PARA_NAME" property="paraName" jdbcType="VARCHAR" />
+        <result column="PARA_SHOT_NAME" property="paraShotName" jdbcType="VARCHAR" />
+        <result column="PARA_MEASURE" property="paraMeasure" jdbcType="VARCHAR" />
+        <result column="VALUE_TYPE" property="valueType" jdbcType="VARCHAR" />
+        <result column="SET_VALUE" property="setValue" jdbcType="VARCHAR" />
+        <result column="DEF_VALUE" property="defValue" jdbcType="VARCHAR" />
+        <result column="MIN_VALUE" property="minValue" jdbcType="VARCHAR" />
+        <result column="MAX_VALUE" property="maxValue" jdbcType="VARCHAR" />
+        <result column="PARA_DESC" property="paraDesc" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, RECIPE_ROW_ID, PARA_CODE, PARA_NAME, PARA_SHOT_NAME, PARA_MEASURE, VALUE_TYPE, 
+        SET_VALUE, DEF_VALUE, MIN_VALUE, MAX_VALUE, PARA_DESC, CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, REMARKS, DEL_FLAG
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_para
+        where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="searchByRcpRowId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_para
+        where del_flag='0'   
+        and RECIPE_ROW_ID = #{recipeRowId}        
+        order by CONVERT(PARA_CODE,decimal)
+    </select>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_para
+        where del_flag='0'   
+        <if test="recipeRowId != null" >
+            and RECIPE_ROW_ID = #{recipeRowId}
+        </if>
+        <if test="paraCode != null" >
+            and PARA_CODE = #{paraCode}
+        </if>        
+    </select> 
+    <select id="searchByMapWithRcpTemp" resultType="java.lang.String" parameterType="java.util.HashMap" >
+        select 
+        set_value
+        from ar_recipe_para
+        where del_flag='0'   
+        and RECIPE_ROW_ID = #{recipeRowId}
+        and PARA_CODE = (
+        select PARA_CODE from ar_recipe_template
+        where del_flag='0'
+        and DEVICE_TYPE_CODE = #{deviceTypeCode}
+        and DEVICE_VARIABLE_TYPE like  CONCAT('%',#{deviceVariableType},'%') 
+        and PARA_NAME= #{paraName}
+        )
+    </select> 
+    <delete id="deleteByRcpRowId" parameterType="java.lang.String" >
+        delete from ar_recipe_para
+        where RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR}
+    </delete>
+    <delete id="deleteRcpParaBatch" parameterType="java.util.List">
+        delete from ar_recipe_para where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <insert id="saveRcpParaBatch" parameterType="java.util.List">
+        insert into ar_recipe_para (ID, RECIPE_ROW_ID, PARA_CODE, 
+        PARA_NAME, PARA_SHOT_NAME, PARA_MEASURE, 
+        VALUE_TYPE, SET_VALUE, DEF_VALUE, 
+        MIN_VALUE, MAX_VALUE, PARA_DESC, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, REMARKS, DEL_FLAG)
+        <foreach collection="list" item="item" index="index" separator="union all">
+            select #{item.id,jdbcType=VARCHAR}, #{item.recipeRowId,jdbcType=VARCHAR}, #{item.paraCode,jdbcType=VARCHAR}, 
+            #{item.paraName,jdbcType=VARCHAR}, #{item.paraShotName,jdbcType=VARCHAR}, #{item.paraMeasure,jdbcType=VARCHAR}, 
+            #{item.valueType,jdbcType=VARCHAR}, #{item.setValue,jdbcType=VARCHAR}, #{item.defValue,jdbcType=VARCHAR}, 
+            #{item.minValue,jdbcType=VARCHAR}, #{item.maxValue,jdbcType=VARCHAR}, #{item.paraDesc,jdbcType=VARCHAR}, 
+            #{item.createBy,jdbcType=VARCHAR}, sysdate(), #{item.updateBy,jdbcType=VARCHAR}, 
+            sysdate(), #{item.remarks,jdbcType=VARCHAR},'0' from dual
+        </foreach>
+    </insert>
+    <update id="modifyRcpParaBatch"  parameterType="java.util.List">	 
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update ar_recipe_para 
+            <set>
+                recipe_Row_Id=${item.recipeRowId},
+            </set>
+            <set>
+                para_Code=${item.paraCode},
+            </set>
+            <set>
+                para_Name=${item.paraName},
+            </set>
+            <set>
+                para_Shot_Name=${item.paraShotName},
+            </set>
+            <set>
+                para_Measure=${item.paraMeasure},
+            </set>
+            <set>
+                value_Type=${item.valueType},
+            </set>
+            <set>
+                set_Value=${item.setValue},
+            </set>
+            <set>
+                def_Value=${item.defValue},
+            </set>
+            <set>
+                min_Value=${item.minValue},
+            </set>
+            <set>
+                max_Value=${item.maxValue},
+            </set>
+            <set>
+                para_Desc=${item.paraDesc},
+            </set>
+            <set>
+                create_By=${item.createBy},
+            </set>
+            <set>
+                create_Date=${item.createDate},
+            </set>
+            <set>
+                update_By=${item.updateBy},
+            </set>
+            <set>
+                update_Date=${item.updateDate},
+            </set>
+            <set>
+                remarks=${item.remarks},
+            </set>
+            <set>
+                del_Flag=${item.delFlag},
+            </set>
+            
+            where id = ${item.id}
+        </foreach>
+		 
+    </update>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipePara" >
+        insert into ar_recipe_para (ID, RECIPE_ROW_ID, PARA_CODE, 
+        PARA_NAME, PARA_SHOT_NAME, PARA_MEASURE, 
+        VALUE_TYPE, SET_VALUE, DEF_VALUE, 
+        MIN_VALUE, MAX_VALUE, PARA_DESC, 
+        CREATE_BY, CREATE_DATE, UPDATE_BY, 
+        UPDATE_DATE, REMARKS, DEL_FLAG
+        )
+        values (UUID(), #{recipeRowId,jdbcType=VARCHAR}, #{paraCode,jdbcType=VARCHAR}, 
+        #{paraName,jdbcType=VARCHAR}, #{paraShotName,jdbcType=VARCHAR}, #{paraMeasure,jdbcType=VARCHAR}, 
+        #{valueType,jdbcType=VARCHAR}, #{setValue,jdbcType=VARCHAR}, #{defValue,jdbcType=VARCHAR}, 
+        #{minValue,jdbcType=VARCHAR}, #{maxValue,jdbcType=VARCHAR}, #{paraDesc,jdbcType=VARCHAR}, 
+        #{createBy,jdbcType=VARCHAR}, sysdate(), #{updateBy,jdbcType=VARCHAR}, 
+        sysdate(), #{remarks,jdbcType=VARCHAR},'0'
+        )
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipePara" >
+        insert into ar_recipe_para
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="recipeRowId != null" >
+                RECIPE_ROW_ID,
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE,
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME,
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME,
+            </if>
+            <if test="paraMeasure != null" >
+                PARA_MEASURE,
+            </if>
+            <if test="valueType != null" >
+                VALUE_TYPE,
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE,
+            </if>
+            <if test="defValue != null" >
+                DEF_VALUE,
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE,
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE,
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{UUID()},
+            </if>
+            <if test="recipeRowId != null" >
+                #{recipeRowId,jdbcType=VARCHAR},
+            </if>
+            <if test="paraCode != null" >
+                #{paraCode,jdbcType=VARCHAR},
+            </if>
+            <if test="paraName != null" >
+                #{paraName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraShotName != null" >
+                #{paraShotName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraMeasure != null" >
+                #{paraMeasure,jdbcType=VARCHAR},
+            </if>
+            <if test="valueType != null" >
+                #{valueType,jdbcType=VARCHAR},
+            </if>
+            <if test="setValue != null" >
+                #{setValue,jdbcType=VARCHAR},
+            </if>
+            <if test="defValue != null" >
+                #{defValue,jdbcType=VARCHAR},
+            </if>
+            <if test="minValue != null" >
+                #{minValue,jdbcType=VARCHAR},
+            </if>
+            <if test="maxValue != null" >
+                #{maxValue,jdbcType=VARCHAR},
+            </if>
+            <if test="paraDesc != null" >
+                #{paraDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                #{delFlag,jdbcType=CHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipePara" >
+        update ar_recipe_para
+        <set >
+            <if test="recipeRowId != null" >
+                RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME = #{paraName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraMeasure != null" >
+                PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+            </if>
+            <if test="valueType != null" >
+                VALUE_TYPE = #{valueType,jdbcType=VARCHAR},
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE = #{setValue,jdbcType=VARCHAR},
+            </if>
+            <if test="defValue != null" >
+                DEF_VALUE = #{defValue,jdbcType=VARCHAR},
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE = #{minValue,jdbcType=VARCHAR},
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE = #{maxValue,jdbcType=VARCHAR},
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipePara" >
+        update ar_recipe_para
+        set RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+        PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+        PARA_NAME = #{paraName,jdbcType=VARCHAR},
+        PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+        PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+        VALUE_TYPE = #{valueType,jdbcType=VARCHAR},
+        SET_VALUE = #{setValue,jdbcType=VARCHAR},
+        DEF_VALUE = #{defValue,jdbcType=VARCHAR},
+        MIN_VALUE = #{minValue,jdbcType=VARCHAR},
+        MAX_VALUE = #{maxValue,jdbcType=VARCHAR},
+        PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        DEL_FLAG = #{delFlag,jdbcType=CHAR}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <select id="selectOldData" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List" />
+        from ar_recipe_para
+        where DEL_FLAG='0'
+        and TO_DAYS(update_date)<![CDATA[<]]> TO_DAYS(NOW())- CONVERT(#{savedDays},DECIMAL)
+        group by recipe_row_id
+    </select>
+</mapper>

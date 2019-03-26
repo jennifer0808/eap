@@ -1,0 +1,56 @@
+/*
+ * Empty Stylesheet file.
+ */
+
+#JB_Login,#JB_SignOut,#JB_MainPage,#JB_RcpMng,#localMode {
+    -fx-background-color: #0081CC;
+    /*-fx-background-image: url("../images/admin-icon.png");*/
+}
+/*.button:hover {*/
+    /*-fx-background-color: #FBC372;*/
+    /*!*-fx-background-image: url("../images/admin-icon.png");*!*/
+/*}*/
+/*#mainScrollPane{*/
+    /*-fx-border-style: dotted none;*/
+/*}*/
+
+.tab-pane>*.tab-header-area>*.tab-header-background {
+    -fx-background-color: -fx-outer-border, -fx-text-box-border, white;
+}
+.scroll-bar:vertical {
+    -fx-background-insets: 0, 0 0 0 1;
+    -fx-padding: -1 -1 -1 0;
+    -fx-background-color: white;
+
+}
+.scroll-bar:horizontal {
+    -fx-background-insets: 0, 0 0 0 1;
+    -fx-padding: -1 -1 -1 0;
+    -fx-background-color: white;
+
+}
+.scroll-pane > .corner {
+    -fx-background-color: white ;
+}
+
+    /*-fx-background-color: white;*/
+/*}*/
+
+.tab-pane {
+    -fx-tab-min-width:80px;
+    -fx-tab-min-height:30px;
+    -fx-tab-max-height:30px;
+}
+.tab {
+    -fx-font-family: Arial;
+    -fx-font-size: 13;
+}
+.split-pane *.split-pane-divider {
+    /*-fx-padding: 0 0 0 0; !* 0 3 0 3 *!*/
+    -fx-background-color: white;
+    -fx-border-style: 0,0,5,0;
+
+}
+
+
+

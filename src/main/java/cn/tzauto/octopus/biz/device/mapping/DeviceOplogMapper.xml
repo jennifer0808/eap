@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.DeviceOplogMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.DeviceOplog" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="DEVICE_ROWID" property="deviceRowid" jdbcType="VARCHAR" />
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="OP_TIME" property="opTime" jdbcType="TIMESTAMP" />
+        <result column="OP_TYPE" property="opType" jdbcType="VARCHAR" />
+        <result column="DEVICE_CEID" property="deviceCeid" jdbcType="VARCHAR" />
+        <result column="OP_DESC" property="opDesc" jdbcType="VARCHAR" />
+        <result column="FORMER_RECIPE_ID" property="formerRecipeId" jdbcType="VARCHAR" />
+        <result column="FORMER_RECIPE_NAME" property="formerRecipeName" jdbcType="VARCHAR" />
+        <result column="CURR_RECIPE_ID" property="currRecipeId" jdbcType="VARCHAR" />
+        <result column="CURR_RECIPE_NAME" property="currRecipeName" jdbcType="VARCHAR" />
+        <result column="FORMER_LOT_ID" property="formerLotId" jdbcType="VARCHAR" />
+        <result column="CURR_LOT_ID" property="currLotId" jdbcType="VARCHAR" />
+        <result column="FORMER_DEVICE_STATUS" property="formerDeviceStatus" jdbcType="VARCHAR" />
+        <result column="CURR_DEVICE_STATUS" property="currDeviceStatus" jdbcType="VARCHAR" />
+        <result column="SYNC_FLAG" property="syncFlag" jdbcType="CHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+        <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, DEVICE_ROWID, DEVICE_CODE, OP_TIME, OP_TYPE, DEVICE_CEID, OP_DESC, FORMER_RECIPE_ID, 
+        FORMER_RECIPE_NAME, CURR_RECIPE_ID, CURR_RECIPE_NAME, FORMER_LOT_ID, CURR_LOT_ID, 
+        FORMER_DEVICE_STATUS, CURR_DEVICE_STATUS, SYNC_FLAG, REMARKS, CREATE_BY, CREATE_DATE, 
+        UPDATE_BY, UPDATE_DATE, DEL_FLAG, VER_NO
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_oplog
+        where ID = #{id,jdbcType=VARCHAR}
+    </select>
+  
+    <select id="selectByParaMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from md_device_oplog
+        where del_flag='0'
+        <if test="deviceCode != null" >
+            and DEVICE_CODE = #{deviceCode} 
+        </if>
+        order by op_time desc
+    </select>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select
+        <include refid="Base_Column_List" />
+        from md_device_oplog
+        where DEL_FLAG='0'
+        <if test="opTime != null">
+            and TO_DAYS(OP_TIME) = TO_DAYS(#{opTime})
+        </if>
+    </select>
+    <select id="selectOldData" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List" />
+        from md_device_oplog
+        where DEL_FLAG='0'
+        and TO_DAYS(create_date)<![CDATA[<]]> TO_DAYS(NOW())- CONVERT(#{savedDays},DECIMAL)
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from md_device_oplog
+        where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <delete id="deleteOpLogBatch" parameterType="java.util.List">
+        delete from md_device_oplog where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceOplog" >
+        insert into md_device_oplog (ID, DEVICE_ROWID, DEVICE_CODE, 
+        OP_TIME, OP_TYPE, DEVICE_CEID, 
+        OP_DESC, FORMER_RECIPE_ID, FORMER_RECIPE_NAME, 
+        CURR_RECIPE_ID, CURR_RECIPE_NAME, FORMER_LOT_ID, 
+        CURR_LOT_ID, FORMER_DEVICE_STATUS, CURR_DEVICE_STATUS, 
+        SYNC_FLAG, REMARKS, CREATE_BY, 
+        CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+        DEL_FLAG, VER_NO)
+        values (#{id,jdbcType=VARCHAR}, #{deviceRowid,jdbcType=VARCHAR}, #{deviceCode,jdbcType=VARCHAR}, 
+        #{opTime,jdbcType=TIMESTAMP}, #{opType,jdbcType=VARCHAR}, #{deviceCeid,jdbcType=VARCHAR}, 
+        #{opDesc,jdbcType=VARCHAR}, #{formerRecipeId,jdbcType=VARCHAR}, #{formerRecipeName,jdbcType=VARCHAR}, 
+        #{currRecipeId,jdbcType=VARCHAR}, #{currRecipeName,jdbcType=VARCHAR}, #{formerLotId,jdbcType=VARCHAR}, 
+        #{currLotId,jdbcType=VARCHAR}, #{formerDeviceStatus,jdbcType=VARCHAR}, #{currDeviceStatus,jdbcType=VARCHAR}, 
+        #{syncFlag,jdbcType=CHAR}, #{remarks,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
+        #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+        #{delFlag,jdbcType=CHAR}, #{verNo,jdbcType=DECIMAL})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceOplog" >
+        insert into md_device_oplog
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="deviceRowid != null" >
+                DEVICE_ROWID,
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE,
+            </if>
+            <if test="opTime != null" >
+                OP_TIME,
+            </if>
+            <if test="opType != null" >
+                OP_TYPE,
+            </if>
+            <if test="deviceCeid != null" >
+                DEVICE_CEID,
+            </if>
+            <if test="opDesc != null" >
+                OP_DESC,
+            </if>
+            <if test="formerRecipeId != null" >
+                FORMER_RECIPE_ID,
+            </if>
+            <if test="formerRecipeName != null" >
+                FORMER_RECIPE_NAME,
+            </if>
+            <if test="currRecipeId != null" >
+                CURR_RECIPE_ID,
+            </if>
+            <if test="currRecipeName != null" >
+                CURR_RECIPE_NAME,
+            </if>
+            <if test="formerLotId != null" >
+                FORMER_LOT_ID,
+            </if>
+            <if test="currLotId != null" >
+                CURR_LOT_ID,
+            </if>
+            <if test="formerDeviceStatus != null" >
+                FORMER_DEVICE_STATUS,
+            </if>
+            <if test="currDeviceStatus != null" >
+                CURR_DEVICE_STATUS,
+            </if>
+            <if test="syncFlag != null" >
+                SYNC_FLAG,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+            <if test="verNo != null" >
+                VER_NO,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceRowid != null" >
+                #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="opTime != null" >
+                #{opTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="opType != null" >
+                #{opType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCeid != null" >
+                #{deviceCeid,jdbcType=VARCHAR},
+            </if>
+            <if test="opDesc != null" >
+                #{opDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="formerRecipeId != null" >
+                #{formerRecipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="formerRecipeName != null" >
+                #{formerRecipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="currRecipeId != null" >
+                #{currRecipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="currRecipeName != null" >
+                #{currRecipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="formerLotId != null" >
+                #{formerLotId,jdbcType=VARCHAR},
+            </if>
+            <if test="currLotId != null" >
+                #{currLotId,jdbcType=VARCHAR},
+            </if>
+            <if test="formerDeviceStatus != null" >
+                #{formerDeviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="currDeviceStatus != null" >
+                #{currDeviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="syncFlag != null" >
+                #{syncFlag,jdbcType=CHAR},
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                #{verNo,jdbcType=DECIMAL},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceOplog" >
+        update md_device_oplog
+        <set >
+            <if test="deviceRowid != null" >
+                DEVICE_ROWID = #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="opTime != null" >
+                OP_TIME = #{opTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="opType != null" >
+                OP_TYPE = #{opType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCeid != null" >
+                DEVICE_CEID = #{deviceCeid,jdbcType=VARCHAR},
+            </if>
+            <if test="opDesc != null" >
+                OP_DESC = #{opDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="formerRecipeId != null" >
+                FORMER_RECIPE_ID = #{formerRecipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="formerRecipeName != null" >
+                FORMER_RECIPE_NAME = #{formerRecipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="currRecipeId != null" >
+                CURR_RECIPE_ID = #{currRecipeId,jdbcType=VARCHAR},
+            </if>
+            <if test="currRecipeName != null" >
+                CURR_RECIPE_NAME = #{currRecipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="formerLotId != null" >
+                FORMER_LOT_ID = #{formerLotId,jdbcType=VARCHAR},
+            </if>
+            <if test="currLotId != null" >
+                CURR_LOT_ID = #{currLotId,jdbcType=VARCHAR},
+            </if>
+            <if test="formerDeviceStatus != null" >
+                FORMER_DEVICE_STATUS = #{formerDeviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="currDeviceStatus != null" >
+                CURR_DEVICE_STATUS = #{currDeviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="syncFlag != null" >
+                SYNC_FLAG = #{syncFlag,jdbcType=CHAR},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                VER_NO = #{verNo,jdbcType=DECIMAL},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceOplog" >
+        update md_device_oplog
+        set DEVICE_ROWID = #{deviceRowid,jdbcType=VARCHAR},
+        DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+        OP_TIME = #{opTime,jdbcType=TIMESTAMP},
+        OP_TYPE = #{opType,jdbcType=VARCHAR},
+        DEVICE_CEID = #{deviceCeid,jdbcType=VARCHAR},
+        OP_DESC = #{opDesc,jdbcType=VARCHAR},
+        FORMER_RECIPE_ID = #{formerRecipeId,jdbcType=VARCHAR},
+        FORMER_RECIPE_NAME = #{formerRecipeName,jdbcType=VARCHAR},
+        CURR_RECIPE_ID = #{currRecipeId,jdbcType=VARCHAR},
+        CURR_RECIPE_NAME = #{currRecipeName,jdbcType=VARCHAR},
+        FORMER_LOT_ID = #{formerLotId,jdbcType=VARCHAR},
+        CURR_LOT_ID = #{currLotId,jdbcType=VARCHAR},
+        FORMER_DEVICE_STATUS = #{formerDeviceStatus,jdbcType=VARCHAR},
+        CURR_DEVICE_STATUS = #{currDeviceStatus,jdbcType=VARCHAR},
+        SYNC_FLAG = #{syncFlag,jdbcType=CHAR},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = 'system',
+        UPDATE_DATE = sysdate(),
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+        VER_NO = #{verNo,jdbcType=DECIMAL}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

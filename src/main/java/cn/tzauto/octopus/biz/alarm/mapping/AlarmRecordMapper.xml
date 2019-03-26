@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.alarm.dao.AlarmRecordMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.alarm.domain.AlarmRecord" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="STATION_ID" property="stationId" jdbcType="VARCHAR" />
+        <result column="STATION_CODE" property="stationCode" jdbcType="VARCHAR" />
+        <result column="STATION_NAME" property="stationName" jdbcType="VARCHAR" />
+        <result column="STEP_ID" property="stepId" jdbcType="VARCHAR" />
+        <result column="STEP_CODE" property="stepCode" jdbcType="VARCHAR" />
+        <result column="STEP_NAME" property="stepName" jdbcType="VARCHAR" />
+        <result column="CLIENT_ID" property="clientId" jdbcType="VARCHAR" />
+        <result column="CLIENT_CODE" property="clientCode" jdbcType="VARCHAR" />
+        <result column="CLIENT_NAME" property="clientName" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_ID" property="deviceTypeId" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_CODE" property="deviceTypeCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_NAME" property="deviceTypeName" jdbcType="VARCHAR" />
+        <result column="DEVICE_ID" property="deviceId" jdbcType="VARCHAR" />
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="DEVCIE_NAME" property="devcieName" jdbcType="VARCHAR" />
+        <result column="ALARM_ID" property="alarmId" jdbcType="VARCHAR" />
+        <result column="ALARM_CODE" property="alarmCode" jdbcType="VARCHAR" />
+        <result column="ALARM_NAME" property="alarmName" jdbcType="VARCHAR" />
+        <result column="ALARM_DATE" property="alarmDate" jdbcType="TIMESTAMP" />
+        <result column="REPEAT_FLAG" property="repeatFlag" jdbcType="CHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+        <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, STATION_ID, STATION_CODE, STATION_NAME, STEP_ID, STEP_CODE, STEP_NAME, CLIENT_ID, 
+        CLIENT_CODE, CLIENT_NAME, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, DEVICE_TYPE_NAME, DEVICE_ID, 
+        DEVICE_CODE, DEVCIE_NAME, ALARM_ID, ALARM_CODE, ALARM_NAME, ALARM_DATE, REPEAT_FLAG, 
+        REMARKS, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, DEL_FLAG, VER_NO
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="searchAlarmRecordInCycTime" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select 
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where del_flag = 0 and REPEAT_FLAG = 'N'
+        <if test = "alarmId !=null">
+            and alarm_id = #{alarmId}
+        </if>
+        <if test = "deviceCode !=null">
+            and device_code = #{deviceCode}
+        </if>
+        <if test = "cycTime !=null">
+            and TO_SECONDS(create_date) >= TO_SECONDS(now())- #{cycTime}
+        </if>
+        and ALARM_CODE !='0'
+    </select>
+    <select id="queryRecentAlarmRecords" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select 
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where del_flag = '0'
+        <if test = "alarmId !=null">
+            and alarm_id = #{alarmId}
+        </if>
+        <if test = "deviceCode !=null">
+            and device_code = #{deviceCode}
+        </if>
+        <if test = "cycTime !=null">
+            and alarm_date <![CDATA[<=]]> #{repeatAlarmTime}
+            and TO_SECONDS(alarm_date) <![CDATA[>=]]> TO_SECONDS(#{repeatAlarmTime})- #{cycTime}
+        </if>
+        order by alarm_date desc
+    </select>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+        select 
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where del_flag = '0'
+        <if test = "deviceCode !=null">
+            and DEVICE_CODE = #{deviceCode}
+        </if>
+        <if test = "alarmId !=null">
+            and alarm_id = #{alarmId}
+        </if>   
+        <if test = "alarmCode !=null">
+            and alarm_code = #{alarmCode}
+        </if>
+        and #{alarmDateStart} <![CDATA[<=]]> alarm_date
+        and alarm_date <![CDATA[<=]]> #{alarmDateEnd}
+        order by alarm_date desc limit 100
+    </select>
+    <select id="selectOldData" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where DEL_FLAG='0'
+        and TO_DAYS(create_date)<![CDATA[<]]> TO_DAYS(NOW())- CONVERT(#{savedDays},DECIMAL)
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+        delete from ar_alarm_record
+        where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <delete id="deleteAlarmRecordBatch" parameterType="java.util.List">
+        delete from ar_alarm_record where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.alarm.domain.AlarmRecord" >
+        insert into ar_alarm_record (ID, STATION_ID, STATION_CODE, 
+        STATION_NAME, STEP_ID, STEP_CODE, 
+        STEP_NAME, CLIENT_ID, CLIENT_CODE, 
+        CLIENT_NAME, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, 
+        DEVICE_TYPE_NAME, DEVICE_ID, DEVICE_CODE, 
+        DEVCIE_NAME, ALARM_ID, ALARM_CODE, 
+        ALARM_NAME, ALARM_DATE, REPEAT_FLAG, 
+        REMARKS, CREATE_BY, CREATE_DATE, 
+        UPDATE_BY, UPDATE_DATE, DEL_FLAG, 
+        VER_NO)
+        values (uuid(), #{stationId,jdbcType=VARCHAR}, #{stationCode,jdbcType=VARCHAR}, 
+        #{stationName,jdbcType=VARCHAR}, #{stepId,jdbcType=VARCHAR}, #{stepCode,jdbcType=VARCHAR}, 
+        #{stepName,jdbcType=VARCHAR}, #{clientId,jdbcType=VARCHAR}, #{clientCode,jdbcType=VARCHAR}, 
+        #{clientName,jdbcType=VARCHAR}, #{deviceTypeId,jdbcType=VARCHAR}, #{deviceTypeCode,jdbcType=VARCHAR}, 
+        #{deviceTypeName,jdbcType=VARCHAR}, #{deviceId,jdbcType=VARCHAR}, #{deviceCode,jdbcType=VARCHAR}, 
+        #{devcieName,jdbcType=VARCHAR}, #{alarmId,jdbcType=VARCHAR}, #{alarmCode,jdbcType=VARCHAR}, 
+        #{alarmName,jdbcType=VARCHAR}, sysdate(), #{repeatFlag,jdbcType=CHAR}, 
+        #{remarks,jdbcType=VARCHAR}, 'system', sysdate(), 
+        'system', sysdate(), #{delFlag,jdbcType=CHAR}, 
+        #{verNo,jdbcType=DECIMAL})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.alarm.domain.AlarmRecord" >
+        insert into ar_alarm_record
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="stationId != null" >
+                STATION_ID,
+            </if>
+            <if test="stationCode != null" >
+                STATION_CODE,
+            </if>
+            <if test="stationName != null" >
+                STATION_NAME,
+            </if>
+            <if test="stepId != null" >
+                STEP_ID,
+            </if>
+            <if test="stepCode != null" >
+                STEP_CODE,
+            </if>
+            <if test="stepName != null" >
+                STEP_NAME,
+            </if>
+            <if test="clientId != null" >
+                CLIENT_ID,
+            </if>
+            <if test="clientCode != null" >
+                CLIENT_CODE,
+            </if>
+            <if test="clientName != null" >
+                CLIENT_NAME,
+            </if>
+            <if test="deviceTypeId != null" >
+                DEVICE_TYPE_ID,
+            </if>
+            <if test="deviceTypeCode != null" >
+                DEVICE_TYPE_CODE,
+            </if>
+            <if test="deviceTypeName != null" >
+                DEVICE_TYPE_NAME,
+            </if>
+            <if test="deviceId != null" >
+                DEVICE_ID,
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE,
+            </if>
+            <if test="devcieName != null" >
+                DEVCIE_NAME,
+            </if>
+            <if test="alarmId != null" >
+                ALARM_ID,
+            </if>
+            <if test="alarmCode != null" >
+                ALARM_CODE,
+            </if>
+            <if test="alarmName != null" >
+                ALARM_NAME,
+            </if>
+            <if test="alarmDate != null" >
+                ALARM_DATE,
+            </if>
+            <if test="repeatFlag != null" >
+                REPEAT_FLAG,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if>
+            <if test="verNo != null" >
+                VER_NO,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="stationId != null" >
+                #{stationId,jdbcType=VARCHAR},
+            </if>
+            <if test="stationCode != null" >
+                #{stationCode,jdbcType=VARCHAR},
+            </if>
+            <if test="stationName != null" >
+                #{stationName,jdbcType=VARCHAR},
+            </if>
+            <if test="stepId != null" >
+                #{stepId,jdbcType=VARCHAR},
+            </if>
+            <if test="stepCode != null" >
+                #{stepCode,jdbcType=VARCHAR},
+            </if>
+            <if test="stepName != null" >
+                #{stepName,jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null" >
+                #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientCode != null" >
+                #{clientCode,jdbcType=VARCHAR},
+            </if>
+            <if test="clientName != null" >
+                #{clientName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+                #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeCode != null" >
+                #{deviceTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeName != null" >
+                #{deviceTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+                #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="devcieName != null" >
+                #{devcieName,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmId != null" >
+                #{alarmId,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmCode != null" >
+                #{alarmCode,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmName != null" >
+                #{alarmName,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmDate != null" >
+                #{alarmDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="repeatFlag != null" >
+                #{repeatFlag,jdbcType=CHAR},
+            </if>
+            <if test="remarks != null" >
+                #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                #{verNo,jdbcType=DECIMAL},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.alarm.domain.AlarmRecord" >
+        update ar_alarm_record
+        <set >
+            <if test="stationId != null" >
+                STATION_ID = #{stationId,jdbcType=VARCHAR},
+            </if>
+            <if test="stationCode != null" >
+                STATION_CODE = #{stationCode,jdbcType=VARCHAR},
+            </if>
+            <if test="stationName != null" >
+                STATION_NAME = #{stationName,jdbcType=VARCHAR},
+            </if>
+            <if test="stepId != null" >
+                STEP_ID = #{stepId,jdbcType=VARCHAR},
+            </if>
+            <if test="stepCode != null" >
+                STEP_CODE = #{stepCode,jdbcType=VARCHAR},
+            </if>
+            <if test="stepName != null" >
+                STEP_NAME = #{stepName,jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null" >
+                CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientCode != null" >
+                CLIENT_CODE = #{clientCode,jdbcType=VARCHAR},
+            </if>
+            <if test="clientName != null" >
+                CLIENT_NAME = #{clientName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+                DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeCode != null" >
+                DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeName != null" >
+                DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+                DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+                DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="devcieName != null" >
+                DEVCIE_NAME = #{devcieName,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmId != null" >
+                ALARM_ID = #{alarmId,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmCode != null" >
+                ALARM_CODE = #{alarmCode,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmName != null" >
+                ALARM_NAME = #{alarmName,jdbcType=VARCHAR},
+            </if>
+            <if test="alarmDate != null" >
+                ALARM_DATE = #{alarmDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="repeatFlag != null" >
+                REPEAT_FLAG = #{repeatFlag,jdbcType=CHAR},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+                VER_NO = #{verNo,jdbcType=DECIMAL},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.alarm.domain.AlarmRecord" >
+        update ar_alarm_record
+        set STATION_ID = #{stationId,jdbcType=VARCHAR},
+        STATION_CODE = #{stationCode,jdbcType=VARCHAR},
+        STATION_NAME = #{stationName,jdbcType=VARCHAR},
+        STEP_ID = #{stepId,jdbcType=VARCHAR},
+        STEP_CODE = #{stepCode,jdbcType=VARCHAR},
+        STEP_NAME = #{stepName,jdbcType=VARCHAR},
+        CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+        CLIENT_CODE = #{clientCode,jdbcType=VARCHAR},
+        CLIENT_NAME = #{clientName,jdbcType=VARCHAR},
+        DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+        DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+        DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+        DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+        DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+        DEVCIE_NAME = #{devcieName,jdbcType=VARCHAR},
+        ALARM_ID = #{alarmId,jdbcType=VARCHAR},
+        ALARM_CODE = #{alarmCode,jdbcType=VARCHAR},
+        ALARM_NAME = #{alarmName,jdbcType=VARCHAR},
+        ALARM_DATE = #{alarmDate,jdbcType=TIMESTAMP},
+        REPEAT_FLAG = #{repeatFlag,jdbcType=CHAR},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = 'system',
+        UPDATE_DATE = sysdate(),
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+        VER_NO = #{verNo,jdbcType=DECIMAL}
+        where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <select id="searchByTime" resultMap="BaseResultMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_alarm_record
+        where DEL_FLAG ='0' and
+        ALARM_DATE <![CDATA[>]]> NOW()-INTERVAL 1 HOUR
+    </select>
+</mapper>

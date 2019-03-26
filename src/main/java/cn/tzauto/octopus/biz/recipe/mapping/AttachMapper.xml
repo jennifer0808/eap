@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.recipe.dao.AttachMapper" >
+  <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.recipe.domain.Attach" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="RECIPE_ROW_ID" property="recipeRowId" jdbcType="VARCHAR" />
+    <result column="ATTACH_NAME" property="attachName" jdbcType="VARCHAR" />
+    <result column="ATTACH_TYPE" property="attachType" jdbcType="VARCHAR" />
+    <result column="ATTACH_PATH" property="attachPath" jdbcType="VARCHAR" />
+    <result column="SORT_NO" property="sortNo" jdbcType="DECIMAL" />
+    <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+    <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+    <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+    <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, RECIPE_ROW_ID, ATTACH_NAME, ATTACH_TYPE, ATTACH_PATH, SORT_NO, CREATE_BY, CREATE_DATE, 
+    UPDATE_BY, UPDATE_DATE, REMARKS, DEL_FLAG
+  </sql>
+  <select id="searchByRecipeRowId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from ar_attach
+    where RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR} 
+    and DEL_FLAG = '0'
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from ar_attach
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from ar_attach
+    where ID = #{id,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByRcpRowId" parameterType="java.lang.String" >
+    delete from ar_attach
+    where RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR}
+  </delete>
+  <update id="delete" parameterType="cn.tzauto.octopus.biz.recipe.domain.Attach">
+    update ar_attach
+    set RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+      ATTACH_NAME = #{attachName,jdbcType=VARCHAR},
+      ATTACH_TYPE = #{attachType,jdbcType=VARCHAR},
+      ATTACH_PATH = #{attachPath,jdbcType=VARCHAR},
+      SORT_NO = #{sortNo,jdbcType=DECIMAL},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = '1'
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <insert id="insert" parameterType="cn.tzauto.octopus.biz.recipe.domain.Attach" >
+    insert into ar_attach (ID, RECIPE_ROW_ID, ATTACH_NAME, 
+      ATTACH_TYPE, ATTACH_PATH, SORT_NO, 
+      CREATE_BY, CREATE_DATE, UPDATE_BY, 
+      UPDATE_DATE, REMARKS, DEL_FLAG
+      )
+    values ( #{id,jdbcType=VARCHAR}, #{recipeRowId,jdbcType=VARCHAR}, #{attachName,jdbcType=VARCHAR}, 
+      #{attachType,jdbcType=VARCHAR}, #{attachPath,jdbcType=VARCHAR}, #{sortNo,jdbcType=DECIMAL}, 
+      #{createBy,jdbcType=VARCHAR}, sysdate(), #{updateBy,jdbcType=VARCHAR}, 
+      sysdate(), #{remarks,jdbcType=VARCHAR}, '0'
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.Attach" >
+    insert into ar_attach
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="recipeRowId != null" >
+        RECIPE_ROW_ID,
+      </if>
+      <if test="attachName != null" >
+        ATTACH_NAME,
+      </if>
+      <if test="attachType != null" >
+        ATTACH_TYPE,
+      </if>
+      <if test="attachPath != null" >
+        ATTACH_PATH,
+      </if>
+      <if test="sortNo != null" >
+        SORT_NO,
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY,
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE,
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY,
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE,
+      </if>
+      <if test="remarks != null" >
+        REMARKS,
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="recipeRowId != null" >
+        #{recipeRowId,jdbcType=VARCHAR},
+      </if>
+      <if test="attachName != null" >
+        #{attachName,jdbcType=VARCHAR},
+      </if>
+      <if test="attachType != null" >
+        #{attachType,jdbcType=VARCHAR},
+      </if>
+      <if test="attachPath != null" >
+        #{attachPath,jdbcType=VARCHAR},
+      </if>
+      <if test="sortNo != null" >
+        #{sortNo,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        sysdate(),
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        sysdate(),
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        '0',
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.Attach" >
+    update ar_attach
+    <set >
+      <if test="recipeRowId != null" >
+        RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+      </if>
+      <if test="attachName != null" >
+        ATTACH_NAME = #{attachName,jdbcType=VARCHAR},
+      </if>
+      <if test="attachType != null" >
+        ATTACH_TYPE = #{attachType,jdbcType=VARCHAR},
+      </if>
+      <if test="attachPath != null" >
+        ATTACH_PATH = #{attachPath,jdbcType=VARCHAR},
+      </if>
+      <if test="sortNo != null" >
+        SORT_NO = #{sortNo,jdbcType=DECIMAL},
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE = sysdate(),
+      </if>
+      <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG = '0',
+      </if>
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.recipe.domain.Attach" >
+    update ar_attach
+    set RECIPE_ROW_ID = #{recipeRowId,jdbcType=VARCHAR},
+      ATTACH_NAME = #{attachName,jdbcType=VARCHAR},
+      ATTACH_TYPE = #{attachType,jdbcType=VARCHAR},
+      ATTACH_PATH = #{attachPath,jdbcType=VARCHAR},
+      SORT_NO = #{sortNo,jdbcType=DECIMAL},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = '0'
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

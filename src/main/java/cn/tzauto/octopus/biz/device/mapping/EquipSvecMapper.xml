@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.EquipSvecMapper" >
+  <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    <id column="ID" property="id" jdbcType="INTEGER" />
+    <result column="PARA_NAME" property="paraName" jdbcType="VARCHAR" />
+    <result column="PARA_TYPE" property="paraType" jdbcType="CHAR" />
+    <result column="PARA_ID" property="paraId" jdbcType="VARCHAR" />
+    <result column="PARA_MIN" property="paraMin" jdbcType="VARCHAR" />
+    <result column="PARA_MAX" property="paraMax" jdbcType="VARCHAR" />
+    <result column="PARA_DEFAULT" property="paraDefault" jdbcType="VARCHAR" />
+    <result column="PARA_MEASURE" property="paraMeasure" jdbcType="VARCHAR" />
+    <result column="EQUIP_TYPE" property="equipType" jdbcType="VARCHAR" />
+    <result column="CREATE_BY_ID" property="createById" jdbcType="VARCHAR" />
+    <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+    <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="UPDATE_BY_ID" property="updateById" jdbcType="VARCHAR" />
+    <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+    <result column="UPDATE_DATE1" property="updateDate1" jdbcType="TIMESTAMP" />
+    <result column="UPDATE_CNT" property="updateCnt" jdbcType="DECIMAL" />
+    <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="cn.tzauto.octopus.biz.device.domain.EquipSvec" extends="BaseResultMap" >
+    <result column="REMARKS" property="remarks" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, PARA_NAME, PARA_TYPE, PARA_ID, PARA_MIN, PARA_MAX, PARA_DEFAULT, PARA_MEASURE, 
+    EQUIP_TYPE, CREATE_BY_ID, CREATE_BY, CREATE_DATE, UPDATE_BY_ID, UPDATE_BY, UPDATE_DATE1, 
+    UPDATE_CNT, DEL_FLAG
+  </sql>
+  <sql id="Blob_Column_List" >
+    REMARKS
+  </sql>
+  <select id="searchByMap" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from md_equip_svec
+    where 1=1
+    <if test = "paraId">
+        and paraId = #{paraId}
+    </if>
+    and del_flag = '0'
+  </select>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from md_equip_svec
+    where ID = #{id,jdbcType=INTEGER} and del_flag = '0'
+  </select>
+    <select id="selectByEquipType" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from md_equip_svec
+    where EQUIP_TYPE = #{equipType,jdbcType=VARCHAR} and del_flag = '1'
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from md_equip_svec
+    where ID = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    insert into md_equip_svec (ID, PARA_NAME, PARA_TYPE, 
+      PARA_ID, PARA_MIN, PARA_MAX, 
+      PARA_DEFAULT, PARA_MEASURE, EQUIP_TYPE, 
+      CREATE_BY_ID, CREATE_BY, CREATE_DATE, 
+      UPDATE_BY_ID, UPDATE_BY, UPDATE_DATE1, 
+      UPDATE_CNT, DEL_FLAG, REMARKS
+      )
+    values (UUID(), #{paraName,jdbcType=VARCHAR}, #{paraType,jdbcType=CHAR}, 
+      #{paraId,jdbcType=VARCHAR}, #{paraMin,jdbcType=VARCHAR}, #{paraMax,jdbcType=VARCHAR}, 
+      #{paraDefault,jdbcType=VARCHAR}, #{paraMeasure,jdbcType=VARCHAR}, #{equipType,jdbcType=VARCHAR}, 
+      #{createById,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, sysdate(), 
+      #{updateById,jdbcType=VARCHAR}, #{updateBy,jdbcType=VARCHAR}, sysdate(), 
+      #{updateCnt,jdbcType=DECIMAL}, '0', #{remarks,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    insert into md_equip_svec
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="paraName != null" >
+        PARA_NAME,
+      </if>
+      <if test="paraType != null" >
+        PARA_TYPE,
+      </if>
+      <if test="paraId != null" >
+        PARA_ID,
+      </if>
+      <if test="paraMin != null" >
+        PARA_MIN,
+      </if>
+      <if test="paraMax != null" >
+        PARA_MAX,
+      </if>
+      <if test="paraDefault != null" >
+        PARA_DEFAULT,
+      </if>
+      <if test="paraMeasure != null" >
+        PARA_MEASURE,
+      </if>
+      <if test="equipType != null" >
+        EQUIP_TYPE,
+      </if>
+      <if test="createById != null" >
+        CREATE_BY_ID,
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY,
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE,
+      </if>
+      <if test="updateById != null" >
+        UPDATE_BY_ID,
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY,
+      </if>
+      <if test="updateDate1 != null" >
+        UPDATE_DATE1,
+      </if>
+      <if test="updateCnt != null" >
+        UPDATE_CNT,
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG,
+      </if>
+      <if test="remarks != null" >
+        REMARKS,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        UUID(),
+      </if>
+      <if test="paraName != null" >
+        #{paraName,jdbcType=VARCHAR},
+      </if>
+      <if test="paraType != null" >
+        #{paraType,jdbcType=CHAR},
+      </if>
+      <if test="paraId != null" >
+        #{paraId,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMin != null" >
+        #{paraMin,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMax != null" >
+        #{paraMax,jdbcType=VARCHAR},
+      </if>
+      <if test="paraDefault != null" >
+        #{paraDefault,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMeasure != null" >
+        #{paraMeasure,jdbcType=VARCHAR},
+      </if>
+      <if test="equipType != null" >
+        #{equipType,jdbcType=VARCHAR},
+      </if>
+      <if test="createById != null" >
+        #{createById,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateById != null" >
+        #{updateById,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate1 != null" >
+        sysdate(),
+      </if>
+      <if test="updateCnt != null" >
+        #{updateCnt,jdbcType=DECIMAL},
+      </if>
+      <if test="delFlag != null" >
+        '0',
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    update md_equip_svec
+    <set >
+      <if test="paraName != null" >
+        PARA_NAME = #{paraName,jdbcType=VARCHAR},
+      </if>
+      <if test="paraType != null" >
+        PARA_TYPE = #{paraType,jdbcType=CHAR},
+      </if>
+      <if test="paraId != null" >
+        PARA_ID = #{paraId,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMin != null" >
+        PARA_MIN = #{paraMin,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMax != null" >
+        PARA_MAX = #{paraMax,jdbcType=VARCHAR},
+      </if>
+      <if test="paraDefault != null" >
+        PARA_DEFAULT = #{paraDefault,jdbcType=VARCHAR},
+      </if>
+      <if test="paraMeasure != null" >
+        PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+      </if>
+      <if test="equipType != null" >
+        EQUIP_TYPE = #{equipType,jdbcType=VARCHAR},
+      </if>
+      <if test="createById != null" >
+        CREATE_BY_ID = #{createById,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE = sysdate(),
+      </if>
+      <if test="updateById != null" >
+        UPDATE_BY_ID = #{updateById,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate1 != null" >
+        UPDATE_DATE1 = #{updateDate1,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateCnt != null" >
+        UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    update md_equip_svec
+    set PARA_NAME = #{paraName,jdbcType=VARCHAR},
+      PARA_TYPE = #{paraType,jdbcType=CHAR},
+      PARA_ID = #{paraId,jdbcType=VARCHAR},
+      PARA_MIN = #{paraMin,jdbcType=VARCHAR},
+      PARA_MAX = #{paraMax,jdbcType=VARCHAR},
+      PARA_DEFAULT = #{paraDefault,jdbcType=VARCHAR},
+      PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+      EQUIP_TYPE = #{equipType,jdbcType=VARCHAR},
+      CREATE_BY_ID = #{createById,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY_ID = #{updateById,jdbcType=VARCHAR},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE1 = #{updateDate1,jdbcType=TIMESTAMP},
+      UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      REMARKS = #{remarks,jdbcType=LONGVARCHAR}
+    where ID = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.EquipSvec" >
+    update md_equip_svec
+    set PARA_NAME = #{paraName,jdbcType=VARCHAR},
+      PARA_TYPE = #{paraType,jdbcType=CHAR},
+      PARA_ID = #{paraId,jdbcType=VARCHAR},
+      PARA_MIN = #{paraMin,jdbcType=VARCHAR},
+      PARA_MAX = #{paraMax,jdbcType=VARCHAR},
+      PARA_DEFAULT = #{paraDefault,jdbcType=VARCHAR},
+      PARA_MEASURE = #{paraMeasure,jdbcType=VARCHAR},
+      EQUIP_TYPE = #{equipType,jdbcType=VARCHAR},
+      CREATE_BY_ID = #{createById,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = sysdate(),
+      UPDATE_BY_ID = #{updateById,jdbcType=VARCHAR},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE1 = sysdate(),
+      UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      DEL_FLAG = '0'
+    where ID = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

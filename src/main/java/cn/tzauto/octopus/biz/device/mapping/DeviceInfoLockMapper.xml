@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.DeviceInfoLockMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="DEVICE_ROWID" property="deviceRowid" jdbcType="VARCHAR" />
+        <result column="LOCK_TYPE" property="lockType" jdbcType="VARCHAR" />
+        <result column="LOCK_STATUS" property="lockStatus" jdbcType="VARCHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+        <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+    ID, DEVICE_ROWID, LOCK_TYPE, LOCK_STATUS, REMARKS, CREATE_BY, CREATE_DATE, UPDATE_BY, 
+    UPDATE_DATE, DEL_FLAG, VER_NO
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    from md_device_info_lock
+    where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from md_device_info_lock
+    where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+    insert into md_device_info_lock (ID, DEVICE_ROWID, LOCK_TYPE, 
+      LOCK_STATUS, REMARKS, CREATE_BY, 
+      CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+      DEL_FLAG, VER_NO)
+    values (#{id,jdbcType=VARCHAR}, #{deviceRowid,jdbcType=VARCHAR}, #{lockType,jdbcType=VARCHAR}, 
+      #{lockStatus,jdbcType=VARCHAR}, #{remarks,jdbcType=VARCHAR}, 'System', 
+      sysdate(), 'System',sysdate(), 
+      '0', #{verNo,jdbcType=DECIMAL})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+    insert into md_device_info_lock
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        ID,
+            </if>
+            <if test="deviceRowid != null" >
+        DEVICE_ROWID,
+            </if>
+            <if test="lockType != null" >
+        LOCK_TYPE,
+            </if>
+            <if test="lockStatus != null" >
+        LOCK_STATUS,
+            </if>
+            <if test="remarks != null" >
+        REMARKS,
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE,
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG,
+            </if>
+            <if test="verNo != null" >
+        VER_NO,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceRowid != null" >
+        #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="lockType != null" >
+        #{lockType,jdbcType=VARCHAR},
+            </if>
+            <if test="lockStatus != null" >
+        #{lockStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+        #{verNo,jdbcType=DECIMAL},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+    update md_device_info_lock
+        <set >
+            <if test="deviceRowid != null" >
+        DEVICE_ROWID = #{deviceRowid,jdbcType=VARCHAR},
+            </if>
+            <if test="lockType != null" >
+        LOCK_TYPE = #{lockType,jdbcType=VARCHAR},
+            </if>
+            <if test="lockStatus != null" >
+        LOCK_STATUS = #{lockStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="verNo != null" >
+        VER_NO = #{verNo,jdbcType=DECIMAL},
+            </if>
+        </set>
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+    update md_device_info_lock
+    set DEVICE_ROWID = #{deviceRowid,jdbcType=VARCHAR},
+      LOCK_TYPE = #{lockType,jdbcType=VARCHAR},
+      LOCK_STATUS = #{lockStatus,jdbcType=VARCHAR},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = 'System',
+      UPDATE_DATE = sysdate(),
+      DEL_FLAG = '0',
+      VER_NO = #{verNo,jdbcType=DECIMAL}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <select id="selectByDeviceRowId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    from md_device_info_lock
+    where DEVICE_ROWID = #{deviceRowid,jdbcType=VARCHAR} and del_flag='0' 
+    </select>
+    <update id="delete" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfoLock" >
+    update md_device_info_lock
+    set  DEL_FLAG = '1'
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <select id="selectByType" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    from md_device_info_lock
+    where  LOCK_TYPE = #{lockType,jdbcType=VARCHAR} and del_flag='0' 
+    </select>
+    <insert id="saveDeviceInfoLockBatch" parameterType="java.util.List" >
+    insert into md_device_info_lock (ID, DEVICE_ROWID, LOCK_TYPE, 
+      LOCK_STATUS, REMARKS, CREATE_BY, 
+      CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+      DEL_FLAG, VER_NO)
+    values 
+        <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.id}, #{item.deviceRowid}, #{item.lockType}, 
+         #{item.lockStatus}, #{item.remarks}, #{item.createBy}, 
+         sysdate(), #{item.updateBy},sysdate(), '0', #{item.verNo})
+        </foreach>
+    </insert>
+    <delete id="deleteDeviceInfoLockBatch" parameterType="java.util.List" >
+    delete from md_device_info_lock where ID in 
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+         #{item.id}
+        </foreach>
+    </delete>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    from md_device_info_lock
+    where del_flag='0'
+        <if test="deviceRowid != null" >
+        and DEVICE_ROWID = #{deviceRowid}
+        </if>
+        <if test="lockType != null" >
+        and LOCK_TYPE = #{lockType}
+        </if>
+        <if test="lockStatus != null" >
+        and LOCK_STATUS = #{lockStatus}
+        </if>
+    </select>
+</mapper>

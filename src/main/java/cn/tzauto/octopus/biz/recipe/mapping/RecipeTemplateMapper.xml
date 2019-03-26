@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.recipe.dao.RecipeTemplateMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate" >
+        <id column="ID" property="id" jdbcType="INTEGER" />
+        <result column="DEVICE_TYPE_ID" property="deviceTypeId" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_CODE" property="deviceTypeCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_NAME" property="deviceTypeName" jdbcType="VARCHAR" />
+        <result column="PARA_CODE" property="paraCode" jdbcType="VARCHAR" />
+        <result column="PARA_NAME" property="paraName" jdbcType="VARCHAR" />
+        <result column="PARA_SHOT_NAME" property="paraShotName" jdbcType="VARCHAR" />
+        <result column="PARA_UNIT" property="paraUnit" jdbcType="VARCHAR" />
+        <result column="SET_VALUE" property="setValue" jdbcType="VARCHAR" />
+        <result column="MIN_VALUE" property="minValue" jdbcType="DECIMAL" />
+        <result column="MAX_VALUE" property="maxValue" jdbcType="DECIMAL" />
+        <result column="SPEC_TYPE" property="specType" jdbcType="VARCHAR" />
+        <result column="SHOW_FLAG" property="showFlag" jdbcType="CHAR" />
+        <result column="MONITOR_FLAG" property="monitorFlag" jdbcType="CHAR" />
+        <result column="PARA_LEVEL" property="paraLevel" jdbcType="VARCHAR" />
+        <result column="PARA_TYPE" property="paraType" jdbcType="VARCHAR" />
+        <result column="COUNT_RATE" property="countRate" jdbcType="VARCHAR" />
+        <result column="DECODE_LENGTH" property="decodeLength" jdbcType="DECIMAL" />
+        <result column="DECODE_START" property="decodeStart" jdbcType="DECIMAL" />
+        <result column="DECODE_END" property="decodeEnd" jdbcType="DECIMAL" />
+        <result column="GROUP_NAME" property="groupName" jdbcType="VARCHAR" />
+        <result column="DEVICE_VARIABLE_ID" property="deviceVariableId" jdbcType="VARCHAR" />
+        <result column="DEVICE_VARIABLE_TYPE" property="deviceVariableType" jdbcType="VARCHAR" />
+        <result column="PARA_DESC" property="paraDesc" jdbcType="VARCHAR" />
+        <result column="SORT_NO" property="sortNo" jdbcType="DECIMAL" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />            
+        <result column="DEVICE_VARIABLE_UNIT" property="deviceVariableUnit" jdbcType="VARCHAR" />   
+        <result column="GOLD_PARA" property="goldPara" jdbcType="CHAR" />   
+    </resultMap>
+    <sql id="Base_Column_List" >
+        ID, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, DEVICE_TYPE_NAME, PARA_CODE, PARA_NAME, PARA_SHOT_NAME, 
+        PARA_UNIT, SET_VALUE, MIN_VALUE, MAX_VALUE, SPEC_TYPE, SHOW_FLAG, MONITOR_FLAG, PARA_LEVEL, 
+        PARA_TYPE, COUNT_RATE, DECODE_LENGTH, DECODE_START, DECODE_END, GROUP_NAME, DEVICE_VARIABLE_ID, 
+        DEVICE_VARIABLE_TYPE, PARA_DESC, SORT_NO, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+        REMARKS, DEL_FLAG, DEVICE_VARIABLE_UNIT,GOLD_PARA
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where ID = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeId != null" >
+            and device_Type_Id = #{deviceTypeId} 
+        </if>      
+        <if test="deviceVariableType != null" >
+            and device_Variable_Type like  CONCAT('%',#{deviceVariableType},'%') 
+        </if> 
+        <if test="deviceVariableId != null" >
+            and device_Variable_Id =#{deviceVariableId}
+        </if> 
+        <if test="monitorFlag != null" >
+            and MONITOR_FLAG = #{monitorFlag} 
+        </if> 
+        order by update_date desc
+    </select>
+    <select id="searchByType" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeId != null" >
+            and device_Type_Id = #{deviceTypeId} 
+        </if>      
+        <if test="deviceVariableType != null" >
+            and device_Variable_Type = #{deviceVariableType}
+        </if> 
+        order by update_date desc
+    </select>
+    <select id="searchRecipeTemplateMonitor" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeId != null" >
+            and DEVICE_TYPE_ID = #{deviceTypeId} 
+        </if>    
+        and device_Variable_Type = 'RecipePara' 
+        and MONITOR_FLAG ='Y'       
+        order by update_date desc
+    </select>
+    <select id="searchByMapOrderByParaCode" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeCode != null" >
+            and device_Type_Code = #{deviceTypeCode} 
+        </if>  
+        <if test="deviceVariableType != null" >
+            and device_Variable_Type = #{deviceVariableType} 
+        </if> 
+        order by CONVERT(PARA_CODE,SIGNED)
+    </select>
+    <select id="searchShotSVByMap" resultType="java.lang.String" parameterType="java.util.HashMap" >
+        select 
+        DEVICE_VARIABLE_ID
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeCode != null" >
+            and device_Type_Code = #{deviceTypeCode} 
+        </if>  
+        <if test="deviceVariableType != null" >
+            and device_Variable_Type like CONCAT('%',#{deviceVariableType},'%') 
+        </if> 
+        <if test="paraDesc != null" >
+            and para_desc like  CONCAT('%',#{paraDesc},'%') 
+        </if> 
+        order by CONVERT(DEVICE_VARIABLE_ID,SIGNED)
+    </select>
+    <select id="searchMonitorByMapOrderByParaCode" resultMap="BaseResultMap" parameterType="java.util.HashMap" >
+        select 
+        <include refid="Base_Column_List" />
+        from ar_recipe_template
+        where del_flag='0'
+        <if test="deviceTypeCode != null" >
+            and device_Type_Code = #{deviceTypeCode} 
+        </if>  
+        <if test="deviceVariableType != null" >
+            and device_Variable_Type = #{deviceVariableType} 
+        </if> 
+        <if test="monitorFlag != null">
+            and MONITOR_FLAG = #{monitorFlag}   
+        </if>
+        order by CONVERT(PARA_CODE,SIGNED)
+    </select>
+    <select id="searchPressRecipeTemplateByDeviceCode" resultMap="BaseResultMap" >
+        select         
+        <include refid="Base_Column_List" />        
+        from ar_recipe_template  
+        where  del_flag='0'
+        and device_Type_Code = #{deviceTypeCode}
+        and device_Variable_Type in
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}                
+        </foreach>
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+        delete from ar_recipe_template
+        where ID = #{id,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate" >
+        insert into ar_recipe_template (ID, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, 
+        DEVICE_TYPE_NAME, PARA_CODE, PARA_NAME, 
+        PARA_SHOT_NAME, PARA_UNIT, SET_VALUE, 
+        MIN_VALUE, MAX_VALUE, SPEC_TYPE, 
+        SHOW_FLAG, MONITOR_FLAG, PARA_LEVEL, 
+        PARA_TYPE, COUNT_RATE, DECODE_LENGTH, 
+        DECODE_START, DECODE_END, GROUP_NAME, 
+        DEVICE_VARIABLE_ID, DEVICE_VARIABLE_TYPE, PARA_DESC, 
+        SORT_NO, CREATE_BY, CREATE_DATE, 
+        UPDATE_BY, UPDATE_DATE, REMARKS, 
+        DEL_FLAG,DEVICE_VARIABLE_UNIT,GOLD_PARA)
+        values (uuid(), #{deviceTypeId,jdbcType=VARCHAR}, #{deviceTypeCode,jdbcType=VARCHAR}, 
+        #{deviceTypeName,jdbcType=VARCHAR}, #{paraCode,jdbcType=VARCHAR}, #{paraName,jdbcType=VARCHAR}, 
+        #{paraShotName,jdbcType=VARCHAR}, #{paraUnit,jdbcType=VARCHAR}, #{setValue,jdbcType=VARCHAR}, 
+        #{minValue,jdbcType=DECIMAL}, #{maxValue,jdbcType=DECIMAL}, #{specType,jdbcType=VARCHAR}, 
+        #{showFlag,jdbcType=CHAR}, #{monitorFlag,jdbcType=CHAR}, #{paraLevel,jdbcType=VARCHAR}, 
+        #{paraType,jdbcType=VARCHAR}, #{countRate,jdbcType=VARCHAR}, #{decodeLength,jdbcType=DECIMAL}, 
+        #{decodeStart,jdbcType=DECIMAL}, #{decodeEnd,jdbcType=DECIMAL}, #{groupName,jdbcType=VARCHAR}, 
+        #{deviceVariableId,jdbcType=VARCHAR}, #{deviceVariableType,jdbcType=VARCHAR}, #{paraDesc,jdbcType=VARCHAR}, 
+        #{sortNo,jdbcType=DECIMAL}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, 
+        #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, 
+        #{delFlag,jdbcType=CHAR}, #{deviceVariableUnit,jdbcType=VARCHAR}, #{goldPara,jdbcType=CHAR})
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate" >
+        insert into ar_recipe_template
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                ID,
+            </if>
+            <if test="deviceTypeId != null" >
+                DEVICE_TYPE_ID,
+            </if>
+            <if test="deviceTypeCode != null" >
+                DEVICE_TYPE_CODE,
+            </if>
+            <if test="deviceTypeName != null" >
+                DEVICE_TYPE_NAME,
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE,
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME,
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME,
+            </if>
+            <if test="paraUnit != null" >
+                PARA_UNIT,
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE,
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE,
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE,
+            </if>
+            <if test="specType != null" >
+                SPEC_TYPE,
+            </if>
+            <if test="showFlag != null" >
+                SHOW_FLAG,
+            </if>
+            <if test="monitorFlag != null" >
+                MONITOR_FLAG,
+            </if>
+            <if test="paraLevel != null" >
+                PARA_LEVEL,
+            </if>
+            <if test="paraType != null" >
+                PARA_TYPE,
+            </if>
+            <if test="countRate != null" >
+                COUNT_RATE,
+            </if>
+            <if test="decodeLength != null" >
+                DECODE_LENGTH,
+            </if>
+            <if test="decodeStart != null" >
+                DECODE_START,
+            </if>
+            <if test="decodeEnd != null" >
+                DECODE_END,
+            </if>
+            <if test="groupName != null" >
+                GROUP_NAME,
+            </if>
+            <if test="deviceVariableId != null" >
+                DEVICE_VARIABLE_ID,
+            </if>
+            <if test="deviceVariableType != null" >
+                DEVICE_VARIABLE_TYPE,
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC,
+            </if>
+            <if test="sortNo != null" >
+                SORT_NO,
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE,
+            </if>
+            <if test="remarks != null" >
+                REMARKS,
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG,
+            </if> 
+            <if test="deviceVariableUnit != null" >
+                DEVICE_VARIABLE_UNIT,
+            </if>
+            <if test="goldPara != null" >
+                GOLD_PARA
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate" >
+        update ar_recipe_template
+        <set >
+            <if test="deviceTypeId != null" >
+                DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeCode != null" >
+                DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeName != null" >
+                DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraCode != null" >
+                PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+            </if>
+            <if test="paraName != null" >
+                PARA_NAME = #{paraName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraShotName != null" >
+                PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+            </if>
+            <if test="paraUnit != null" >
+                PARA_UNIT = #{paraUnit,jdbcType=VARCHAR},
+            </if>
+            <if test="setValue != null" >
+                SET_VALUE = #{setValue,jdbcType=VARCHAR},
+            </if>
+            <if test="minValue != null" >
+                MIN_VALUE = #{minValue,jdbcType=DECIMAL},
+            </if>
+            <if test="maxValue != null" >
+                MAX_VALUE = #{maxValue,jdbcType=DECIMAL},
+            </if>
+            <if test="specType != null" >
+                SPEC_TYPE = #{specType,jdbcType=VARCHAR},
+            </if>
+            <if test="showFlag != null" >
+                SHOW_FLAG = #{showFlag,jdbcType=CHAR},
+            </if>
+            <if test="monitorFlag != null" >
+                MONITOR_FLAG = #{monitorFlag,jdbcType=CHAR},
+            </if>
+            <if test="paraLevel != null" >
+                PARA_LEVEL = #{paraLevel,jdbcType=VARCHAR},
+            </if>
+            <if test="paraType != null" >
+                PARA_TYPE = #{paraType,jdbcType=VARCHAR},
+            </if>
+            <if test="countRate != null" >
+                COUNT_RATE = #{countRate,jdbcType=VARCHAR},
+            </if>
+            <if test="decodeLength != null" >
+                DECODE_LENGTH = #{decodeLength,jdbcType=DECIMAL},
+            </if>
+            <if test="decodeStart != null" >
+                DECODE_START = #{decodeStart,jdbcType=DECIMAL},
+            </if>
+            <if test="decodeEnd != null" >
+                DECODE_END = #{decodeEnd,jdbcType=DECIMAL},
+            </if>
+            <if test="groupName != null" >
+                GROUP_NAME = #{groupName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceVariableId != null" >
+                DEVICE_VARIABLE_ID = #{deviceVariableId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceVariableType != null" >
+                DEVICE_VARIABLE_TYPE = #{deviceVariableType,jdbcType=VARCHAR},
+            </if>
+            <if test="paraDesc != null" >
+                PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="sortNo != null" >
+                SORT_NO = #{sortNo,jdbcType=DECIMAL},
+            </if>
+            <if test="createBy != null" >
+                CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+                CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+                UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+                UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+                REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+                DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="deviceVariableUnit != null" >
+                DEVICE_VARIABLE_UNIT = #{deviceVariableUnit,jdbcType=VARCHAR},
+            </if>
+            <if test="goldPara != null" >
+                GOLD_PARA = #{goldPara,jdbcType=CHAR},
+            </if>
+        </set>
+        where ID = #{id,jdbcType=INTEGER}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate" >
+        update ar_recipe_template
+        set DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+        DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+        DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+        PARA_CODE = #{paraCode,jdbcType=VARCHAR},
+        PARA_NAME = #{paraName,jdbcType=VARCHAR},
+        PARA_SHOT_NAME = #{paraShotName,jdbcType=VARCHAR},
+        PARA_UNIT = #{paraUnit,jdbcType=VARCHAR},
+        SET_VALUE = #{setValue,jdbcType=VARCHAR},
+        MIN_VALUE = #{minValue,jdbcType=DECIMAL},
+        MAX_VALUE = #{maxValue,jdbcType=DECIMAL},
+        SPEC_TYPE = #{specType,jdbcType=VARCHAR},
+        SHOW_FLAG = #{showFlag,jdbcType=CHAR},
+        MONITOR_FLAG = #{monitorFlag,jdbcType=CHAR},
+        PARA_LEVEL = #{paraLevel,jdbcType=VARCHAR},
+        PARA_TYPE = #{paraType,jdbcType=VARCHAR},
+        COUNT_RATE = #{countRate,jdbcType=VARCHAR},
+        DECODE_LENGTH = #{decodeLength,jdbcType=DECIMAL},
+        DECODE_START = #{decodeStart,jdbcType=DECIMAL},
+        DECODE_END = #{decodeEnd,jdbcType=DECIMAL},
+        GROUP_NAME = #{groupName,jdbcType=VARCHAR},
+        DEVICE_VARIABLE_ID = #{deviceVariableId,jdbcType=VARCHAR},
+        DEVICE_VARIABLE_TYPE = #{deviceVariableType,jdbcType=VARCHAR},
+        PARA_DESC = #{paraDesc,jdbcType=VARCHAR},
+        SORT_NO = #{sortNo,jdbcType=DECIMAL},
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+        DEVICE_VARIABLE_UNIT = #{deviceVariableUnit,jdbcType=VARCHAR},
+        GOLD_PARA = #{goldPara,jdbcType=CHAR}
+        where ID = #{id,jdbcType=INTEGER}
+    </update>
+    <insert id="saveRecipeTemplateBatch" parameterType="java.util.List" >
+        insert into ar_recipe_template (ID, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, 
+        DEVICE_TYPE_NAME, PARA_CODE, PARA_NAME, 
+        PARA_SHOT_NAME, PARA_UNIT, SET_VALUE, 
+        MIN_VALUE, MAX_VALUE, SPEC_TYPE, 
+        SHOW_FLAG, MONITOR_FLAG, PARA_LEVEL, 
+        PARA_TYPE, COUNT_RATE, DECODE_LENGTH, 
+        DECODE_START, DECODE_END, GROUP_NAME, 
+        DEVICE_VARIABLE_ID, DEVICE_VARIABLE_TYPE, PARA_DESC, 
+        SORT_NO, CREATE_BY, CREATE_DATE, 
+        UPDATE_BY, UPDATE_DATE, REMARKS, 
+        DEL_FLAG,DEVICE_VARIABLE_UNIT,GOLD_PARA)
+        values 
+        <foreach collection="list" item="item" index="index" separator=",">
+            (uuid(), #{item.deviceTypeId}, #{item.deviceTypeCode}, 
+            #{item.deviceTypeName}, #{item.paraCode}, #{item.paraName}, 
+            #{item.paraShotName}, #{item.paraUnit}, #{item.setValue}, 
+            #{item.minValue}, #{item.maxValue}, #{item.specType}, 
+            #{item.showFlag}, #{item.monitorFlag}, #{item.paraLevel}, 
+            #{item.paraType}, #{item.countRate}, #{item.decodeLength}, 
+            #{item.decodeStart}, #{item.decodeEnd}, #{item.groupName}, 
+            #{item.deviceVariableId}, #{item.deviceVariableType}, #{item.paraDesc}, 
+            #{item.sortNo}, #{item.createBy}, sysdate(), 
+            #{item.updateBy}, sysdate(), #{item.remarks}, '0',#{item.deviceVariableUnit},#{item.goldPara})
+        </foreach>
+    </insert>
+    <delete id="deleteRecipeTemplateByDeviceTypeIdBatch" parameterType="java.util.List" >
+        delete from ar_recipe_template  where DEVICE_TYPE_ID in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.deviceTypeId}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteRecipeTemplateByDeviceTypeCodeBatch" parameterType="java.util.List" >
+        delete from ar_recipe_template  where DEVICE_TYPE_Code in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.deviceTypeCode}
+        </foreach>
+    </delete>
+    <delete id="deleteRecipeTemplateByIdBatch" parameterType="java.util.List" >
+        delete from ar_recipe_template  where ID in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </delete>
+</mapper>

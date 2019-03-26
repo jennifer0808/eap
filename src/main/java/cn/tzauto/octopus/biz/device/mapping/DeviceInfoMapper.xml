@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.DeviceInfoMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="OFFICE_ID" property="officeId" jdbcType="VARCHAR" />
+        <result column="CLIENT_ID" property="clientId" jdbcType="VARCHAR" />
+        <result column="CLIENT_PORT" property="clientPort" jdbcType="VARCHAR" />
+        <result column="DEVICE_PORT" property="devicePort" jdbcType="VARCHAR" />
+        <result column="DEVICE_ID" property="deviceId" jdbcType="VARCHAR" />
+        <result column="START_UP" property="startUp" jdbcType="CHAR" />
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_NAME" property="deviceName" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_ID" property="deviceTypeId" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE" property="deviceType" jdbcType="VARCHAR" />
+        <result column="DEVICE_IP" property="deviceIp" jdbcType="VARCHAR" />
+        <result column="DEVICE_DESC" property="deviceDesc" jdbcType="VARCHAR" />
+        <result column="PROCESS_STEP" property="processStep" jdbcType="VARCHAR" />
+        <result column="ACTIVE_MODE" property="activeMode" jdbcType="VARCHAR" />
+        <result column="DEVICE_STATUS" property="deviceStatus" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+    ID, OFFICE_ID, CLIENT_ID, CLIENT_PORT, DEVICE_PORT, DEVICE_ID, START_UP, DEVICE_CODE, 
+    DEVICE_NAME, DEVICE_TYPE_ID, DEVICE_TYPE, DEVICE_IP, DEVICE_DESC, PROCESS_STEP, ACTIVE_MODE, 
+    DEVICE_STATUS, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, REMARKS, DEL_FLAG
+    </sql>
+    <select id="searchByMap" resultMap="BaseResultMap" parameterType="java.util.HashMap">
+       select 
+        <include refid="Base_Column_List" />
+    from md_device_info
+    where del_flag = '0'
+        <if test="clientId != null">
+        and client_id=#{clientId}
+        </if>
+        <if test = "deviceCode!=null">
+        and device_code = #{deviceCode}
+        </if>
+    </select>
+    <select id="getDeviceInfo" resultMap="BaseResultMap" parameterType="java.lang.String">
+       select 
+        <include refid="Base_Column_List" />
+    from md_device_info
+    where del_flag='0'
+       and  client_id = #{clientId}
+    </select>
+    <select id="selectDeviceInfoByDeviceCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+       select 
+        <include refid="Base_Column_List" />
+    from md_device_info
+    where del_flag='0'
+       and  device_code = #{deviceCode}
+    </select>
+    
+    <delete id="deleteByClientId" parameterType="java.lang.String" >
+    delete from md_device_info
+    where CLIENT_ID = #{clientId,jdbcType=VARCHAR}
+    </delete>
+    <delete id = "batchDeleteDeviceInfo" parameterType = "java.util.List">
+        delete from md_device_info where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    from md_device_info
+    where id = #{id,jdbcType=VARCHAR}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from md_device_info
+    where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+    insert into md_device_info
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        UUID(),
+            </if>
+            <if test="officeId != null" >
+        #{officeId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null" >
+        #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientPort != null" >
+        #{clientPort,jdbcType=VARCHAR},
+            </if>
+            <if test="devicePort != null" >
+        #{devicePort,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+        #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="startUp != null" >
+        #{startUp,jdbcType=CHAR},
+            </if>
+            <if test="deviceCode != null" >
+        #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+        #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+        #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceType != null" >
+        #{deviceType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceIp != null" >
+        #{deviceIp,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceDesc != null" >
+        #{deviceDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="processStep != null" >
+        #{processStep,jdbcType=VARCHAR},
+            </if>
+            <if test="activeMode != null" >
+        #{activeMode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceStatus != null" >
+        #{deviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        sysdate(),
+            </if>
+            <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        sysdate(),
+            </if>
+            <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        '0'
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+    update md_device_info
+        <set >
+            <if test="officeId != null" >
+        OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientId != null" >
+        CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="clientPort != null" >
+        CLIENT_PORT = #{clientPort,jdbcType=VARCHAR},
+            </if>
+            <if test="devicePort != null" >
+        DEVICE_PORT = #{devicePort,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+        DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="startUp != null" >
+        START_UP = #{startUp,jdbcType=CHAR},
+            </if>
+            <if test="deviceCode != null" >
+        DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+        DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+        DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceType != null" >
+        DEVICE_TYPE = #{deviceType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceIp != null" >
+        DEVICE_IP = #{deviceIp,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceDesc != null" >
+        DEVICE_DESC = #{deviceDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="processStep != null" >
+        PROCESS_STEP = #{processStep,jdbcType=VARCHAR},
+            </if>
+            <if test="activeMode != null" >
+        ACTIVE_MODE = #{activeMode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceStatus != null" >
+        DEVICE_STATUS = #{deviceStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE = sysdate(),
+            </if>
+            <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+        </set>
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+    update md_device_info
+    set OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+      CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+      CLIENT_PORT = #{clientPort,jdbcType=VARCHAR},
+      DEVICE_PORT = #{devicePort,jdbcType=VARCHAR},
+      DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+      START_UP = #{startUp,jdbcType=CHAR},
+      DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+      DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+      DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+      DEVICE_TYPE = #{deviceType,jdbcType=VARCHAR},
+      DEVICE_IP = #{deviceIp,jdbcType=VARCHAR},
+      DEVICE_DESC = #{deviceDesc,jdbcType=VARCHAR},
+      PROCESS_STEP = #{processStep,jdbcType=VARCHAR},
+      ACTIVE_MODE = #{activeMode,jdbcType=VARCHAR},
+      DEVICE_STATUS = #{deviceStatus,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="delete" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+    update md_device_info
+    set OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+      CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+      CLIENT_PORT = #{clientPort,jdbcType=VARCHAR},
+      DEVICE_PORT = #{devicePort,jdbcType=VARCHAR},
+      DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+      START_UP = #{startUp,jdbcType=CHAR},
+      DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+      DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+      DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+      DEVICE_TYPE = #{deviceType,jdbcType=VARCHAR},
+      DEVICE_IP = #{deviceIp,jdbcType=VARCHAR},
+      DEVICE_DESC = #{deviceDesc,jdbcType=VARCHAR},
+      PROCESS_STEP = #{processStep,jdbcType=VARCHAR},
+      ACTIVE_MODE = #{activeMode,jdbcType=VARCHAR},
+      DEVICE_STATUS = #{deviceStatus,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = '1'
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.DeviceInfo" >
+    insert into md_device_info (ID, OFFICE_ID, CLIENT_ID, CLIENT_PORT, DEVICE_PORT, DEVICE_ID, START_UP, DEVICE_CODE, 
+    DEVICE_NAME, DEVICE_TYPE_ID, DEVICE_TYPE, DEVICE_IP, DEVICE_DESC, PROCESS_STEP, ACTIVE_MODE, 
+    DEVICE_STATUS, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, REMARKS, DEL_FLAG)
+    values (#{id,jdbcType=VARCHAR}, #{officeId,jdbcType=VARCHAR}, #{clientId,jdbcType=VARCHAR},
+      #{clientPort,jdbcType=VARCHAR}, #{devicePort,jdbcType=VARCHAR},#{deviceId,jdbcType=VARCHAR}, 
+      #{startUp,jdbcType=CHAR},  #{deviceCode,jdbcType=VARCHAR},#{deviceName,jdbcType=VARCHAR}, 
+      #{deviceTypeId,jdbcType=VARCHAR}, #{deviceType,jdbcType=VARCHAR}, #{deviceIp,jdbcType=VARCHAR}, 
+      #{deviceDesc,jdbcType=VARCHAR},#{processStep,jdbcType=VARCHAR},#{activeMode,jdbcType=VARCHAR},
+      #{deviceStatus,jdbcType=VARCHAR},#{createBy,jdbcType=VARCHAR},sysdate(),
+      #{updateBy,jdbcType=VARCHAR},sysdate(), #{remarks,jdbcType=VARCHAR},'0')
+    </insert>
+    
+    <insert id="insertDeviceInfoBatch"  parameterType="java.util.List" >
+    insert into md_device_info (ID, OFFICE_ID, CLIENT_ID, CLIENT_PORT, DEVICE_PORT, DEVICE_ID, START_UP, DEVICE_CODE, 
+    DEVICE_NAME, DEVICE_TYPE_ID, DEVICE_TYPE, DEVICE_IP, DEVICE_DESC, PROCESS_STEP, ACTIVE_MODE, 
+    DEVICE_STATUS, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, REMARKS, DEL_FLAG)
+        <foreach collection="list" item="item" index="index" separator="union all">
+   select #{item.id,jdbcType=VARCHAR}, #{item.officeId,jdbcType=VARCHAR}, #{item.clientId,jdbcType=VARCHAR},
+      #{item.clientPort,jdbcType=VARCHAR}, #{item.devicePort,jdbcType=VARCHAR},#{item.deviceId,jdbcType=VARCHAR}, 
+      #{item.startUp,jdbcType=CHAR},  #{item.deviceCode,jdbcType=VARCHAR},#{item.deviceName,jdbcType=VARCHAR}, 
+      #{item.deviceTypeId,jdbcType=VARCHAR}, #{item.deviceType,jdbcType=VARCHAR}, #{item.deviceIp,jdbcType=VARCHAR}, 
+      #{item.deviceDesc,jdbcType=VARCHAR},#{item.processStep,jdbcType=VARCHAR},#{item.activeMode,jdbcType=VARCHAR},
+      #{item.deviceStatus,jdbcType=VARCHAR},'System',sysdate(),
+      'System',sysdate(), #{item.remarks,jdbcType=VARCHAR},'0' from dual
+        </foreach>
+    </insert>
+</mapper>

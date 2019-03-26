@@ -1,0 +1,110 @@
+/*
+ * Empty Stylesheet file.
+ */
+
+/*.button {*/
+    /*-fx-background-color: #0081CC;*/
+    /*-fx-background-radius: 5.0px;*/
+/*}*/
+
+/*.button:hover{*/
+    /*-fx-background-color: #FBC372;*/
+/*}*/
+
+/*设置表格头靠左、字体大小，字体颜色*/
+.table-view .column-header .label{
+    -fx-alignment: center;
+    -fx-font-family: "Arial";
+    -fx-text-fill: rgba(68,68,68,0.96);
+    -fx-font-size: 12;
+}
+
+/*设置表格头高度*/
+.table-view > .column-header-background{
+    -fx-pref-height: 30;
+}
+
+/*设置每一列内容居中，每一行高度*/
+.table-row-cell{
+    -fx-cell-size: 30px;
+    -fx-alignment: center;
+}
+
+#dataTable{
+    -fx-table-cell-border-color:transparent;
+    -fx-border-color: white;
+    -fx-alignment: center;
+}
+
+.table-view > .virtual-flow > .scroll-bar:vertical {
+    -fx-background-insets: 0, 0 0 0 1;
+    -fx-padding: -1 -1 -1 0;
+    -fx-background-color: white;
+
+}
+
+/*.scroll-bar:vertical .thumb {*/
+/*!*-fx-background-color: #acc6fa;*!*/
+/*!*linear-gradient(to right, derive(#334db3, 95%), derive(#334db3, 10%));*!*/
+/*!*linear-gradient(to right, derive(#334db3, 38%), derive(#334db3, -16%));*!*/
+/*-fx-background-insets: 0, 1, 2;*/
+/*-fx-background-radius: 0.5em;*/
+
+/*border-radius: 5px;*/
+/*-webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);*/
+/*background: rgba(0,0,0,0.2);*/
+/*}*/
+
+.table-view .filler {
+    -fx-background-color: white;
+}
+/*设置每一列内容居中*/
+#dataTable .table-column{
+    -fx-alignment: center;
+}
+
+.combo-box {
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1;
+    -fx-background-radius: 0;
+    -fx-background-color: #ffffff;
+    -fx-font-family: "Arial";
+    -fx-font-size: 12px;
+    -fx-text-fill: #000000;
+    -fx-background-insets: 0;
+    -fx-alignment: center;
+    -fx-content-display: center;
+}
+
+.combo-box > .cell {
+    -fx-text-fill: #000000;
+    -fx-alignment: center;
+}
+
+.combo-box:hover {
+    -fx-background-color: #0081CC;
+    -fx-background-radius: 10.0;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #000000;
+    -fx-text-alignment: center;
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected,
+.combo-box-popup .list-view .list-cell:filled:selected:hover {
+    -fx-background: #2f4f4f;
+    -fx-background-color: #0081CC;
+    -fx-text-fill: #000000;
+    -fx-text-alignment: center;
+    -fx-background-radius: 10.0;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover {
+    -fx-background-color: #0081CC;
+    -fx-text-alignment: center;
+    -fx-background-radius: 10.0;
+}
+
+

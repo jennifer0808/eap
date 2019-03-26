@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.recipe.dao.RecipeMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="RECIPE_CODE" property="recipeCode" jdbcType="VARCHAR" />
+        <result column="RECIPE_NAME" property="recipeName" jdbcType="VARCHAR" />
+        <result column="RECIPE_TYPE" property="recipeType" jdbcType="VARCHAR" />
+        <result column="DEVICE_ID" property="deviceId" jdbcType="VARCHAR" />
+        <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_NAME" property="deviceName" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_ID" property="deviceTypeId" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_CODE" property="deviceTypeCode" jdbcType="VARCHAR" />
+        <result column="DEVICE_TYPE_NAME" property="deviceTypeName" jdbcType="VARCHAR" />
+        <result column="PROD_ID" property="prodId" jdbcType="VARCHAR" />
+        <result column="PROD_CODE" property="prodCode" jdbcType="VARCHAR" />
+        <result column="PROD_NAME" property="prodName" jdbcType="VARCHAR" />
+        <result column="VERSION_TYPE" property="versionType" jdbcType="VARCHAR" />
+        <result column="VERSION_NO" property="versionNo" jdbcType="DECIMAL" />
+        <result column="RECIPE_STATUS" property="recipeStatus" jdbcType="VARCHAR" />
+        <result column="TOTAL_CNT" property="totalCnt" jdbcType="DECIMAL" />
+        <result column="CLIENT_ID" property="clientId" jdbcType="VARCHAR" />
+        <result column="SRC_DEVICE_ID" property="srcDeviceId" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_CNT" property="updateCnt" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    </resultMap>
+    <resultMap id="ResultMapWithBLOBs" type="cn.tzauto.octopus.biz.recipe.domain.Recipe" extends="BaseResultMap" >
+        <result column="RECIPE_DESC" property="recipeDesc" jdbcType="LONGVARCHAR" />
+    </resultMap>
+  
+    <sql id="Base_Column_List" >
+    ID, RECIPE_CODE, RECIPE_NAME, RECIPE_TYPE, DEVICE_ID, DEVICE_CODE, DEVICE_NAME, DEVICE_TYPE_ID, 
+    DEVICE_TYPE_CODE, DEVICE_TYPE_NAME, PROD_ID, PROD_CODE, PROD_NAME, VERSION_TYPE, 
+    VERSION_NO, RECIPE_STATUS, TOTAL_CNT, CLIENT_ID, SRC_DEVICE_ID, CREATE_BY, CREATE_DATE, 
+    UPDATE_BY, UPDATE_DATE, UPDATE_CNT, REMARKS, DEL_FLAG
+    </sql>
+    <sql id="Blob_Column_List" >
+    RECIPE_DESC
+    </sql>
+  
+    <select id="searchByMap" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where del_flag='0'
+        <if test="recipeName != null" >
+        and recipe_name LIKE #{recipeName}
+        </if>
+        <if test="deviceCode != null" >
+        and device_code = #{deviceCode} 
+        </if>
+        <if test="versionType != null" >
+        and version_type = #{versionType} 
+        </if>
+        <if test="versionNo != null" >
+        and version_no = #{versionNo} 
+        </if>     
+     order by update_date desc
+    </select> 
+    <select id="searchByPaMap" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where del_flag='0'
+        <if test="recipeName != null" >
+        and recipe_name LIKE #{recipeName}
+        </if>
+        <if test="deviceTypeCode != null" >
+        and DEVICE_TYPE_CODE = #{deviceTypeCode} 
+        </if>
+        <if test="versionType != null" >
+        and version_type = #{versionType} 
+        </if>
+        <if test="versionNo != null" >
+        and version_no = #{versionNo} 
+        </if>     
+     order by update_date desc
+    </select> 
+    <select id="searchByMapVerNo" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where del_flag='0'
+        <if test="recipeName != null" >
+        and recipe_name LIKE #{recipeName}
+        </if>
+        <if test="deviceCode != null" >
+        and device_code = #{deviceCode} 
+        </if>
+        <if test="versionType != null" >
+        and version_type = #{versionType} 
+        </if>
+     order by version_no desc
+    </select> 
+    <select id="searchRecipeRecent" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where TO_DAYS(create_date) >= TO_DAYS(now())-7  
+    and del_flag='0'
+    and version_type !='GOLD' 
+    and client_id = #{clientId}
+    order by update_date desc
+    </select>
+    <select id="searchRecipeByRcpType" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where del_flag='0'
+        <if test="recipeName != null" >
+        and recipe_name =  #{recipeName}
+        </if>
+        <if test="recipeType != null" >
+        and RECIPE_TYPE = #{recipeType} 
+        </if>
+    </select> 
+    <select id="searchRecipeByPaExtMap" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where del_flag='0'
+        <if test="recipeName != null" >
+        and recipe_name =  #{recipeName}
+        </if>
+        <if test="deviceId != null" >
+        and device_id = #{deviceId} 
+        </if>
+        <if test="clientId != null" >
+        and client_id = #{clientId} 
+        </if>
+        <if test="versionNo != null" >
+        #{versionNo,jdbcType=DECIMAL},
+        </if>
+    </select> 
+    
+    <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+        ,
+        <include refid="Blob_Column_List" />
+    from ar_recipe
+    where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    
+    <select id="getAllRecipeName" resultType="java.lang.String" >
+    select 
+        DISTINCT RECIPE_NAME
+    from ar_recipe
+    where del_flag='0'
+    and device_code = #{deviceCode,jdbcType=VARCHAR}
+    </select>
+    
+    
+    <select id="getUUID" resultType="java.lang.String">
+        select UUID()
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from ar_recipe
+    where ID = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    insert into ar_recipe (ID, RECIPE_CODE, RECIPE_NAME, 
+      RECIPE_TYPE, DEVICE_ID, DEVICE_CODE, 
+      DEVICE_NAME, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, 
+      DEVICE_TYPE_NAME, PROD_ID, PROD_CODE, 
+      PROD_NAME, VERSION_TYPE, VERSION_NO, 
+      RECIPE_STATUS, TOTAL_CNT, CLIENT_ID, 
+      SRC_DEVICE_ID, CREATE_BY, CREATE_DATE, 
+      UPDATE_BY, UPDATE_DATE, UPDATE_CNT, 
+      REMARKS, DEL_FLAG, RECIPE_DESC
+      )
+    values (#{id,jdbcType=VARCHAR}, #{recipeCode,jdbcType=VARCHAR}, #{recipeName,jdbcType=VARCHAR}, 
+      #{recipeType,jdbcType=VARCHAR}, #{deviceId,jdbcType=VARCHAR}, #{deviceCode,jdbcType=VARCHAR}, 
+      #{deviceName,jdbcType=VARCHAR}, #{deviceTypeId,jdbcType=VARCHAR}, #{deviceTypeCode,jdbcType=VARCHAR}, 
+      #{deviceTypeName,jdbcType=VARCHAR}, #{prodId,jdbcType=VARCHAR}, #{prodCode,jdbcType=VARCHAR}, 
+      #{prodName,jdbcType=VARCHAR}, #{versionType,jdbcType=VARCHAR}, #{versionNo,jdbcType=DECIMAL}, 
+      #{recipeStatus,jdbcType=VARCHAR}, #{totalCnt,jdbcType=DECIMAL}, #{clientId,jdbcType=VARCHAR}, 
+      #{srcDeviceId,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP},
+      #{updateBy,jdbcType=VARCHAR},sysdate(), #{updateCnt,jdbcType=DECIMAL}, 
+      #{remarks,jdbcType=VARCHAR}, '0', #{recipeDesc,jdbcType=LONGVARCHAR}
+      )
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    insert into ar_recipe
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeCode != null" >
+        #{recipeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeName != null" >
+        #{recipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeType != null" >
+        #{recipeType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+        #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+        #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+        #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+        #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeCode != null" >
+        #{deviceTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeName != null" >
+        #{deviceTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="prodId != null" >
+        #{prodId,jdbcType=VARCHAR},
+            </if>
+            <if test="prodCode != null" >
+        #{prodCode,jdbcType=VARCHAR},
+            </if>
+            <if test="prodName != null" >
+        #{prodName,jdbcType=VARCHAR},
+            </if>
+            <if test="versionType != null" >
+        #{versionType,jdbcType=VARCHAR},
+            </if>
+            <if test="versionNo != null" >
+        #{versionNo,jdbcType=DECIMAL},
+            </if>
+            <if test="recipeStatus != null" >
+        #{recipeStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="totalCnt != null" >
+        #{totalCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="clientId != null" >
+        #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="srcDeviceId != null" >
+        #{srcDeviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        #{sysdate()},
+            </if>
+            <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        #{sysdate()},
+            </if>
+            <if test="updateCnt != null" >
+        #{updateCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="recipeDesc != null" >
+        #{recipeDesc,jdbcType=LONGVARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    update ar_recipe
+        <set >
+            <if test="recipeCode != null" >
+        RECIPE_CODE = #{recipeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeName != null" >
+        RECIPE_NAME = #{recipeName,jdbcType=VARCHAR},
+            </if>
+            <if test="recipeType != null" >
+        RECIPE_TYPE = #{recipeType,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceId != null" >
+        DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceCode != null" >
+        DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceName != null" >
+        DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeId != null" >
+        DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeCode != null" >
+        DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="deviceTypeName != null" >
+        DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+            </if>
+            <if test="prodId != null" >
+        PROD_ID = #{prodId,jdbcType=VARCHAR},
+            </if>
+            <if test="prodCode != null" >
+        PROD_CODE = #{prodCode,jdbcType=VARCHAR},
+            </if>
+            <if test="prodName != null" >
+        PROD_NAME = #{prodName,jdbcType=VARCHAR},
+            </if>
+            <if test="versionType != null" >
+        VERSION_TYPE = #{versionType,jdbcType=VARCHAR},
+            </if>
+            <if test="versionNo != null" >
+        VERSION_NO = #{versionNo,jdbcType=DECIMAL},
+            </if>
+            <if test="recipeStatus != null" >
+        RECIPE_STATUS = #{recipeStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="totalCnt != null" >
+        TOTAL_CNT = #{totalCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="clientId != null" >
+        CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+            </if>
+            <if test="srcDeviceId != null" >
+        SRC_DEVICE_ID = #{srcDeviceId,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateCnt != null" >
+        UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+            </if>
+            <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="recipeDesc != null" >
+        RECIPE_DESC = #{recipeDesc,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKeyWithBLOBs" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    update ar_recipe
+    set RECIPE_CODE = #{recipeCode,jdbcType=VARCHAR},
+      RECIPE_NAME = #{recipeName,jdbcType=VARCHAR},
+      RECIPE_TYPE = #{recipeType,jdbcType=VARCHAR},
+      DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+      DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+      DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+      DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+      DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+      DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+      PROD_ID = #{prodId,jdbcType=VARCHAR},
+      PROD_CODE = #{prodCode,jdbcType=VARCHAR},
+      PROD_NAME = #{prodName,jdbcType=VARCHAR},
+      VERSION_TYPE = #{versionType,jdbcType=VARCHAR},
+      VERSION_NO = #{versionNo,jdbcType=DECIMAL},
+      RECIPE_STATUS = #{recipeStatus,jdbcType=VARCHAR},
+      TOTAL_CNT = #{totalCnt,jdbcType=DECIMAL},
+      CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+      SRC_DEVICE_ID = #{srcDeviceId,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      RECIPE_DESC = #{recipeDesc,jdbcType=LONGVARCHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    update ar_recipe
+    set RECIPE_CODE = #{recipeCode,jdbcType=VARCHAR},
+      RECIPE_NAME = #{recipeName,jdbcType=VARCHAR},
+      RECIPE_TYPE = #{recipeType,jdbcType=VARCHAR},
+      DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+      DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+      DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+      DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+      DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+      DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+      PROD_ID = #{prodId,jdbcType=VARCHAR},
+      PROD_CODE = #{prodCode,jdbcType=VARCHAR},
+      PROD_NAME = #{prodName,jdbcType=VARCHAR},
+      VERSION_TYPE = #{versionType,jdbcType=VARCHAR},
+      VERSION_NO = #{versionNo,jdbcType=DECIMAL},
+      RECIPE_STATUS = #{recipeStatus,jdbcType=VARCHAR},
+      TOTAL_CNT = #{totalCnt,jdbcType=DECIMAL},
+      CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+      SRC_DEVICE_ID = #{srcDeviceId,jdbcType=VARCHAR},
+<!--      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},-->
+
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="deleteRcp" parameterType="cn.tzauto.octopus.biz.recipe.domain.Recipe" >
+    update ar_recipe
+    set RECIPE_CODE = #{recipeCode,jdbcType=VARCHAR},
+      RECIPE_NAME = #{recipeName,jdbcType=VARCHAR},
+      RECIPE_TYPE = #{recipeType,jdbcType=VARCHAR},
+      DEVICE_ID = #{deviceId,jdbcType=VARCHAR},
+      DEVICE_CODE = #{deviceCode,jdbcType=VARCHAR},
+      DEVICE_NAME = #{deviceName,jdbcType=VARCHAR},
+      DEVICE_TYPE_ID = #{deviceTypeId,jdbcType=VARCHAR},
+      DEVICE_TYPE_CODE = #{deviceTypeCode,jdbcType=VARCHAR},
+      DEVICE_TYPE_NAME = #{deviceTypeName,jdbcType=VARCHAR},
+      PROD_ID = #{prodId,jdbcType=VARCHAR},
+      PROD_CODE = #{prodCode,jdbcType=VARCHAR},
+      PROD_NAME = #{prodName,jdbcType=VARCHAR},
+      VERSION_TYPE = #{versionType,jdbcType=VARCHAR},
+      VERSION_NO = #{versionNo,jdbcType=DECIMAL},
+      RECIPE_STATUS = #{recipeStatus,jdbcType=VARCHAR},
+      TOTAL_CNT = #{totalCnt,jdbcType=DECIMAL},
+      CLIENT_ID = #{clientId,jdbcType=VARCHAR},
+      SRC_DEVICE_ID = #{srcDeviceId,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      UPDATE_CNT = #{updateCnt,jdbcType=DECIMAL},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = '1',
+      RECIPE_DESC = #{recipeDesc,jdbcType=LONGVARCHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <insert id="saveRecipeBatch" parameterType="java.util.List" >
+    insert into ar_recipe (ID, RECIPE_CODE, RECIPE_NAME, 
+      RECIPE_TYPE, DEVICE_ID, DEVICE_CODE, 
+      DEVICE_NAME, DEVICE_TYPE_ID, DEVICE_TYPE_CODE, 
+      DEVICE_TYPE_NAME, PROD_ID, PROD_CODE, 
+      PROD_NAME, VERSION_TYPE, VERSION_NO, 
+      RECIPE_STATUS, TOTAL_CNT, CLIENT_ID, 
+      SRC_DEVICE_ID, CREATE_BY, CREATE_DATE, 
+      UPDATE_BY, UPDATE_DATE, UPDATE_CNT, 
+      REMARKS, DEL_FLAG, RECIPE_DESC
+      )
+    values 
+        <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.id}, #{item.recipeCode}, #{item.recipeName}, 
+      #{item.recipeType}, #{item.deviceId}, #{item.deviceCode}, 
+      #{item.deviceName}, #{item.deviceTypeId}, #{item.deviceTypeCode}, 
+      #{item.deviceTypeName}, #{item.prodId}, #{item.prodCode}, 
+      #{item.prodName}, #{item.versionType}, #{item.versionNo}, 
+      #{item.recipeStatus}, #{item.totalCnt}, #{item.clientId}, 
+      #{item.srcDeviceId}, #{item.createBy}, sysdate(), 
+      #{item.updateBy},sysdate(), #{item.updateCnt}, 
+      #{item.remarks}, '0', #{item.recipeDesc}
+      )
+        </foreach>
+    </insert>
+    <delete id="deleteRecipeByIdBatch" parameterType="java.util.List" >
+    delete from ar_recipe where ID in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+        #{item.id}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.sys.dao.SysUserMapper" >
+    <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+        <id column="ID" property="id" jdbcType="VARCHAR" />
+        <result column="COMPANY_ID" property="companyId" jdbcType="VARCHAR" />
+        <result column="OFFICE_ID" property="officeId" jdbcType="VARCHAR" />
+        <result column="LOGIN_NAME" property="loginName" jdbcType="VARCHAR" />
+        <result column="PASSWORD" property="password" jdbcType="VARCHAR" />
+        <result column="NO" property="no" jdbcType="VARCHAR" />
+        <result column="NAME" property="name" jdbcType="VARCHAR" />
+        <result column="EMAIL" property="email" jdbcType="VARCHAR" />
+        <result column="PHONE" property="phone" jdbcType="VARCHAR" />
+        <result column="MOBILE" property="mobile" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="CHAR" />
+        <result column="LOGIN_IP" property="loginIp" jdbcType="VARCHAR" />
+        <result column="LOGIN_DATE" property="loginDate" jdbcType="TIMESTAMP" />
+        <result column="LOGIN_FLAG" property="loginFlag" jdbcType="VARCHAR" />
+        <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    </resultMap>
+    <resultMap id="ResultMapWithBLOBs" type="cn.tzauto.octopus.biz.sys.domain.SysUser" extends="BaseResultMap" >
+        <result column="PHOTO" property="photo" jdbcType="LONGVARCHAR" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+    ID, COMPANY_ID, OFFICE_ID, LOGIN_NAME, PASSWORD, NO, NAME, EMAIL, PHONE, MOBILE, 
+    USER_TYPE, LOGIN_IP, LOGIN_DATE, LOGIN_FLAG, CREATE_BY, CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+    REMARKS, DEL_FLAG
+    </sql>
+    <sql id="Blob_Column_List" >
+    PHOTO
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from sys_user
+    where ID = #{id,jdbcType=VARCHAR}
+    </select>
+    <insert id="insert" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    insert into sys_user (ID, COMPANY_ID, OFFICE_ID, 
+      LOGIN_NAME, PASSWORD, NO, 
+      NAME, EMAIL, PHONE, 
+      MOBILE, USER_TYPE, LOGIN_IP, 
+      LOGIN_DATE, LOGIN_FLAG, CREATE_BY, 
+      CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+      REMARKS, DEL_FLAG, PHOTO
+      )
+    values (UUID(), #{companyId,jdbcType=VARCHAR}, #{officeId,jdbcType=VARCHAR}, 
+      #{loginName,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{no,jdbcType=VARCHAR}, 
+      #{name,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, 
+      #{mobile,jdbcType=VARCHAR}, #{userType,jdbcType=CHAR}, #{loginIp,jdbcType=VARCHAR}, 
+      sysdate(), #{loginFlag,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, 
+      sysdate(), #{updateBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, 
+      #{remarks,jdbcType=VARCHAR},'0', #{photo,jdbcType=LONGVARCHAR}
+      )
+    </insert>
+    <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    insert into sys_user
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        ID,
+            </if>
+            <if test="companyId != null" >
+        COMPANY_ID,
+            </if>
+            <if test="officeId != null" >
+        OFFICE_ID,
+            </if>
+            <if test="loginName != null" >
+        LOGIN_NAME,
+            </if>
+            <if test="password != null" >
+        PASSWORD,
+            </if>
+            <if test="no != null" >
+        NO,
+            </if>
+            <if test="name != null" >
+        NAME,
+            </if>
+            <if test="email != null" >
+        EMAIL,
+            </if>
+            <if test="phone != null" >
+        PHONE,
+            </if>
+            <if test="mobile != null" >
+        MOBILE,
+            </if>
+            <if test="userType != null" >
+        USER_TYPE,
+            </if>
+            <if test="loginIp != null" >
+        LOGIN_IP,
+            </if>
+            <if test="loginDate != null" >
+        LOGIN_DATE,
+            </if>
+            <if test="loginFlag != null" >
+        LOGIN_FLAG,
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY,
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE,
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY,
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE,
+            </if>
+            <if test="remarks != null" >
+        REMARKS,
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG,
+            </if>
+            <if test="photo != null" >
+        PHOTO,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="companyId != null" >
+        #{companyId,jdbcType=VARCHAR},
+            </if>
+            <if test="officeId != null" >
+        #{officeId,jdbcType=VARCHAR},
+            </if>
+            <if test="loginName != null" >
+        #{loginName,jdbcType=VARCHAR},
+            </if>
+            <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+            </if>
+            <if test="no != null" >
+        #{no,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null" >
+        #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="mobile != null" >
+        #{mobile,jdbcType=VARCHAR},
+            </if>
+            <if test="userType != null" >
+        #{userType,jdbcType=CHAR},
+            </if>
+            <if test="loginIp != null" >
+        #{loginIp,jdbcType=VARCHAR},
+            </if>
+            <if test="loginDate != null" >
+        #{loginDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="loginFlag != null" >
+        #{loginFlag,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="photo != null" >
+        #{photo,jdbcType=LONGVARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    update sys_user
+        <set >
+            <if test="companyId != null" >
+        COMPANY_ID = #{companyId,jdbcType=VARCHAR},
+            </if>
+            <if test="officeId != null" >
+        OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+            </if>
+            <if test="loginName != null" >
+        LOGIN_NAME = #{loginName,jdbcType=VARCHAR},
+            </if>
+            <if test="password != null" >
+        PASSWORD = #{password,jdbcType=VARCHAR},
+            </if>
+            <if test="no != null" >
+        NO = #{no,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null" >
+        NAME = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="email != null" >
+        EMAIL = #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="phone != null" >
+        PHONE = #{phone,jdbcType=VARCHAR},
+            </if>
+            <if test="mobile != null" >
+        MOBILE = #{mobile,jdbcType=VARCHAR},
+            </if>
+            <if test="userType != null" >
+        USER_TYPE = #{userType,jdbcType=CHAR},
+            </if>
+            <if test="loginIp != null" >
+        LOGIN_IP = #{loginIp,jdbcType=VARCHAR},
+            </if>
+            <if test="loginDate != null" >
+        LOGIN_DATE = #{loginDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="loginFlag != null" >
+        LOGIN_FLAG = #{loginFlag,jdbcType=VARCHAR},
+            </if>
+            <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+            </if>
+            <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+            </if>
+            <if test="updateDate != null" >
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+            <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+            </if>
+            <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="photo != null" >
+        PHOTO = #{photo,jdbcType=LONGVARCHAR},
+            </if>
+        </set>
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKeyWithBLOBs" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    update sys_user
+    set COMPANY_ID = #{companyId,jdbcType=VARCHAR},
+      OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+      LOGIN_NAME = #{loginName,jdbcType=VARCHAR},
+      PASSWORD = #{password,jdbcType=VARCHAR},
+      NO = #{no,jdbcType=VARCHAR},
+      NAME = #{name,jdbcType=VARCHAR},
+      EMAIL = #{email,jdbcType=VARCHAR},
+      PHONE = #{phone,jdbcType=VARCHAR},
+      MOBILE = #{mobile,jdbcType=VARCHAR},
+      USER_TYPE = #{userType,jdbcType=CHAR},
+      LOGIN_IP = #{loginIp,jdbcType=VARCHAR},
+      LOGIN_DATE = #{loginDate,jdbcType=TIMESTAMP},
+      LOGIN_FLAG = #{loginFlag,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      PHOTO = #{photo,jdbcType=LONGVARCHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="deleteByPrimaryKey" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    delete from sys_user
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+  
+    <select id="searchByMap" resultMap="ResultMapWithBLOBs" parameterType="java.util.HashMap" >
+    select 
+        <include refid="Base_Column_List" />
+    ,
+        <include refid="Blob_Column_List" />
+    from sys_user
+    where del_flag='0'
+        <if test="loginName != null" >
+        and LOGIN_NAME = #{loginName} 
+        </if>
+    </select> 
+    
+    <update id="updateSysUser" parameterType="cn.tzauto.octopus.biz.sys.domain.SysUser" >
+    update sys_user
+    set COMPANY_ID = #{companyId,jdbcType=VARCHAR},
+      OFFICE_ID = #{officeId,jdbcType=VARCHAR},
+      LOGIN_NAME = #{loginName,jdbcType=VARCHAR},
+      PASSWORD = #{password,jdbcType=VARCHAR},
+      NO = #{no,jdbcType=VARCHAR},
+      NAME = #{name,jdbcType=VARCHAR},
+      EMAIL = #{email,jdbcType=VARCHAR},
+      PHONE = #{phone,jdbcType=VARCHAR},
+      MOBILE = #{mobile,jdbcType=VARCHAR},
+      USER_TYPE = #{userType,jdbcType=CHAR},
+      LOGIN_IP = #{loginIp,jdbcType=VARCHAR},
+      LOGIN_DATE = sysdate(),
+      LOGIN_FLAG = #{loginFlag,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE =sysdate(),
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = sysdate(),
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      PHOTO = #{photo,jdbcType=LONGVARCHAR}
+    where ID = #{id,jdbcType=VARCHAR}
+    </update>
+    <delete id="deleteBatch" parameterType = "java.util.List">
+        delete from sys_user where id in
+        <foreach collection="list" item = "item" open="(" separator="," close=")">#{item.id}
+        </foreach>
+    </delete>
+    <insert id="insertSysUserBatch"  parameterType="java.util.List" >
+    insert into sys_user (ID, COMPANY_ID, OFFICE_ID, 
+      LOGIN_NAME, PASSWORD, NO, 
+      NAME, EMAIL, PHONE, 
+      MOBILE, USER_TYPE, LOGIN_IP, 
+      LOGIN_DATE, LOGIN_FLAG, CREATE_BY, 
+      CREATE_DATE, UPDATE_BY, UPDATE_DATE, 
+      REMARKS, DEL_FLAG, PHOTO)
+        <foreach collection="list" item="item" index="index" separator="union all">
+    select #{item.id,jdbcType=VARCHAR}, #{item.companyId,jdbcType=VARCHAR}, #{item.officeId,jdbcType=VARCHAR}, 
+      #{item.loginName,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.no,jdbcType=VARCHAR}, 
+      #{item.name,jdbcType=VARCHAR}, #{item.email,jdbcType=VARCHAR}, #{item.phone,jdbcType=VARCHAR}, 
+      #{item.mobile,jdbcType=VARCHAR}, #{item.userType,jdbcType=CHAR}, #{item.loginIp,jdbcType=VARCHAR}, 
+      #{item.loginDate,jdbcType=TIMESTAMP}, #{item.loginFlag,jdbcType=VARCHAR}, 'System', 
+      sysdate(), 'System', sysdate(), 
+      #{item.remarks,jdbcType=VARCHAR}, '0', #{item.photo,jdbcType=LONGVARCHAR} from dual
+        </foreach>
+    </insert>
+</mapper>

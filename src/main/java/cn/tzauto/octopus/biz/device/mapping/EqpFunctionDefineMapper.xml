@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.tzauto.octopus.biz.device.dao.EqpFunctionDefineMapper" >
+  <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.device.domain.EqpFunctionDefine" >
+    <id column="ID" property="id" jdbcType="VARCHAR" />
+    <result column="FUNCTION_TYPE" property="functionType" jdbcType="VARCHAR" />
+    <result column="FUNCTION_CODE" property="functionCode" jdbcType="VARCHAR" />
+    <result column="FUNCTION_DESC" property="functionDesc" jdbcType="VARCHAR" />
+    <result column="ACTIVE_FLAG" property="activeFlag" jdbcType="CHAR" />
+    <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+    <result column="CREATE_BY" property="createBy" jdbcType="VARCHAR" />
+    <result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+    <result column="UPDATE_DATE" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="DEL_FLAG" property="delFlag" jdbcType="CHAR" />
+    <result column="VER_NO" property="verNo" jdbcType="DECIMAL" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    ID, FUNCTION_TYPE, FUNCTION_CODE, FUNCTION_DESC, ACTIVE_FLAG, REMARKS, CREATE_BY, 
+    CREATE_DATE, UPDATE_BY, UPDATE_DATE, DEL_FLAG, VER_NO
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from md_eqp_function_define
+    where ID = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from md_eqp_function_define
+    where ID = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="cn.tzauto.octopus.biz.device.domain.EqpFunctionDefine" >
+    insert into md_eqp_function_define (ID, FUNCTION_TYPE, FUNCTION_CODE, 
+      FUNCTION_DESC, ACTIVE_FLAG, REMARKS, 
+      CREATE_BY, CREATE_DATE, UPDATE_BY, 
+      UPDATE_DATE, DEL_FLAG, VER_NO
+      )
+    values (#{id,jdbcType=VARCHAR}, #{functionType,jdbcType=VARCHAR}, #{functionCode,jdbcType=VARCHAR}, 
+      #{functionDesc,jdbcType=VARCHAR}, #{activeFlag,jdbcType=CHAR}, #{remarks,jdbcType=VARCHAR}, 
+      #{createBy,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateDate,jdbcType=TIMESTAMP}, #{delFlag,jdbcType=CHAR}, #{verNo,jdbcType=DECIMAL}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="cn.tzauto.octopus.biz.device.domain.EqpFunctionDefine" >
+    insert into md_eqp_function_define
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        ID,
+      </if>
+      <if test="functionType != null" >
+        FUNCTION_TYPE,
+      </if>
+      <if test="functionCode != null" >
+        FUNCTION_CODE,
+      </if>
+      <if test="functionDesc != null" >
+        FUNCTION_DESC,
+      </if>
+      <if test="activeFlag != null" >
+        ACTIVE_FLAG,
+      </if>
+      <if test="remarks != null" >
+        REMARKS,
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY,
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE,
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY,
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE,
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG,
+      </if>
+      <if test="verNo != null" >
+        VER_NO,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="functionType != null" >
+        #{functionType,jdbcType=VARCHAR},
+      </if>
+      <if test="functionCode != null" >
+        #{functionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="functionDesc != null" >
+        #{functionDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="activeFlag != null" >
+        #{activeFlag,jdbcType=CHAR},
+      </if>
+      <if test="remarks != null" >
+        #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="verNo != null" >
+        #{verNo,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.tzauto.octopus.biz.device.domain.EqpFunctionDefine" >
+    update md_eqp_function_define
+    <set >
+      <if test="functionType != null" >
+        FUNCTION_TYPE = #{functionType,jdbcType=VARCHAR},
+      </if>
+      <if test="functionCode != null" >
+        FUNCTION_CODE = #{functionCode,jdbcType=VARCHAR},
+      </if>
+      <if test="functionDesc != null" >
+        FUNCTION_DESC = #{functionDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="activeFlag != null" >
+        ACTIVE_FLAG = #{activeFlag,jdbcType=CHAR},
+      </if>
+      <if test="remarks != null" >
+        REMARKS = #{remarks,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="delFlag != null" >
+        DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="verNo != null" >
+        VER_NO = #{verNo,jdbcType=DECIMAL},
+      </if>
+    </set>
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.tzauto.octopus.biz.device.domain.EqpFunctionDefine" >
+    update md_eqp_function_define
+    set FUNCTION_TYPE = #{functionType,jdbcType=VARCHAR},
+      FUNCTION_CODE = #{functionCode,jdbcType=VARCHAR},
+      FUNCTION_DESC = #{functionDesc,jdbcType=VARCHAR},
+      ACTIVE_FLAG = #{activeFlag,jdbcType=CHAR},
+      REMARKS = #{remarks,jdbcType=VARCHAR},
+      CREATE_BY = #{createBy,jdbcType=VARCHAR},
+      CREATE_DATE = #{createDate,jdbcType=TIMESTAMP},
+      UPDATE_BY = #{updateBy,jdbcType=VARCHAR},
+      UPDATE_DATE = #{updateDate,jdbcType=TIMESTAMP},
+      DEL_FLAG = #{delFlag,jdbcType=CHAR},
+      VER_NO = #{verNo,jdbcType=DECIMAL}
+    where ID = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>
