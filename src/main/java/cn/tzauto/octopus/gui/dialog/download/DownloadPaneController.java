@@ -76,12 +76,12 @@ public class DownloadPaneController implements Initializable {
         AnchorPane downloadPane = new AnchorPane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
-            downloadPane = FXMLLoader.load(getClass().getResource("DownloadPane.fxml"), resourceBundle);
+            downloadPane = FXMLLoader.load(getClass().getClassLoader().getResource("DownloadPane.fxml"), resourceBundle);
 
         } catch (IOException ex) {
         }
         stage.setResizable(false);
-        Image image = new Image(DownloadPaneController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         Scene scene = new Scene(downloadPane);
         stage.setScene(scene);

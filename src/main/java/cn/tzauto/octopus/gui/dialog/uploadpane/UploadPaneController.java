@@ -108,7 +108,7 @@ public class UploadPaneController implements Initializable {
         Pane rcpMngPane = new Pane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap",new languageUtil().getLocale());
-            rcpMngPane = FXMLLoader.load(getClass().getResource("UploadPane.fxml"),resourceBundle);
+            rcpMngPane = FXMLLoader.load(getClass().getClassLoader().getResource("UploadPane.fxml"),resourceBundle);
 
         } catch (IOException ex) {
 
@@ -117,7 +117,7 @@ public class UploadPaneController implements Initializable {
         dataTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         fillComboBox(rcpMngPane);
         Stage stage = new Stage();
-        Image image = new Image(UploadPaneController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("Recipe上传");
         Scene scene = new Scene(rcpMngPane);

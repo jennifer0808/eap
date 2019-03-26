@@ -39,13 +39,13 @@ public class SVQueryPaneController implements Initializable {
     public void init() {
         // TODO String : deviceId, String : deviceCode
         Stage stage = new Stage();
-        Image image = new Image(SVQueryPaneController.class.getResourceAsStream("/cn/tzauto/octopus/gui/main/resources/logoTaiZhi.png"));
+        Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("SV数据查询");
         Pane root = new Pane();
         try {
             ResourceBundle resourceBundle =ResourceBundle.getBundle("eap",new languageUtil().getLocale());
-            root = FXMLLoader.load(getClass().getResource("SVQueryPane.fxml"),resourceBundle);
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("SVQueryPane.fxml"),resourceBundle);
         } catch (IOException ex) {
 
         }
