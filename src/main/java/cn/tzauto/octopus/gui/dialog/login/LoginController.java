@@ -127,7 +127,7 @@ public class LoginController implements Initializable {
     public void init() throws IOException {
 
         Stage window = new Stage();
-        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"));
+        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"));
         Scene scene = new Scene(root);
         window.setScene(scene);
         window.setResizable(false);

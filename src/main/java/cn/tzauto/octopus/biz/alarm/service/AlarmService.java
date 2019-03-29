@@ -13,17 +13,18 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.service.BaseService;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author njtz
  * @since 2017/08/07
  */
@@ -34,7 +35,7 @@ public class AlarmService extends BaseService {
 
     public AlarmService(SqlSession sqlSession) {
         super(sqlSession);
-        alarmRecordMapper = this.session.getMapper(AlarmRecordMapper.class);      
+        alarmRecordMapper = this.session.getMapper(AlarmRecordMapper.class);
     }
 
     /**
@@ -44,7 +45,7 @@ public class AlarmService extends BaseService {
      */
     public void triggerAlarm(Map alarmMap) {
         String deviceCode = alarmMap.get("deviceCode").toString();//获取发送触发指令的机台的DeviceCode
-        DeviceInfo deviceInfo = GlobalConstants.stage.getDeviceInfo(null, deviceCode);
+        DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
         //deviceService.searchDeviceInfoByPara(GlobalConstants.getProperty("clientId"), deviceCode).get(0); 
         //存储报警信息
         AlarmRecord alarmRecord = setAlarmRecord(deviceInfo, alarmMap);

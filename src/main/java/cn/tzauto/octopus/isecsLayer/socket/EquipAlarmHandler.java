@@ -50,7 +50,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         }
         String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
         String deviceCode = map.get(eqpIp);
-        DeviceInfo deviceInfo = GlobalConstants.stage.getDeviceInfo(null, deviceCode);
+        DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
 
         List<String> alarmStringList = new ArrayList<>();
         alarmStringList.add(message);

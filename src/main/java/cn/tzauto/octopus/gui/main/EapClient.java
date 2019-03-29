@@ -21,12 +21,14 @@ import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -50,7 +52,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+
 import javax.swing.SwingWorker;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.JobExecutionContext;
@@ -119,7 +123,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
         vb.setStyle("-fx-border-color: lightblue");
         vb.setSpacing(10);
         Scene loadingScene = new Scene(vb, 500, 300);
-//        loadingScene.getStylesheets().add(getClass().getResource("/cn/tzinfo/htauto/octopus/gui/main/main.css").toExternalForm());
+//        loadingScene.getStylesheets().add(getClass().getClassLoader().getResource("/cn/tzinfo/htauto/octopus/gui/main/main.css").toExternalForm());
         window.setScene(loadingScene);
 
         window.show();
@@ -184,12 +188,12 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 //渲染设备状态信息
                 this.initializeEquipStatusAndRender();
                 //启动Secs通信
-//                this.startHost();
+                this.startHost();
 //                //启动ISecs通信
 //                EquipStatusListen.startListen();
 
                 //启动ISecs通信
-                this.startModel();
+//                this.startModel();
 
                 GlobalConstants.stage = this;
 
@@ -200,11 +204,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                    }
 //                }.start();
                 //自动注销功能
-                try {
-                    new MainScheduler().schedulerJob();
-                } catch (SchedulerException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    new MainScheduler().schedulerJob();
+//                } catch (SchedulerException e) {
+//                    e.printStackTrace();
+//                }
 
                 //Quartz监控
                 if ("1".equals(GlobalConstants.getProperty("MONITOR_PARA"))) {
@@ -269,11 +273,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
         equipBeans = hostManager.initEquipNodeBeans();
         Collections.sort(equipBeans,
                 new Comparator<EquipNodeBean>() {
-            @Override
-            public int compare(EquipNodeBean s1, EquipNodeBean s2) {
-                return s1.getEquipName().compareToIgnoreCase(s2.getEquipName());
-            }
-        });
+                    @Override
+                    public int compare(EquipNodeBean s1, EquipNodeBean s2) {
+                        return s1.getEquipName().compareToIgnoreCase(s2.getEquipName());
+                    }
+                });
         for (EquipNodeBean value : equipBeans) {
             if (value == null) {
                 continue;
@@ -389,7 +393,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
         try {
             hostManager.startHostThread(deviceId);
-            hostManager.startSECS(deviceId, eqpEventDealer, eqpEventDealer, eqpEventDealer);
+            hostManager.startSECS(deviceId, eqpEventDealer);
         } catch (Exception e1) {
             logger.fatal(equipNodeBean.getEquipName() + " has not been initialized!", e1);
         }
@@ -492,27 +496,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
         }
     }
 
-    public MultipleEquipHostManager getMultipleEquipHostManager() {
-        return this.hostManager;
-    }
 
-    public DeviceInfo getDeviceInfo(String deviceId, String deviceCode) {
-        if (deviceId != null) {
-            for (DeviceInfo deviceInfo : deviceInfos) {
-                if (deviceId.equals(deviceInfo.getDeviceId())) {
-                    return deviceInfo;
-                }
-            }
-        }
-        if (deviceCode != null) {
-            for (DeviceInfo deviceInfo : deviceInfos) {
-                if (deviceCode.equals(deviceInfo.getDeviceCode())) {
-                    return deviceInfo;
-                }
-            }
-        }
-        return null;
-    }
+
 
     public TextArea getTX_EventLog() {
         return (TextArea) root.lookup("#TX_EventLog");

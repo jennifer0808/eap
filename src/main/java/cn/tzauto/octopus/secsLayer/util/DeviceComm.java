@@ -5,6 +5,10 @@
  */
 package cn.tzauto.octopus.secsLayer.util;
 
+import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
+import cn.tzauto.generalDriver.exceptions.T3TimeOutException;
+import cn.tzauto.generalDriver.exceptions.T6TimeOutException;
+import cn.tzauto.generalDriver.exceptions.WrongStateTransitionNumberException;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
@@ -36,21 +40,31 @@ public class DeviceComm {
 //            public Void doInBackground() {
         logger.info("DoInBackground,start comm... ");
         String deviceId = equipNodeBean.getDeviceIdProperty();
-        EquipmentEventDealer watchDog = new EquipmentEventDealer(equipNodeBean, GlobalConstants.stage);
+        EquipmentEventDealer equipmentEventDealer = new EquipmentEventDealer(equipNodeBean, GlobalConstants.stage);
         //start the watch dog
-        watchDog.execute();
+        equipmentEventDealer.execute();
         //start the Host Thread
         MultipleEquipHostManager hostsManager = EapClient.hostManager;
         hostsManager.startHostThread(deviceId);
 
         //start the SECS protocols
         try {
-            hostsManager.startSECS(deviceId, watchDog, watchDog, watchDog);
+            hostsManager.startSECS(deviceId, equipmentEventDealer);
         } catch (NotInitializedException e1) {
             e1.printStackTrace();
 //                    return null;
+        } catch (InvalidHsmsHeaderDataException e) {
+            e.printStackTrace();
+        } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (T3TimeOutException e) {
+            e.printStackTrace();
+        } catch (WrongStateTransitionNumberException e) {
+            e.printStackTrace();
         }
-        EapClient.addWatchDog(deviceId, watchDog);
+        EapClient.addWatchDog(deviceId, equipmentEventDealer);
 //                return null;
 //            }
 //        };

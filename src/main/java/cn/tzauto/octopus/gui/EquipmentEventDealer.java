@@ -1,5 +1,9 @@
 package cn.tzauto.octopus.gui;
 
+import cn.tzauto.generalDriver.api.EqpEventDealer;
+import cn.tzauto.generalDriver.entity.msg.MessageHeader;
+import cn.tzauto.generalDriver.exceptions.InvalidHsmsDataLengthException;
+import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
@@ -11,12 +15,6 @@ import cn.tzauto.octopus.gui.equipevent.ControlEvent;
 import cn.tzauto.octopus.gui.equipevent.ReceivedSeparateEvent;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.InvalidHsmsDataLengthException;
-import cn.tzinfo.smartSecsDriver.exception.InvalidHsmsHeaderDataException;
-import cn.tzinfo.smartSecsDriver.representation.secsii.MessageHeader;
-import cn.tzinfo.smartSecsDriver.userapi.ErrorDataMessageDealer;
-import cn.tzinfo.smartSecsDriver.userapi.HsmsCommunicationFailureDealer;
-import cn.tzinfo.smartSecsDriver.userapi.UpLevelAnouncer;
 import com.alibaba.fastjson.JSON;
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +24,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
-        implements HsmsCommunicationFailureDealer, ErrorDataMessageDealer, UpLevelAnouncer {
+        implements EqpEventDealer {
 
     private EquipNodeBean equipNodeBean;
     private LinkedBlockingQueue<ControlEvent> eventQueue;
@@ -71,7 +69,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                     Thread.yield();
                 }
                 EquipState newState = (EquipState) equipNodeBean.getEquipStateProperty().clone();
-                MultipleEquipHostManager hostsManager = stage.getMultipleEquipHostManager();
+                MultipleEquipHostManager hostsManager = stage.hostManager;
                 if (ev instanceof CommStatusEvent) {
                     CommStatusEvent cev = (CommStatusEvent) ev;
                     logger.info("Equip State is changed. publish is called==>" + JSON.toJSONString(ev));
@@ -173,12 +171,12 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         eventQueue.add(new ReceivedSeparateEvent(deviceId));
     }
 
-    @Override
+
     public void notificationOfSentPrimaryMessage(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfSentPrimaryMessage Invoked at device id " + deviceId + " " + msgTagName);
     }
 
-    @Override
+
     public void notificationOfSentSecondaryMessage(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfSentSecondaryMessage Invoked at device id " + deviceId + " " + msgTagName);
 //        eventQueue.add(new ServiceStatusEvent(true, deviceId)); //to be changed
@@ -189,6 +187,16 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void notificationOfT3Timeout(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfT3Timeout Invoked at device id " + deviceId + " " + msgTagName
                 + " at equip " + equipNodeBean.getEquipName());
+    }
+
+    @Override
+    public void notificationOfSentMessage(int i, long l, String s) {
+
+    }
+
+    @Override
+    public void notificationOfRespondMessage(int i, long l, String s) {
+
     }
 
     @Override
@@ -208,18 +216,33 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     }
 
     @Override
+    public void notificationOfSentMessageFailed(int i, long l, String s) {
+
+    }
+
+    @Override
+    public void notificationOfSentMessageFailedCommFailure(int i, long l, String s) {
+
+    }
+
+    @Override
+    public void notificationOfRespondMessageFailed(int i, long l, String s) {
+
+    }
+
+
     public void notificationOfSentPrimaryMessageFailed(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfSentPrimaryMessageFailed Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
-    @Override
+
     public void notificationOfSentPrimaryMessageFailedCommFailure(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfSentPrimaryMessageFailedCommFailure Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
-    @Override
+
     public void notificationOfSentSecondaryMessageFailed(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfSentSecondaryMessageFailed Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
@@ -235,7 +258,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         eventQueue.add(new CommFailureEvent(e, deviceId));
     }
 
-    @Override
+
     public void processDataSendIOException(IOException e, int deviceId) {
         logger.debug("Communication Failure occured: "
                 + "DataSendIOException with device id = " + deviceId + ".", e);
@@ -256,13 +279,22 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     }
 
     @Override
+    public void processDataSendException(Exception e, int i) {
+
+    }
+
+
+
+
+
+    @Override
     public void processWrongMessageLengthException(InvalidHsmsDataLengthException e, int deviceId) {
         logger.debug("Communication Failure occured:  "
                 + "WrongMessageLengthException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));
     }
 
-    @Override
+
     public void processHeartBeatingFailuret(int deviceId) {
         logger.debug("Communication Failure occured:  "
                 + "Heart Beating Failure with device id = " + deviceId + ".");
@@ -272,7 +304,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     /*
      * The following block is from ErrorDataMessageDealer interface
      **/
-    @Override
+
     public void processDataMessageOfWrongDevId(MessageHeader header) {
         logger.info("Received a Data Message Of Wrong DevId." + " msg info " + header);
     }
@@ -281,7 +313,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      * (non-Javadoc)
      * Send S9F7 out.
      */
-    @Override
+
     public void processMessageOfMistakeDataFormat(byte[] headerBytes) {
         logger.info("Received a Data Message Of Mistake Data Format.");
     }
@@ -290,7 +322,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      * (non-Javadoc)
      * Send S9F5 out.
      */
-    @Override
+
     public void processMessageOfWrongFunctionType(byte[] headerBytes) {
         logger.info("Received a Data Message Of  Wrong Function Type.");
     }
@@ -299,7 +331,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      * (non-Javadoc)
      * Send S9F3 out.
      */
-    @Override
+
     public void processMessageOfWrongStreamType(byte[] headerBytes) {
         logger.info("Received a Data Message Of  Wrong Stream Type.");
     }
@@ -308,14 +340,14 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      * (non-Javadoc)
      * Send S9F9 out.
      */
-    @Override
+
     public void processT3Timeout(MessageHeader header) {
     }
 
     /*
      * Send S9F11
      */
-    @Override
+
     public void processDataMessageOfTooLongData(byte[] headerBytes) {
         logger.info("Received a Data Message Of Too Long Data.");
     }

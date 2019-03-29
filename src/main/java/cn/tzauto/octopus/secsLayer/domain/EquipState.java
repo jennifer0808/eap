@@ -15,7 +15,7 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
  * @(#)EquipState.java
  *
  */
-public class EquipState extends DomainObject {
+public class EquipState  {
     //E98 service states
 
     public static final int IN_SERVICE_STATE = 1;
@@ -232,7 +232,6 @@ public class EquipState extends DomainObject {
         another.setAlarmState(alarmState);
         another.setAlarm(isAlarm);
         another.setEventString(this.getEventString());
-        another.setId(this.id);
         return another;
     }
 

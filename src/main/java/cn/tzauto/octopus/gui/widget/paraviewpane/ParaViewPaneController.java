@@ -87,13 +87,13 @@ public class ParaViewPaneController implements Initializable {
         stage.setTitle("查看");
         stage.setWidth(800);
         stage.setHeight(500);
-        Image image = new Image(ParaViewPaneController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(ParaViewPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         AnchorPane pvPane = new AnchorPane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());//new Locale("zh", "TW");Locale.getDefault()
 
-            pvPane = FXMLLoader.load(getClass().getResource("ParaViewPane.fxml"),resourceBundle);
+            pvPane = FXMLLoader.load(getClass().getClassLoader().getResource("ParaViewPane.fxml"),resourceBundle);
 
         } catch (IOException ex) {
         }

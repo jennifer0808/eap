@@ -41,7 +41,7 @@ public class CommonUtil {
     public static boolean wirteString2File(String fielName, String str) {
         try {
             //将文件缓存到本地
-            InputStream in = GlobalConstants.class.getResourceAsStream(fielName);
+            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream(fielName);
 
             File file = new File(fielName);
             FileWriter fw = new FileWriter(file);

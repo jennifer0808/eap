@@ -4,6 +4,8 @@
  */
 package cn.tzauto.octopus.common.util.scheduler.job;
 
+
+import cn.tzauto.generalDriver.exceptions.BrokenProtocolException;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -17,8 +19,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.HsmsProtocolNotSelectedException;
-import cn.tzinfo.smartSecsDriver.exception.NoConnectionException;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -264,7 +264,6 @@ public class CommCheckTask implements Job {
     /**
      * 设置界面，并重启
      *
-     * @param deviceId
      * @param equipNodeBean
      */
     private void resetFlagAndRestart(EquipHost equipHost, EquipNodeBean equipNodeBean) {
@@ -344,7 +343,7 @@ public class CommCheckTask implements Job {
                         return "2";
                     }
 
-                } catch (HsmsProtocolNotSelectedException | NoConnectionException e) {
+                } catch ( BrokenProtocolException e) {
                     logger.error("Secs Exception:", e);
                     return "3";
                 } catch (Exception e) {

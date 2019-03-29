@@ -61,7 +61,7 @@ public class MonitorAlarmTask implements Job {
                         continue;
                     }
                     //  String deviceCode = equipModel.deviceCode;//获取发送触发指令的机台的DeviceCode
-                    DeviceInfo deviceInfo = GlobalConstants.stage.getDeviceInfo(null, equipModel.deviceCode);
+                    DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, equipModel.deviceCode);
                     List<AlarmRecord> alarmRecordList = setAlarmRecord(deviceInfo, alarmStrings);
                     if (equipModel.deviceType.contains("DFL7161")) {
                         for (String alarmString : alarmStrings) {

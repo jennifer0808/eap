@@ -15,80 +15,80 @@ public class ACKDescription {
     //HCACK: for s2f42 f50 
     //ALCD:  for s5f1 f6
 
-    public static String description(byte[] ackcode, String acktype) {
+    public static String description(byte ackcode, String acktype) {
         String description = "";
         if (acktype.equals("ACKC5")) {
-            if (ackcode[0] == 0) {
+            if (ackcode == 0) {
                 description = "Accepted";
-            } else if (ackcode[0] > 0) {
+            } else if (ackcode > 0) {
                 description = "Error not accepted";
             }
         } else if (acktype.equals("ACKC7")) {
-            if (ackcode[0] == 0) {
+            if (ackcode == 0) {
                 description = "Accepted";
-            } else if (ackcode[0] == 1) {
+            } else if (ackcode == 1) {
                 description = "Permission not granted";//未授予权限
-            } else if (ackcode[0] == 2) {
+            } else if (ackcode == 2) {
                 description = "Length error";
-            } else if (ackcode[0] == 3) {
+            } else if (ackcode == 3) {
                 description = "Matrix overflow";//矩阵溢出
-            } else if (ackcode[0] == 4) {
+            } else if (ackcode == 4) {
                 description = "PPID not found";
-            } else if (ackcode[0] == 5) {
+            } else if (ackcode == 5) {
                 description = "Mode unsupported";//模式不支持
-            } else if (ackcode[0] > 5) {
+            } else if (ackcode > 5) {
                 description = "Other error";
             }
         } else if (acktype.equals("PPGNT")) {
-            if (ackcode[0] == 0) {
+            if (ackcode == 0) {
                 description = "OK";
-            } else if (ackcode[0] == 1) {
+            } else if (ackcode == 1) {
                 description = "Already have";
-            } else if (ackcode[0] == 2) {
+            } else if (ackcode == 2) {
                 description = "No space";
-            } else if (ackcode[0] == 3) {
+            } else if (ackcode == 3) {
                 description = "Invalid PPID";//无效的ppid
-            } else if (ackcode[0] == 4) {
+            } else if (ackcode == 4) {
                 description = "Busy , try later";
-            } else if (ackcode[0] == 5) {
+            } else if (ackcode == 5) {
                 description = "Will not accept";
-            } else if (ackcode[0] > 5) {
+            } else if (ackcode > 5) {
                 description = "Other error";
             }
         } else if (acktype.equals("HCACK")) {
-            if (ackcode[0] == 0) {
+            if (ackcode == 0) {
                 description = "Command has been performed";//命令已执行
-            } else if (ackcode[0] == 1) {
+            } else if (ackcode == 1) {
                 description = "Command does not exist";
-            } else if (ackcode[0] == 2) {
+            } else if (ackcode == 2) {
                 description = "Cannot perform now";
-            } else if (ackcode[0] == 3) {
+            } else if (ackcode == 3) {
                 description = "At least one parameter is invalid";//至少有一个参数无效
-            } else if (ackcode[0] == 4) {
+            } else if (ackcode == 4) {
                 description = "Command will be performed with completion signaled later by an event";//命令将执行完成后由事件发出的信号
-            } else if (ackcode[0] == 5) {
+            } else if (ackcode == 5) {
                 description = "Rejected, Already in Desired Condtion";//拒绝，已经在预期的条件
-            } else if (ackcode[0] > 5) {
+            } else if (ackcode > 5) {
                 description = "NO such object exists";//没有这样的对象存在
             }
         } else if (acktype.equals("ALCD")) {
-            if (ackcode[0] == 0) {
+            if (ackcode == 0) {
                 description = "Not used";
-            } else if (ackcode[0] == 1) {
+            } else if (ackcode == 1) {
                 description = "Personal safety";
-            } else if (ackcode[0] == 2) {
+            } else if (ackcode == 2) {
                 description = "Equipment safety";
-            } else if (ackcode[0] == 3) {
+            } else if (ackcode == 3) {
                 description = "Parameter control warning";//参数控制报警
-            } else if (ackcode[0] == 4) {
+            } else if (ackcode == 4) {
                 description = "Parameter control error";
-            } else if (ackcode[0] == 5) {
+            } else if (ackcode == 5) {
                 description = "Irrecoverable error";//不可恢复的错误
-            } else if (ackcode[0] == 6) {
+            } else if (ackcode == 6) {
                 description = "Equipment status waring";
-            } else if (ackcode[0] == 7) {
+            } else if (ackcode == 7) {
                 description = "Attention flags";//注意标志
-            } else if (ackcode[0] == 8) {
+            } else if (ackcode == 8) {
                 description = "Data integries";//数据的完整性
             } else {
                 description = "Other categories";//其他类别

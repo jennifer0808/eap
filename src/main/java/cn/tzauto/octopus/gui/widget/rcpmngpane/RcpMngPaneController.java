@@ -133,7 +133,7 @@ public class RcpMngPaneController implements Initializable {
 
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());//new Locale("zh", "TW");Locale.getDefault()
 
-            rcpMngPane = FXMLLoader.load(getClass().getResource("RcpMngPane.fxml"), resourceBundle);
+            rcpMngPane = FXMLLoader.load(getClass().getClassLoader().getResource("RcpMngPane.fxml"), resourceBundle);
 
 
         } catch (IOException ex) {

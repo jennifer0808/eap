@@ -95,7 +95,7 @@ public class EapMainController implements Initializable {
     public void loginOut(Button JB_MainPage, Button JB_RcpMng, Button JB_Login, Button JB_SignOut, Button localMode) throws IOException {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
-        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"), resourceBundle);
+        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"), resourceBundle);
         userName = (TextField) root.lookup("#userName");
         // userNameStr = userName.getText();
         UiLogUtil.appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
@@ -128,10 +128,10 @@ public class EapMainController implements Initializable {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());//new Locale("zh", "TW");Locale.getDefault()
 
-        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"), resourceBundle);
+        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"), resourceBundle);
         Scene scene = new Scene(root);
         loginStage.setScene(scene);
-        Image image = new Image(EapMainController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(EapMainController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         loginStage.getIcons().add(image);
         loginStage.setResizable(false);
         loginStage.setTitle("用户登录");

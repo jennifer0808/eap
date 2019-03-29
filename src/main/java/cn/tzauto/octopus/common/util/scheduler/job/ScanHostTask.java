@@ -4,6 +4,10 @@
  */
 package cn.tzauto.octopus.common.util.scheduler.job;
 
+import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
+import cn.tzauto.generalDriver.exceptions.T3TimeOutException;
+import cn.tzauto.generalDriver.exceptions.T6TimeOutException;
+import cn.tzauto.generalDriver.exceptions.WrongStateTransitionNumberException;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 
@@ -30,7 +34,7 @@ public class ScanHostTask implements Job {
         logger.debug("ScanHostTask=====>ScanHostTask任务执行....");
 //        String  resultStr=WSUtility.getDeviceList(GlobalConstants.getProperty("SERVER_ID"));
 //        jec.getJobDetail().getJobDataMap().put(GlobalConstants.SYNC_JOB_DATA_MAP, resultStr);
-        MultipleEquipHostManager hostsManager = GlobalConstants.stage.getMultipleEquipHostManager();
+        MultipleEquipHostManager hostsManager = GlobalConstants.stage.hostManager;
 //        hostsManager.testComm();
         // Todo 扫描所有Host线程，如果中断，重新启动
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
@@ -41,17 +45,27 @@ public class ScanHostTask implements Job {
             logger.debug("ScanHostTask=====>DeviceID:" + deviceId + "=========>状态:" + hostsManager.getAllEquipHosts().get(deviceId).isInterrupted());
             if (hostsManager.getAllEquipHosts().get(deviceId).isInterrupted() == true) {
                 logger.debug("ScanHostTask=====>检测到中断，DeviceID:" + deviceId);
-                EquipmentEventDealer watchDog = new EquipmentEventDealer(GlobalConstants.stage.equipBeans.get(i), GlobalConstants.stage);
+                EquipmentEventDealer equipmentEventDealer = new EquipmentEventDealer(GlobalConstants.stage.equipBeans.get(i), GlobalConstants.stage);
                 //start the watch dog
-                watchDog.execute();
+                equipmentEventDealer.execute();
                 hostsManager.startHostThread(deviceId);
                 try {
-                    hostsManager.startSECS(deviceId, watchDog, watchDog, watchDog);
+                    hostsManager.startSECS(deviceId, equipmentEventDealer);
                     System.out.println(GlobalConstants.stage.equipBeans.get(i).getEquipName() + " has  been restart!");
                 } catch (NotInitializedException e1) {
                     System.out.println(GlobalConstants.stage.equipBeans.get(i).getEquipName() + " has restarted failure");
+                } catch (InvalidHsmsHeaderDataException e) {
+                    e.printStackTrace();
+                } catch (T6TimeOutException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (T3TimeOutException e) {
+                    e.printStackTrace();
+                } catch (WrongStateTransitionNumberException e) {
+                    e.printStackTrace();
                 }
-                EapClient.addWatchDog(deviceId, watchDog);
+                EapClient.addWatchDog(deviceId, equipmentEventDealer);
                 logger.debug("ScanHostTask=====>重新启动完成，DeviceID:" + deviceId);
             } else {
                 continue;

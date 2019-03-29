@@ -156,11 +156,11 @@ public class DeviceInfoPaneController implements Initializable {
         Pane root = new Pane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap",new languageUtil().getLocale());
-            root = FXMLLoader.load(getClass().getResource("DeviceInfoPane.fxml"),resourceBundle);
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("DeviceInfoPane.fxml"),resourceBundle);
         } catch (IOException ex) {
 
         }
-        Image image = new Image(DeviceInfoPaneController.class.getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("设备详情");
         Scene scene = new Scene(root);

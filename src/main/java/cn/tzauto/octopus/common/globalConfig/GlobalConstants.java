@@ -128,6 +128,7 @@ public class GlobalConstants {
     public static Map statusMap = new HashMap();
 
     public static String ISECS_STATUS_CONFIRM = "";
+    public static List<DeviceInfo> deviceInfos;
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -244,7 +245,7 @@ public class GlobalConstants {
 
     private static void loadFile() {
         try {
-            InputStream in = GlobalConstants.class.getResourceAsStream(CONFIG_FILE_PATH);
+            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream(CONFIG_FILE_PATH);
             prop.load(in);
         } catch (Exception e) {
             sysLogger.error("Exception:", e);

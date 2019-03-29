@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author rain
  */
 public class AxisUtility {
 
     private static final Logger logger = Logger.getLogger(AxisUtility.class);
+
     public static boolean checkBusinessMode(String eqptId) {
         DeviceInfoExt deviceInfoExt = getEqptStatus("SysAuto", eqptId);
         return "Y".equals(deviceInfoExt.getBusinessMod());
@@ -324,54 +324,8 @@ public class AxisUtility {
         return resultMap;
     }
 
-    public static void main(String args[]) {
-//           downloadStripMap("W20180531YZ-009", "DA-113");
-        String map = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<MapData xmlns=\"urn:semi-org:xsd.E142-1.V1005.SubstrateMap\">\n"
-                + "<SubstrateMaps>\n"
-                + "<SubstrateMap SubstrateType=\"Strip\" SubstrateId=\"KNSTEST7\" LayoutSpecifier=\"1\" Orientation=\"0\" OriginLocation=\"UpperRight\" SubstrateSide=\"TopSide\" AxisDirection=\"DownLeft\">\n"
-                + "<Overlay MapName=\"BinCodeMap\" MapVersion=\"1\">\n"
-                + "<BinCodeMap BinType=\"HexaDecimal\" NullBin=\"FF\">\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "<BinCode><![CDATA[01010101810101010101010181010101010101018101]]></BinCode>\n"
-                + "</BinCodeMap>\n"
-                + "</Overlay>\n"
-                + "</SubstrateMap>\n"
-                + "</SubstrateMaps>\n"
-                + "</MapData>";
-
-        uploadStripMap(map, "DA-113");
-    }
 
     /**
-     * TOWAY1R设备2D码追溯
-     *
-     * @param deviceCode,stripID(L&R),pressNo,recipeName,formingNo
-     * @return
-     */
-    public static Map get2DCode(String deviceCode, String pressNo, String recipeName, String formingNo, String leftStripID, String rightStripID) {
-        Map resultMap = new HashMap();
-//        String endPoint = "http://172.17.200.251/autoServer/services/fbiLotService";
-        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/fbiLotService";
-        try {
-            Service service = new Service();
-            Call call = (Call) service.createCall();
-            call.setTargetEndpointAddress(new java.net.URL(endPoint));
-            call.setOperationName("insertMesMapping2DBIn");
-            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, pressNo, recipeName, formingNo, leftStripID, rightStripID}));
-            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
-        } catch (Exception e) {
-            logger.error("Exception", e);
-        }
-        return resultMap;
-    }
-
-    /**
-     *
      * @param stripid
      * @param deviceCode
      * @return
@@ -401,7 +355,6 @@ public class AxisUtility {
     }
 
     /**
-     *
      * @param xmlStr
      * @param deviceCode
      * @return
@@ -491,4 +444,191 @@ public class AxisUtility {
         }
         return true;
     }
+
+    /**
+     * TOWAY1R设备2D码追溯
+     *
+     * @param deviceCode,stripID(L&R),pressNo,recipeName,formingNo
+     * @return
+     */
+    public static Map get2DCode(String deviceCode, String pressNo, String recipeName, String formingNo, String leftStripID, String rightStripID) {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.200.251/autoServer/services/fbiLotService";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/fbiLotService";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("insertMesMapping2DBIn");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, pressNo, recipeName, formingNo, leftStripID, rightStripID}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap;
+    }
+
+    /**
+     * SPI设备SPC数据上传
+     *
+     * @param deviceCode,stripID(L&R),pressNo,recipeName,formingNo
+     * @return
+     */
+    public static Map getSPCdata(String stripId, String pSampleValues, String pUserName, String pUserNo, String snt, String deviceCode) {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.173.11/autoServer/services/spcService";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/spcService";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("getSPCdata");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap;
+    }
+
+    /**
+     * 所有设备recipe上传之前检查是否存在GOLD版本
+     *
+     * @param deviceCode，recipeName
+     * @return
+     */
+    public static boolean acceptRecipeGoldService(String deviceCode, String recipeName) {
+        String result = "";
+        Boolean Flag = false;
+//        String endPoint = "http://172.17.200.231:8080/services/eqptService";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/AcceptRecipeGoldService";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("acceptRecipeGold");
+            result = String.valueOf(call.invoke(new Object[]{deviceCode, recipeName}));
+            logger.info("get acceptRecipeGoldService result :" + result);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (result.equalsIgnoreCase("Y")) {
+            Flag = true;
+        }
+        if (result.equalsIgnoreCase("N")) {
+            Flag = false;
+        }
+        return Flag;
+    }
+
+    /**
+     * 获取WaferMapping设置参数
+     *
+     * @param deviceCode,stripID(L&R),pressNo,recipeName,formingNo
+     * @return
+     */
+    public static Map getWaferMappingInfo(String waferId, String deviceCode) {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.162.209:8080/services/GetWaferMappingService?wsdl";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/GetWaferMappingService?wsdl";
+        System.out.println(endPoint + "===========================");
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("getMappingInfo");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, waferId}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap;
+    }
+
+    public static Map downloadWaferMap(String deviceCode, String waferId) throws Exception {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.162.209:8080/services/GetWaferMappingService?wsdl";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/wafermappingservice?wsdl";
+        System.out.println(endPoint + "===========================");
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("downloadWaferMap");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, waferId}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+            throw e;
+        }
+        return resultMap;
+    }
+
+    /**
+     * 获取WaferMapping BinList
+     *
+     * @param waferId
+     * @return
+     */
+    public static Map getWaferMappingFile(String waferId, String deviceCode) {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.200.205:8080/services/GetWaferMappingService?wsdl";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/GetWaferMappingService?wsdl";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("getMappingFile");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, waferId}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap;
+    }
+
+    public static Map sendWaferMappingInfo(String waferId, String row, String col, String binList, String deviceCode) {
+        Map resultMap = new HashMap();
+//        String endPoint = "http://172.17.200.205:8080/services/SaveWaferMappingService?wsdl";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/SaveWaferMappingService?wsdl";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("saveMappingInfo");
+            if (binList.indexOf("#") > 0) {
+                binList = binList.replaceAll("#", "353535");
+            }
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode, waferId, row, col, binList}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap;
+    }
+
+    /**
+     * wafer防混
+     *
+     * @param waferId
+     * @return
+     */
+    public static String checkWaferMix(String waferId, String deviceCode) {
+        Map resultMap = new HashMap();
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/edcService?wsdl";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("confirmWaferIdInLot");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{waferId, deviceCode}));
+            resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
+            logger.info("flag : " + resultMap.get("flag") + "" + " message:" + resultMap.get("msg"));
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+        return resultMap.get("flag").toString();
+    }
+
+
 }

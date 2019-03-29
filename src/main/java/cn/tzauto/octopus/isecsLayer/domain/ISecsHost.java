@@ -1,7 +1,9 @@
 package cn.tzauto.octopus.isecsLayer.domain;
 
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -538,5 +540,38 @@ public class ISecsHost implements ISecsInterface {
         }
         return resultMap;
     }
+    public byte[] executeCommand2(String command) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command);
+            writer.flush();
+            byte[] bytes = new byte[1024];
+            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
+            inputStream.read(bytes);
+            System.out.println("=======================");
+            System.out.println(new String(bytes, "GBK"));
+        } catch (Exception e) {
 
+        }
+        return null;
+    }
+
+    public String executeCommand3(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command.toString());
+            writer.flush();
+            byte[] bytes = new byte[1024];
+            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
+            System.out.println("=======================");
+            System.out.println(new String(bytes, "GBK"));
+            logger.info("已经将参数发送至wafer软件:"+command);
+        } catch (Exception e) {
+            System.out.print("111111");
+        }
+        return null;
+    }
 }

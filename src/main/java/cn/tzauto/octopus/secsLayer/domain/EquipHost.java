@@ -1,76 +1,49 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
+import cn.tzauto.generalDriver.api.EqpEventDealer;
+import cn.tzauto.generalDriver.api.MsgListener;
+import cn.tzauto.generalDriver.api.SecsDriver;
+import cn.tzauto.generalDriver.api.SecsDriverFactory;
+import cn.tzauto.generalDriver.entity.cnct.ConnRegInfo;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.*;
+import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
+import cn.tzauto.octopus.biz.alarm.service.AlarmService;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoLock;
+import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
-import cn.tzauto.octopus.biz.recipe.domain.Attach;
-import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.domain.*;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.DeviceComm;
-import cn.tzauto.octopus.secsLayer.util.XmlUtil;
-import cn.tzauto.octopus.biz.alarm.service.AlarmService;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.common.ws.AxisUtility;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.DeviceNotRegisteredException;
-import cn.tzinfo.smartSecsDriver.exception.HsmsProtocolNotSelectedException;
-import cn.tzinfo.smartSecsDriver.exception.NoConnectionException;
-import cn.tzinfo.smartSecsDriver.exception.ParameterErrorException;
-import cn.tzinfo.smartSecsDriver.network.RegistrationTable;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.CntlMessageArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.ErrorDataMessageDealer;
-import cn.tzinfo.smartSecsDriver.userapi.HsmsCommunicationFailureDealer;
-import cn.tzinfo.smartSecsDriver.userapi.InputMessageListener;
-import cn.tzinfo.smartSecsDriver.userapi.MliFactory;
-import cn.tzinfo.smartSecsDriver.userapi.MliHsms;
-import cn.tzinfo.smartSecsDriver.userapi.MsgDataHashtable;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import cn.tzinfo.smartSecsDriver.userapi.UpLevelAnouncer;
-import cn.tzinfo.smartSecsDriver.util.MliConfig;
+import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- * @author dingxiaoguo
- * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-7-14
- * @(#)EquipHost.java
- */
-public abstract class EquipHost extends Thread implements InputMessageListener {
+import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.*;
+
+
+public abstract class EquipHost extends Thread implements MsgListener {
 
     private static final long serialVersionUID = -8008553978164121001L;
     private static Logger logger = Logger.getLogger(EquipHost.class.getName());
@@ -89,12 +62,12 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     protected String connectMode = "active"; //only "active" or "passive" allowed, default is "active"
     protected String protocolType = "hsms";//only "hsms" or "rs232" allowed, default is "hsms"
     protected String deviceId;
-    protected MliHsms mli;
+    protected ActiveWrapper mli;
     protected String description;
     protected boolean startUp;
     protected EquipState equipState;
     protected boolean threadUsed; //Java Thread can be only started once
-    protected LinkedBlockingQueue<MsgDataHashtable> inputMsgQueue;
+    protected LinkedBlockingQueue<DataMsgMap> inputMsgQueue;
     //only stores messages which needs to delegate
     protected String deviceType;//设备类型
     protected String manufacturer;//生产厂商
@@ -118,7 +91,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     public int checkNotReady = 0;
     public boolean isCleanMode = false;
     public Map<String, CommandDomain> remoteCommandMap = new HashMap<>();
-    public Map<Long, MsgDataHashtable> waitMsgValueMap = new ConcurrentHashMap<>();
+    public Map<Long, DataMsgMap> waitMsgValueMap = new ConcurrentHashMap<>();
     protected short svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     protected short ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     protected long lastStartCheckTime;
@@ -130,28 +103,20 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     protected volatile boolean isInterrupted = false;
     protected long startedDate = 0;//Host启动的时间
     public int restartCnt = 0;
+    //wafermapping相关属性
+    protected long downFlatNotchLocation;
+    protected long upFlatNotchLocation;
+    // protected String waferMappingrow = ""; //原始数据的行
+//    protected String waferMappingcol = "";//原始数据的列
+    protected String waferMappingbins = ""; //转换后的binlist
+    protected String uploadWaferMappingRow = "";
+    protected String uploadWaferMappingCol = "";
+    //延迟删除的标识，判断是否是切换recipe之后,用于DB800,DB730
+    public boolean ppselectFlag = false;
 
     public EquipHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int rcpType, String iconPath) {
-        this.deviceId = devId;
-        this.equipId = equipmentId;
-        this.smlFilePath = smlFileFullPath;
-        this.localIPAddress = localIpAddress;
-        this.localTCPPort = localTcpPort;
-        this.remoteIPAddress = remoteIpAddress;
-        this.remoteTCPPort = remoteTcpPort;
-        this.inputMsgQueue = new LinkedBlockingQueue<>(5000);
-        equipState = new EquipState();
-        threadUsed = false;
-        this.deviceType = deviceType;
-        this.deviceCode = deviceCode;
-        this.recipeType = rcpType;
-        this.iconPath = iconPath;
-    }
-
-    public EquipHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int rcpType, String iconPath) {
+                     int localTcpPort, String remoteIpAddress, int remoteTcpPort,
+                     String connectMode, String protocolType, String deviceType, String deviceCode, int rcpType, String iconPath) {
         this.deviceId = devId;
         this.equipId = equipmentId;
         this.smlFilePath = smlFileFullPath;
@@ -170,24 +135,12 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         this.iconPath = iconPath;
     }
 
-    public void initialize() throws ParameterErrorException, DeviceNotRegisteredException, NullPointerException {
+    public void initialize() throws DeviceNotRegisteredException {
         logger.info("Initializing SECS Protocol for " + this.getEquipId() + ".");
-        RegistrationTable.registerHsmsActive(Integer.valueOf(this.deviceId), this.smlFilePath,
-                this.remoteIPAddress, this.remoteTCPPort, this.localIPAddress, this.localTCPPort);
-        MliConfig.setDumpAllSettings(true);
-        mli = (MliHsms) MliFactory.getMliForDevice(Integer.valueOf(this.deviceId));
-        //put all addInputMessageListener before calling connectAnsStart()
-        //mli.addInputMessageListener(this, "s1f13in");
-        //mli.addInputMessageListener(this, "s6f12in");
-        //mli.addInputMessageListener(this, "s1f1in");
-        mli.addInputMessageListenerToAll(this);
+        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
+        mli = (ActiveWrapper) SecsDriverFactory.getSecsDriverForDevice(Integer.valueOf(this.deviceId));
     }
 
-    public int deselectReqMessageArrived(CntlMessageArrivedEvent evt) {
-        logger.info("Deselect is received and is supported.");
-        //((MliHsms)testObj.mli).
-        return 0;
-    }
 
     public boolean isThreadUsed() {
         return threadUsed;
@@ -310,7 +263,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         this.description = description;
     }
 
-    public MliHsms getMli() {
+    public SecsDriver getMli() {
         return mli;
     }
 
@@ -622,13 +575,15 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // <editor-fold defaultstate="collapsed" desc="Equipment Communicating Logic">
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     @SuppressWarnings("unchecked")
-    public void processS1F1in(MsgDataHashtable data) {
+    public void processS1F1in(DataMsgMap data) {
+
         try {
-            MsgDataHashtable s1f2out = new MsgDataHashtable("s1f2out", mli.getDeviceId());
+
+            DataMsgMap s1f2out = new DataMsgMap("s1f2out", mli.getDeviceId());
             s1f2out.put("Mdln", Mdln);
             s1f2out.put("SoftRev", SoftRev);
             s1f2out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(s1f2out);
+            mli.respondMessage(s1f2out);
             setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -637,13 +592,9 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS1F1out() {
-        MsgDataHashtable s1f1out = new MsgDataHashtable("s1f1out", mli.getDeviceId());
-        s1f1out.setTransactionId(mli.getNextAvailableTransactionId());
         try {
-            MsgDataHashtable s1f2in = mli.sendPrimaryWsetMessage(s1f1out);
-            if (s1f2in != null && s1f2in.get("Mdln") != null) {
-                Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-                SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
+            DataMsgMap s1f2in = mli.sendS1F1out();
+            if (s1f2in != null && s1f2in.get("MDLN") != null) {
                 setCommState(1);
             }
         } catch (Exception e) {
@@ -652,12 +603,8 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void processS1F2in(MsgDataHashtable s1f2in) {
-        if (s1f2in == null) {
-            return;
-        }
-        Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-        SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
+    public void processS1F2in(DataMsgMap s1f2in) {
+        setCommState(1);
     }
 
     /**
@@ -667,37 +614,28 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      */
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
-        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3statecheck", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        MsgDataHashtable data = null;
+
+        DataMsgMap data = null;
         try {
+            List<Long> statusList = new ArrayList<>();
+
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            data = sendMsg2Equip(s1f3out);
+            long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+            long pPExecNamesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+            long controlStatesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
+            statusList.add(equipStatussvid);
+            statusList.add(pPExecNamesvid);
+            statusList.add(controlStatesvid);
+            data = mli.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
         }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
         logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         ppExecName = String.valueOf(listtmp.get(1));
         controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
@@ -709,182 +647,27 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return panelMap;
     }
 
-    public Map sendS1F3RcpAndStateCheck() {
-        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3rcpandstate", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] preEquipStatuss = new long[1];
-        MsgDataHashtable data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            //有些设备无法获取前一个状态，故先判断是否存在
-            List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PreProcessStatus");
-            if (recipeTemplates != null && !recipeTemplates.isEmpty()) {
-                preEquipStatuss[0] = Long.parseLong(recipeTemplates.get(0).getDeviceVariableId());
-            } else {
-                sqlSession.close();
-                return null;
-            }
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PreProcessStatus", preEquipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            data = mli.sendPrimaryWsetMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(2);
-        Map resultMap = new HashMap();
-        resultMap.put("EquipStatus", equipStatus);
-        resultMap.put("PreProcessStatus", preEquipStatus);
-        resultMap.put("PPExecName", ppExecName);
-        return resultMap;
-    }
-
     public Map sendS1F3SingleCheck(String svidName) {
-        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3singleout", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
-        MsgDataHashtable data = null;
+
+        List svidlist = new ArrayList();
+        svidlist.add(svidName);
+        DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
-            data = sendMsg2Equip(s1f3out);
+            data = mli.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            return null;
-        }
-        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         Map resultMap = new HashMap();
         String svValue = String.valueOf(listtmp.get(0));
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Value", svValue);
         logger.info("resultMap=" + resultMap);
-        return resultMap;
-    }
-
-    //只获取设备ShotCount的SV值，
-    public Map sendS1F3SVShotCountCheckout(List<String> svidlist) {
-        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3svshot", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        for (int i = 0; i < svidlist.size(); i++) {
-            long[] svid = new long[1];
-            // Long.parseLong(svidlist.get(i));
-            svid[0] = Long.parseLong(svidlist.get(i));
-            s1f3out.put("Data" + i, svid);
-        }
-
-        MsgDataHashtable data = null;
-        try {
-            data = mli.sendPrimaryWsetMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        for (int i = 0; i < listtmp.size(); i++) {
-            resultMap.put(i + 1, listtmp.get(i));
-        }
-        return resultMap;
-    }
-
-    @SuppressWarnings("unchecked")
-    public Map sendS1F3RcpParaCheckout(List svidlist) {
-        MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3" + deviceType + "RcpPara", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        for (int i = 0; i < svidlist.size(); i++) {
-            long[] svid = new long[1];
-            // Long.parseLong(svidlist.get(i));
-            svid[0] = Long.parseLong(svidlist.get(i).toString());
-            s1f3out.put("Data" + i, svid);
-        }
-        MsgDataHashtable data = null;
-        try {
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("SVList", listtmp);
-        resultMap.put("Description", "Get SVList from equip " + listtmp);
-        return resultMap;
-    }
-
-    @SuppressWarnings("unchecked")
-    public Map sendS1F11out() {
-        MsgDataHashtable s1f11out = new MsgDataHashtable("s1f11out", mli.getDeviceId());
-        s1f11out.setTransactionId(mli.getNextAvailableTransactionId());
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s1f12");
-        resultMap.put("deviceCode", deviceCode);
-        List<Map> resultList = new ArrayList();
-        try {
-            MsgDataHashtable msgdata = mli.sendPrimaryWsetMessage(s1f11out);
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) msgdata.get("RESULT")).getData();
-            if (list != null && !list.isEmpty()) {
-                ArrayList<Object> listtmp = CommonSMLUtil.getECSVData(list);
-                for (int i = 0; i < listtmp.size(); i++) {
-                    List dateItemList = (List) listtmp.get(i);
-                    logger.info("SVID ==" + ((long[]) dateItemList.get(0))[0] + "; SVName ==" + (String) dateItemList.get(1) + ";UNITS" + (String) dateItemList.get(2));
-                    Map map = new HashMap();
-                    map.put("SVID", ((long[]) dateItemList.get(0))[0]);
-                    map.put("SVName", (String) dateItemList.get(1));
-                    map.put("UNITS", (String) dateItemList.get(2));
-                    resultList.add(map);
-                }
-            }
-            resultMap.put("Description", "Get SVList from equip " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("Description", "S1F11获取失败，原因: " + e.getMessage());
-        }
-        resultMap.put("svDataList", resultList);
         return resultMap;
     }
 
@@ -908,31 +691,18 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return resultMap;
     }
 
-    /**
-     * 获取机台Blade
-     *
-     * @return
-     */
-    public Map getBladeThreshold() {
-
-        return null;
-    }
 
     public Map findEqptStatus() {
         return this.findDeviceRecipe();
 
     }
 
-    public String testRUThere() throws HsmsProtocolNotSelectedException, NoConnectionException {
+    public String testRUThere() {
         try {
-            MsgDataHashtable s1f1out = new MsgDataHashtable("s1f1out", mli.getDeviceId());
-            long transactionId = mli.getNextAvailableTransactionId();
-            s1f1out.setTransactionId(transactionId);
-            logger.info("transactionId = " + transactionId);
-            MsgDataHashtable s1f2in = mli.sendPrimaryWsetMessage(s1f1out);
+            DataMsgMap s1f2in = mli.sendS1F1out();
             if (s1f2in != null) {
                 //如果回复取消会话，那么需要重新发送S1F13
-                if (s1f2in.getMsgTagName().contains("s1f0")) {
+                if (s1f2in.getMsgSfName().contains("S1F0")) {
                     logger.info("testRUThere成功,但是未正确回复消息,需要重新建立连接 ");
                     return "1";
                 } else {
@@ -942,74 +712,31 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
             } else {
                 return "2";
             }
-        } catch (HsmsProtocolNotSelectedException e) {
-            logger.error("Exception:", e);
-            throw new HsmsProtocolNotSelectedException("HsmsProtocolNotSelectedException");
-        } catch (NoConnectionException e) {
-            logger.error("Exception:", e);
-            throw new NoConnectionException("NoConnectionException");
         } catch (Exception e) {
             logger.error("Exception:", e);
             return "2";
         }
     }
 
-    public boolean testInitLink() throws HsmsProtocolNotSelectedException, NoConnectionException {
+    public boolean testInitLink() throws BrokenProtocolException {
         try {
-            MsgDataHashtable s1f13out = new MsgDataHashtable("s1f13out", mli.getDeviceId());
-            long transactionId = mli.getNextAvailableTransactionId();
-            s1f13out.setTransactionId(transactionId);
-            s1f13out.put("Mdln", Mdln);
-            s1f13out.put("SoftRev", SoftRev);
-            MsgDataHashtable s1f14in = mli.sendPrimaryWsetMessage(s1f13out);
-            Mdln = (String) ((SecsItem) s1f14in.get("Mdln")).getData();
-            SoftRev = (String) ((SecsItem) s1f14in.get("SoftRev")).getData();
-//            setCommState(1);
+
+            DataMsgMap s1f14in = mli.sendS1F13out();
+            setCommState(1);
             logger.info("testInitLink成功 建立连接、通信正常 ");
             return true;
-        } catch (HsmsProtocolNotSelectedException e) {
-            e.printStackTrace();
-            logger.error("Exception:", e);
-            throw new HsmsProtocolNotSelectedException("HsmsProtocolNotSelectedException");
-        } catch (NoConnectionException e) {
-            e.printStackTrace();
-            logger.error("Exception:", e);
-            throw new NoConnectionException("NoConnectionException");
         } catch (Exception e) {
             logger.error("Exception:", e);
             return false;
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public Map processS1F4in(MsgDataHashtable data) {
-        logger.debug("get s1f4 msg from device:" + deviceCode + ".MsgInfo:" + JsonMapper.toJsonString(data));
-//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-//        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-//        resultMap.put("SVList", listtmp);
-//        resultMap.put("Description", "Get SVList from equip " + listtmp);
-        return resultMap;
-    }
 
     @SuppressWarnings("unchecked")
-    public void processS1F13in(MsgDataHashtable data) {
+    public void processS1F13in(DataMsgMap data) {
         try {
-            MsgDataHashtable s1f14out = new MsgDataHashtable("s1f14out", mli.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            s1f14out.put("AckCode", ack);
-            if (data.get("SoftRev") != null) {
-                SoftRev = (String) ((SecsItem) data.get("SoftRev")).getData();
-            }
-            if (data.get("Mdln") != null) {
-                Mdln = (String) ((SecsItem) data.get("Mdln")).getData();
-            }
-            logger.info("-----Received s1f13in----. And SoftRev = " + SoftRev + " Mdln = " + Mdln);
-            s1f14out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(s1f14out);
+
+            mli.sendS1F14out((byte) 0, data.getTransactionId());
             setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1018,13 +745,8 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS1F13out() {
-        MsgDataHashtable s1f13out = new MsgDataHashtable("s1f13out", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-        s1f13out.put("Mdln", Mdln);
-        s1f13out.put("SoftRev", SoftRev);
         try {
-            MsgDataHashtable data = mli.sendPrimaryWsetMessage(s1f13out);
+            DataMsgMap data = mli.sendS1F13out();
             if (data != null) {
                 setCommState(1);
             }
@@ -1035,27 +757,16 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void processS1F14in(MsgDataHashtable data) {
-        if (data == null) {
-            return;
-        }
-        if (data.get("SoftRev") != null) {
-            SoftRev = (String) ((SecsItem) data.get("SoftRev")).getData();
-        }
-        if (data.get("Mdln") != null) {
-            Mdln = (String) ((SecsItem) data.get("Mdln")).getData();
-        }
+    public void processS1F14in(DataMsgMap data) {
         setCommState(1);
     }
 
     @SuppressWarnings("unchecked")
     public void sendS1F15out() {
-        MsgDataHashtable s1f15out = new MsgDataHashtable("s1f15out", mli.getDeviceId());
-        s1f15out.setTransactionId(mli.getNextAvailableTransactionId());
-        MsgDataHashtable msgdata = null;
+
         try {
-            msgdata = mli.sendPrimaryWsetMessage(s1f15out);
-            long onlack = msgdata.getSingleNumber("AckCode");
+            DataMsgMap msgdata = mli.sendS1F15out();
+            long onlack = msgdata.getSingleNumber("OFLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_OFFLINE);
             }
@@ -1066,12 +777,10 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS1F17out() {
-        MsgDataHashtable s1f17out = new MsgDataHashtable("s1f17out", mli.getDeviceId());
-        s1f17out.setTransactionId(mli.getNextAvailableTransactionId());
-        MsgDataHashtable data = null;
+
         try {
-            data = mli.sendPrimaryWsetMessage(s1f17out);
-            long onlack = data.getSingleNumber("AckCode");
+            DataMsgMap data = mli.sendS1F17out();
+            long onlack = data.getSingleNumber("ONLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
@@ -1084,54 +793,40 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
 
     public Map sendS2F13ECCheckout(List ecidlist) {
-        MsgDataHashtable s2f13out = new MsgDataHashtable("s2f13" + deviceType + "ECCheck", mli.getDeviceId());
-        s2f13out.setTransactionId(mli.getNextAvailableTransactionId());
-        for (int i = 0; i < ecidlist.size(); i++) {
-            long[] svid = new long[1];
-            // Long.parseLong(svidlist.get(i));
-            svid[0] = Long.parseLong(String.valueOf(ecidlist.get(i)));
-            s2f13out.put("Data" + i, svid);
-        }
-        MsgDataHashtable data = null;
+        DataMsgMap data = null;
         try {
-            data = mli.sendPrimaryWsetMessage(s2f13out);
+            data = mli.sendS2F13out(ecidlist, ecFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         Map resultMap = new HashMap();
         ArrayList<SecsItem> list = new ArrayList<>();
-        if (data == null || data.get("RESULT") == null) {
+        if (data == null || data.get("EC") == null) {
             return null;
         }
-        list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("EC");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ECValueList", listtmp);
         return resultMap;
     }
 
-    public Map sendS2F13ECSingleCheckout(String ecidStr) {
-        MsgDataHashtable s2f13out = new MsgDataHashtable("s2f13singleout", mli.getDeviceId());
-        s2f13out.setTransactionId(mli.getNextAvailableTransactionId());
-        long[] ecid = new long[1];
-        ecid[0] = Long.parseLong(ecidStr);
-        s2f13out.put("ECID", ecid);
-        MsgDataHashtable data = null;
+    public Map sendS2F13ECSingleCheckout(String ecid) {
+
+        List ecidList = new ArrayList();
+        ecidList.add(ecid);
+        DataMsgMap data = null;
         try {
-            data = mli.sendPrimaryWsetMessage(s2f13out);
+            data = mli.sendS2F13out(ecidList, ecFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = new ArrayList<>();
+
         String ecValue = null;
-        if (data != null) {
-            list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        }
-        if (list != null) {
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            ecValue = String.valueOf(listtmp.get(0));
-        }
+
+        ArrayList listtmp = (ArrayList) data.get("EC");
+        ecValue = String.valueOf(listtmp.get(0));
+
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Value", ecValue);
@@ -1139,8 +834,8 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void sendS2F15out(String ecid, String ecv, MliHsms mli) {
-        MsgDataHashtable s2f15out = new MsgDataHashtable("s2f15out", mli.getDeviceId());
+    public void sendS2F15out(String ecid, String ecv) {
+        DataMsgMap s2f15out = new DataMsgMap("S2F15OUT", mli.getDeviceId());
         s2f15out.setTransactionId(mli.getNextAvailableTransactionId());
         long tmpL = Long.parseLong(ecid);
         long l[] = new long[1];
@@ -1148,11 +843,19 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         float tmpF = Float.parseFloat(ecv);
         float f[] = new float[1];
         f[0] = tmpF;
-        s2f15out.put("ECID", l);
-        s2f15out.put("ECV", f);
-        MsgDataHashtable msgdata = null;
+        SecsItem rootItem = new SecsItem();
+        List rootList = new ArrayList();
+
+        SecsItem secsItemL = new SecsItem(l, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+        rootList.add(secsItemL);
+        SecsItem secsItemF = new SecsItem(f, FormatCode.SECS_4BYTE_FLOAT_POINT);
+        rootList.add(secsItemF);
+        SecsItem secsItemRootList = new SecsItem(rootList, FormatCode.SECS_LIST);
+
+        s2f15out.put("S2F15OUT", secsItemRootList);
+        DataMsgMap msgdata = null;
         try {
-            msgdata = mli.sendPrimaryWsetMessage(s2f15out);
+            msgdata = mli.sendAwaitMessage(s2f15out);
             byte[] ack = (byte[]) ((SecsItem) msgdata.get("AckCode")).getData();
             if (ack[0] == 0 || ack[0] == 2) {
                 setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
@@ -1163,56 +866,26 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void processS2F17in(MsgDataHashtable data) {
-        MsgDataHashtable s2f18out = new MsgDataHashtable("s2f18out", mli.getDeviceId());
+    public void processS2F17in(DataMsgMap data) {
+        DataMsgMap s2f18out = new DataMsgMap("S2F18OUT", mli.getDeviceId());
         s2f18out.setTransactionId(data.getTransactionId());
         try {
             DateFormat df = new SimpleDateFormat("yyMMddHHmmss");
-            s2f18out.put("Time", df.format(new Date()));
-            mli.sendSecondaryOutputMessage(s2f18out);
+//            s2f18out.put("Time", df.format(new Date()));
+            SecsItem secsItem = new SecsItem(df.format(new Date()), FormatCode.SECS_ASCII);
+            s2f18out.put("S2F18OUT", secsItem);
+            mli.respondMessage(s2f18out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public void sendS2f33out(long reportId, long svId) {
-        MsgDataHashtable s2f33out = new MsgDataHashtable("s2f33out", mli.getDeviceId());
-        s2f33out.setTransactionId(mli.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] variableID = new long[1];
-        variableID[0] = svId;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", variableID);
-        try {
-            mli.sendPrimaryWsetMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     @SuppressWarnings("unchecked")
-    public void sendS2f33out(long reportId, long equipStatusID, long pPExecNameID) {
-        MsgDataHashtable s2f33out = new MsgDataHashtable("s2f33eqpstate", mli.getDeviceId());
-        s2f33out.setTransactionId(mli.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] EquipStatusID = new long[1];
-        EquipStatusID[0] = equipStatusID;
-        long[] PPExecNameID = new long[1];
-        PPExecNameID[0] = pPExecNameID;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("EquipStatusID", EquipStatusID);
-        s2f33out.put("PPExecNameID", PPExecNameID);
+    public void sendS2f33out(long dataid, long reportId, List svidList) {
         try {
-            mli.sendPrimaryWsetMessage(s2f33out);
+            mli.sendS2F33out(dataid, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                    , svidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1220,7 +893,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2f33outDelete(long reportId) {
-        MsgDataHashtable s2f33out = new MsgDataHashtable("s2f33zeroout", mli.getDeviceId());
+        DataMsgMap s2f33out = new DataMsgMap("s2f33zeroout", mli.getDeviceId());
         s2f33out.setTransactionId(mli.getNextAvailableTransactionId());
         long[] dataid = new long[1];
         dataid[0] = reportId;
@@ -1229,52 +902,26 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         s2f33out.put("DataID", dataid);
         s2f33out.put("ReportID", reportid);
         try {
-            mli.sendPrimaryWsetMessage(s2f33out);
+            mli.sendAwaitMessage(s2f33out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public void sendS2f33out(long reportId, long equipStatusID, long pPExecNameID, long controlStateID) {
-        MsgDataHashtable s2f33out = new MsgDataHashtable("s2f33state", mli.getDeviceId());
-        s2f33out.setTransactionId(mli.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] EquipStatusID = new long[1];
-        EquipStatusID[0] = equipStatusID;
-        long[] PPExecNameID = new long[1];
-        PPExecNameID[0] = pPExecNameID;
-        long[] ControlStateID = new long[1];
-        ControlStateID[0] = controlStateID;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("EquipStatusID", EquipStatusID);
-        s2f33out.put("PPExecNameID", PPExecNameID);
-        s2f33out.put("ControlStateID", ControlStateID);
-        try {
-            mli.sendPrimaryWsetMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     @SuppressWarnings("unchecked")
-    public void processS2F34in(MsgDataHashtable data) {
+    public void processS2F34in(DataMsgMap data) {
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
     }
 
     /**
-     *
      * @param dataid
      * @param ceid
      * @param rptid
      */
     @SuppressWarnings("unchecked")
     public void sendS2f35out(long dataid, long ceid, long rptid) {
-        MsgDataHashtable s2f35out = new MsgDataHashtable("s2f35out", mli.getDeviceId());
+        DataMsgMap s2f35out = new DataMsgMap("s2f35out", mli.getDeviceId());
         s2f35out.setTransactionId(mli.getNextAvailableTransactionId());
         long[] dataId = new long[1];
         dataId[0] = dataid;
@@ -1286,7 +933,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         s2f35out.put("CollEventID", eventid);
         s2f35out.put("ReportID", reportid);
         try {
-            mli.sendPrimaryWsetMessage(s2f35out);
+            mli.sendAwaitMessage(s2f35out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1294,7 +941,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2f35outDelete(long dataid, long ceid) {
-        MsgDataHashtable s2f35out = new MsgDataHashtable("s2f35zeroout", mli.getDeviceId());
+        DataMsgMap s2f35out = new DataMsgMap("s2f35zeroout", mli.getDeviceId());
         s2f35out.setTransactionId(mli.getNextAvailableTransactionId());
         long[] dataId = new long[1];
         dataId[0] = dataid;
@@ -1304,14 +951,14 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         s2f35out.put("CollEventID", eventid);
 
         try {
-            mli.sendPrimaryWsetMessage(s2f35out);
+            mli.sendAwaitMessage(s2f35out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processS2F36in(MsgDataHashtable data) {
+    public void processS2F36in(DataMsgMap data) {
         logger.info("----------Received s2f36in---------");
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
@@ -1319,7 +966,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F37out(long ceid) {
-        MsgDataHashtable s2f37out = new MsgDataHashtable("s2f37out", mli.getDeviceId());
+        DataMsgMap s2f37out = new DataMsgMap("s2f37out", mli.getDeviceId());
         s2f37out.setTransactionId(mli.getNextAvailableTransactionId());
         long[] CollEventId = new long[1];
         CollEventId[0] = ceid;
@@ -1329,7 +976,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         s2f37out.put("CollEventId", CollEventId);
         //s1f13out.put("SoftRev", "9.25.5");
         try {
-            mli.sendPrimaryWsetMessage(s2f37out);
+            mli.sendAwaitMessage(s2f37out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1337,7 +984,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F37outClose(long ceid) {
-        MsgDataHashtable s2f37out = new MsgDataHashtable("s2f37out", mli.getDeviceId());
+        DataMsgMap s2f37out = new DataMsgMap("s2f37out", mli.getDeviceId());
         s2f37out.setTransactionId(mli.getNextAvailableTransactionId());
         long[] CollEventId = new long[1];
         CollEventId[0] = ceid;
@@ -1347,7 +994,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         s2f37out.put("CollEventId", CollEventId);
         //s1f13out.put("SoftRev", "9.25.5");
         try {
-            mli.sendPrimaryWsetMessage(s2f37out);
+            mli.sendAwaitMessage(s2f37out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1358,14 +1005,14 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      */
     @SuppressWarnings("unchecked")
     public void sendS2F37outAll() {
-        MsgDataHashtable s2f37outAll = new MsgDataHashtable("s2f37outAll", mli.getDeviceId());
+        DataMsgMap s2f37outAll = new DataMsgMap("s2f37outAll", mli.getDeviceId());
         long transactionId = mli.getNextAvailableTransactionId();
         s2f37outAll.setTransactionId(transactionId);
         boolean[] flag = new boolean[1];
         flag[0] = true;
         s2f37outAll.put("Booleanflag", flag);
         try {
-            mli.sendPrimaryWsetMessage(s2f37outAll);
+            mli.sendAwaitMessage(s2f37outAll);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1373,51 +1020,21 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F37outCloseAll() {
-        MsgDataHashtable s2f37outAll = new MsgDataHashtable("s2f37outAll", mli.getDeviceId());
+        DataMsgMap s2f37outAll = new DataMsgMap("s2f37outAll", mli.getDeviceId());
         long transactionId = mli.getNextAvailableTransactionId();
         s2f37outAll.setTransactionId(transactionId);
         boolean[] flag = new boolean[1];
         flag[0] = false;
         s2f37outAll.put("Booleanflag", flag);
         try {
-            mli.sendPrimaryWsetMessage(s2f37outAll);
+            mli.sendAwaitMessage(s2f37outAll);
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-    }
-
-    public String sendS2F37outMuilt(boolean openFlag, long[] ceidList) {
-        MsgDataHashtable s2f37outMuilt = new MsgDataHashtable("s2f37outMuilt", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s2f37outMuilt.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = openFlag;
-        s2f37outMuilt.put("Booleanflag", flag);
-
-        SecsItem vRoot = new SecsItem();
-        vRoot.setFormatCode(FormatCode.SECS_LIST);
-        ArrayList rootData = new ArrayList();
-        for (long ceid : ceidList) {
-            long[] u1 = new long[1];
-            u1[0] = ceid;
-            SecsItem sItem1 = new SecsItem(u1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-            rootData.add(sItem1);
-        }
-        vRoot.setData(rootData);//very important
-        s2f37outMuilt.put("CEIDList", vRoot);
-
-        try {
-            MsgDataHashtable s2f38in = mli.sendPrimaryWsetMessage(s2f37outMuilt);
-            byte[] ack = (byte[]) ((SecsItem) s2f38in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processS2F38in(MsgDataHashtable data) {
+    public void processS2F38in(DataMsgMap data) {
         logger.info("----------Received s2f38in---------");
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
@@ -1430,7 +1047,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      * @return
      */
     public Map sendCommandByDymanic(String commandKey) {
-        MsgDataHashtable s2f41out = new MsgDataHashtable("s2f41outConfig", mli.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41outConfig", mli.getDeviceId());
         s2f41out.setTransactionId(mli.getNextAvailableTransactionId());
         CommandDomain commandDomain = this.remoteCommandMap.get(commandKey);
         if (commandDomain != null) {
@@ -1461,11 +1078,11 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
             }
             vRoot.setData(rootData);//very important
             s2f41out.put("CPLIST", vRoot);
-            byte[] hcack = new byte[1];
+            byte hcack = -1;
             try {
-                MsgDataHashtable data = mli.sendPrimaryWsetMessage(s2f41out);
-                hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-                logger.info("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+                DataMsgMap data = mli.sendAwaitMessage(s2f41out);
+                hcack = (byte) ((SecsItem) data.get("HCACK")).getData();
+                logger.info("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             } catch (Exception e) {
                 logger.error("Exception:", e);
             }
@@ -1473,7 +1090,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
             resultMap.put("msgType", "s2f42");
             resultMap.put("deviceCode", deviceCode);
             resultMap.put("HCACK", hcack);
-            resultMap.put("Description", "Remote cmd " + commandKey + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd " + commandKey + " at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             return resultMap;
         } else {
             Map resultMap = new HashMap();
@@ -1487,7 +1104,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselect(String recipeName) {
-        MsgDataHashtable s2f41out = new MsgDataHashtable("s2f41outPPSelect", mli.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", mli.getDeviceId());
         s2f41out.setTransactionId(mli.getNextAvailableTransactionId());
         s2f41out.put("PPID", recipeName);
         byte[] hcack = new byte[1];
@@ -1495,12 +1112,12 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            MsgDataHashtable data = mli.sendPrimaryWsetMessage(s2f41out);
+            DataMsgMap data = mli.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -1519,22 +1136,22 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      */
     @SuppressWarnings("unchecked")
     public Map sendS2f41Cmd(String Remotecommand) {
-        MsgDataHashtable s2f41out = new MsgDataHashtable("s2f41zeroout", mli.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41zeroout", mli.getDeviceId());
         s2f41out.setTransactionId(mli.getNextAvailableTransactionId());
         s2f41out.put("Remotecommand", Remotecommand);
-        MsgDataHashtable msgdata = null;
+        DataMsgMap msgdata = null;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("prevCmd", Remotecommand);
         byte[] hcack = new byte[1];
         try {
-            msgdata = mli.sendPrimaryWsetMessage(s2f41out);
+            msgdata = mli.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to " + Remotecommand);
             hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -1551,7 +1168,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      * @param enable true->open ；false-->close
      */
     public void sendS5F3out(boolean enable) {
-        MsgDataHashtable s5f3out = new MsgDataHashtable("s5f3allout", mli.getDeviceId());
+        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", mli.getDeviceId());
         s5f3out.setTransactionId(mli.getNextAvailableTransactionId());
         byte[] aled = new byte[1];
         boolean[] flag = new boolean[1];
@@ -1563,20 +1180,20 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         }
         s5f3out.put("ALED", aled);
         try {
-            mli.sendPrimaryWsetMessage(s5f3out);
+            mli.sendAwaitMessage(s5f3out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    public boolean replyS5F2Directly(MsgDataHashtable data) {
-        MsgDataHashtable s5f2out = new MsgDataHashtable("s5f2out", mli.getDeviceId());
+    public boolean replyS5F2Directly(DataMsgMap data) {
+        DataMsgMap s5f2out = new DataMsgMap("s5f2out", mli.getDeviceId());
         byte b[] = new byte[1];
         b[0] = 0;
         s5f2out.put("AckCode", b);
         try {
             s5f2out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(s5f2out);
+            mli.respondMessage(s5f2out);
             return true;
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1585,7 +1202,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public Map processS5F1in(MsgDataHashtable data) {
+    public Map processS5F1in(DataMsgMap data) {
         long ALID = 0l;
         try {
             ALID = data.getSingleNumber("ALID");
@@ -1594,7 +1211,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         }
         byte[] ALCD = (byte[]) ((SecsItem) data.get("ALCD")).getData();
         String ALTX = (String) ((SecsItem) data.get("ALTX")).getData().toString();
-        logger.info("Recived s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD[0] + " means " + ACKDescription.description(ALCD, "ALCD") + ", and the ALTX is: " + ALTX);
+        logger.info("Recived s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD[0] + " means " + ACKDescription.description(ALCD[0], "ALCD") + ", and the ALTX is: " + ALTX);
 //        UiLogUtil.appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
@@ -1603,7 +1220,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         resultMap.put("ALID", ALID);
         resultMap.put("ALCD", ALCD[0]);
         resultMap.put("ALTX", ALTX);
-        resultMap.put("Description", ACKDescription.description(ALCD, "ALCD"));
+        resultMap.put("Description", ACKDescription.description(ALCD[0], "ALCD"));
         resultMap.put("TransactionId", data.getTransactionId());
         reportAlarm(resultMap);
         return resultMap;
@@ -1619,34 +1236,32 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
     @SuppressWarnings("unchecked")
-    public void processS6F11in(MsgDataHashtable data) {
-        long ceid = 0;
+    public void processS6F11in(DataMsgMap data) {
+        String ceid = "";
         try {
-            if (data.get("CollEventId") != null) {
-                ceid = data.getSingleNumber("CollEventId");
+            if (data.get("CEID") != null) {
+                ceid = String.valueOf(data.get("CEID"));
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(out);
-            this.setCommState(1);
+            //TODO 根据ceid分发处理事件
+            mli.sendS6F12out((byte) 0, data.getTransactionId());
+            if (commState != 1) {
+                this.setCommState(1);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    public void processS6f11StripMapUpload(MsgDataHashtable data, MliHsms mli) {
+    public void processS6f11StripMapUpload(DataMsgMap data) {
         logger.info("----Received from Equip Strip Map Upload event - S6F11");
         try {
-            MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
+            DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
             byte[] ack = new byte[1];
             ack[0] = 0;  //granted
             out.put("AckCode", ack);
             out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(out);
+            mli.respondMessage(out);
             logger.info(" ----- s6f12 sended - Strip Upload Completed-----.");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1654,7 +1269,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    protected void processS6F11inStripMapUpload(MsgDataHashtable data) {
+    protected void processS6F11inStripMapUpload(DataMsgMap data) {
         logger.info("----Received from Equip Strip Map Upload event - S6F11");
         try {
             //获取xml字符串
@@ -1662,7 +1277,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
             UiLogUtil.appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
-            MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
+            DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
             byte[] ack = new byte[1];
 //            ack[0] = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
             ack[0] = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
@@ -1676,32 +1291,22 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
             out.put("AckCode", ack);
             out.setTimeStamp(new Date());
             out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(out);
+            mli.respondMessage(out);
             logger.info(" ----- s6f12 sended - Strip Upload Completed-----.");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    protected void processS6F11EquipStatus(MsgDataHashtable data) {
-        //回复s6f11消息
-        long ceid = 0l;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-//        showCollectionsEventInfo(ceid);
-    }
 
     //直接回复S6F12
-    protected void replyS6F12WithACK(MsgDataHashtable data, byte[] ackCode) {
+    protected void replyS6F12WithACK(DataMsgMap data, byte[] ackCode) {
         //回复s6f11消息
-        MsgDataHashtable out = new MsgDataHashtable("s6f12out", mli.getDeviceId());
+        DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
         out.put("AckCode", ackCode);
         try {
             out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(out);
+            mli.respondMessage(out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1713,65 +1318,51 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     public void sendTerminalMsg2EqpSingle(String msg) {
-        byte[] tid = new byte[1];
-        tid[0] = 0;
-        sendS10F3(tid, msg);
+        sendS10F3((byte) 0, msg);
     }
 
-//    public void sendTerminalMsg2EqpAdditional(String msg) {
-//        byte[] tid = new byte[1];
-//        tid[0] = 1;
-//        sendS10F1(tid, msg);
-//    }
     protected void sendS10F1(byte[] tid, String text) {
-        MsgDataHashtable out = new MsgDataHashtable("s10f1out", mli.getDeviceId());
+
+        DataMsgMap out = new DataMsgMap("s10f1out", mli.getDeviceId());
         out.setTransactionId(mli.getNextAvailableTransactionId());
         try {
             out.put("TID", tid);
             out.put("TEXT", text);
-            mli.sendPrimaryWsetMessage(out);
+            mli.sendAwaitMessage(out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    protected void processS10F1in(MsgDataHashtable data) {
+    protected void processS10F1in(DataMsgMap data) {
         String text = "";
         try {
             if (data.get("TEXT") != null) {
-                text = ((SecsItem) data.get("TEXT")).getData().toString();
+                text = data.get("TEXT").toString();
                 logger.info("Received a s10f1in with text = " + text);
                 UiLogUtil.appendLog2SecsTab(deviceCode, "收到设备发送的消息:[" + text + "]");
             }
-            MsgDataHashtable out = new MsgDataHashtable("s10f2out", mli.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            mli.sendSecondaryOutputMessage(out);
+
+            mli.sendS10F2out((byte) 0, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    protected void sendS10F3(byte[] tid, String text) {
-        MsgDataHashtable out = new MsgDataHashtable("s10f3out", mli.getDeviceId());
-        out.setTransactionId(mli.getNextAvailableTransactionId());
+    protected void sendS10F3(byte tid, String text) {
         try {
             if (text.length() > 300) {
                 logger.info("准备向设备发送的消息为:" + text + ",长度超过限制，将被截取");
                 text = text.substring(0, 300) + "...";
                 logger.info("实际向设备发送的消息为:" + text);
             }
-            out.put("TID", tid);
-            out.put("TEXT", text);
-            mli.sendPrimaryWsetMessage(out);
+            mli.sendS10F3out(tid, text);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    protected void processS6F11EquipStatusChange(MsgDataHashtable data) {
+    protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
             ceid = data.getSingleNumber("CollEventID");
@@ -1890,7 +1481,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void processS6F12in(MsgDataHashtable data) {
+    public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
@@ -1899,15 +1490,15 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
     @SuppressWarnings("unchecked")
-    public void processS7F1in(MsgDataHashtable data) {
-        MsgDataHashtable s7f2out = new MsgDataHashtable("s7f2out", mli.getDeviceId());
+    public void processS7F1in(DataMsgMap data) {
+        DataMsgMap s7f2out = new DataMsgMap("s7f2out", mli.getDeviceId());
         byte[] ack = new byte[1];
         //目前不允许从机台直接上传recipe
         ack[0] = 5;
         s7f2out.put("PPGNT", ack);
         s7f2out.setTransactionId(data.getTransactionId());
         try {
-            mli.sendSecondaryOutputMessage(s7f2out);
+            mli.respondMessage(s7f2out);
             logger.error("Received s7f1 from equip " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1925,25 +1516,25 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        if (length[0] == 0) {
+
+        long length = TransferUtil.getPPLength(localFilePath);
+        if (length == 0) {
             resultMap.put("ppgnt", 9);
             resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
             return resultMap;
         }
-        MsgDataHashtable s7f1out = new MsgDataHashtable("s7f1out", mli.getDeviceId());
+        DataMsgMap s7f1out = new DataMsgMap("s7f1out", mli.getDeviceId());
         s7f1out.setTransactionId(mli.getNextAvailableTransactionId());
         s7f1out.put("ProcessprogramID", targetRecipeName);
         s7f1out.put("Length", length);
 
-        MsgDataHashtable data = null;
-        byte[] ppgnt = new byte[1];
+        DataMsgMap data = null;
+
         try {
-            data = mli.sendPrimaryWsetMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = mli.sendS7F1out(targetRecipeName, length, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            byte ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-            resultMap.put("ppgnt", ppgnt[0]);
+            resultMap.put("ppgnt", ppgnt);
             resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1961,8 +1552,8 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      * @return
      */
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        MsgDataHashtable data = null;
-        MsgDataHashtable s7f3out = new MsgDataHashtable("s7f3out", mli.getDeviceId());
+        DataMsgMap data = null;
+        DataMsgMap s7f3out = new DataMsgMap("s7f3out", mli.getDeviceId());
         s7f3out.setTransactionId(mli.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
@@ -1972,11 +1563,11 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        byte[] ackc7 = new byte[1];
+
         try {
-            data = mli.sendPrimaryWsetMessage(s7f3out);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
+            data = mli.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) ((SecsItem) data.get("AckCode")).getData();
+            resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1987,7 +1578,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void processS7F3in(MsgDataHashtable data) {
+    public void processS7F3in(DataMsgMap data) {
 //不允许从机台直接上传Recipe此段已注释，勿删！        
 //        String ppid = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
 //        Object ppbody = new Object();
@@ -1998,22 +1589,22 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 //        }
 //        TransferUtil.setPPBody(ppid, ppbody, rcptype, rcpPath + ppid + ".txt");
 
-        MsgDataHashtable s7f4out = new MsgDataHashtable("s7f4out", mli.getDeviceId());
+        DataMsgMap s7f4out = new DataMsgMap("s7f4out", mli.getDeviceId());
         s7f4out.setTransactionId(data.getTransactionId());
         byte[] ack = new byte[1];
         //目前不允许从机台直接上传recipe
         ack[0] = 1;
         s7f4out.put("AckCode", ack);
         try {
-            mli.sendSecondaryOutputMessage(s7f4out);
+            mli.respondMessage(s7f4out);
         } catch (Exception e) {
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processS7F5in(MsgDataHashtable data) {
+    public void processS7F5in(DataMsgMap data) {
         try {
-//            MsgDataHashtable s7f6out = new MsgDataHashtable("s7f6out", mli.getDeviceId());
+//            DataMsgMap s7f6out = new DataMsgMap("s7f6out", mli.getDeviceId());
             String ppid = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
             logger.info("This equipment" + deviceCode + " is requesting to download recipe :" + ppid);
 //暂时不用的功能，代码勿删            
@@ -2024,41 +1615,46 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 //                s7f6out.put("AckCode", ack);
 //                s7f6out.setTimeStamp(new Date());
 //            s7f6out.setTransactionId(data.getTransactionId());
-//            mli.sendSecondaryOutputMessage(s7f6out);
+//            mli.respondMessage(s7f6out);
 //                sendS7F6out(ppid, recipePath + ppid, mli);
 //            } else {
 //               logger.error("The recipe named" + ppid + "is not exist");
 //            }
-            MsgDataHashtable s7f6out = new MsgDataHashtable("s7f6zeroout", mli.getDeviceId());
+            DataMsgMap s7f6out = new DataMsgMap("s7f6zeroout", mli.getDeviceId());
             s7f6out.setTransactionId(mli.getNextAvailableTransactionId());
-            mli.sendPrimaryWsetMessage(s7f6out);
+            mli.sendAwaitMessage(s7f6out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    public abstract Map sendS7F5out(String recipeName);
+    public Map sendS7F5out(String recipeName) {
+        try {
+            mli.sendS7F5out(recipeName);
+        } catch (Exception w) {
+        }
+        return null;
+    }
 
     @SuppressWarnings("unchecked")
     public Map sendS7F17out(String recipeName) {
-        MsgDataHashtable s7f17out = new MsgDataHashtable("s7f17out", mli.getDeviceId());
-        s7f17out.setTransactionId(mli.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        byte[] ackc7 = new byte[1];
+        byte ackc7;
+        List recipeIDlist = new ArrayList();
+        recipeIDlist.add(recipeName);
         try {
-            MsgDataHashtable data = mli.sendPrimaryWsetMessage(s7f17out);
+            DataMsgMap data = mli.sendS7F17out(recipeIDlist);
             logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+            ackc7 = (byte) data.get("ACKC7");
+            if (ackc7 == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
-            resultMap.put("ACKC7", ackc7[0]);
+            resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -2074,29 +1670,22 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        MsgDataHashtable s7f19out = new MsgDataHashtable("s7f19out", mli.getDeviceId());
-        long transactionId = mli.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        MsgDataHashtable data = null;
+        DataMsgMap data = null;
         try {
-            data = mli.sendPrimaryWsetMessage(s7f19out);
+            data = mli.sendS7F19out();
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
         }
         if (data == null || data.get("EPPD") == null) {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            logger.info("recipeNameList:" + listtmp);
-            resultMap.put("eppd", listtmp);
+            logger.info("recipeNameList:" + list);
+            resultMap.put("eppd", list);
         }
         return resultMap;
     }
@@ -2104,79 +1693,68 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code">
     @SuppressWarnings("unchecked")
-    protected void processS14F1in(MsgDataHashtable data) {
+    protected void processS14F1in(DataMsgMap data) {
         if (data == null) {
             return;
         }
         String objType = null;
-        if (data.get("ObjectType") != null) {
-            objType = (String) ((SecsItem) data.get("ObjectType")).getData();
+        if (data.get("OBJTYPE") != null) {
+            objType = (String) data.get("ObjectType");
         }
         String stripId = "";
-        if (data.get("StripId") != null) {
-            stripId = (String) ((SecsItem) data.get("StripId")).getData();
+        if (data.get("OBJID") != null) {
+            stripId = (String) (data.get("OBJID"));
         }
         UiLogUtil.appendLog2SecsTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
-        MsgDataHashtable out = null;
+        DataMsgMap out = null;
         //通过Web Service获得xml字符串
-//        String stripMapData = WSUtility.binGet(stripId, deviceCode);
-        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
-//      String stripMapData ="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-//                "<MapData xmlns=\"urn:semi-org:xsd.E142-1.V1005.SubstrateMap\">\n" +
-//                "    <SubstrateMaps>\n" +
-//                "        <SubstrateMap LayoutSpecifier=\"StripLayout/Device\"\n" +
-//                "            SubstrateId=\"W1234567890-99-999\" SubstrateType=\"Strip\">\n" +
-//                "            <Overlay MapName=\"DownloadBinCodeMap\">\n" +
-//                "                <BinCodeMap BinType=\"HexaDecimal\" NullBin=\"FF\">\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                    <BinCode>008100000000000000000000000000000081000000000000000000000000000000000000000000</BinCode>\n" +
-//                "                </BinCodeMap>\n" +
-//                "            </Overlay>\n" +
-//                "        </SubstrateMap>\n" +
-//                "    </SubstrateMaps>\n" +
-//                "</MapData>"; 
-        if (stripMapData == null) {//stripId不存在  
-            out = new MsgDataHashtable("s14f2outNoExist", mli.getDeviceId());
+        Map<Object, Map> objMap = new HashMap<>();
+        Map<Long, String> errorMap = new HashMap<>();
+        Map stripMap = new HashMap();
+        Map stripIDformatMap = new HashMap();
+        stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
+        byte objack = 0;
+//        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
+        String stripMapData = "<stripmaptest12312313";
+        if (stripMapData == null) {//stripId不存在
+            out = new DataMsgMap("s14f2outNoExist", mli.getDeviceId());
             long[] u1 = new long[1];
             u1[0] = 0;
-            out.put("ObjectAck", u1);
+            out.put("OBJACK", u1);
             UiLogUtil.appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
+
         } else {//stripId存在
             String downLoadResult = stripMapData.substring(0, 1);
             if ("<".equals(downLoadResult)) {
-                out = new MsgDataHashtable("s14f2out", mli.getDeviceId());
-                out.put("StripId", stripId);
-                out.put("MapData", stripMapData);
+//                out = new DataMsgMap("s14f2out", mli.getDeviceId());
+//                out.put("StripId", stripId);
+//                out.put("MapData", stripMapData);
+                stripMap.put("MapData", stripMapData);
+                objMap.put(stripId, stripMap);
                 UiLogUtil.appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
             } else {
+                objack = 1;
                 //是分号
-                long[] errorCodes = new long[1];
+                long errorCode = 10L;
                 try {
-                    errorCodes[0] = Long.valueOf(stripMapData.split(";")[0]);
+                    errorCode = Long.valueOf(stripMapData.split(";")[0]);
                 } catch (Exception e) {
-                    errorCodes[0] = 10L;
+                    errorCode = 10L;
                 }
-                out = new MsgDataHashtable("s14f2outException", mli.getDeviceId());
-                out.put("StripId", stripId);
-                out.put("MapData", stripMapData);
-                out.put("ErrCode", errorCodes);
-                out.put("ErrText", stripMapData);
+                stripMap.put("MapData", stripMapData);
+                objMap.put(stripId, stripMap);
+                errorMap.put(errorCode, stripMapData);
                 UiLogUtil.appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
             }
-            out.setTransactionId(data.getTransactionId());
+
         }
         try {
-            mli.sendSecondaryOutputMessage(out);
+
+//            mli.sendS14F2out(stripMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap, (byte) 2,
+//                    errorMap, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+
+            mli.sendS14F2out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
+                    objack, errorMap, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
             UiLogUtil.appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -2186,6 +1764,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="StartStopCOMM Code">
     //开启连接
+
     /**
      *
      */
@@ -2212,43 +1791,42 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     // </editor-fold>    
     // <editor-fold defaultstate="collapsed" desc="StartStopSECS Code">
+
     /**
      * 关闭SECS通信
      */
     protected void terminateSecs() {
-        mli.getProtocol().setShutdown(true);
-        mli.terminateMli();
+
+        mli.terminateSecsDriver();
     }
 
     /**
      * 开启SECS通信线程
      *
-     * @param commFailAdapter
-     * @param errAdapter
-     * @param feedUpAdapter
      * @throws NotInitializedException
      */
-    public void startSecs(HsmsCommunicationFailureDealer commFailAdapter,
-            ErrorDataMessageDealer errAdapter,
-            UpLevelAnouncer feedUpAdapter)
-            throws NotInitializedException {
+    public void startSecs(EqpEventDealer eqpEventDealer)
+            throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException {
         if (this.mli == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.equipId + " is not initialized yet.");
         }
         logger.info("SECS Protocol for " + this.getEquipId() + " is being started.");
-        this.mli.connectAndStartForActiveMode(commFailAdapter, errAdapter, feedUpAdapter);
+        this.mli.connectByActiveMode(eqpEventDealer);
+
+        mli.addInputMessageListenerToAll(this);
+        mli.startInActiveMode();
         //if hsms, then it can be MliHsms instance. //this will make the MSP hsms specific.
     }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="WaitMsgValueMap Code">
+
     /**
-     *
      * @param transactionId
      * @return
      */
-    public MsgDataHashtable getMsgDataFromWaitMsgValueMapByTransactionId(long transactionId) {
+    public DataMsgMap getMsgDataFromWaitMsgValueMapByTransactionId(long transactionId) {
         int i = 0;
         logger.info("Can not get value directly,will try to get value from message queue");
         while (i < 5) {
@@ -2258,11 +1836,11 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
                 logger.error("Exception occur，Exception info：从WaitMsgValueMap中获取消息时，线程中断。设备编号：" + deviceCode);
                 ex.printStackTrace();
             }
-            MsgDataHashtable msgDataHashtable = this.waitMsgValueMap.get(transactionId);
+            DataMsgMap DataMsgMap = this.waitMsgValueMap.get(transactionId);
             logger.info("try===>" + i);
-            if (msgDataHashtable != null) {
-                logger.info("Had get value from message queue ===>" + JSONArray.toJSON(msgDataHashtable));
-                return msgDataHashtable;
+            if (DataMsgMap != null) {
+                logger.info("Had get value from message queue ===>" + JSONArray.toJSON(DataMsgMap));
+                return DataMsgMap;
             }
             i++;
         }
@@ -2278,7 +1856,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return null;
     }
 
-    protected void putDataIntoWaitMsgValueMap(MsgDataHashtable dataHashtable) {
+    protected void putDataIntoWaitMsgValueMap(DataMsgMap dataHashtable) {
         if (waitMsgValueMap.entrySet().size() > 1000) {
             waitMsgValueMap.clear();
         }
@@ -2290,6 +1868,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="Equipment Data Collection ">
     // <editor-fold defaultstate="collapsed" desc="About MOLD Press Code">
+
     /**
      * 调用webservice，获取PressCheck锁机标志
      *
@@ -2374,8 +1953,8 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="SpecificData Collection">
+
     /**
-     *
      * @param dataIdMap
      * @return
      */
@@ -2416,29 +1995,13 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         List svValueList = new ArrayList();
         //发送查询SV命令，并取值
         if (svidList.size() > 0) {
-            MsgDataHashtable s1f3out = new MsgDataHashtable("s1f3Specific", mli.getDeviceId());
-            long transactionId = mli.getNextAvailableTransactionId();
-            s1f3out.setTransactionId(transactionId);
-            SecsItem vRoot = new SecsItem();
-            vRoot.setFormatCode(FormatCode.SECS_LIST);
-            ArrayList rootData = new ArrayList();
-            for (Object svid : svidList) {
-                long[] u1 = new long[1];
-                u1[0] = Long.valueOf(String.valueOf(svid));
-                SecsItem sItem1 = new SecsItem(u1, svFormat);
-                rootData.add(sItem1);
-            }
-            vRoot.setData(rootData);
-            s1f3out.put("DATA", vRoot);
+
             try {
-                MsgDataHashtable data = null;
-                data = mli.sendPrimaryWsetMessage(s1f3out);
-                if (data == null || data.isEmpty()) {
-                    data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-                }
-                if (data != null && data.get("RESULT") != null) {
-                    ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-                    svValueList = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+                DataMsgMap data = null;
+                data = mli.sendS1F3out(dataIdList, svFormat);
+
+                if (data != null && data.get("SV") != null) {
+                    svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
                         resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
                     }
@@ -2467,28 +2030,11 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         List ecValueList = new ArrayList();
         //发送查询EC命令，并取值
         if (ecidList.size() > 0) {
-            MsgDataHashtable s2f13out = new MsgDataHashtable("s2f13Specific", mli.getDeviceId());
-            long transactionId = mli.getNextAvailableTransactionId();
-            s2f13out.setTransactionId(transactionId);
-            SecsItem vRoot = new SecsItem();
-            vRoot.setFormatCode(FormatCode.SECS_LIST);
-            ArrayList rootData = new ArrayList();
-            for (Object ecid : ecidList) {
-                long[] u1 = new long[1];
-                u1[0] = Long.valueOf(String.valueOf(ecid));
-                SecsItem sItem1 = new SecsItem(u1, ecFormat);
-                rootData.add(sItem1);
-            }
-            vRoot.setData(rootData);//very important
-            s2f13out.put("DATA", vRoot);
             try {
-                MsgDataHashtable data = mli.sendPrimaryWsetMessage(s2f13out);
-                if (data == null || data.isEmpty()) {
-                    data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-                }
-                if (data != null && data.get("RESULT") != null) {
-                    ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-                    ecValueList = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+                DataMsgMap data = mli.sendS2F13out(dataIdList, ecFormat);
+
+                if (data != null && data.get("EC") != null) {
+                    ecValueList = (ArrayList) ((SecsItem) data.get("EC")).getData();
                     for (int i = 0; i < ecValueList.size(); i++) {
                         resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
                     }
@@ -2536,6 +2082,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="Related Data Reported ">
+
     /**
      * 发送设备操作日志到服务端
      *
@@ -2873,11 +2420,11 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
      * @param commandMsg
      * @return
      */
-    public String sendRemoteCommand(MsgDataHashtable commandMsg) {
+    public String sendRemoteCommand(DataMsgMap commandMsg) {
         commandMsg.setTransactionId(mli.getNextAvailableTransactionId());
         byte[] hcack = new byte[1];
         try {
-            MsgDataHashtable feedBackData = mli.sendPrimaryWsetMessage(commandMsg);
+            DataMsgMap feedBackData = mli.sendAwaitMessage(commandMsg);
             hcack = (byte[]) ((SecsItem) feedBackData.get("HCACK")).getData();
             return String.valueOf(hcack);
         } catch (Exception e) {
@@ -2893,6 +2440,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="External Controlling Logic">
     // <editor-fold defaultstate="collapsed" desc="Server Check Flag">
+
     /**
      * 调用webservice，获取锁机标志
      *
@@ -2937,6 +2485,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
     // </editor-fold> 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="Update Equipment UI">
+
     /**
      * 更新设备作业信息显示
      *
@@ -3033,6 +2582,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="About Recipe">
+
     /**
      * 读取路径下的recipe配置文件，获取recipe相关的子文件信息
      *
@@ -3206,20 +2756,20 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return checkResult;
     }
 
-    public MsgDataHashtable sendMsg2Equip(MsgDataHashtable msgDataHashtable) {
-        final MsgDataHashtable dataHashtable = msgDataHashtable;
-        MsgDataHashtable result = null;
+    public DataMsgMap sendMsg2Equip(DataMsgMap DataMsgMap) {
+        final DataMsgMap dataHashtable = DataMsgMap;
+        DataMsgMap result = null;
         ExecutorService exec = Executors.newSingleThreadExecutor();
-        Callable<MsgDataHashtable> call = new Callable<MsgDataHashtable>() {
+        Callable<DataMsgMap> call = new Callable<DataMsgMap>() {
 
             @Override
-            public MsgDataHashtable call() throws Exception {
+            public DataMsgMap call() throws Exception {
                 //开始执行耗时操作  
-                return mli.sendPrimaryWsetMessage(dataHashtable);
+                return mli.sendAwaitMessage(dataHashtable);
             }
         };
 
-        Future<MsgDataHashtable> future = exec.submit(call);
+        Future<DataMsgMap> future = exec.submit(call);
         try {
             result = future.get(GlobalConstants.msgWaitTime, TimeUnit.MILLISECONDS);
             logger.info("Execute future task...");
@@ -3272,7 +2822,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
                 sqlSession.commit();
             }
 //            monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-           // sqlSession.commit();
+            // sqlSession.commit();
         } catch (Exception e) {
             sqlSession.close();
         } finally {
@@ -3383,7 +2933,7 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
                             String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue();
 
                             eventDescEng = eventDescEng + eventDescEngtmp;
-                        }                      
+                        }
                     } else {
                         if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
                             logger.info("Para:Name[" + recipeTemplates.get(i).getParaName() + "],Code[" + recipeTemplates.get(i).getParaCode() + "]has not set range! Pass");
@@ -3463,15 +3013,47 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         this.startedDate = startedDate;
     }
 
-    //waferMapping upload
-    public Map processS12F1in(MsgDataHashtable msgDataHashtable) {
+    @SuppressWarnings("unchecked")
+    public void sendS2F33clear() {
+        DataMsgMap s2f37outAll = new DataMsgMap("s2f33clear", mli.getDeviceId());
+        long transactionId = mli.getNextAvailableTransactionId();
+        s2f37outAll.setTransactionId(transactionId);
+
         try {
-            MsgDataHashtable s12f2out = new MsgDataHashtable("s12f2out", mli.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
+            mli.sendAwaitMessage(s2f37outAll);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void sendS2F35clear() {
+        DataMsgMap s2f37outAll = new DataMsgMap("s2f35clear", mli.getDeviceId());
+        long transactionId = mli.getNextAvailableTransactionId();
+        s2f37outAll.setTransactionId(transactionId);
+
+        try {
+            mli.sendAwaitMessage(s2f37outAll);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    /**
+     * WaferMappingInfo Upload (Simple)
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F1inSimple(DataMsgMap DataMsgMap) {
+        try {
+
+            DataMsgMap s12f2out = new DataMsgMap("s12f2out", mli.getDeviceId());
+            //TODO 调用webservices回传waferMapping信息
+            byte[] ack = new byte[]{0};
             s12f2out.put("SDACK", ack);
-            s12f2out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f2out);
+            s12f2out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f2out);
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3479,35 +3061,48 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return null;
     }
 
-    public void processS12F5in(MsgDataHashtable msgDataHashtable) {
+    /**
+     * Map Transmit Inquire
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F5in(DataMsgMap DataMsgMap) {
         try {
-            MsgDataHashtable s12f6out = new MsgDataHashtable("s12f6out", mli.getDeviceId());
+            DataMsgMap s12f6out = new DataMsgMap("s12f6out", mli.getDeviceId());
             byte[] ack = new byte[1];
             ack[0] = 0;
             s12f6out.put("GRANT1", ack);
-            s12f6out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f6out);
+            s12f6out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f6out);
 
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
+        return null;
     }
 
-    public Map processS12F7in(MsgDataHashtable msgDataHashtable) {
+    /**
+     * upload type1 未使用
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F7in(DataMsgMap DataMsgMap) {
         try {
 
-            String MaterialID = msgDataHashtable.get("MaterialID").toString();
+            String MaterialID = DataMsgMap.get("MaterialID").toString();
 
-            byte IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData())[0];
+            byte IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData())[0];
 
-            String binList = msgDataHashtable.get("RSINFBinList").toString();
+            String binList = DataMsgMap.get("RSINFBinList").toString();
 
-            MsgDataHashtable s12f8out = new MsgDataHashtable("s12f8out", mli.getDeviceId());
+            DataMsgMap s12f8out = new DataMsgMap("s12f8out", mli.getDeviceId());
             byte[] ack = new byte[1];
             ack[0] = 0;
             s12f8out.put("MDACK", ack);
-            s12f8out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f8out);
+            s12f8out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f8out);
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3515,187 +3110,395 @@ public abstract class EquipHost extends Thread implements InputMessageListener {
         return null;
     }
 
-    public Map processS12F9in(MsgDataHashtable msgDataHashtable) {
+    /**
+     * upload type3 未使用
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F11in(DataMsgMap DataMsgMap) {
         try {
-            String MaterialID = msgDataHashtable.get("MaterialID").toString();
-            msgDataHashtable.getSingleNumber("IDTYP");
-            byte IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData())[0];
-            int[] STRPxSTRPy = (int[]) ((SecsItem) msgDataHashtable.get("STRPxSTRPy")).getData();
-            String binList = msgDataHashtable.get("BinList").toString();
-            //TODO  这里获取到的mapping 存储在什么位置
-            //local&ftp 路径是什么？
-            //db 表结构？几个表？
+            String MaterialID = DataMsgMap.get("MaterialID").toString();
 
-            MsgDataHashtable s12f10out = new MsgDataHashtable("s12f10out", mli.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            s12f10out.put("MDACK", ack);
-            s12f10out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f10out);
+            byte IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData())[0];
 
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        return null;
-    }
+            String binList = DataMsgMap.get("XYPOSBinList").toString();
 
-    public Map processS12F11in(MsgDataHashtable msgDataHashtable) {
-        try {
-            String MaterialID = msgDataHashtable.get("MaterialID").toString();
-
-            byte IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData())[0];
-
-            String binList = msgDataHashtable.get("XYPOSBinList").toString();
-
-            MsgDataHashtable s12f12out = new MsgDataHashtable("s12f12out", mli.getDeviceId());
+            DataMsgMap s12f12out = new DataMsgMap("s12f12out", mli.getDeviceId());
             byte[] ack = new byte[1];
             ack[0] = 0;
             s12f12out.put("MDACK", ack);
-            s12f12out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f12out);
+            s12f12out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f12out);
 
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         return null;
     }
-    //waferMapping download
 
-    public void processS12F3in(MsgDataHashtable msgDataHashtable) {
-        //    S12F3
-//    <V>=MaterialID
-//    <B [1]>=IDTYP
-//    <B [1]>=MapDataFormatType
-//    <U2 [1]>=FlatNotchLocation
-//    <U2 [1]>=FileFrameRotation
-//    <B [1]>=OriginLocation
-//    <B [1]>=ProcessAxis
-//    <V>=BinCodeEquivalents
-//    <V>=NullBinCodeValue
+    /**
+     * download type1 未使用
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F13in(DataMsgMap DataMsgMap) {
         try {
-            MsgDataHashtable s12f4out = new MsgDataHashtable("s12f4out2", mli.getDeviceId());
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) msgDataHashtable.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            String MaterialID = String.valueOf(listtmp.get(0));
-            String IDTYP = String.valueOf(listtmp.get(1));
-            String MapDataFormatType = String.valueOf(listtmp.get(2));
-            String FlatNotchLocation = String.valueOf(listtmp.get(3));
-            String FileFrameRotation = String.valueOf(listtmp.get(4));
-            String OriginLocation = String.valueOf(listtmp.get(5));
-            String ProcessAxis = String.valueOf(listtmp.get(6));
-            String BinCodeEquivalents = String.valueOf(listtmp.get(7));
-            String NullBinCodeValue = String.valueOf(listtmp.get(8));
-//s12f4
-//    <V>=MaterialID
-//    <B [1]>=IDTYP
-//    <U2 [1]>=FlatNotchLocation
-//    <B [1]>=OriginLocation
-//    <U1 [1]>=RrferencePointSelect
-//    <V>=REFPxREFPy
-//    <A[MAX 100]>=DieUnitsOfMeasure
-//    <V>=XAxisDieSize
-//    <V>=YAxisDieSize
-//    <U2[1]>=RowCountInDieIncrements
-//    <U2[1]>=ColumnCountInDieIncrements
-//    <U4[1]>=ProcessDieCount
-//    <V>=BinCodeEquivalents  
-//    <V>=NullBinCodeValue  
-//    <U2 [1]>=MessageLength
-// < A "G2WU93-25.TXT" >MaterialID
-//    < B 0x0 >IDTYP
-//    < U2 90 >FlatNotchLocation
-//    < B 0x2 >OriginLocation
-//    < U1 0 >RrferencePointSelect
-//    < L 
-//    > REFPxREFPy
-//    < A  >DieUnitsOfMeasure
-//    < U4 0 >XAxisDieSize
-//    < U4 0 >YAxisDieSize
-//    < U2 61 >RowCountInDieIncrements
-//     < U2 37 >ColumnCountInDieIncrements
-//     < U4 1761 >ProcessDieCount
-//     < U1  >BinCodeEquivalents
-//     < U1 46 >NullBinCodeValue
-//     < U4 35 >MessageLength
+            DataMsgMap s12f14out = new DataMsgMap("s12f14out", mli.getDeviceId());
+
+            s12f14out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f14out);
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    /**
+     * download type3 未使用
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F17in(DataMsgMap DataMsgMap) {
+        try {
+            DataMsgMap s12f18out = new DataMsgMap("s12f18out", mli.getDeviceId());
+
+            s12f18out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f18out);
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    public Map processS12F19in(DataMsgMap DataMsgMap) {
+        try {
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    /**
+     * Map Restart Request
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F67in(DataMsgMap DataMsgMap) {
+        try {
+            DataMsgMap s12f68out = new DataMsgMap("s12f68out", mli.getDeviceId());
+            s12f68out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f68out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 
+
+    /**
+     * WaferMappingInfo Upload
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F1in(DataMsgMap DataMsgMap) {
+        try {
+            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = MaterialID.trim();
+            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
+            upFlatNotchLocation = DataMsgMap.getSingleNumber("FlatNotchLocation");
+//            long FileFrameRotation = DataMsgMap.getSingleNumber("FileFrameRotation");
+            byte[] OriginLocation = ((byte[]) ((SecsItem) DataMsgMap.get("OriginLocation")).getData());
+            long RowCountInDieIncrements = DataMsgMap.getSingleNumber("RowCountInDieIncrements");
+            long ColumnCountInDieIncrements = DataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
+            uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
+            uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
+            //kong
+            //String NullBinCodeValue = (String)((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
+            //byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
+            UiLogUtil.appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
+            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
+            DataMsgMap s12f2out = new DataMsgMap("s12f2out", mli.getDeviceId());
+            //TODO 调用webservices回传waferMapping信息
+            byte[] ack = new byte[]{0};
+            s12f2out.put("SDACK", ack);
+            s12f2out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f2out);
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    /**
+     * WaferMapping Upload (Simple)
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F9in(DataMsgMap DataMsgMap) {
+        try {
+            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = MaterialID.trim();
+            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
+            int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
+            SecsItem BinListItem = (SecsItem) DataMsgMap.get("BinList");
+            String binList = "";
+            if (BinListItem.getData() instanceof Long[] || BinListItem.getData() instanceof long[]) {
+                long[] binlists = (long[]) BinListItem.getData();
+                StringBuffer binBuffer = new StringBuffer();
+                for (Long binlistLong : binlists) {
+                    int temp = binlistLong.intValue();
+                    char c = (char) temp;
+                    binBuffer.append(c);
+                }
+                binList = binBuffer.toString();
+            } else {
+                binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
+            }
+            logger.info("waferid:" + MaterialID + "binlist:" + binList);
+            UiLogUtil.appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
+            //上传WaferMapping,
+            String _uploadWaferMappingRow = uploadWaferMappingRow;
+            String _uploadWaferMappingCol = uploadWaferMappingCol;
+            if (this.deviceType.contains("ESEC") || this.deviceType.contains("SIGMA") || this.deviceType.contains("8800")) {
+                logger.info(this.deviceType + "旋转角度:" + (360L - upFlatNotchLocation));
+                binList = WaferTransferUtil.transferAngleAsFlatNotchLocation(binList, 360L - upFlatNotchLocation, uploadWaferMappingRow, uploadWaferMappingCol);
+                if (upFlatNotchLocation == 90 || upFlatNotchLocation == 270) {
+                    _uploadWaferMappingRow = uploadWaferMappingCol;
+                    _uploadWaferMappingCol = uploadWaferMappingRow;
+                }
+            }
+            //上传旋转后的行列数及mapping
+            AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
+            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
+            DataMsgMap s12f10out = new DataMsgMap("s12f10out", mli.getDeviceId());
+            byte[] ack = new byte[]{0};
+            s12f10out.put("MDACK", ack);
+            s12f10out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f10out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        return null;
+    }
+
+    /**
+     * WaferMappingInfo Download
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F3in(DataMsgMap DataMsgMap) {
+        DataMsgMap s12f4out = null;
+        String MaterialID = "";
+        try {
+            //DataMsgMap s12f4out = new DataMsgMap("s12f4out2", mli.getDeviceId());            
+            MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = MaterialID.trim();
+            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
+            byte[] MapDataFormatType = ((byte[]) ((SecsItem) DataMsgMap.get("MapDataFormatType")).getData());
+            downFlatNotchLocation = DataMsgMap.getSingleNumber("FlatNotchLocation");
+            byte[] OriginLocation = ((byte[]) ((SecsItem) DataMsgMap.get("OriginLocation")).getData());
+            byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
+//            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
+//            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
+            SecsItem BinCodeEquivalents = ((SecsItem) DataMsgMap.get("BinCodeEquivalents"));
+            SecsItem NullBinCodeValue = ((SecsItem) DataMsgMap.get("NullBinCodeValue"));
+            UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+            Map<String, String> mappingInfo = AxisUtility.downloadWaferMap(deviceCode, MaterialID);
+            if ("N".equals(mappingInfo.get("flag"))) {
+                UiLogUtil.appendLog2SeverTab(deviceCode, "WaferId：[" + MaterialID + "]下载失败," + mappingInfo.get("msg"));
+                s12f4out = new DataMsgMap("s12f4Zeroout", mli.getDeviceId());
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+                mli.respondMessage(s12f4out);
+                this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
+                return null;
+            }
+            logger.info("mappingInfo:" + mappingInfo);
+            String binList = mappingInfo.get("BinList");
+            int mapRow = Integer.parseInt(mappingInfo.get("RowCountInDieIncrements")); //原始wafer map行
+            int mapCol = Integer.parseInt(mappingInfo.get("ColumnCountInDieIncrements")); //原始wafer map列
+            String rote = mappingInfo.get("rote");//mapping原路径
+
+            //esec 单独处理
+            if (this.deviceType.contains("ESEC")) {
+                StringBuilder newbinList = new StringBuilder("");
+                char[][] binArray = WaferTransferUtil.toDoubleArray(binList, mapRow, mapCol);
+                Map<String, Integer> map = WaferTransferUtil.blankCheck(binList.charAt(0), binList, mapRow, mapCol);
+                UiLogUtil.appendLog2SeverTab(deviceCode, "UP:" + map.get("UP") + "DOWN:" + map.get("DOWN")
+                        + "LEFT:" + map.get("LEFT") + "RIGHT:" + map.get("RIGHT"));
+
+                int mapRowEsecNoNull = map.get("DOWN") - map.get("UP") + 1;
+                int mapColEsecNoNull = map.get("RIGHT") - map.get("LEFT") + 1;
+
+                for (int i = 0; i < mapRow; i++) {
+                    if (i < map.get("UP") || i > map.get("DOWN")) {
+                        continue;
+                    }
+                    for (int j = 0; j < mapCol; j++) {
+                        if (j < map.get("LEFT") || j > map.get("RIGHT")) {
+                            continue;
+                        }
+                        newbinList.append(binArray[i][j]);
+                    }
+                }
+                binList = newbinList.toString();
+                mapRow = mapRowEsecNoNull;
+                mapCol = mapColEsecNoNull;
+            }
+
+//            waferMappingrow = String.valueOf(RowCountInDieIncrementss[0]);
+//            waferMappingcol = String.valueOf(ColumnCountInDieIncrementss[0]);
+//            String _waferMappingcol = waferMappingcol;
+//            String _waferMappingrow = waferMappingrow;
+            waferMappingbins = binList;
+            logger.info(this.deviceType + "wafer map 旋转角度:" + downFlatNotchLocation + ";waferMappingrow:" + mapRow + ";waferMappingcol" + mapCol);
+            if (this.deviceType.contains("ESEC") || this.deviceType.contains("SIGMA") || this.deviceType.contains("8800") || this.deviceType.contains("DB-800")) {
+                logger.info(this.deviceType + "程序旋转方向和bin");
+                waferMappingbins = WaferTransferUtil.transferAngleAsFlatNotchLocation(waferMappingbins, downFlatNotchLocation, mapRow, mapCol);
+                if (downFlatNotchLocation == 90 || downFlatNotchLocation == 270) {
+                    int temp = mapRow;
+                    mapRow = mapCol;
+                    mapCol = temp;
+                }
+            }
+
+            s12f4out = new DataMsgMap("s12f4out", mli.getDeviceId());
             s12f4out.put("MaterialID", MaterialID);
             s12f4out.put("IDTYP", IDTYP);
-            s12f4out.put("FlatNotchLocation", FlatNotchLocation);
+            s12f4out.put("FlatNotchLocation", new long[]{downFlatNotchLocation});
             s12f4out.put("OriginLocation", OriginLocation);
-            s12f4out.put("RrferencePointSelect", 0);
-            s12f4out.put("REFPxREFPy", null);
-            s12f4out.put("DieUnitsOfMeasure", "");
-            s12f4out.put("XAxisDieSize", 0);
-            s12f4out.put("YAxisDieSize", 0);
-            s12f4out.put("RowCountInDieIncrements", 61);
-            s12f4out.put("ColumnCountInDieIncrements", 37);
-            s12f4out.put("ProcessDieCount", 1761);
+            s12f4out.put("RowCountInDieIncrements", new long[]{mapRow});
+            s12f4out.put("ColumnCountInDieIncrements", new long[]{mapCol});
+            s12f4out.put("BinCodeEquivalents", BinCodeEquivalents);
+            s12f4out.put("NullBinCodeValue", NullBinCodeValue);
+            s12f4out.put("MessageLength", new long[]{mapRow * mapCol});
+            UiLogUtil.appendLog2SeverTab(deviceCode, "从服务端成功获取WaferMapping设置信息！WaferId：[" + MaterialID + "]");
 
-            s12f4out.put("BinCodeEquivalents", null);
-            s12f4out.put("NullBinCodeValue", 46);
-            s12f4out.put("MessageLength", null);
-
-            s12f4out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f4out);
+            //针对DB800 mapping展示软件
+            if (this.deviceType.contains("DB-800")) {
+                String port = "8080";
+                ISecsHost iSecsHost = new ISecsHost("127.0.0.1", port, deviceType, deviceCode);
+                String commond = rote + "," + mapRow + "," + mapCol + "," + binList + "," + MaterialID;
+                logger.info("准备发送服务器端数据至wafer软件" + commond);
+                iSecsHost.executeCommand3("START," + commond + ",END;");
+            }
 
         } catch (Exception e) {
             logger.error("Exception:", e);
+            try {
+                s12f4out = new DataMsgMap("s12f4Zeroout", mli.getDeviceId());
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+                mli.respondMessage(s12f4out);
+                UiLogUtil.appendLog2SeverTab(deviceCode, "获取服务端WaferMappingInfo出现异常！");
+            } catch (Exception ex) {
+                logger.error("Exception:", e);
+            }
         }
-
+        try {
+            s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f4out);
+            UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
+        } catch (Exception ex) {
+            logger.error("Exception:", ex);
+        }
+        return null;
     }
 
-    public Map processS12F13in(MsgDataHashtable msgDataHashtable) {
+
+    /**
+     * WaferMapping Download
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F15in(DataMsgMap DataMsgMap) {
+        DataMsgMap s12f16out = null;
+        String MaterialID = "";
         try {
-            MsgDataHashtable s12f14out = new MsgDataHashtable("s12f14out", mli.getDeviceId());
+            MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = MaterialID.trim();
+            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
+            UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping！WaferId：[" + MaterialID + "]");
+            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping！WaferId：[" + MaterialID + "]");
 
-            s12f14out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f14out);
+            s12f16out = new DataMsgMap("s12f16out", mli.getDeviceId());
+            s12f16out.put("MaterialID", MaterialID);
+            s12f16out.put("IDTYP", IDTYP);
+            logger.info("waferMappingbinList:" + waferMappingbins);
+            SecsItem BinList = new SecsItem(waferMappingbins, FormatCode.SECS_ASCII);
+            s12f16out.put("BinList", BinList);
+            s12f16out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f16out);
+            UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping至机台！WaferId：[" + MaterialID + "]");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            UiLogUtil.appendLog2SeverTab(deviceCode, "获取服务端WaferMapping出现异常！");
+            s12f16out = new DataMsgMap("s12f16outZero", mli.getDeviceId());
+            s12f16out.setTransactionId(DataMsgMap.getTransactionId());
+            try {
+                mli.respondMessage(s12f16out);
+            } catch (Exception ex) {
+                logger.error("Exception:", e);
+            }
+        }
+        return null;
+    }
 
+    public Map processS12F81in(DataMsgMap DataMsgMap) {
+        try {
+            DataMsgMap s12f81out = new DataMsgMap("s12f81out", mli.getDeviceId());
+            s12f81out.setTransactionId(DataMsgMap.getTransactionId());
+            mli.respondMessage(s12f81out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         return null;
     }
 
-    public void processS12F15in(MsgDataHashtable msgDataHashtable) {
-        try {
-            MsgDataHashtable s12f16ut = new MsgDataHashtable("s12f16out", mli.getDeviceId());
-            byte[] IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData());
-            String MaterialID = ((SecsItem) msgDataHashtable.get("MaterialID")).getData().toString();
-            s12f16ut.put("MaterialID", MaterialID);
-            s12f16ut.put("IDTYP", IDTYP);
-            int[] STRPxSTRPy = (int[]) ((SecsItem) msgDataHashtable.get("STRPxSTRPy")).getData();
-            STRPxSTRPy[0] = 0;
-            STRPxSTRPy[1] = 0;
-            s12f16ut.put("STRPxSTRPy", STRPxSTRPy);
-            String BinList = "";
-            s12f16ut.put("BinList", MaterialID);
+    public Map processS6F83in(DataMsgMap DataMsgMap) {
+        if (this.deviceType.contains("HITACHI")) {
+            try {
+                long[] IDTYP = ((long[]) ((SecsItem) DataMsgMap.get("PickedupPosition")).getData());
 
-            s12f16ut.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f16ut);
+                String row = "" + IDTYP[0];//X坐标
+                String col = "" + IDTYP[1];//Y坐标
 
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+                InetAddress address = InetAddress.getLocalHost();
+                String HostName = address.getHostName();//获取计算机名
+                String ip = address.getHostAddress();//获取IP地址
+                InetAddress address3 = InetAddress.getByName("IP地址");
+                String port = "8080";
+                ISecsHost iSecsHost = new ISecsHost("127.0.0.1", port, deviceType, deviceCode);
+                logger.info("准备发送坐标至wafer软件" + row + "," + col);
+                iSecsHost.executeCommand3("START," + row + col + ",END;");
 
-    public Map processS12F17in(MsgDataHashtable msgDataHashtable) {
-        try {
-            MsgDataHashtable s12f18out = new MsgDataHashtable("s12f18out", mli.getDeviceId());
-
-            s12f18out.setTransactionId(msgDataHashtable.getTransactionId());
-            mli.sendSecondaryOutputMessage(s12f18out);
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+            } catch (Exception e) {
+                logger.error("Exception:", e);
+            }
         }
         return null;
     }
 
-    public Map processS12F19in(MsgDataHashtable msgDataHashtable) {
-        try {
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+    public String GpMqTest(int deviceId, String lot_id, String lot_count) {
         return null;
+    }
+
+
+    protected String getRecipeRemotePath(Recipe recipe) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        return recipeService.organizeUploadRecipePath(recipe);
     }
 }

@@ -108,7 +108,7 @@ public class EquipStatusPane {
 
     public void setCommLabelForegroundColorCommOn() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath()));
-        Image image = new Image(getClass().getResource(equipNodeBean.getIconPath()).toString());
+        Image image = new Image(getClass().getClassLoader().getResource(equipNodeBean.getIconPath()).toString());
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }

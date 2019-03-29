@@ -1,5 +1,10 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
+import cn.tzauto.generalDriver.api.EqpEventDealer;
+import cn.tzauto.generalDriver.api.SecsDriverFactory;
+import cn.tzauto.generalDriver.exceptions.*;
+import cn.tzauto.generalDriver.utils.DriverConfig;
+import cn.tzauto.generalDriver.utils.PropInitializer;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceType;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -19,20 +24,14 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.common.resolver.RecipeTransfer;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.DeviceNotRegisteredException;
-import cn.tzinfo.smartSecsDriver.exception.ParameterErrorException;
-import cn.tzinfo.smartSecsDriver.userapi.ErrorDataMessageDealer;
-import cn.tzinfo.smartSecsDriver.userapi.HsmsCommunicationFailureDealer;
-import cn.tzinfo.smartSecsDriver.userapi.MliFactory;
-import cn.tzinfo.smartSecsDriver.userapi.UpLevelAnouncer;
-import cn.tzinfo.smartSecsDriver.util.MliConfig;
-import cn.tzinfo.smartSecsDriver.util.PropertyServer;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -54,7 +53,7 @@ public class MultipleEquipHostManager {
 
     public boolean initializeSecs(List<DeviceInfo> deviceInfos)
             throws ParserConfigurationException, SAXException, IOException,
-            ParameterErrorException, DeviceNotRegisteredException, SecurityException,
+            SecurityException,
             IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
         equipHosts = new HashMap<String, EquipHost>();
@@ -66,12 +65,12 @@ public class MultipleEquipHostManager {
             return false;
         }
 
-        PropertyServer.debug = true;
-        PropertyServer.instance(); //load the jsip property into PropertyServer
+        PropInitializer.debug = true;
+        PropInitializer.instance(); //load the jsip property into PropertyServer
 
-        MliFactory.loadProperties(); //must be called
-        MliConfig.setDumpAllSettings(true);
-        MliConfig.printAllSettings();
+        SecsDriverFactory.loadProperties(); //must be called
+        DriverConfig.setDumpAllSettings(true);
+        DriverConfig.printAllSettings();
 
         for (EquipHost value : this.equipHosts.values()) {
             try {
@@ -86,7 +85,6 @@ public class MultipleEquipHostManager {
     }
 
     /**
-     *
      * @return init equipList
      * @throws ClassNotFoundException
      * @throws SecurityException
@@ -283,31 +281,31 @@ public class MultipleEquipHostManager {
 
     @SuppressWarnings("unchecked")
     private Object instanciateEquipHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String hostClassName, String deviceType, String deviceCode, int recipeType, String iconPath)
+                                        int localTcpPort, String remoteIpAddress, int remoteTcpPort,
+                                        String connectMode, String protocolType, String hostClassName, String deviceType, String deviceCode, int recipeType, String iconPath)
             throws ClassNotFoundException, SecurityException, NoSuchMethodException,
             IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
         Class hostClass = Class.forName(hostClassName);
         Constructor<?> cons = hostClass.getConstructor(
                 new Class[]{
-                    String.class,
-                    String.class,
-                    String.class,
-                    String.class,
-                    Integer.TYPE,
-                    String.class,
-                    Integer.TYPE,
-                    String.class,
-                    String.class,
-                    String.class,
-                    String.class,
-                    Integer.TYPE,
-                    String.class
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        Integer.TYPE,
+                        String.class,
+                        Integer.TYPE,
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        Integer.TYPE,
+                        String.class
                 });
         return (Object) cons.newInstance(
                 new Object[]{
-                    devId, equipmentId, smlFileFullPath, localIpAddress,
-                    localTcpPort, remoteIpAddress, remoteTcpPort, connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath
+                        devId, equipmentId, smlFileFullPath, localIpAddress,
+                        localTcpPort, remoteIpAddress, remoteTcpPort, connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath
                 });
 
     }
@@ -382,16 +380,11 @@ public class MultipleEquipHostManager {
      * 开启第二步，开启某个设备的SECS线程，开发发送和接收消息
      *
      * @param deviceId
-     * @param commFailAdapter
-     * @param errAdapter
-     * @param feedUpAdapter
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, HsmsCommunicationFailureDealer commFailAdapter,
-            ErrorDataMessageDealer errAdapter,
-            UpLevelAnouncer feedUpAdapter) throws NotInitializedException {
+    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException {
         if (equipHosts.get(deviceId) != null) {
-            equipHosts.get(deviceId).startSecs(commFailAdapter, errAdapter, feedUpAdapter);
+            equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
     }
 
@@ -521,7 +514,8 @@ public class MultipleEquipHostManager {
     /*
      * 获取指定recipe的详情（解析）
      */
-    public Map getRecipeParaFromDevice(String deviceId, String recipeName) {
+    public Map getRecipeParaFromDevice(String deviceCode, String recipeName) {
+        String deviceId = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode).getDeviceId();
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             if (equipHost.deviceType.contains("DEKHorizon03ix")) {
@@ -743,7 +737,6 @@ public class MultipleEquipHostManager {
      * 选中指定的Recipe
      *
      * @param deviceId
-     * @param recipe
      * @return
      */
     public String selectSpecificRecipe(String deviceId, String recipeName) {
@@ -850,10 +843,10 @@ public class MultipleEquipHostManager {
     /*
      * 获取设备使用recipe所需要监控参数的对应svid
      */
-    public Map getDeviceRcpParaCheck(String deviceId, List svIdList) {
+    public Map getDeviceRcpParaCheck(String deviceId, List svIdList) throws IOException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, BrokenProtocolException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.sendS1F3RcpParaCheckout(svIdList);
+            return equipHost.mli.sendS1F3out(svIdList, equipHost.svFormat);
         }
         Map resultMap = null;
         return resultMap;
@@ -1089,7 +1082,8 @@ public class MultipleEquipHostManager {
     public Map getEquipBladeLifeThreshold(String deviceId) {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.getBladeThreshold();
+//            return equipHost.getBladeThreshold();
+            return null;
         } else {
             return null;
         }
@@ -1106,16 +1100,16 @@ public class MultipleEquipHostManager {
         return null;
     }
 
-    public Map getSVShotCountValue(String deviceId) {
+    public Map getSVShotCountValue(String deviceId) throws IOException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, BrokenProtocolException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         Map resultMap = new HashMap();
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
-            List<String> svidlist = recipeService.searchShotSVByDeviceType(equipHost.getDeviceType());
+            List svidlist = recipeService.searchShotSVByDeviceType(equipHost.getDeviceType());
             sqlSession.close();
             if (svidlist != null && !svidlist.isEmpty()) {
-                resultMap = equipHost.sendS1F3SVShotCountCheckout(svidlist);
+                resultMap = equipHost.mli.sendS1F3out(svidlist, equipHost.svFormat);
             }
         } else {
 
@@ -1124,15 +1118,6 @@ public class MultipleEquipHostManager {
         return resultMap;
     }
 
-    public Map getRcpAndEqptState(String deviceId) {
-        if (equipHosts.get(deviceId) != null) {
-            EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.sendS1F3RcpAndStateCheck();
-        } else {
-            //  equipModels.get(deviceId).refreshInitState();
-            return null;
-        }
-    }
 
     public String changeEqptStateAndReturnDetail(String deviceId, String state) {
         String result = "";
@@ -1167,7 +1152,6 @@ public class MultipleEquipHostManager {
     }
 
     /**
-     *
      * @param deviceId
      * @param dataIdMap
      * @return
@@ -1423,22 +1407,22 @@ public class MultipleEquipHostManager {
 
     @SuppressWarnings("unchecked")
     private Object instanciateEquipModel(String devId, String remoteIpAddress, int remoteTcpPort,
-            String hostClassName, String deviceType, String iconPath, String equipRecipePath)
+                                         String hostClassName, String deviceType, String iconPath, String equipRecipePath)
             throws ClassNotFoundException, SecurityException, NoSuchMethodException,
             IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
         Class hostClass = Class.forName(hostClassName);
         Constructor<?> cons = hostClass.getConstructor(
                 new Class[]{
-                    String.class,
-                    String.class,
-                    Integer.TYPE,
-                    String.class,
-                    String.class,
-                    String.class
+                        String.class,
+                        String.class,
+                        Integer.TYPE,
+                        String.class,
+                        String.class,
+                        String.class
                 });
         return (Object) cons.newInstance(
                 new Object[]{
-                    devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath
+                        devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath
                 });
 
     }
@@ -1455,7 +1439,7 @@ public class MultipleEquipHostManager {
             logger.error("工控下未配置任何设备,启动已取消...");
             return null;
         }
-//        GlobalConstants.stage.deviceInfos = deviceInfoList;
+        GlobalConstants.deviceInfos = deviceInfoList;
         List<DeviceInfo> deviceInfoSecs = new ArrayList<>();
         List<DeviceInfo> deviceInfoIsecs = new ArrayList<>();
         for (DeviceInfo deviceInfo : deviceInfoList) {
@@ -1627,7 +1611,6 @@ public class MultipleEquipHostManager {
     }
 
     /**
-     *
      * @param deviceId
      * @param dataIdMap
      * @return
@@ -1667,5 +1650,23 @@ public class MultipleEquipHostManager {
             UiLogUtil.appendLog2EventTab(deviceCode, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
             return recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description"));
         }
+    }
+
+    public DeviceInfo getDeviceInfo(String deviceId, String deviceCode) {
+        if (deviceId != null) {
+            for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
+                if (deviceId.equals(deviceInfo.getDeviceId())) {
+                    return deviceInfo;
+                }
+            }
+        }
+        if (deviceCode != null) {
+            for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
+                if (deviceCode.equals(deviceInfo.getDeviceCode())) {
+                    return deviceInfo;
+                }
+            }
+        }
+        return null;
     }
 }

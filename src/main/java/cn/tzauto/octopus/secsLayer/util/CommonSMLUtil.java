@@ -1,6 +1,8 @@
 package cn.tzauto.octopus.secsLayer.util;
 
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +13,7 @@ import java.util.List;
 public class CommonSMLUtil {
 
     public static ArrayList getECSVData(List<SecsItem> list) {
-        ArrayList<Object> listtmp = new ArrayList<>();
+        ArrayList listtmp = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {//     
             short tmp = (short) list.get(i).getFormatCode();
             if (tmp == SecsItem.SECS_1BYTE_UNSIGNED_INTEGER
