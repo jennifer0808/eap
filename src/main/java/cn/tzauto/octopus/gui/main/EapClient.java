@@ -101,7 +101,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 System.exit(0);
             }
         });
-
+        System.out.println(111);
         ProgressIndicator progressIndicator = new ProgressIndicator();
 
         Stage window = new Stage();

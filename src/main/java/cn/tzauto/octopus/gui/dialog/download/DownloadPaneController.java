@@ -81,7 +81,7 @@ public class DownloadPaneController implements Initializable {
         } catch (IOException ex) {
         }
         stage.setResizable(false);
-        Image image = new Image(DownloadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+        Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         Scene scene = new Scene(downloadPane);
         stage.setScene(scene);

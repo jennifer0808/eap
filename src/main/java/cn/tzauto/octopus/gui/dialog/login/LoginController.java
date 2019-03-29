@@ -5,12 +5,6 @@
  */
 package cn.tzauto.octopus.gui.dialog.login;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
-
-import java.io.IOException;
-
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.main.EapMainController;
 import javafx.application.Platform;
@@ -29,6 +23,10 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
 

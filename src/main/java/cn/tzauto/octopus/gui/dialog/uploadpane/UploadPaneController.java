@@ -118,6 +118,7 @@ public class UploadPaneController implements Initializable {
         fillComboBox(rcpMngPane);
         Stage stage = new Stage();
         Image image = new Image(UploadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+
         stage.getIcons().add(image);
         stage.setTitle("Recipe上传");
         Scene scene = new Scene(rcpMngPane);
