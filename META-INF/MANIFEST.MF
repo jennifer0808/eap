@@ -1,20 +1,31 @@
 Manifest-Version: 1.0
-Class-Path: slf4j-log4j12-1.7.2.jar mybatis-3.2.8.jar mchange-commons-
- java-0.2.11.jar mqtt-client-1.3.jar jackson-core-2.9.8.jar spring-con
- text-3.0.7.RELEASE.jar quartz-2.3.0.jar jackson-module-jaxb-annotatio
- ns-2.9.8.jar fastjson-1.2.47.jar slf4j-api-1.7.25.jar netty-all-4.1.2
- 2.Final.jar spring-expression-3.0.7.RELEASE.jar druid-1.1.10.jar spri
- ng-aop-3.0.7.RELEASE.jar activemq-core-5.7.0.jar commons-compress-1.1
- 8.jar HikariCP-java6-2.3.13.jar commons-codec-1.12.jar geronimo-j2ee-
- management_1.1_spec-1.0.1.jar aopalliance-1.0.jar spring-core-3.0.7.R
- ELEASE.jar commons-discovery-0.5.jar axis-1.4.jar log4j-1.2.17.jar ja
- ckson-annotations-2.9.0.jar activemq-protobuf-1.1.jar c3p0-0.9.5.2.ja
- r geronimo-jta_1.0.1B_spec-1.0.1.jar jasypt-1.9.0.jar mysql-connector
- -java-5.1.46.jar commons-pool-1.6.jar catilla-1.0-SNAPSHOT.jar geroni
- mo-jms_1.1_spec-1.1.1.jar hawtdispatch-transport-1.11.jar axis-jaxrpc
- -1.4.jar spring-beans-3.0.7.RELEASE.jar activemq-pool-5.7.0.jar jacks
- on-databind-2.9.8.jar spring-asm-3.0.7.RELEASE.jar hawtdispatch-1.11.
- jar commons-logging-1.1.1.jar commons-lang3-3.8.1.jar hawtbuf-1.9.jar
-  commons-net-3.6.jar kahadb-5.7.0.jar
+Class-Path: axis-1.4.jar xmlschema-core-2.2.1.jar HikariCP-java6-2.3.1
+ 3.jar cxf-rt-transports-http-jetty-3.1.6.jar activemq-protobuf-1.1.ja
+ r mchange-commons-java-0.2.11.jar jackson-databind-2.9.8.jar fastjson
+ -1.2.47.jar xml-resolver-1.2.jar cxf-rt-ws-addr-3.1.6.jar druid-1.1.1
+ 0.jar jetty-server-9.2.15.v20160210.jar cxf-core-3.1.6.jar cxf-rt-dat
+ abinding-jaxb-3.1.6.jar geronimo-jta_1.0.1B_spec-1.0.1.jar slf4j-log4
+ j12-1.7.2.jar jackson-annotations-2.9.0.jar jaxb-impl-2.2.11.jar asm-
+ 5.0.4.jar jetty-security-9.2.15.v20160210.jar jackson-module-jaxb-ann
+ otations-2.9.8.jar netty-all-4.1.22.Final.jar spring-aop-3.0.7.RELEAS
+ E.jar cxf-rt-frontend-simple-3.1.6.jar hawtdispatch-transport-1.11.ja
+ r neethi-3.0.3.jar aopalliance-1.0.jar cxf-rt-transports-http-3.1.6.j
+ ar hawtbuf-1.9.jar mqtt-client-1.3.jar cxf-rt-wsdl-3.1.6.jar spring-c
+ ore-3.0.7.RELEASE.jar cxf-rt-bindings-soap-3.1.6.jar spring-expressio
+ n-3.0.7.RELEASE.jar stax2-api-3.1.4.jar geronimo-jms_1.1_spec-1.1.1.j
+ ar catilla-1.0-SNAPSHOT.jar commons-codec-1.12.jar jetty-continuation
+ -9.2.15.v20160210.jar axis-jaxrpc-1.4.jar spring-beans-3.0.7.RELEASE.
+ jar activemq-core-5.7.0.jar cxf-rt-frontend-jaxws-3.1.6.jar jetty-htt
+ p-9.2.15.v20160210.jar commons-discovery-0.5.jar jetty-io-9.2.15.v201
+ 60210.jar log4j-1.2.17.jar activemq-pool-5.7.0.jar commons-lang3-3.8.
+ 1.jar cxf-rt-ws-policy-3.1.6.jar commons-pool-1.6.jar hawtdispatch-1.
+ 11.jar c3p0-0.9.5.2.jar javax.servlet-api-3.1.0.jar spring-context-3.
+ 0.7.RELEASE.jar jackson-core-2.9.8.jar woodstox-core-asl-4.4.1.jar ws
+ dl4j-1.6.3.jar jetty-util-9.2.15.v20160210.jar mysql-connector-java-5
+ .1.46.jar jaxb-core-2.2.11.jar commons-logging-1.1.1.jar cxf-rt-bindi
+ ngs-xml-3.1.6.jar mybatis-3.2.8.jar spring-asm-3.0.7.RELEASE.jar gero
+ nimo-j2ee-management_1.1_spec-1.0.1.jar kahadb-5.7.0.jar commons-net-
+ 3.6.jar commons-compress-1.18.jar jasypt-1.9.0.jar quartz-2.3.0.jar s
+ lf4j-api-1.7.25.jar
 Main-Class: cn.tzauto.octopus.gui.main.EapClient
 

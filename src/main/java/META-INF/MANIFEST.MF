@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: cn.tzauto.octopus.gui.main.EapClient
-

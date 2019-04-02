@@ -26,6 +26,7 @@ import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.common.ws.WSUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
@@ -1224,8 +1225,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             UiLogUtil.appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
 
-//            ack[0] = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
-            byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
+            byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
+//            byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
             if (ack == '0') {//上传成功
                 UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
                 mli.sendS6F12out((byte) 0, data.getTransactionId());
@@ -1652,7 +1653,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map stripIDformatMap = new HashMap();
         stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
         byte objack = 0;
-        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
+        String stripMapData = WSUtility.binGet(stripId, deviceCode);
+//        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
 //        String stripMapData = "<stripmaptest12312313";
         if (stripMapData == null) {//stripId不存在
             out = new DataMsgMap("s14f2outNoExist", mli.getDeviceId());

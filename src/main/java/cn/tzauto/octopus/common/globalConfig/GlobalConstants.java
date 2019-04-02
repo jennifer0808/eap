@@ -14,6 +14,8 @@ import cn.tzauto.octopus.biz.device.domain.ClientInfo;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.endpoint.dynamic.DynamicClientFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -24,9 +26,6 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
-/**
- * @author gavin
- */
 public class GlobalConstants {
 
     private static Properties prop;
@@ -129,6 +128,8 @@ public class GlobalConstants {
 
     public static String ISECS_STATUS_CONFIRM = "";
     public static List<DeviceInfo> deviceInfos;
+    public static DynamicClientFactory factory = null;
+    public static Client mapBinClient = null;
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -211,14 +212,10 @@ public class GlobalConstants {
         }
 
         if (getProperty("SERVER_URL") != null) {
-//                String alarmUrl = getProperty("SERVER_URL") + getProperty("AlarmLogWSUrl");
-//                String sflogUrl = getProperty("SERVER_URL") + getProperty("SfLogWSUrl");
-//            String mapBinUrl = getProperty("SERVER_URL") + getProperty("Server2DMesUrl");
-//                String codeTransferCodeUrl =getProperty("SERVER_URL") +getProperty("CodeTransferCodeUrl");
-//                String serverDeviceUrl =getProperty("SERVER_URL") + getProperty("ServerDeviceUrl");
-//                String recipeWSUrl = getProperty("SERVER_URL") + getProperty("ServerRecipeWSUrl");
-//                String idGenWSUrl = getProperty("SERVER_URL") + getProperty("IdGenWSUrl");
-
+            String mapBinUrl = getProperty("SERVER_URL") + getProperty("Server2DMesUrl");
+            if (factory != null && !isLocalMode) {
+                mapBinClient = factory.createClient(mapBinUrl);
+            }
         }
         if (getProperty("REDUNDANCYDATA_SAVED_DAYS") != null) {
             redundancyDataSavedDays = getProperty("REDUNDANCYDATA_SAVED_DAYS");
@@ -226,7 +223,6 @@ public class GlobalConstants {
         if (getProperty("ISECS_STATUS_CONFIRM") != null) {
             ISECS_STATUS_CONFIRM = getProperty("ISECS_STATUS_CONFIRM");
         }
-
         return true;
     }
 
@@ -234,7 +230,7 @@ public class GlobalConstants {
         prop = new Properties();
 
         try {
-//            InputStream in = new BufferedInputStream (new FileInputStream(CONFIG_FILE_PATH)); 
+            factory = DynamicClientFactory.newInstance();
             InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream(CONFIG_FILE_PATH);
             prop.load(in);
 

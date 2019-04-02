@@ -7,6 +7,7 @@ import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -75,14 +76,14 @@ public class MessageProcess implements MessageHandler {
                 return true;
             } else {
                 if (!"".equals(deviceTypeId)) {
-                    for (DeviceInfo deviceInfo : GlobalConstants.stage.deviceInfos) {
+                    for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
                         if (deviceInfo.getDeviceTypeId().equals(deviceTypeId)) {
                             return true;
                         }
                     }
                 }
                 if (!"".equals(deviceCode)) {
-                    for (DeviceInfo deviceInfo : GlobalConstants.stage.deviceInfos) {
+                    for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
                         if (deviceInfo.getDeviceCode().equals(deviceCode)) {
                             return true;
                         }

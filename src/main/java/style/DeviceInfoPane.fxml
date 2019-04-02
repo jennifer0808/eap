@@ -10,7 +10,7 @@
 
 <AnchorPane id="AnchorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="350.0" prefWidth="500.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController">
     <stylesheets>
-        <URL value="@deviceinfopane.css" />
+        <URL value="@style/deviceinfopane.cssne.css" />
     </stylesheets>
    <children>
       <Label layoutX="26.0" layoutY="28.0" text="%deviceInfo">

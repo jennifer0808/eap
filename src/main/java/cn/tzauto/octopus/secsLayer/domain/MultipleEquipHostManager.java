@@ -50,6 +50,7 @@ public class MultipleEquipHostManager {
     private EquipHost equipHost;
     private ConcurrentHashMap<String, EquipModel> equipModels;
     public Map<String, DeviceType> deviceTypeDic;
+    public List<DeviceInfo> deviceInfos;
 
     public boolean initializeSecs(List<DeviceInfo> deviceInfos)
             throws ParserConfigurationException, SAXException, IOException,
@@ -59,6 +60,7 @@ public class MultipleEquipHostManager {
         equipHosts = new HashMap<String, EquipHost>();
         boolean pass = false;
         pass = loadDeviceInfoAndInstanciateEquips(deviceInfos);
+        this.deviceInfos = deviceInfos;
         if (!pass) {
             logger.fatal("Error during loading host.xnl file - returned false. Exit!");
             //System.out.println("Error during loading host.xnl file - returned false. Exit!");
