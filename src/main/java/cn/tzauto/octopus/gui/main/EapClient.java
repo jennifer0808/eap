@@ -92,7 +92,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
     public static HashMap<String, EquipmentEventDealer> watchDogs;
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) {
 //        server = Server.oneServer();
 
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -101,7 +101,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 System.exit(0);
             }
         });
-        System.out.println(111);
         ProgressIndicator progressIndicator = new ProgressIndicator();
 
         Stage window = new Stage();
@@ -164,22 +163,22 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     return;
                 }
                 //查询数据库元素，显示设备信息
-                try {
-                    hostManager = new MultipleEquipHostManager();
+//                try {
+                hostManager = new MultipleEquipHostManager();
 
-                    if (hostManager.initialize()) {
-                        logger.info("加载工控下配置设备成功...");
-                    } else {
-                        logger.error("加载工控下配置设备失败...");
-                        return;
-                    }
-
-                    equipHosts = hostManager.getAllEquipHosts();
-                    equipModels = hostManager.getAllEquipModels();
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                    System.exit(0);
+                if (hostManager.initialize()) {
+                    logger.info("加载工控下配置设备成功...");
+                } else {
+                    logger.error("加载工控下配置设备失败...");
+                    return;
                 }
+
+                equipHosts = hostManager.getAllEquipHosts();
+                equipModels = hostManager.getAllEquipModels();
+//                } catch (Exception e) {
+//                    logger.error("Exception:", e);
+//                    System.exit(0);
+//                }
 
                 //显示界面
                 //渲染设备信息界面
@@ -246,8 +245,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     GlobalConstants.sendStartLog2Server(null);
                 }
 
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (Exception ex) {
+                logger.error("Exception:", ex);
+                window.close();
+                stage.close();
+                System.exit(0);
             }
             window.close();
         });
@@ -494,8 +496,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
         }
     }
-
-
 
 
     public TextArea getTX_EventLog() {
