@@ -5,10 +5,7 @@
  */
 package cn.tzauto.octopus.secsLayer.util;
 
-import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
-import cn.tzauto.generalDriver.exceptions.T3TimeOutException;
-import cn.tzauto.generalDriver.exceptions.T6TimeOutException;
-import cn.tzauto.generalDriver.exceptions.WrongStateTransitionNumberException;
+import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
@@ -26,7 +23,7 @@ public class DeviceComm {
     private static final Logger logger = Logger.getLogger(DeviceComm.class);
 
     public static void startHost(final EquipNodeBean equipNodeBean) {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getEquipName());
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
 //        EquipmentEventDealer watchDogOld = EAPGuiView.removeWatchDog(equipNodeBean.getDeviceIdProperty());
 //        if (watchDogOld != null && !watchDogOld.isDone()) { // still runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.
@@ -63,6 +60,8 @@ public class DeviceComm {
             e.printStackTrace();
         } catch (WrongStateTransitionNumberException e) {
             e.printStackTrace();
+        } catch (HsmsProtocolNotSelectedException e) {
+            e.printStackTrace();
         }
         EapClient.addWatchDog(deviceId, equipmentEventDealer);
 //                return null;
@@ -73,7 +72,7 @@ public class DeviceComm {
 
     public static void restartHost(EquipNodeBean equipNodeBean) {
         boolean needRestart = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getEquipName());
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
         EquipmentEventDealer watchDog = EapClient.getWatchDog(equipNodeBean.getDeviceIdProperty());
 //        if (watchDog == null || watchDog.isDone()) { // not runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.

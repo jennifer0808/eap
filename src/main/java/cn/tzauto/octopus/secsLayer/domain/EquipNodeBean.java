@@ -2,6 +2,7 @@ package cn.tzauto.octopus.secsLayer.domain;
 
 import java.beans.*;
 import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
 public class EquipNodeBean implements Serializable {
@@ -9,21 +10,17 @@ public class EquipNodeBean implements Serializable {
     public static final String EQUIP_STATE_PROPERTY = "EquipStateProperty";
     public static final String EQUIP_PANEL_PROPERTY = "EquipPanelProperty";
     private PropertyChangeSupport propertySupport;
-    private String equipName;
-    //private String equipIdProperty;
+    private String deviceCode;
+    private String deviceType;
     private String deviceIdProperty;
     private boolean startUpProperty;
-    private String smlFilePathProperty;
-    private String localIPAddressProperty;
-    private int localTCPPortProperty;
-    private String remoteIPAddressProperty;
-    private int remoteTCPPortProperty;
+    private String iPAddressProperty;
+    private int tCPPortProperty;
     private String connectModeProperty; //only "active" or "passive" allowed, default is "active"
-    private String protocolTypeProperty;//only "hsms" or "rs232" allowed, default is "hsms"
+    private String protocolTypeProperty;
     private int alarmProperty;//0 no alarm  1 little alarm  2 alarm and hold
     private EquipState equipStateProperty; //if equipment state is changed, this instance must be replaced.
     private static final Logger logger = Logger.getLogger(EquipNodeBean.class.getName());
-    private String iconPath;
     private EquipPanel equipPanelProperty;
 
     public EquipNodeBean() {
@@ -99,75 +96,6 @@ public class EquipNodeBean implements Serializable {
         this.startUpProperty = startUpProperty;
     }
 
-    /**
-     * @return the smlFilePathProperty
-     */
-    public String getSmlFilePathProperty() {
-        return smlFilePathProperty;
-    }
-
-    /**
-     * @param smlFilePathProperty the smlFilePathProperty to set
-     */
-    public void setSmlFilePathProperty(String smlFilePathProperty) {
-        this.smlFilePathProperty = smlFilePathProperty;
-    }
-
-    /**
-     * @return the localIPAddressProperty
-     */
-    public String getLocalIPAddressProperty() {
-        return localIPAddressProperty;
-    }
-
-    /**
-     * @param localIPAddressProperty the localIPAddressProperty to set
-     */
-    public void setLocalIPAddressProperty(String localIPAddressProperty) {
-        this.localIPAddressProperty = localIPAddressProperty;
-    }
-
-    /**
-     * @return the localTCPPortProperty
-     */
-    public int getLocalTCPPortProperty() {
-        return localTCPPortProperty;
-    }
-
-    /**
-     * @param localTCPPortProperty the localTCPPortProperty to set
-     */
-    public void setLocalTCPPortProperty(int localTCPPortProperty) {
-        this.localTCPPortProperty = localTCPPortProperty;
-    }
-
-    /**
-     * @return the remoteIPAddressProperty
-     */
-    public String getRemoteIPAddressProperty() {
-        return remoteIPAddressProperty;
-    }
-
-    /**
-     * @param remoteIPAddressProperty the remoteIPAddressProperty to set
-     */
-    public void setRemoteIPAddressProperty(String remoteIPAddressProperty) {
-        this.remoteIPAddressProperty = remoteIPAddressProperty;
-    }
-
-    /**
-     * @return the remoteTCPPortProperty
-     */
-    public int getRemoteTCPPortProperty() {
-        return remoteTCPPortProperty;
-    }
-
-    /**
-     * @param remoteTCPPortProperty the remoteTCPPortProperty to set
-     */
-    public void setRemoteTCPPortProperty(int remoteTCPPortProperty) {
-        this.remoteTCPPortProperty = remoteTCPPortProperty;
-    }
 
     /**
      * @return the connectModeProperty
@@ -197,23 +125,10 @@ public class EquipNodeBean implements Serializable {
         this.protocolTypeProperty = protocolTypeProperty;
     }
 
-    /**
-     * @return the equipName
-     */
-    public String getEquipName() {
-        return equipName;
-    }
-
-    /**
-     * @param equipName the equipName to set
-     */
-    public void setEquipName(String equipName) {
-        this.equipName = equipName;
-    }
 
     @Override
     public String toString() {
-        return this.equipName + " dev id " + this.deviceIdProperty;
+        return this.deviceCode + " dev id " + this.deviceIdProperty;
     }
 
     /**
@@ -231,11 +146,35 @@ public class EquipNodeBean implements Serializable {
         equipStateProperty.setAlarmState(alarmProperty);
     }
 
-    public String getIconPath() {
-        return iconPath;
+    public String getiPAddressProperty() {
+        return iPAddressProperty;
     }
 
-    public void setIconPath(String iconPath) {
-        this.iconPath = iconPath;
+    public void setiPAddressProperty(String iPAddressProperty) {
+        this.iPAddressProperty = iPAddressProperty;
+    }
+
+    public int gettCPPortProperty() {
+        return tCPPortProperty;
+    }
+
+    public void settCPPortProperty(int tCPPortProperty) {
+        this.tCPPortProperty = tCPPortProperty;
+    }
+
+    public String getDeviceCode() {
+        return deviceCode;
+    }
+
+    public void setDeviceCode(String deviceCode) {
+        this.deviceCode = deviceCode;
+    }
+
+    public String getDeviceType() {
+        return deviceType;
+    }
+
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
     }
 }

@@ -108,15 +108,15 @@ public class EquipStatusPane {
 
     public void setCommLabelForegroundColorCommOn() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath()));
-        Image image = new Image(getClass().getClassLoader().getResource(equipNodeBean.getIconPath()).toString());
+        Image image = new Image(getClass().getClassLoader().getResource(equipNodeBean.getDeviceType() + ".jpg").toString());
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }
 
     public void setCommLabelForegroundColorCommOff() {
-        //TODO 改变设备图片
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath().replaceAll(".jpg", "-commoff.jpg")));
-        Image image = new Image(getClass().getClassLoader().getResource(equipNodeBean.getIconPath().replaceAll(".jpg", "-commoff.jpg")).toString());
+        String equipIconName = equipNodeBean.getDeviceType() + ".jpg";
+        Image image = new Image(getClass().getClassLoader().getResource(equipIconName.replaceAll(".jpg", "-commoff.jpg")).toString());
         this.equipImg.setImage(image);
 
         this.P_EquipPane.setBackground(bgGray);

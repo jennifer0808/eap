@@ -4,10 +4,7 @@
  */
 package cn.tzauto.octopus.common.util.scheduler.job;
 
-import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
-import cn.tzauto.generalDriver.exceptions.T3TimeOutException;
-import cn.tzauto.generalDriver.exceptions.T6TimeOutException;
-import cn.tzauto.generalDriver.exceptions.WrongStateTransitionNumberException;
+import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 
@@ -38,7 +35,7 @@ public class ScanHostTask implements Job {
 //        hostsManager.testComm();
         // Todo 扫描所有Host线程，如果中断，重新启动
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getEquipName());
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                                    
             String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceIdProperty();
             //start the Host Thread
@@ -51,9 +48,9 @@ public class ScanHostTask implements Job {
                 hostsManager.startHostThread(deviceId);
                 try {
                     hostsManager.startSECS(deviceId, equipmentEventDealer);
-                    System.out.println(GlobalConstants.stage.equipBeans.get(i).getEquipName() + " has  been restart!");
+                    System.out.println(GlobalConstants.stage.equipBeans.get(i).getDeviceCode() + " has  been restart!");
                 } catch (NotInitializedException e1) {
-                    System.out.println(GlobalConstants.stage.equipBeans.get(i).getEquipName() + " has restarted failure");
+                    System.out.println(GlobalConstants.stage.equipBeans.get(i).getDeviceCode() + " has restarted failure");
                 } catch (InvalidHsmsHeaderDataException e) {
                     e.printStackTrace();
                 } catch (T6TimeOutException e) {
@@ -63,6 +60,8 @@ public class ScanHostTask implements Job {
                 } catch (T3TimeOutException e) {
                     e.printStackTrace();
                 } catch (WrongStateTransitionNumberException e) {
+                    e.printStackTrace();
+                } catch (HsmsProtocolNotSelectedException e) {
                     e.printStackTrace();
                 }
                 EapClient.addWatchDog(deviceId, equipmentEventDealer);

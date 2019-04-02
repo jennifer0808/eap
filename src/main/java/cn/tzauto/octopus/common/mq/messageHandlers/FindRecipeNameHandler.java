@@ -50,7 +50,6 @@ public class FindRecipeNameHandler implements MessageHandler {
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             Map equipState = hostManager.getEquipInitState(deviceInfo.getDeviceId());
-            //TODO 服务端在此应该传来要核对的RecipeName 方便需要时直接ppselect
             if (equipState == null) {
                 recipeName = deviceInfoExt.getRecipeName();
             } else {

@@ -141,7 +141,7 @@ public class UploadPaneController implements Initializable {
         ObservableList deviceCodeList = FXCollections.observableArrayList();
 
         for (EquipNodeBean equipNodeBean : GlobalConstants.stage.equipBeans) {
-            deviceCodeList.add(equipNodeBean.getEquipName());
+            deviceCodeList.add(equipNodeBean.getDeviceCode());
         }
         CMB_deviceCode.setItems(deviceCodeList);
     }

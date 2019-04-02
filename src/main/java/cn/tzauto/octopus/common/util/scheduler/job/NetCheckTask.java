@@ -15,12 +15,12 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 /**
- *
  * @author rain
  */
 public class NetCheckTask implements Job {
@@ -41,13 +41,13 @@ public class NetCheckTask implements Job {
                 }
                 if (src != null) {
                     if (src.getEquipPanelProperty().getNetState() == 1) {
-                        logger.info(equipHost.getRemoteIPAddress() + "暂未发现网络异常+++++++++++++++++++++++++++");
+                        logger.info(equipHost.iPAddress + "暂未发现网络异常+++++++++++++++++++++++++++");
                         checkNet(equipHost);
                         if (GlobalConstants.restartMap.containsKey(equipHost.getDeviceId())) {
                             GlobalConstants.restartMap.remove(equipHost.getDeviceId());
                         }
                     } else {
-                        logger.info(equipHost.getRemoteIPAddress() + "断网啦，正在尝试重连！！+++++++++++++++++++++++++++");
+                        logger.info(equipHost.iPAddress + "断网啦，正在尝试重连！！+++++++++++++++++++++++++++");
                         if (!GlobalConstants.restartMap.containsKey(equipHost.getDeviceId())) {
                             DeviceComm.restartHost(src);
                             GlobalConstants.restartMap.put(equipHost.getDeviceId(), Boolean.TRUE);
@@ -65,7 +65,7 @@ public class NetCheckTask implements Job {
         try {
             Runtime runtime = Runtime.getRuntime();
             boolean errorFlag = false;
-            String tracertString = "ping " + equipHost.getRemoteIPAddress();
+            String tracertString = "ping " + equipHost.iPAddress;
             Process process = runtime.exec(tracertString);
             process.waitFor();
             InputStream inputStream = process.getInputStream();

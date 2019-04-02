@@ -275,7 +275,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 new Comparator<EquipNodeBean>() {
                     @Override
                     public int compare(EquipNodeBean s1, EquipNodeBean s2) {
-                        return s1.getEquipName().compareToIgnoreCase(s2.getEquipName());
+                        return s1.getDeviceCode().compareToIgnoreCase(s2.getDeviceCode());
                     }
                 });
         for (EquipNodeBean value : equipBeans) {
@@ -295,7 +295,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 for (int i = 0; i < equipBeans.size(); i++) {
                     String protocol = equipBeans.get(i).getProtocolTypeProperty();
                     if (!"ISECS".equals(protocol)) {
-                        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getEquipName());
+                        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
                         startComByEqp(equipBeans.get(i));
                     }
                 }
@@ -311,7 +311,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             @Override
             public void run() {
                 for (int i = 0; i < equipBeans.size(); i++) {
-                    MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getEquipName());
+                    MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
                     startComByEqp(equipBeans.get(i));
                 }
             }
@@ -325,7 +325,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //            @Override
 //            public void run() {
         for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getEquipName());
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
             startIsecsByEqp(equipBeans.get(i));
         }
 //            }
@@ -348,7 +348,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
             //"/cn/tzinfo/htauto/octopus/gui/main/resources/Fico-AMS-W.jpg"n
 //            equip.setDeviceCode(value.getEquipName());
-            equipStatusPane.setDeviceCodeAndDeviceType(value.getEquipName());
+            equipStatusPane.setDeviceCodeAndDeviceType(value.getDeviceCode());
             if (value.getEquipStateProperty().isCommOn()) {
                 equipStatusPane.setCommLabelForegroundColorCommOn();
             } else {
@@ -356,7 +356,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
             equipStatusPane.setRunStatus(value.getEquipStateProperty().getEventString());
             equipStatusPane.setRunningRcp(value.getEquipStateProperty().getRunningRcp());
-            equipStatusPanes.put(value.getEquipName(), equipStatusPane);
+            equipStatusPanes.put(value.getDeviceCode(), equipStatusPane);
             flowPane1.getChildren().add(equipStatusPane.equipStatusPane);
         }
         scrollPane.setContent(flowPane1);
@@ -395,7 +395,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             hostManager.startHostThread(deviceId);
             hostManager.startSECS(deviceId, eqpEventDealer);
         } catch (Exception e1) {
-            logger.fatal(equipNodeBean.getEquipName() + " has not been initialized!", e1);
+            logger.fatal(equipNodeBean.getDeviceCode() + " has not been initialized!", e1);
         }
 
     }
@@ -409,7 +409,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         try {
             EquipModel equipModel = equipModels.get(equipNodeBean.getDeviceIdProperty());
             if (equipModel.iSecsHost.iSecsConnection.getSocketClient() != null && !equipModel.isInterrupted()) {
-//                equipModel.getEquipRealTimeState();
                 equipModel.start();
             }
         } catch (Exception e) {
@@ -425,7 +424,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
         Object oldValue = propertyChangeEvent.getOldValue();
         if (source instanceof EquipNodeBean) {
             EquipNodeBean src = (EquipNodeBean) source;
-            String deviceCode = src.getEquipName();
+            String deviceCode = src.getDeviceCode();
             if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_PANEL_PROPERTY)) {
                 EquipPanel newPanel = (EquipPanel) newValue;
                 EquipStatusPane equipStatusPane = this.equipStatusPanes.get(deviceCode);

@@ -260,7 +260,7 @@
                     </rowConstraints>
                     <children>
                         <Label prefHeight="15.0" prefWidth="524.0"
-                               text="Copyright 2015-2017 华天科技（西安）有限公司 - Powered By 南京泰治自动化技术有限公司"
+                               text="Copyright 南京泰治自动化技术有限公司"
                                GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                         <Label fx:id="L_Clock" mnemonicParsing="false" prefHeight="19.0" prefWidth="128.0" text="time"
                                GridPane.columnIndex="2" GridPane.rowIndex="1"/>

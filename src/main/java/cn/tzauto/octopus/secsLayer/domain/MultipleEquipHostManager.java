@@ -265,8 +265,8 @@ public class MultipleEquipHostManager {
 
             if (!skip) {
                 EquipHost equip = (EquipHost) instanciateEquipHost(
-                        String.valueOf(deviceId), deviceName, smlPath, ipAddress, localTcpPort, remoteIp,
-                        remoteTcpPort, activeMode, protocolType, hostJavaClass, deviceType, deviceCode, recipeType, iconPath);
+                        String.valueOf(deviceId), remoteIp,
+                        remoteTcpPort, activeMode, hostJavaClass, deviceType, deviceCode);
                 equip.setStartUp(isStart);
                 equip.setDaemon(true);
                 equipHosts.put(String.valueOf(deviceId), equip);
@@ -280,9 +280,8 @@ public class MultipleEquipHostManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Object instanciateEquipHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                                        int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                                        String connectMode, String protocolType, String hostClassName, String deviceType, String deviceCode, int recipeType, String iconPath)
+    private Object instanciateEquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
+                                        String connectMode, String hostClassName, String deviceType, String deviceCode)
             throws ClassNotFoundException, SecurityException, NoSuchMethodException,
             IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
         Class hostClass = Class.forName(hostClassName);
@@ -290,22 +289,14 @@ public class MultipleEquipHostManager {
                 new Class[]{
                         String.class,
                         String.class,
-                        String.class,
-                        String.class,
-                        Integer.TYPE,
-                        String.class,
                         Integer.TYPE,
                         String.class,
                         String.class,
-                        String.class,
-                        String.class,
-                        Integer.TYPE,
                         String.class
                 });
         return (Object) cons.newInstance(
                 new Object[]{
-                        devId, equipmentId, smlFileFullPath, localIpAddress,
-                        localTcpPort, remoteIpAddress, remoteTcpPort, connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath
+                        devId, remoteIpAddress, remoteTcpPort, connectMode, deviceType, deviceCode
                 });
 
     }
@@ -372,7 +363,7 @@ public class MultipleEquipHostManager {
             } else {
                 equip.start();
             }
-            logger.info("Equipment Host " + equip.getEquipId() + " has been started.");
+            logger.info("Equipment Host " + equip.deviceCode + " has been started.");
         }
     }
 
@@ -382,7 +373,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException {
+    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
@@ -1193,28 +1184,23 @@ public class MultipleEquipHostManager {
         ArrayList<EquipNodeBean> result = new ArrayList<>();
         for (EquipHost value : equipHosts.values()) {
             EquipNodeBean nBean = new EquipNodeBean(value.getEquipState());
-            //nBean.setEquipIdProperty(value.getEquipId());
             nBean.setDeviceIdProperty(String.valueOf(value.getDeviceId()));
             nBean.setStartUpProperty(value.isStartUp());
-            nBean.setSmlFilePathProperty(value.getSmlFilePath());
-            nBean.setLocalIPAddressProperty(value.getLocalIPAddress());
-            nBean.setLocalTCPPortProperty(value.getLocalTCPPort());
-            nBean.setRemoteIPAddressProperty(value.getRemoteIPAddress());
-            nBean.setRemoteTCPPortProperty(value.getRemoteTCPPort());
+            nBean.setiPAddressProperty(value.iPAddress);
+            nBean.settCPPortProperty(value.tCPPort);
             nBean.setConnectModeProperty(value.getConnectMode());
-            nBean.setProtocolTypeProperty(value.getProtocolType());
-            nBean.setEquipName(value.getDeviceCode());
-            nBean.setIconPath(value.getIconPath());
+            nBean.setDeviceCode(value.getDeviceCode());
+            nBean.setDeviceType(value.deviceType);
+            nBean.setProtocolTypeProperty("SECS");
             result.add(nBean);
         }
         for (EquipModel value : equipModels.values()) {
             EquipNodeBean nBean = new EquipNodeBean(value.getEquipState());
-            //nBean.setEquipIdProperty(value.getEquipId());
             nBean.setDeviceIdProperty(value.deviceCode);
             nBean.setStartUpProperty(value.isStartUp());
             nBean.setProtocolTypeProperty("ISECS");
-            nBean.setEquipName(value.deviceCode);
-            nBean.setIconPath(value.getIconPath());
+            nBean.setDeviceCode(value.deviceCode);
+            nBean.setDeviceType(value.deviceType);
             result.add(nBean);
         }
         logger.info("Extracted " + result.size() + " EquipNodeBean objects.");
@@ -1225,11 +1211,9 @@ public class MultipleEquipHostManager {
             NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
         equipModels = new ConcurrentHashMap<String, EquipModel>();
         boolean pass = false;
-        //pass = loadXmlAndInstanciateEquips();
         pass = instanciateEquipModels(deviceInfos);
         if (!pass) {
             logger.fatal("Error during loading host.xnl file - returned false. Exit!");
-            //System.out.println("Error during loading host.xnl file - returned false. Exit!");
             return false;
         }
         for (EquipModel value : this.equipModels.values()) {
@@ -1249,7 +1233,6 @@ public class MultipleEquipHostManager {
         boolean result = true;
         for (DeviceInfo deviceInfo : deviceInfos) {
             DeviceType deviceTypeObj = deviceTypeDic.get(deviceInfo.getDeviceTypeId());
-            // new DeviceTypeDao().queryDeviceTypeById(deviceInfo.getDeviceTypeId());
             String deviceCode = deviceInfo.getDeviceCode();
             String deviceName = deviceInfo.getDeviceCode();
             String tDeviceId = deviceInfo.getDeviceCode();

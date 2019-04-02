@@ -66,7 +66,7 @@ public class CommCheckTask implements Job {
         }
         // Todo 扫描所有Host线程，如果超过1分钟未通信，发送S1F1信号
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getEquipName());
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             boolean isSecsException = false;
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                  
             String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceIdProperty();
@@ -200,7 +200,7 @@ public class CommCheckTask implements Job {
     }
 
     private void checkNetAndDealer(String deviceId, EquipNodeBean src) {
-        if (checkNet( GlobalConstants.stage.equipHosts.get(deviceId).getRemoteIPAddress()) < 3) {
+        if (checkNet( GlobalConstants.stage.equipHosts.get(deviceId).iPAddress) < 3) {
             doWhenNetRight(deviceId, src);
         } else {
             netBrokenDealer(deviceId);

@@ -769,7 +769,7 @@ public class RecipeService extends BaseService {
         String recipeLocalPath = GlobalConstants.localRecipePath + organizeRecipePath(recipe) + recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt";
         //ftp路径需要到目录
         String recipeRemotePath = organizeUploadRecipePath(recipe);
-        //TODO 添加操作日志
+
         RecipeOperationLog recipeOperationLog = setRcpOperationLog(recipe, "upload");
         this.saveRecipeOperationLog(recipeOperationLog);
         recipeParas = setParasRCProwId(recipeParas, recipe.getId());

@@ -58,7 +58,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      */
     @Override
     public Object doInBackground() {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipNodeBean.getEquipName());
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipNodeBean.getDeviceCode());
         try {
             while (!this.isCancelled()) {
                 ControlEvent ev = null;
@@ -155,8 +155,8 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     @Override
     public void notificationOfSecsDriverReady(int deviceId) {
         logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
-                + equipNodeBean.getEquipName());
-        UiLogUtil.appendLog2EventTab(equipNodeBean.getEquipName(), "SECS连接正常启动...");
+                + equipNodeBean.getDeviceCode());
+        UiLogUtil.appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
         stage.equipHosts.get(String.valueOf(deviceId)).setJsipReady(true);
         stage.equipHosts.get(String.valueOf(deviceId)).setIsRestarting(false);
@@ -167,7 +167,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     @Override
     public void notificationOfHsmsReceivedSeparate(int deviceId) {
         logger.info("notificationOfHsmsReceivedSeparate Invoked at device id " + deviceId + " equip name "
-                + equipNodeBean.getEquipName());
+                + equipNodeBean.getDeviceCode());
         eventQueue.add(new ReceivedSeparateEvent(deviceId));
     }
 
@@ -186,7 +186,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     @Override
     public void notificationOfT3Timeout(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfT3Timeout Invoked at device id " + deviceId + " " + msgTagName
-                + " at equip " + equipNodeBean.getEquipName());
+                + " at equip " + equipNodeBean.getDeviceCode());
     }
 
     @Override
@@ -202,14 +202,14 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     @Override
     public void notificationOfHsmsRequestSendSeparate(int deviceId) {
         logger.info("notificationOfHsmsRequestSendSeparate Invoked at device id " + deviceId + " equip name "
-                + equipNodeBean.getEquipName());
+                + equipNodeBean.getDeviceCode());
         eventQueue.add(new CommStatusEvent(false, deviceId));
     }
 
     @Override
     public void notificationOfCloseNetwork(int deviceId) {
         logger.info("notificationOfJsipCloseNetwork Invoked at device id " + deviceId + " equip name "
-                + equipNodeBean.getEquipName());
+                + equipNodeBean.getDeviceCode());
 //        eventQueue.add(new CommStatusEvent(false, deviceId));
         eventQueue.add(new CommFailureEvent(null, deviceId));
 

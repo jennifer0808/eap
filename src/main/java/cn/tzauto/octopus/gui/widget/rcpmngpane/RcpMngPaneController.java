@@ -206,7 +206,7 @@ public class RcpMngPaneController implements Initializable {
         ObservableList deviceCodeList = FXCollections.observableArrayList();
         ObservableList versionTypeList = FXCollections.observableArrayList();
         for (EquipNodeBean equipNodeBean : GlobalConstants.stage.equipBeans) {
-            deviceCodeList.add(equipNodeBean.getEquipName());
+            deviceCodeList.add(equipNodeBean.getDeviceCode());
         }
 
         CMB_deviceCode.setItems(deviceCodeList);

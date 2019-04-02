@@ -49,18 +49,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
     private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
-    private int commState = NOT_COMMUNICATING;
+    protected int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
     private int alarmState = 0;
     private boolean jsipReady = false;
-    protected String equipId;
-    protected String smlFilePath;
-    protected String localIPAddress;
-    protected int localTCPPort;
-    protected String remoteIPAddress;
-    protected int remoteTCPPort;
+
+    public String iPAddress;
+    protected int tCPPort;
     protected String connectMode = "active"; //only "active" or "passive" allowed, default is "active"
-    protected String protocolType = "hsms";//only "hsms" or "rs232" allowed, default is "hsms"
     protected String deviceId;
     protected ActiveWrapper mli;
     protected String description;
@@ -74,7 +70,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String deviceCode;//设备代码;
     protected String ProcessProgramID;
     protected int recipeType;
-    protected String iconPath;
     protected String Mdln = "";
     protected String SoftRev = "";
     protected String recipePath = "";
@@ -114,31 +109,24 @@ public abstract class EquipHost extends Thread implements MsgListener {
     //延迟删除的标识，判断是否是切换recipe之后,用于DB800,DB730
     public boolean ppselectFlag = false;
 
-    public EquipHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                     int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                     String connectMode, String protocolType, String deviceType, String deviceCode, int rcpType, String iconPath) {
+    public EquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
+                     String connectMode, String deviceType, String deviceCode) {
         this.deviceId = devId;
-        this.equipId = equipmentId;
-        this.smlFilePath = smlFileFullPath;
-        this.localIPAddress = localIpAddress;
-        this.localTCPPort = localTcpPort;
-        this.remoteIPAddress = remoteIpAddress;
-        this.remoteTCPPort = remoteTcpPort;
+        this.iPAddress = remoteIpAddress;
+        this.tCPPort = remoteTcpPort;
         this.connectMode = connectMode; //only "active" or "passive" allowed, default is "active"
-        this.protocolType = protocolType;//only "hsms" or "rs232" allowed, default is "hsms"
         this.inputMsgQueue = new LinkedBlockingQueue<>(5000);
         equipState = new EquipState();
         threadUsed = false;
         this.deviceType = deviceType;
         this.deviceCode = deviceCode;
-        this.recipeType = rcpType;
-        this.iconPath = iconPath;
     }
 
     public void initialize() throws DeviceNotRegisteredException {
-        logger.info("Initializing SECS Protocol for " + this.getEquipId() + ".");
-        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
-        mli = (ActiveWrapper) SecsDriverFactory.getSecsDriverForDevice(Integer.valueOf(this.deviceId));
+        logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
+//        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
+        mli = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
+        ;
     }
 
 
@@ -150,12 +138,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public abstract Object clone();
 
     protected void clear() {
-        this.equipId = null;
-        this.smlFilePath = null;
-        this.localIPAddress = null;
-        this.remoteIPAddress = null;
         this.connectMode = null;
-        this.protocolType = null;
         this.description = null;
         this.mli.removeInputMessageListenerToAll(this);
         this.mli = null;
@@ -275,45 +258,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.startUp = startUp;
     }
 
-    public String getSmlFilePath() {
-        return smlFilePath;
-    }
-
-    public String getLocalIPAddress() {
-        return localIPAddress;
-    }
-
-    public int getLocalTCPPort() {
-        return localTCPPort;
-    }
-
-    public String getRemoteIPAddress() {
-        return remoteIPAddress;
-    }
-
-    public int getRemoteTCPPort() {
-        return remoteTCPPort;
-    }
 
     public String getConnectMode() {
         return connectMode;
     }
 
-    public String getProtocolType() {
-        return protocolType;
-    }
 
     public EquipState getEquipState() {
         return equipState;
     }
 
-    public String getIconPath() {
-        return iconPath;
-    }
-
-    public void setIconPath(String iconPath) {
-        this.iconPath = iconPath;
-    }
 
     private String getRecipeName() {
         return "";
@@ -342,17 +296,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.deviceType = deviceType;
     }
 
-    public String getEquipId() {
-        return equipId;
-    }
 
     public String getLotId() {
         return lotId;
     }
 
-    public void setEquipId(String equipId) {
-        this.equipId = equipId;
-    }
 
     public int getRecipeType() {
         return recipeType;
@@ -579,11 +527,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         try {
 
-            DataMsgMap s1f2out = new DataMsgMap("s1f2out", mli.getDeviceId());
-            s1f2out.put("Mdln", Mdln);
-            s1f2out.put("SoftRev", SoftRev);
-            s1f2out.setTransactionId(data.getTransactionId());
-            mli.respondMessage(s1f2out);
+            mli.sendS1F2out(data.getTransactionId());
             setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1272,26 +1216,23 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected void processS6F11inStripMapUpload(DataMsgMap data) {
         logger.info("----Received from Equip Strip Map Upload event - S6F11");
         try {
+            ArrayList reportData = (ArrayList) data.get("REPORT");
             //获取xml字符串
-            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
+//            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
+            String stripMapData = (String) ((ArrayList) reportData.get(1)).get(0);
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
             UiLogUtil.appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
-            DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
-            byte[] ack = new byte[1];
+
 //            ack[0] = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
-            ack[0] = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
-            if (ack[0] == '0') {//上传成功
-                ack[0] = 0;
+            byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
+            if (ack == '0') {//上传成功
                 UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
+                mli.sendS6F12out((byte) 0, data.getTransactionId());
             } else {//上传失败
-                ack[0] = 1;
                 UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
+                mli.sendS6F12out((byte) 1, data.getTransactionId());
             }
-            out.put("AckCode", ack);
-            out.setTimeStamp(new Date());
-            out.setTransactionId(data.getTransactionId());
-            mli.respondMessage(out);
             logger.info(" ----- s6f12 sended - Strip Upload Completed-----.");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1300,13 +1241,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
 
     //直接回复S6F12
-    protected void replyS6F12WithACK(DataMsgMap data, byte[] ackCode) {
+    protected void replyS6F12WithACK(DataMsgMap data, byte ackCode) {
         //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
-        out.put("AckCode", ackCode);
         try {
-            out.setTransactionId(data.getTransactionId());
-            mli.respondMessage(out);
+            mli.sendS6F12out(ackCode, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1714,8 +1652,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map stripIDformatMap = new HashMap();
         stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
         byte objack = 0;
-//        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
-        String stripMapData = "<stripmaptest12312313";
+        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
+//        String stripMapData = "<stripmaptest12312313";
         if (stripMapData == null) {//stripId不存在
             out = new DataMsgMap("s14f2outNoExist", mli.getDeviceId());
             long[] u1 = new long[1];
@@ -1806,12 +1744,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @throws NotInitializedException
      */
     public void startSecs(EqpEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException {
+            throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
         if (this.mli == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
-                    + " Equip Id = " + this.equipId + " is not initialized yet.");
+                    + " Equip Id = " + this.deviceId + " is not initialized yet.");
         }
-        logger.info("SECS Protocol for " + this.getEquipId() + " is being started.");
+        logger.info("SECS Protocol for " + this.deviceId + " is being started.");
         this.mli.connectByActiveMode(eqpEventDealer);
 
         mli.addInputMessageListenerToAll(this);

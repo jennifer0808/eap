@@ -46,7 +46,6 @@ public class PPSelectHandler implements MessageHandler {
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求将设备 " + deviceCode + " 的程序更换为 " + recipeName);
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);          
             if (deviceInfo.getDeviceType().contains("MVP")) {
-                //TODO 做PPSelect之前最好要确认Recipe列表是否有该程序，这个后面再写
                 result = hostManager.selectSpecificRecipe(deviceInfo.getDeviceId(), recipeName);
             }
         } catch (Exception e) {

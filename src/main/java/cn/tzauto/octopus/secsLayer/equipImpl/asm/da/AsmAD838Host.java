@@ -39,18 +39,16 @@ public class AsmAD838Host extends EquipHost {
     private final long StripMapUpCeid = 237L;
 
 
-    public AsmAD838Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                        int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                        String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public AsmAD838Host(String devId, String IpAddress, int TcpPort,
+                        String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort,
+                connectMode, deviceType, deviceCode);
     }
 
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipId);
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         DataMsgMap msg = null;
         while (!this.isInterrupted()) {
             try {
@@ -59,6 +57,7 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
+                    sendS1F1out();
                 }
 
                 if (rptDefineNum < 1) {
@@ -178,7 +177,7 @@ public class AsmAD838Host extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[])data.get("PPBODY");
+            byte[] ppbody = (byte[]) data.get("PPBODY");
 //            String ppbody = (String) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
@@ -401,11 +400,10 @@ public class AsmAD838Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     // </editor-fold>
     public Object clone() {
-        AsmAD838Host newEquip = new AsmAD838Host(deviceId, this.equipId,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
+        AsmAD838Host newEquip = new AsmAD838Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
         newEquip.startUp = this.startUp;
         newEquip.description = this.description;
         newEquip.mli = this.mli;
@@ -465,8 +463,8 @@ public class AsmAD838Host extends EquipHost {
     }
 
     private void initRptPara() {
-        sendS1F1out();
-        super.findDeviceRecipe();
+//        sendS1F1out();
+//        super.findDeviceRecipe();
 //        sendS2F37outAll();
 //        sendS2F37outClose(267L);
 //        sendS5F3out(true);
@@ -479,5 +477,25 @@ public class AsmAD838Host extends EquipHost {
             return "1";
         }
         return "0";
+    }
+
+    public void processS6F11in(DataMsgMap data) {
+        String ceid = "";
+        try {
+            if (data.get("CEID") != null) {
+                ceid = String.valueOf(data.get("CEID"));
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            //TODO 根据ceid分发处理事件
+            if (Long.parseLong(ceid) == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            }
+            mli.sendS6F12out((byte) 0, data.getTransactionId());
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
     }
 }

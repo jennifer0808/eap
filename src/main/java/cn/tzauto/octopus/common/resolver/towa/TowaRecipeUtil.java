@@ -253,7 +253,6 @@ public class TowaRecipeUtil {
                     rcpTemplates.get(i).setSetValue(String.valueOf(Double.parseDouble(result)));
                 }
             }
-//TODO 实现存储
         }
         return transfer2Normal2(rcpTemplates);
     }
