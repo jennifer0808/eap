@@ -12,10 +12,10 @@
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
             </columnConstraints>
             <rowConstraints>
-                <RowConstraints maxHeight="145.0" minHeight="0.0" prefHeight="31.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="380.0" minHeight="10.0" prefHeight="74.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="522.0" minHeight="10.0" prefHeight="49.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="457.0" minHeight="10.0" prefHeight="252.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="145.0" minHeight="0.0" prefHeight="21.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="380.0" minHeight="10.0" prefHeight="44.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="522.0" minHeight="10.0" prefHeight="39.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="457.0" minHeight="10.0" prefHeight="286.0" vgrow="SOMETIMES" />
             </rowConstraints>
             <children>
                 <GridPane>
@@ -55,7 +55,7 @@
                         <ComboBox fx:id="CMB_rcpType" prefHeight="23.0" prefWidth="102.0" promptText="--请选择--" GridPane.columnIndex="6" />
                     </children>
                 </GridPane>
-                <FlowPane fx:id="functionPane" alignment="CENTER_RIGHT" hgap="10.0" prefHeight="200.0" prefWidth="200.0" vgap="10.0" GridPane.rowIndex="2">
+                <FlowPane fx:id="functionPane" alignment="CENTER_RIGHT" hgap="10.0" prefHeight="29.0" prefWidth="850.0" vgap="10.0" GridPane.rowIndex="2">
                     <children>
                         <Button fx:id="BTN_save" mnemonicParsing="false" onAction="#JB_RcpClear" onMouseExited="#saveExited" onMouseMoved="#saveMoved" onMousePressed="#savePressed" onMouseReleased="#saveReleased" text="%reserve" textFill="WHITE" />
                         <Button fx:id="BTN_query" mnemonicParsing="false" onAction="#btnQueryClick" onMouseExited="#queryExited" onMouseMoved="#queryMoved" onMousePressed="#queryPressed" onMouseReleased="#queryReleased" text="%query" textFill="WHITE" />
