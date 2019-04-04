@@ -436,7 +436,7 @@ public class MultipleEquipHostManager {
      */
     public void notifyHostOfJsipReady(String deviceId) {
         if (equipHosts.get(deviceId) != null) {
-            equipHosts.get(deviceId).setJsipReady(true);
+            equipHosts.get(deviceId).setSdrReady(true);
         }
     }
 
@@ -445,7 +445,7 @@ public class MultipleEquipHostManager {
      */
     public void notifyHostOfJsipDown(String deviceId) {
         if (equipHosts.get(deviceId) != null) {
-            equipHosts.get(deviceId).setJsipReady(false);
+            equipHosts.get(deviceId).setSdrReady(false);
         }
     }
 
@@ -508,9 +508,8 @@ public class MultipleEquipHostManager {
      * 获取指定recipe的详情（解析）
      */
     public Map getRecipeParaFromDevice(String deviceCode, String recipeName) {
-        String deviceId = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode).getDeviceId();
-        if (equipHosts.get(deviceId) != null) {
-            EquipHost equipHost = equipHosts.get(deviceId);
+        if (equipHosts.get(deviceCode) != null) {
+            EquipHost equipHost = equipHosts.get(deviceCode);
             if (equipHost.deviceType.contains("DEKHorizon03ix")) {
                 equipHost.sendS1F3Check();
                 if (!equipHost.ppExecName.equalsIgnoreCase(recipeName)) {
@@ -522,18 +521,18 @@ public class MultipleEquipHostManager {
             }
             return equipHost.sendS7F5out(recipeName);
         }
-        if (equipModels.get(deviceId) != null) {
-            boolean pass = equipModels.get(deviceId).getPassport();
+        if (equipModels.get(deviceCode) != null) {
+            boolean pass = equipModels.get(deviceCode).getPassport();
             if (pass) {
-                Map map = equipModels.get(deviceId).uploadRecipe(recipeName);
-                equipModels.get(deviceId).returnPassport();
+                Map map = equipModels.get(deviceCode).uploadRecipe(recipeName);
+                equipModels.get(deviceCode).returnPassport();
                 logger.info("map==========>" + map);
                 return map;
             } else {
                 logger.debug("直接获取设备recipe信息失败,尝试循环多次处理...");
                 for (int i = 0; i < 5; i++) {
                     logger.debug("第" + (i + 1) + "次尝试...");
-                    pass = equipModels.get(deviceId).getPassport(1);
+                    pass = equipModels.get(deviceCode).getPassport(1);
                     if (!pass) {
                         logger.debug("获取失败,等待1秒后再次获取");
                         try {
@@ -541,13 +540,13 @@ public class MultipleEquipHostManager {
                         } catch (Exception e) {
                         }
                     } else {
-                        Map map = equipModels.get(deviceId).uploadRecipe(recipeName);
-                        equipModels.get(deviceId).returnPassport();
+                        Map map = equipModels.get(deviceCode).uploadRecipe(recipeName);
+                        equipModels.get(deviceCode).returnPassport();
                         logger.debug("获取成功,结束循环");
                         return map;
                     }
                 }
-                UiLogUtil.appendLog2EventTab(deviceId, "上传Recipe失败,通讯资源正在被占用,请稍后重试");
+                UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe失败,通讯资源正在被占用,请稍后重试");
             }
         }
         return null;
@@ -839,7 +838,7 @@ public class MultipleEquipHostManager {
     public Map getDeviceRcpParaCheck(String deviceId, List svIdList) throws IOException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, BrokenProtocolException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.mli.sendS1F3out(svIdList, equipHost.svFormat);
+            return equipHost.activeWrapper.sendS1F3out(svIdList, equipHost.svFormat);
         }
         Map resultMap = null;
         return resultMap;
@@ -1102,7 +1101,7 @@ public class MultipleEquipHostManager {
             List svidlist = recipeService.searchShotSVByDeviceType(equipHost.getDeviceType());
             sqlSession.close();
             if (svidlist != null && !svidlist.isEmpty()) {
-                resultMap = equipHost.mli.sendS1F3out(svidlist, equipHost.svFormat);
+                resultMap = equipHost.activeWrapper.sendS1F3out(svidlist, equipHost.svFormat);
             }
         } else {
 

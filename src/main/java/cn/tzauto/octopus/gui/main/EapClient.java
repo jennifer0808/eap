@@ -132,12 +132,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());//new Locale("zh", "TW");Locale.getDefault()
                 FXMLLoader fXMLLoader = new FXMLLoader();
                 root = FXMLLoader.load(getClass().getClassLoader().getResource("Main.fxml"), resourceBundle);
-//                resourceBundle.getString("ClientId");
-//                resourceBundle.getString("login");
-//                resourceBundle.getString("mainPage");
-//                resourceBundle.getString("logout");
-//                resourceBundle.getString("name");
-                stage.setTitle("EAPClient JFXML");
+                stage.setTitle("EAPClient");
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
 
@@ -391,11 +386,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
         EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
-        String deviceId = equipNodeBean.getDeviceIdProperty();
+        String deviceCode = equipNodeBean.getDeviceCode();
 
         try {
-            hostManager.startHostThread(deviceId);
-            hostManager.startSECS(deviceId, eqpEventDealer);
+            hostManager.startHostThread(deviceCode);
+            hostManager.startSECS(deviceCode, eqpEventDealer);
         } catch (Exception e1) {
             logger.fatal(equipNodeBean.getDeviceCode() + " has not been initialized!", e1);
         }
@@ -479,14 +474,14 @@ public class EapClient extends Application implements JobListener, PropertyChang
             if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_STATE_PROPERTY)) {
                 if (src.getEquipStateProperty().isCommOn()) {
                     logger.info("CommOn==========================");
-                    EquipHost equipHost = equipHosts.get(src.getDeviceIdProperty());
+                    EquipHost equipHost = equipHosts.get(src.getDeviceCode());
                     Map map = new HashMap();
                     map.put("NetState", 1);
                     equipHost.changeEquipPanel(map);
 //                  thePanel.setCommLabelForegroundColorCommOn();
                 } else {
                     logger.info("CommOff==========================");
-                    EquipHost equipHost = equipHosts.get(src.getDeviceIdProperty());
+                    EquipHost equipHost = equipHosts.get(src.getDeviceCode());
                     Map map = new HashMap();
                     map.put("NetState", 0);
                     equipHost.changeEquipPanel(map);

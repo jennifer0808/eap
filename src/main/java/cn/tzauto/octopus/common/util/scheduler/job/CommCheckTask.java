@@ -69,7 +69,7 @@ public class CommCheckTask implements Job {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             boolean isSecsException = false;
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                  
-            String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceIdProperty();
+            String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
             //EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
             if ( GlobalConstants.stage.equipHosts.get(deviceId) == null) {
                 //  EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceId);
@@ -105,14 +105,14 @@ public class CommCheckTask implements Job {
                 }
             }
             //start the Host Thread
-            logger.info("CommCheckTask======>DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isJsipReady());
+            logger.info("CommCheckTask======>DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
             logger.info("----------------------------" + currentHost.getClass().getName() + ": " + currentHost.hashCode());
             long lastConDate = hostsManager.getAllEquipHosts().get(deviceId).getLastComDate();
             long diff = new Date().getTime() - lastConDate;
             logger.info("获取最后一次通信时间========>" + lastConDate);
             String testResult = "";
             if (currentHost != null) {
-//                if (currentHost.isJsipReady()) {
+//                if (currentHost.isSdrReady()) {
 //                    currentHost.checkNotReady = 0;
                 if (lastConDate == 0) {
                     logger.info("检测到上一次通信时间为0========" + currentHost.checkNotComm);
@@ -147,7 +147,7 @@ public class CommCheckTask implements Job {
                     logger.info("==lastConDate===" + lastConDate + "==diff===" + diff + "==checkNotComm===" + currentHost.checkNotComm + "==checkNotReady======" + currentHost.checkNotReady);
                     //如果超过60秒没有通信，那么发送Are u there命令
                     if (lastConDate != 0 && diff > 60000) {
-                        logger.info("CommCheckTask=====>发送Are u there 2 eqp，等待回复，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isJsipReady());
+                        logger.info("CommCheckTask=====>发送Are u there 2 eqp，等待回复，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
                         testType = "1";
                         testResult = comTestFunction(testType, currentHost);
                         //保存第一次的are u there 结果
@@ -190,7 +190,7 @@ public class CommCheckTask implements Job {
                             currentHost.setLastComDate(new Date().getTime());
                             currentHost.checkNotComm = 0;
                             currentHost.checkNotReady = 0;
-                            logger.info("CommCheckTask=====>发送Are u there正常、连接正常，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isJsipReady());
+                            logger.info("CommCheckTask=====>发送Are u there正常、连接正常，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
                         }
                     }
                 }
@@ -291,8 +291,8 @@ public class CommCheckTask implements Job {
     private void msgTimeoutCountAndRestart(String deviceId, EquipNodeBean equipNodeBean) {
         logger.info("CommCheckTask=====>currentHost.secsMsgTimeoutTime:" + currentHost.secsMsgTimeoutTime + " DeviceID:" + deviceId);
         if (currentHost.secsMsgTimeoutTime == 3) {
-            logger.info("CommCheckTask=====>检测到中断，secsMsgTimeoutTime=" + currentHost.secsMsgTimeoutTime + "修改状态，准备重启，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isJsipReady());
-            logger.info("DeviceID:" + deviceId + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isJsipReady());
+            logger.info("CommCheckTask=====>检测到中断，secsMsgTimeoutTime=" + currentHost.secsMsgTimeoutTime + "修改状态，准备重启，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
+            logger.info("DeviceID:" + deviceId + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
             resetFlagAndRestart(currentHost, equipNodeBean);
             logger.info("DeviceID:" + deviceId + ";重置统计超时标记secsMsgTimeoutTime");
             currentHost.secsMsgTimeoutTime = 0;

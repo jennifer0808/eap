@@ -53,7 +53,7 @@ public class SvTransferHandler implements MessageHandler {
         try {
             List<DeviceInfo> deviceInfos = deviceService.searchDeviceInfoByPara(GlobalConstants.getProperty("clientId"), deviceCode);
             String deviceId = deviceInfos.get(0).getDeviceId();
-            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfos.get(0).getDeviceCode());
 
             if (equipHost.getEquipState().isCommOn()) {
                 List<RecipeTemplate> recipeTemplatesAll = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");

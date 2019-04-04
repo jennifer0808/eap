@@ -4,13 +4,16 @@
  */
 package cn.tzauto.octopus.common.ws;
 
+import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -629,6 +632,20 @@ public class AxisUtility {
         }
         return resultMap.get("flag").toString();
     }
-
+    /**
+     * 调用webservice，获取锁机标志
+     *
+     * @param deviceCode
+     * @return
+     */
+    public static boolean checkLockFlagFromServerByWS(String deviceCode) {
+        boolean lockFlag = false;
+        Map checkServerLockResult = AxisUtility.getLockFlagAndRemarks("SysAuto", deviceCode);
+        String lockFlagStr = String.valueOf(checkServerLockResult.get("lockFlag"));
+        if ("Y".equals(lockFlagStr)) {
+            lockFlag = true;
+        }
+        return lockFlag;
+    }
 
 }

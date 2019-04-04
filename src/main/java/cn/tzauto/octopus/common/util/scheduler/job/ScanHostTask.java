@@ -37,17 +37,17 @@ public class ScanHostTask implements Job {
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                                    
-            String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceIdProperty();
+            String deviceCode = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
             //start the Host Thread
-            logger.debug("ScanHostTask=====>DeviceID:" + deviceId + "=========>状态:" + hostsManager.getAllEquipHosts().get(deviceId).isInterrupted());
-            if (hostsManager.getAllEquipHosts().get(deviceId).isInterrupted() == true) {
-                logger.debug("ScanHostTask=====>检测到中断，DeviceID:" + deviceId);
+            logger.debug("ScanHostTask=====>DeviceID:" + deviceCode + "=========>状态:" + hostsManager.getAllEquipHosts().get(deviceCode).isInterrupted());
+            if (hostsManager.getAllEquipHosts().get(deviceCode).isInterrupted() == true) {
+                logger.debug("ScanHostTask=====>检测到中断，DeviceID:" + deviceCode);
                 EquipmentEventDealer equipmentEventDealer = new EquipmentEventDealer(GlobalConstants.stage.equipBeans.get(i), GlobalConstants.stage);
                 //start the watch dog
                 equipmentEventDealer.execute();
-                hostsManager.startHostThread(deviceId);
+                hostsManager.startHostThread(deviceCode);
                 try {
-                    hostsManager.startSECS(deviceId, equipmentEventDealer);
+                    hostsManager.startSECS(deviceCode, equipmentEventDealer);
                     System.out.println(GlobalConstants.stage.equipBeans.get(i).getDeviceCode() + " has  been restart!");
                 } catch (NotInitializedException e1) {
                     System.out.println(GlobalConstants.stage.equipBeans.get(i).getDeviceCode() + " has restarted failure");
@@ -64,8 +64,8 @@ public class ScanHostTask implements Job {
                 } catch (HsmsProtocolNotSelectedException e) {
                     e.printStackTrace();
                 }
-                EapClient.addWatchDog(deviceId, equipmentEventDealer);
-                logger.debug("ScanHostTask=====>重新启动完成，DeviceID:" + deviceId);
+                EapClient.addWatchDog(deviceCode, equipmentEventDealer);
+                logger.debug("ScanHostTask=====>重新启动完成，DeviceID:" + deviceCode);
             } else {
                 continue;
             }
