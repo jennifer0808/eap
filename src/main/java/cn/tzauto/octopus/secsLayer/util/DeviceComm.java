@@ -58,9 +58,9 @@ public class DeviceComm {
             e.printStackTrace();
         } catch (T3TimeOutException e) {
             e.printStackTrace();
-        } catch (WrongStateTransitionNumberException e) {
-            e.printStackTrace();
         } catch (HsmsProtocolNotSelectedException e) {
+            e.printStackTrace();
+        } catch (IllegalStateTransitionException e) {
             e.printStackTrace();
         }
         EapClient.addWatchDog(deviceId, equipmentEventDealer);

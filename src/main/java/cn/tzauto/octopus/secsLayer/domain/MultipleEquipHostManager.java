@@ -53,8 +53,7 @@ public class MultipleEquipHostManager {
     public List<DeviceInfo> deviceInfos;
 
     public boolean initializeSecs(List<DeviceInfo> deviceInfos)
-            throws ParserConfigurationException, SAXException, IOException,
-            SecurityException,
+            throws ParserConfigurationException, SAXException, IOException, SecurityException,
             IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
         equipHosts = new HashMap<String, EquipHost>();
@@ -375,7 +374,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
+    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
@@ -1442,7 +1441,7 @@ public class MultipleEquipHostManager {
     }
 
     public boolean initialize() throws ParserConfigurationException, SAXException, IOException,
-            ParameterErrorException, DeviceNotRegisteredException, SecurityException,
+            SecurityException,
             IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
         boolean pass = false;

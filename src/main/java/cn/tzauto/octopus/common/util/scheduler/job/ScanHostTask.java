@@ -59,9 +59,9 @@ public class ScanHostTask implements Job {
                     e.printStackTrace();
                 } catch (T3TimeOutException e) {
                     e.printStackTrace();
-                } catch (WrongStateTransitionNumberException e) {
+                }  catch (HsmsProtocolNotSelectedException e) {
                     e.printStackTrace();
-                } catch (HsmsProtocolNotSelectedException e) {
+                } catch (IllegalStateTransitionException e) {
                     e.printStackTrace();
                 }
                 EapClient.addWatchDog(deviceId, equipmentEventDealer);

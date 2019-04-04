@@ -123,11 +123,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.deviceCode = deviceCode;
     }
 
-    public void initialize() throws DeviceNotRegisteredException {
+    public void initialize() {
         logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         mli = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
-        ;
     }
 
 
@@ -1746,7 +1745,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @throws NotInitializedException
      */
     public void startSecs(EqpEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
+            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
         if (this.mli == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.deviceId + " is not initialized yet.");
