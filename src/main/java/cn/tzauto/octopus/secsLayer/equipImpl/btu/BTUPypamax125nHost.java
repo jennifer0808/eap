@@ -4,52 +4,54 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.btu;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- *
- * @author Administrator
- */
+
 public class BTUPypamax125nHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(BTUPypamax125nHost.class.getName());
 
-    public BTUPypamax125nHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public BTUPypamax125nHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
-
-    public BTUPypamax125nHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        BTUPypamax125nHost newEquip = new BTUPypamax125nHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -119,8 +121,6 @@ public class BTUPypamax125nHost extends EquipHost {
                 //回复掉消息
                 processS6F11in(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -143,7 +143,8 @@ public class BTUPypamax125nHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
-    @Override
+
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -303,22 +304,9 @@ public class BTUPypamax125nHost extends EquipHost {
         return null;
     }
 
-    @Override
-    public Object clone() {
-        BTUPypamax125nHost newEquip = new BTUPypamax125nHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
+
+
+
 
     @Override
     public void initRemoteCommand() {
@@ -349,7 +337,7 @@ public class BTUPypamax125nHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -399,9 +387,9 @@ public class BTUPypamax125nHost extends EquipHost {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);

@@ -1,44 +1,42 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.besi.mold;
 
-import cn.tfinfo.jcauto.octopus.biz.alarm.service.AutoAlter;
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoLock;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.domain.DeviceRealtimePara;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.secsLayer.resolver.besi.FicoRecipeUtil;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.*;
+import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoLock;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.besi.FicoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import com.alibaba.fastjson.JSONArray;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
 
 @SuppressWarnings("serial")
 public class FicoHost extends EquipHost {
@@ -47,18 +45,23 @@ public class FicoHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(FicoHost.class.getName());
     boolean cancelCheckFlag = false;
 
-    public FicoHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public FicoHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public FicoHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        FicoHost newEquip = new FicoHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -127,7 +130,7 @@ public class FicoHost extends EquipHost {
         }
     }
 
-    @Override
+   
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -141,30 +144,9 @@ public class FicoHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange") || tagName.equalsIgnoreCase("s6f11ppselectfinish") || tagName.equalsIgnoreCase("s6f11svgetfinish")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if (ceid < 72 || (ceid >= 1550 && ceid <= 1561)) {
-                    this.inputMsgQueue.put(data);
-                }
-            } else if (tagName.equalsIgnoreCase("s1f14in")) {
+            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s2f34in")) {
                 processS2F34in(data);
@@ -220,7 +202,7 @@ public class FicoHost extends EquipHost {
         return listtmp;
     }
 
-    @Override
+   
     public Map sendS1F3RcpParaCheckout(List svidlist) {
         DataMsgMap s1f3out = new DataMsgMap("s1f3FICORcpPara", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
@@ -282,7 +264,7 @@ public class FicoHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S5FX Code">
     @SuppressWarnings("unchecked")
-    @Override
+   
     public Map processS5F1in(DataMsgMap data) {
         long ALID = 0l;
         try {
@@ -292,7 +274,7 @@ public class FicoHost extends EquipHost {
         }
         byte[] ALCD = (byte[]) ((SecsItem) data.get("ALCD")).getData();
         String ALTX = ((SecsItem) data.get("ALTX")).getData().toString();
-        logger.info("Received s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD[0] + " means " + ACKDescription.description(ALCD, "ALCD") + ", and the ALTX is: " + ALTX);
+        logger.info("Received s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD[0] + " means " + ACKDescription.description(ALCD[0], "ALCD") + ", and the ALTX is: " + ALTX);
         UiLogUtil.appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
@@ -301,10 +283,10 @@ public class FicoHost extends EquipHost {
         resultMap.put("ALID", ALID);
         resultMap.put("ALCD", ALCD[0]);
         resultMap.put("ALTX", ALTX);
-        resultMap.put("Description", ACKDescription.description(ALCD, "ALCD"));
+        resultMap.put("Description", ACKDescription.description(ALCD[0], "ALCD"));
         resultMap.put("TransactionId", data.getTransactionId());
         String[] ALIDs = {"100020361", "100020401", "100020441", "100020637", "100020657", "100020677", "100020695",
-            "100020697", "100020699", "100021389", "100021391", "100021393", "100021371", "100021373", "100021375"};
+                "100020697", "100020699", "100021389", "100021391", "100021393", "100021371", "100021373", "100021375"};
         List<String> ALIDList = Arrays.asList(ALIDs);
         if (ALIDList.contains(String.valueOf(ALID))) {
             UiLogUtil.appendLog2EventTab(deviceCode, "收到设备特殊报警，报警ID: " + ALID + " 报警详情: " + ALTX);
@@ -316,7 +298,7 @@ public class FicoHost extends EquipHost {
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    @Override
+   
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -381,7 +363,7 @@ public class FicoHost extends EquipHost {
         }
     }
 
-    @Override
+   
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -541,14 +523,14 @@ public class FicoHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", ppid);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+//        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
     /**
      * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
      *
-     * @param recipe
+
      * @param targetRecipeName
      * @return
      */
@@ -572,11 +554,11 @@ public class FicoHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
-    @Override
+   
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
@@ -610,7 +592,7 @@ public class FicoHost extends EquipHost {
         return resultMap;
     }
 
-    @Override
+   
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
@@ -655,7 +637,7 @@ public class FicoHost extends EquipHost {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S10FX Code">
-    @Override
+   
     protected void processS10F1in(DataMsgMap data) {
         String text = "";
         try {
@@ -686,22 +668,7 @@ public class FicoHost extends EquipHost {
     }
     // </editor-fold>
 
-    @Override
-    public Object clone() {
-        FicoHost newEquip = new FicoHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
+
 
     public void getUsingPress() {
         List pressResults = sendS1F3PressCheckout();
@@ -721,12 +688,12 @@ public class FicoHost extends EquipHost {
      * @param checkRecipe
      * @param type
      */
-    @Override
+   
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
@@ -963,16 +930,16 @@ public class FicoHost extends EquipHost {
         return svIdList;
     }
 
-    @Override
-    public void sendUphData2Server() {
+   
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
         sqlSession.close();
         //获取前一状态与当前状态
-        sendS1F3RcpAndStateCheck();
-        Map shotCountMap = sendS1F3SVShotCountCheckout(svidlist);
+//todo z这里处理的逻辑不正确
+        Map shotCountMap = activeWrapper.sendS1F3out(svidlist, svFormat);
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);
@@ -999,7 +966,7 @@ public class FicoHost extends EquipHost {
         super.sendS5F3out(enable);
     }
 
-    @Override
+   
     public void sendTerminalMsg2EqpSingle(String msg) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -1008,11 +975,11 @@ public class FicoHost extends EquipHost {
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
             byte[] tid = new byte[1];
             tid[0] = 0;
-            sendS10F3(tid, msg);
+            sendS10F3(tid[0], msg);
         }
     }
 
-    @Override
+   
     public Map holdDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -1033,14 +1000,14 @@ public class FicoHost extends EquipHost {
         }
     }
 
-    @Override
+   
     public Map releaseDevice() {
         Map map = this.sendS2f41Cmd("RESUME");
         this.setAlarmState(0);
         return map;
     }
 
-    @Override
+   
     public String getOutputData() {
         String outputSVID = "114";
         Map resultMap = sendS1F3SingleCheck(outputSVID);
@@ -1057,7 +1024,7 @@ public class FicoHost extends EquipHost {
      * @param dataIdList-->svidlist
      * @return
      */
-    @Override
+   
     public Map getSpecificSVData(List dataIdList) {
         Map resultMap = new HashMap();
         List svidList = dataIdList;
@@ -1135,13 +1102,13 @@ public class FicoHost extends EquipHost {
         FutureTask<Boolean> future = new FutureTask<>(
                 new Callable<Boolean>() {
 
-            public Boolean call() throws InterruptedException {
-                Thread.sleep(5000);
-                cancelCheckFlag = false;
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
-                return false;
-            }
-        });
+                    public Boolean call() throws InterruptedException {
+                        Thread.sleep(5000);
+                        cancelCheckFlag = false;
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
+                        return false;
+                    }
+                });
         executor.execute(future);
         executor.shutdown();
     }
@@ -1154,29 +1121,36 @@ public class FicoHost extends EquipHost {
         FutureTask<Boolean> future = new FutureTask<>(
                 new Callable<Boolean>() {
 
-            public Boolean call() throws InterruptedException {
-                Thread.sleep(3000);
-                if (!cancelCheckFlag) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开始进行SV参数比对");
-                    checkSVSpec(ceidF, cavityVacuumValueF, boardVacuumValueF);
-                } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "取消此次SV参数比对");
-                }
-                return false;
-            }
-        });
+                    public Boolean call() throws InterruptedException {
+                        Thread.sleep(3000);
+                        if (!cancelCheckFlag) {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "开始进行SV参数比对");
+                            checkSVSpec(ceidF, cavityVacuumValueF, boardVacuumValueF);
+                        } else {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "取消此次SV参数比对");
+                        }
+                        return false;
+                    }
+                });
         executor.execute(future);
         executor.shutdown();
     }
 
     private void initRptPara() {
         //重定义机台的equipstatuschange事件报告
-        sendS2f33out(10l, 15l, 97l);
+        List list1 = new ArrayList();
+        list1.add(15l);
+        list1.add(97l);
+        sendS2f33out(10l, 15l, list1);
         sendS2f35out(10l, 10l, 10l);
 //        sendS2F37out(10l);
 
         //重定义ppchange事件
-        sendS2f33out(60l, 97l);
+        List list = new ArrayList();
+        list.add(97l);
+
+        sendS2f33out(4l, 60l, list);
+//        sendS2f33out(60l, 97l);
         sendS2f35out(60l, 60l, 60l);
 //        sendS2F37out(60l);
 
@@ -1190,12 +1164,13 @@ public class FicoHost extends EquipHost {
 
 //        super.sendS2F37outCloseAll(activeWrapper);
         long[] ceids = {70l, 2l, 3l, 60l, 62l, 1l, 22l, 18l, 11l, 10l, 20l, 17l, 1550l, 1551l, 1552l, 1553l, 1554l, 1555l, 1556l, 1557l, 1558l, 1559l, 1560l, 1561l};
-        super.sendS2F37outMuilt(true, ceids);
+        //todo sendS2F37outMuilt
+//        super.sendS2F37outMuilt(true, ceids);
 //        super.sendS2F37outAll(activeWrapper);
 
     }
 
-    @Override
+   
     public void initRemoteCommand() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

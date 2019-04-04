@@ -1,43 +1,37 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.*;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import com.alibaba.fastjson.JSONArray;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.*;
+
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -46,18 +40,23 @@ public class ASMIdeal3GHost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(ASMIdeal3GHost.class.getName());
 
-    public ASMIdeal3GHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int rcpType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, rcpType, iconPtah);
+    public ASMIdeal3GHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public ASMIdeal3GHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int rcpType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, rcpType, iconPtah);
+    public Object clone() {
+        ASMIdeal3GHost newEquip = new ASMIdeal3GHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -123,33 +122,8 @@ public class ASMIdeal3GHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if (ceid == 8) {  //recipe改变事件
-                    this.inputMsgQueue.put(data);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -181,7 +155,7 @@ public class ASMIdeal3GHost extends EquipHost {
         }
     }
 
-//    public void processS1F4statein(DataMsgMap data) {
+    //    public void processS1F4statein(DataMsgMap data) {
 //        if (data == null) {
 //            return;
 //        }
@@ -639,7 +613,7 @@ public class ASMIdeal3GHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
-         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -717,7 +691,7 @@ public class ASMIdeal3GHost extends EquipHost {
         String pressStatusAll = "";
         for (int i = 0; i < pressResults.size(); i++) {
             String pressStatus = String.valueOf(pressResults.get(i));
-            if ("1".equals(pressStatus)||"2".equals(pressStatus)||"3".equals(pressStatus)) { // || "2".equals(pressStatus)
+            if ("1".equals(pressStatus) || "2".equals(pressStatus) || "3".equals(pressStatus)) { // || "2".equals(pressStatus)
                 pressStatusAll = pressStatusAll + (i + 1) + ",";
                 super.pressUseMap.put(i + 1, true);
             }
@@ -728,15 +702,15 @@ public class ASMIdeal3GHost extends EquipHost {
         UiLogUtil.appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
-    public void sendUphData2Server() {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
         sqlSession.close();
         //获取前一状态与当前状态
-        sendS1F3RcpAndStateCheck();
-        Map shotCountMap = sendS1F3SVShotCountCheckout(svidlist);
+
+        Map shotCountMap = activeWrapper.sendS1F3out(svidlist, svFormat);
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);
@@ -754,21 +728,6 @@ public class ASMIdeal3GHost extends EquipHost {
 //        UiLogUtil.appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
-    public Object clone() {
-        ASMIdeal3GHost newEquip = new ASMIdeal3GHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     private void initRptPara() {
     }

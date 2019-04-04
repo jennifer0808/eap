@@ -1,32 +1,30 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.fc;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Date;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.apache.ibatis.session.SqlSession;
+
+import java.util.*;
 
 public class AsmAD8312FCHost extends EquipHost {
 
@@ -38,18 +36,23 @@ public class AsmAD8312FCHost extends EquipHost {
     public String Lead_Frame_Type_Id;
     public String Datelength;
 
-    public AsmAD8312FCHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPath) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPath);
+    public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public AsmAD8312FCHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPath) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath);
+    public Object clone() {
+        AsmAD8312FCHost newEquip = new AsmAD8312FCHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -79,8 +82,6 @@ public class AsmAD8312FCHost extends EquipHost {
                         processS14F1in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                         processS6F11inStripMapUpload(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                        processS6F11EquipStatus(msg);
                     } else if (msg.getMsgSfName().contains("s6f11EquipStatusChange")) {
                         processS6F11EquipStatusChange(msg);
                     } else if (msg.getMsgSfName().equals("s6f11ControlStateChange")) {
@@ -124,44 +125,11 @@ public class AsmAD8312FCHost extends EquipHost {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s7f20in")) {
                 putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
 //                processS6F11inStripMapUpload(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11EquipStatusChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11ControlStateChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11LoginUserChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11PPExecName")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data); 
                 this.inputMsgQueue.put(data);
@@ -432,7 +400,7 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -456,7 +424,7 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -464,7 +432,7 @@ public class AsmAD8312FCHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
         s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName+".rcp");
+        s7f5out.put("ProcessprogramID", recipeName + ".rcp");
         recipeName = recipeName.replace(".rcp", "");
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
@@ -511,7 +479,7 @@ public class AsmAD8312FCHost extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+//                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -521,10 +489,10 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
-    
+
     @Override
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
@@ -589,7 +557,7 @@ public class AsmAD8312FCHost extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -598,7 +566,7 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         return resultMap;
     }
 
@@ -607,24 +575,7 @@ public class AsmAD8312FCHost extends EquipHost {
      * (non-Javadoc) It only copies field member values except Mli.
      * @see java.lang.Object#clone()
      */
-    @Override
-    public Object clone() {
-        AsmAD8312FCHost newEquip = new AsmAD8312FCHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        this.setIsRestarting(isRestarting);
-        this.setStartedDate(0);
-        return newEquip;
-    }
+
 
     @Override
     public void initRemoteCommand() {

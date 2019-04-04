@@ -4,22 +4,12 @@
  */
 package cn.tzauto.octopus.biz.recipe.service;
 
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.dao.DeviceInfoMapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.biz.recipe.dao.AttachMapper;
-import cn.tzauto.octopus.biz.recipe.dao.RecipeMapper;
-import cn.tzauto.octopus.biz.recipe.dao.RecipeOperationLogMapper;
-import cn.tzauto.octopus.biz.recipe.dao.RecipeParaMapper;
-import cn.tzauto.octopus.biz.recipe.dao.RecipeTemplateMapper;
-import cn.tzauto.octopus.biz.recipe.domain.Attach;
-import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeOperationLog;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.dao.*;
+import cn.tzauto.octopus.biz.recipe.domain.*;
 import cn.tzauto.octopus.biz.sys.dao.SysOfficeMapper;
 import cn.tzauto.octopus.biz.sys.domain.SysOffice;
 import cn.tzauto.octopus.biz.sys.service.SysService;
@@ -29,20 +19,16 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.RoundingOff;
 import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import com.alibaba.fastjson.JSON;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import java.util.*;
+
 /**
- *
  * @author njtz
  */
 public class RecipeService extends BaseService {
@@ -54,6 +40,7 @@ public class RecipeService extends BaseService {
     private AttachMapper attachMapper;
     private DeviceInfoMapper deviceInfoMapper;
     public SysOfficeMapper sysOfficeMapper;
+    private RecipeNameMappingMapper recipeNameMappingMapper;
     private static Logger logger = Logger.getLogger(RecipeService.class.getName());
 
     public RecipeService(SqlSession sqlSession) {
@@ -254,7 +241,6 @@ public class RecipeService extends BaseService {
     }
 
     /**
-     *
      * 获取TOWAYPM和TOWAY1R之外类型的实时参数受到管控信息
      *
      * @param deviceCode
@@ -336,8 +322,6 @@ public class RecipeService extends BaseService {
      * SVID
      *
      * @param deviceTypeCode
-     * @param deviceVariableType
-     * @param paraDesc
      * @return
      */
     public List<String> searchShotSVByDeviceType(String deviceTypeCode) {
@@ -533,7 +517,6 @@ public class RecipeService extends BaseService {
      *
      * @param deviceInfo
      * @param recipe
-     * @param eventId
      * @param type
      * @return
      */
@@ -1120,7 +1103,6 @@ public class RecipeService extends BaseService {
     /**
      * 保存recipe操作日志
      *
-     * @param recipeOperationLog
      * @param recipe
      * @param operationType
      * @return
@@ -1190,8 +1172,6 @@ public class RecipeService extends BaseService {
     /**
      * 根据recipe类型和名称，生成recipe的保存路径
      *
-     * @param recipeType
-     * @param recipeName
      * @return
      */
     public String organizeRecipePath(Recipe recipe) {
@@ -1292,7 +1272,6 @@ public class RecipeService extends BaseService {
      * 判断recipepara里是否包含该设备要管控的所有参数
      *
      * @param recipeParas
-     * @param recipeTemplates
      * @return
      */
     public List<RecipePara> recipeParaContainAllTemplatePara(List<RecipePara> recipeParas, String deviceCode) {
@@ -1482,4 +1461,23 @@ public class RecipeService extends BaseService {
         return "0";
     }
 
+    /**
+     * 由于ws、ls站程序名问题，做一步转换（设备软件改正后将废弃）
+     *
+     * @param deviceCode
+     * @param shotName
+     * @param recipeName
+     * @return
+     */
+    public List<RecipeNameMapping> getRecipeNameByDeviceCodeAndShotName(String deviceCode, String shotName, String recipeName) {
+        Map paraMap = new HashMap();
+        paraMap.put("deviceCode", deviceCode);
+        paraMap.put("recipeShortName", shotName);
+        paraMap.put("recipeName", recipeName);
+        return this.recipeNameMappingMapper.searchRcpNameByDeviceCodeAndShotName(paraMap);
+    }
+
+    public int savaRecipeNameMapping(RecipeNameMapping recipeNameMapping) {
+        return this.recipeNameMappingMapper.insert(recipeNameMapping);
+    }
 }

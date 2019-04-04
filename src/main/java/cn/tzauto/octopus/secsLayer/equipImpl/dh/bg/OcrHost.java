@@ -1,31 +1,29 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.dh.bg;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.dh.bg.OCRRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class OcrHost extends EquipHost {
@@ -33,18 +31,23 @@ public class OcrHost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(OcrHost.class.getName());
 
-    public OcrHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
-    }
 
-    public OcrHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public OcrHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+    }
+    public Object clone() {
+        OcrHost newEquip = new OcrHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -111,28 +114,9 @@ public class OcrHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
-            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -161,7 +145,7 @@ public class OcrHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     // </editor-fold> 
-    @Override
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -320,7 +304,7 @@ public class OcrHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+//        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
@@ -344,7 +328,7 @@ public class OcrHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+//        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -406,10 +390,10 @@ public class OcrHost extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
             }
             resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -467,22 +451,8 @@ public class OcrHost extends EquipHost {
         return resultMap;
     }
 
-    @Override
-    public Object clone() {
-        OcrHost newEquip = new OcrHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
+
+
 
     private void initRptPara() {
     }

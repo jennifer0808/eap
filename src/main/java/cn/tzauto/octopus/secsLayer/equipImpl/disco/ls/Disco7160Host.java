@@ -1,23 +1,24 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.disco.ls;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -25,7 +26,6 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -35,18 +35,24 @@ public class Disco7160Host extends EquipHost {
     private static final Logger logger = Logger.getLogger(Disco7160Host.class.getName());
     private boolean isFullAutoState1st = false;
 
-    public Disco7160Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+
+    public Disco7160Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public Disco7160Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        Disco7160Host newEquip = new Disco7160Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -90,19 +96,19 @@ public class Disco7160Host extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-                            processS6F11EquipStatus(msg);
+//                            processS6F11EquipStatus(msg);
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }
-                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11incommon")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11incommon")) {
                     long ceid = 0l;
                     try {
                         ceid = msg.getSingleNumber("CEID");
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }
-                    if (ceid == 191 ) {
+                    if (ceid == 191) {
                         processCoatingEndEvent(msg);
                     }
                 }
@@ -134,28 +140,28 @@ public class Disco7160Host extends EquipHost {
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
-                if (ceid==43){
+                if (ceid == 43) {
                     isFullAutoState1st = true;
-                    logger.info(deviceCode+":设备已进入全自动模式！");
+                    logger.info(deviceCode + ":设备已进入全自动模式！");
                 }
-                if (ceid == 191 ) {
+                if (ceid == 191) {
                     logger.info("接受到CoatingEnd事件，发送锁机指令");
-                        this.inputMsgQueue.put(data);
+                    this.inputMsgQueue.put(data);
                 }
             } else if (tagName.contains("s6f11equipstatuschange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 long ceid = 0l;
                 try {
                     ceid = data.getSingleNumber("CollEventID");
@@ -166,8 +172,6 @@ public class Disco7160Host extends EquipHost {
                     this.inputMsgQueue.put(data);
                 }
 
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -261,7 +265,7 @@ public class Disco7160Host extends EquipHost {
             ceid = data.getSingleNumber("CollEventID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-            String prestate= equipStatus;
+            String prestate = equipStatus;
             super.findDeviceRecipe();
             String curstate = equipStatus;
 //            if("READY".equalsIgnoreCase(prestate)&&"RUN".equalsIgnoreCase(curstate)){
@@ -300,37 +304,37 @@ public class Disco7160Host extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-            if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    this.holdDevice();
-                    return;
+                if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
+                    if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    //检查程序是否存在 GOLD
+                    Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
+                    if (goldRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (checkRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                        this.holdDevice();
+                    } else {
+                        this.startCheckRecipePara(checkRecipe);
+                    }
                 }
-                if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
-                    this.holdDevice();
-                    return;
-                }
-                Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
-                    this.holdDevice();
-                    return;
-                }
-                //检查程序是否存在 GOLD
-                Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
-                if (goldRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                    this.holdDevice();
-                    return;
-                }
-                if (checkRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
-                    this.holdDevice();
-                } else {
-                    this.startCheckRecipePara(checkRecipe);
-                }
-            }
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
@@ -340,8 +344,8 @@ public class Disco7160Host extends EquipHost {
     }
 
 
-    public void processCoatingEndEvent(DataMsgMap data){
-        if(isFullAutoState1st) {
+    public void processCoatingEndEvent(DataMsgMap data) {
+        if (isFullAutoState1st) {
             logger.info(deviceCode + ":进入全自动模式，做完第一片，启动停止！发送锁机指令");
             holdDevice2();
             isFullAutoState1st = false;
@@ -377,7 +381,7 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -405,7 +409,7 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -475,7 +479,7 @@ public class Disco7160Host extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -485,7 +489,7 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -532,7 +536,7 @@ public class Disco7160Host extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -541,7 +545,7 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         return resultMap;
     }
 
@@ -596,19 +600,20 @@ public class Disco7160Host extends EquipHost {
         }
     }
 
-    class test implements Runnable{
+    class test implements Runnable {
         public Disco7160Host equipHost;
-        public test(){
+
+        public test() {
         }
 
-        public test(Disco7160Host equipHost){
+        public test(Disco7160Host equipHost) {
             this.equipHost = equipHost;
         }
 
         @Override
         public void run() {
             try {
-                Thread.sleep(10*1000);
+                Thread.sleep(10 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -630,9 +635,9 @@ public class Disco7160Host extends EquipHost {
             msgdata = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to " + Remotecommand);
             hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -696,22 +701,6 @@ public class Disco7160Host extends EquipHost {
         return "0";
     }
 
-    @Override
-    public Object clone() {
-        Disco7160Host newEquip = new Disco7160Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     @Override
     public void initRemoteCommand() {

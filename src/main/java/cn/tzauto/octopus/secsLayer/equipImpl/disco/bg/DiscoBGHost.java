@@ -4,35 +4,32 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.util.*;
+
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -44,18 +41,23 @@ public class DiscoBGHost extends EquipHost {
     private String portARcpName = "";
     private String portBRcpName = "";
 
-    public DiscoBGHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public DiscoBGHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public DiscoBGHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        DiscoBGHost newEquip = new DiscoBGHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -102,11 +104,11 @@ public class DiscoBGHost extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(msg);
-                            processS6F11EquipStatus(msg);
+//                            processS6F11EquipStatus(msg);
                         } else if (ceid == 211 || ceid == 221) {
                             processS6F11PPselect(msg);
                         } else {
-                            processS6F11EquipStatus(msg);
+//                            processS6F11EquipStatus(msg);
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
@@ -135,30 +137,8 @@ public class DiscoBGHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11alarmClear")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -222,7 +202,7 @@ public class DiscoBGHost extends EquipHost {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
+
     public Map sendS1F3RcpParaCheckout(List svidlist) {
         DataMsgMap s1f3out = new DataMsgMap("s1f3" + deviceType + "RcpPara", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
@@ -260,7 +240,6 @@ public class DiscoBGHost extends EquipHost {
     }
 
     /**
-     *
      * @param svValueList
      * @return
      */
@@ -315,8 +294,8 @@ public class DiscoBGHost extends EquipHost {
                                     portARcpName = recipeName;
                                     selectOkFlag = true;
                                 }
-                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka, "HCACK"));
-                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka, "HCACK");
+                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK"));
+                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK");
                             }
                             if (cassUseMap.get("B")) {
                                 DataMsgMap dataB = activeWrapper.sendAwaitMessage(PPselectB);
@@ -325,8 +304,8 @@ public class DiscoBGHost extends EquipHost {
                                     portBRcpName = recipeName;
                                     selectOkFlag = true;
                                 }
-                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb, "HCACK"));
-                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb, "HCACK");
+                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK"));
+                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK");
                             }
                         }
                         logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
@@ -361,8 +340,8 @@ public class DiscoBGHost extends EquipHost {
                     if (hcacka != null && hcacka[0] == 0) {
                         portARcpName = recipeName;
                     }
-                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka, "HCACK"));
-                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka, "HCACK");
+                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK"));
+                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK");
                 }
             }
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
@@ -389,8 +368,8 @@ public class DiscoBGHost extends EquipHost {
                     if (hcackb != null && hcackb[0] == 0) {
                         portBRcpName = recipeName;
                     }
-                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb, "HCACK"));
-                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb, "HCACK");
+                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK"));
+                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK");
                 }
             }
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
@@ -447,32 +426,32 @@ public class DiscoBGHost extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-            if (equipStatus.equalsIgnoreCase("run")) {
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    this.holdDevice();
+                if (equipStatus.equalsIgnoreCase("run")) {
+                    if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        this.holdDevice();
+                    }
+                    String trackInRcpName = deviceInfoExt.getRecipeName();
+                    if (!"".equals(portARcpName) && !trackInRcpName.equals(portARcpName)) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
+                        this.holdDevice();
+                    }
+                    if (!"".equals(portBRcpName) && !trackInRcpName.equals(portBRcpName)) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
+                        this.holdDevice();
+                    }
+                    if (!ppExecName.equals(trackInRcpName)) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
+                        this.holdDevice();
+                    }
+                    if (execRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
+                        //不允许开机
+                        this.holdDevice();
+                    }
+                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    this.startCheckRecipePara(checkRecipe);
                 }
-                String trackInRcpName = deviceInfoExt.getRecipeName();
-                if (!"".equals(portARcpName) && !trackInRcpName.equals(portARcpName)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
-                    this.holdDevice();
-                }
-                if (!"".equals(portBRcpName) && !trackInRcpName.equals(portBRcpName)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
-                    this.holdDevice();
-                }
-                if (!ppExecName.equals(trackInRcpName)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
-                    this.holdDevice();
-                }
-                if (execRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
-                    //不允许开机
-                    this.holdDevice();
-                }
-                Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                this.startCheckRecipePara(checkRecipe);
-            }
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
@@ -561,7 +540,7 @@ public class DiscoBGHost extends EquipHost {
                         if (!selectOkFlag) {
                             UiLogUtil.appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功提交改机！\n");
                         }
-                    }                   
+                    }
                 }
             }
             if (ceid == 1000000401) {
@@ -570,8 +549,8 @@ public class DiscoBGHost extends EquipHost {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }finally{
-            
+        } finally {
+
         }
     }
 
@@ -666,22 +645,6 @@ public class DiscoBGHost extends EquipHost {
         return "0";
     }
 
-    @Override
-    public Object clone() {
-        DiscoBGHost newEquip = new DiscoBGHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     @Override
     public void initRemoteCommand() {

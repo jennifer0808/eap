@@ -4,39 +4,36 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.disco.ls;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeNameMapping;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.equipImpl.disco.bg.DiscoBGHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.util.*;
+
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -45,22 +42,26 @@ public class DiscoLSHost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(DiscoBGHost.class.getName());
 
-    public DiscoLSHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+
+    public DiscoLSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     }
 
-    public DiscoLSHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    public Object clone() {
+        DiscoLSHost newEquip = new DiscoLSHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -108,7 +109,7 @@ public class DiscoLSHost extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-                            processS6F11EquipStatus(msg);
+//                            processS6F11EquipStatus(msg);
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
@@ -134,22 +135,22 @@ public class DiscoLSHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.contains("s6f11equipstatuschange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 long ceid = 0l;
                 try {
                     ceid = data.getSingleNumber("CollEventID");
@@ -159,12 +160,8 @@ public class DiscoLSHost extends EquipHost {
                 if (ceid == 75 || ceid == 76) {
                     this.inputMsgQueue.put(data);
                 }
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
-                processS1F4in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
@@ -289,37 +286,37 @@ public class DiscoLSHost extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-            if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    this.holdDevice();
-                    return;
+                if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
+                    if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    //检查程序是否存在 GOLD
+                    Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
+                    if (goldRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (checkRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                        this.holdDevice();
+                    } else {
+                        this.startCheckRecipePara(checkRecipe);
+                    }
                 }
-                if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
-                    this.holdDevice();
-                    return;
-                }
-                Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
-                    this.holdDevice();
-                    return;
-                }
-                //检查程序是否存在 GOLD
-                Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
-                if (goldRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                    this.holdDevice();
-                    return;
-                }
-                if (checkRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
-                    this.holdDevice();
-                } else {
-                    this.startCheckRecipePara(checkRecipe);
-                }
-            }
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
@@ -518,22 +515,6 @@ public class DiscoLSHost extends EquipHost {
         return "0";
     }
 
-    @Override
-    public Object clone() {
-        DiscoLSHost newEquip = new DiscoLSHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     @Override
     public void initRemoteCommand() {

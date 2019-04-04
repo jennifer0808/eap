@@ -4,39 +4,31 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.smt.dek;
 
-/**
- *
- * @author MJS
- */
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceOplog;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.dialog.DialogUtil;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzinfo.smartSecsDriver.exception.MliBaseException;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
+import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class Horizon03ixHost extends EquipHost {
@@ -45,18 +37,23 @@ public class Horizon03ixHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(Horizon03ixHost.class.getName());
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
-    public Horizon03ixHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public Horizon03ixHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public Horizon03ixHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        Horizon03ixHost newEquip = new Horizon03ixHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -120,8 +117,6 @@ public class Horizon03ixHost extends EquipHost {
                 processS2F17in(data);
             } else if (tagName.contains("s6f11incommon")) {
                 processS6F11inAll(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -229,7 +224,7 @@ public class Horizon03ixHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
-        
+
         //更新设备模型状态
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         try {
@@ -243,7 +238,7 @@ public class Horizon03ixHost extends EquipHost {
                 sqlSession.commit();
             }
             //保存设备操作记录至本地数据库并发送给sever
-            saveOplogAndSend2Server(ceid,deviceService,deviceInfoExt);
+            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
@@ -261,17 +256,17 @@ public class Horizon03ixHost extends EquipHost {
             }
             //2.比对recipe是否正确
             //根据检查模式执行开机检查逻辑
-                //1、A-检查recipe名称和参数
-                //2、B-检查SV
+            //1、A-检查recipe名称和参数
+            //2、B-检查SV
             if (equipStatus.equalsIgnoreCase("READY")) {
                 String startCheckMod = deviceInfoExt.getStartCheckMod();
                 boolean checkRecipeResult = false;
                 Recipe goldRecipe = null;
                 Recipe currentLocalRecipe = null;//下载切换更新到本地数据库的recipe
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                        holdDeviceAndShowDetailInfo();                        
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
-                }else{
+                    holdDeviceAndShowDetailInfo();
+                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                } else {
                     currentLocalRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     checkRecipeResult = checkRecipeName(deviceInfoExt.getRecipeName());
                     if (!checkRecipeResult) {
@@ -286,7 +281,7 @@ public class Horizon03ixHost extends EquipHost {
                             UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
                         }
                     }
-                } 
+                }
                 //2.recipe check过了，在比对参数
                 if (checkRecipeResult && "A".equals(startCheckMod)) {
                     //首先判断下载的Recipe类型
@@ -333,7 +328,7 @@ public class Horizon03ixHost extends EquipHost {
             sqlSession.close();
         }
     }
-    
+
 //    @Override
 //    protected void processS6F11EquipStatusChange(DataMsgMap data) {
 //        //回复s6f11消息
@@ -482,7 +477,7 @@ public class Horizon03ixHost extends EquipHost {
 //        }
 //    }
 
-//    protected void processS6F11EquipStatusChange(DataMsgMap data) throws MalformedURLException {
+    //    protected void processS6F11EquipStatusChange(DataMsgMap data) throws MalformedURLException {
 //        //回复s6f11消息
 //        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
 //        byte[] ack = new byte[1];
@@ -613,9 +608,7 @@ public class Horizon03ixHost extends EquipHost {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
         if (goldRecipe == null) {
-            //TODO  这里需要讨论做试产时的情况
-            GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备" + deviceCode + "执行开机检查，清模程序例外。请联系PE处理！\n");
-            DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+
         }
         try {
             if (deviceInfoExt == null) {
@@ -647,15 +640,17 @@ public class Horizon03ixHost extends EquipHost {
             sqlSession.commit();
             //开机check
             if (goldRecipe == null) {
-                GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
-                DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+//                GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
+//                DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+                UiLogUtil.appendLog2EventTab(deviceCode,"");
                 //不允许开机
                 this.holdDevice();
             } else {
                 Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                 if (checkRecipe == null) {
-                    GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过！\n");
-                    DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+//                    GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过！\n");
+
+                    UiLogUtil.appendLog2EventTab(deviceCode,"");
                     this.startCheckRecipePara(goldRecipe);
                 } else {
                     this.startCheckRecipePara(checkRecipe);
@@ -669,7 +664,7 @@ public class Horizon03ixHost extends EquipHost {
         }
     }
 
-    private void processS6F11inAll(DataMsgMap msg) throws MliBaseException, InterruptedException {
+    private void processS6F11inAll(DataMsgMap msg) throws InterruptedException {
 //        long ceid = 0l;
 //        ceid = msg.getSingleNumber("CollEventID");
 //        if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
@@ -681,7 +676,7 @@ public class Horizon03ixHost extends EquipHost {
 //            processS6F11in(msg);
 //        }
         long ceid = 0l;
-        ceid = msg.getSingleNumber("CollEventID");
+        ceid = (Long) msg.get("CollEventID");
 
         if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
             if (ceid == 90001) {
@@ -804,22 +799,6 @@ public class Horizon03ixHost extends EquipHost {
     }
     // </editor-fold>
 
-    @Override
-    public Object clone() {
-        Horizon03ixHost newEquip = new Horizon03ixHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     private void initRptPara() {
     }
@@ -843,13 +822,13 @@ public class Horizon03ixHost extends EquipHost {
             }
             return cmdMap;
         } else {
-            GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 设备：" + deviceCode + " 未设置锁机！\n");
-            DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+            UiLogUtil.appendLog2EventTab(deviceCode, "");
+
             return null;
         }
     }
 
-//    public Map releaseDevice() {
+    //    public Map releaseDevice() {
 //        Map map = new HashMap();
 //        map.put("HCACK", 0);
 //        return map;

@@ -1,41 +1,34 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.secsLayer.resolver.asm.ASMRecipeUtil;
 
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.asm.ASMRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.util.*;
+import java.util.concurrent.*;
+
 
 @SuppressWarnings("serial")
 public class ASM80THost extends EquipHost {
@@ -43,18 +36,23 @@ public class ASM80THost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(ASM80THost.class.getName());
 
-    public ASM80THost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public ASM80THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public ASM80THost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        ASM80THost newEquip = new ASM80THost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -125,34 +123,9 @@ public class ASM80THost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-//                processS6F11in(data);
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                //待过滤CEID
-                this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            }  else if (tagName.toLowerCase().contains("s6f11incommon")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
-            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+            }else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -170,7 +143,7 @@ public class ASM80THost extends EquipHost {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
-            }else {
+            } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
@@ -229,7 +202,7 @@ public class ASM80THost extends EquipHost {
         return panelMap;
     }
 
-    @Override
+
     public Map sendS1F3RcpAndStateCheck() {
         DataMsgMap s1f3out = new DataMsgMap("s1f3rcpandstate", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
@@ -342,7 +315,7 @@ public class ASM80THost extends EquipHost {
         return resultMap;
     }
 
-//    @SuppressWarnings("unchecked")
+    //    @SuppressWarnings("unchecked")
 //    public Map sendS1F3Multi(List<String> svidlist, String deviceType, MliHsms activeWrapper) {
 //        Map resultMap = new HashMap();
 //        DataMsgMap s1f3OutMuilt = new DataMsgMap("s1f3OutMulti", activeWrapper.getDeviceId());
@@ -395,9 +368,9 @@ public class ASM80THost extends EquipHost {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+//            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -408,7 +381,7 @@ public class ASM80THost extends EquipHost {
     // </editor-fold> 
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    @Override
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         //回复s6f11消息
         long ceid = 0l;
@@ -583,7 +556,7 @@ public class ASM80THost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -607,7 +580,7 @@ public class ASM80THost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+//        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -640,7 +613,7 @@ public class ASM80THost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
-         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -761,7 +734,7 @@ public class ASM80THost extends EquipHost {
         String pressStatusAll = "";
         for (int i = 0; i < pressResults.size(); i++) {
             String pressStatus = String.valueOf(pressResults.get(i));
-            if ("1".equals(pressStatus)||"2".equals(pressStatus)||"3".equals(pressStatus)) {//|| "2".equals(pressStatus)
+            if ("1".equals(pressStatus) || "2".equals(pressStatus) || "3".equals(pressStatus)) {//|| "2".equals(pressStatus)
                 pressStatusAll = pressStatusAll + (i + 1) + ",";
                 super.pressUseMap.put(i + 1, true);
             }
@@ -800,22 +773,7 @@ public class ASM80THost extends EquipHost {
         return map;
     }
 
-    @Override
-    public Object clone() {
-        ASM80THost newEquip = new ASM80THost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
+
 
     private void initRptPara() {
 //        sendS2f33out(5l, 8l, 19l);

@@ -2,7 +2,6 @@ package cn.tzauto.octopus.secsLayer.domain;
 
 import cn.tzauto.generalDriver.api.EqpEventDealer;
 import cn.tzauto.generalDriver.api.MsgListener;
-import cn.tzauto.generalDriver.api.SecsDriver;
 import cn.tzauto.generalDriver.api.SecsDriverFactory;
 import cn.tzauto.generalDriver.entity.cnct.ConnRegInfo;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
@@ -32,13 +31,12 @@ import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
-import cn.tzauto.octopus.secsLayer.modules.Dealer;
-import cn.tzauto.octopus.secsLayer.modules.event.EventDealer;
 import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -2044,7 +2042,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     /**
      * uph数据上报
      */
-    public void sendUphData2Server() {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
     }
 
     public String getOutputData() {
@@ -3407,4 +3405,62 @@ public abstract class EquipHost extends Thread implements MsgListener {
         RecipeService recipeService = new RecipeService(sqlSession);
         return recipeService.organizeUploadRecipePath(recipe);
     }
+
+    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe) {
+        return startCheckRecipeParaReturnFlag(checkRecipe, "");
+    }
+
+    /**
+     * 开机check recipe参数:使用获取recipe文件解析参数
+     *
+     * @param checkRecipe
+     * @param type
+     */
+    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe, String type) {
+        boolean checkParaFlag = false;
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        MonitorService monitorService = new MonitorService(sqlSession);
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        try {
+            Map mqMap = new HashMap();
+            mqMap.put("msgName", "eqpt.StartCheckWI");
+            mqMap.put("deviceCode", deviceCode);
+            mqMap.put("recipeName", ppExecName);
+            mqMap.put("EquipStatus", equipStatus);
+            mqMap.put("lotId", lotId);
+            String eventDesc = "";
+            if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
+                this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+                checkParaFlag = false;
+//                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
+//                realTimePara.setSize(1000, 650);
+//                SwingUtil.setWindowCenter(realTimePara);
+//                realTimePara.setVisible(true);
+                for (RecipePara recipePara : recipeParasdiff) {
+                    eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
+                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                }
+                monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
+            } else {
+                checkParaFlag = true;
+                this.releaseDevice();
+                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+                eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
+                logger.info("设备：" + deviceCode + " 开机Check成功");
+            }
+            mqMap.put("eventDesc", eventDesc);
+            GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+            sqlSession.commit();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return checkParaFlag;
+        } finally {
+            sqlSession.close();
+            return checkParaFlag;
+        }
+    }
+
 }

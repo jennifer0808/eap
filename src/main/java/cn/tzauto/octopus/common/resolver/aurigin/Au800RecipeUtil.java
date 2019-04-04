@@ -4,16 +4,11 @@
  */
 package cn.tzauto.octopus.common.resolver.aurigin;
 
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.common.resolver.IOUtil;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.OutputStream;
+import cn.tzauto.octopus.common.resolver.IOUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
@@ -21,15 +16,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author Administrator
  */
 public class Au800RecipeUtil {
@@ -138,6 +137,7 @@ public class Au800RecipeUtil {
         }
         return recipeParas;
     }
+
     public static String FluxPickDwell[] = {"FluxDipDwell"};
     public static String FluxPlaceDwell[] = {"FluxAssemblyDwell"};
     public static String BallPickDwell[] = {"BallPickDwell"};
@@ -328,4 +328,50 @@ public class Au800RecipeUtil {
 
     }
 
+    public static List transferAu800Rcp(String recipePath) {
+        FileReader fr = null;
+        BufferedReader bfr = null;
+        OutputStream os = null;
+
+        File file = new File(recipePath);
+        List<RecipePara> recipeParas = new ArrayList<>();
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode("AU800", "RecipePara");
+        try {
+            fr = new FileReader(file);
+            bfr = new BufferedReader(fr);
+            String ss = null;
+            String para = null;
+            for (RecipeTemplate recipeTemp : recipeTemplates) {
+                while ((ss = bfr.readLine()) != null) {
+                    RecipePara recipePara = new RecipePara();
+                    if (ss.contains(recipeTemp.getParaName())) {
+                        if (ss.contains("href")) {
+                            para = ss.substring(ss.indexOf("\"") + 1, ss.lastIndexOf("\""));
+                        } else {
+                            String[] str1 = ss.split(">");
+                            String[] str2 = str1[1].split("<");
+                            para = str2[0];
+                        }
+
+                        recipePara.setParaCode(recipeTemp.getParaCode());
+                        recipePara.setParaDesc(recipeTemp.getParaDesc());
+                        recipePara.setParaMeasure(recipeTemp.getParaUnit());
+                        recipePara.setParaName(recipeTemp.getParaName());
+                        recipePara.setParaShotName(recipeTemp.getParaShotName());
+                        recipePara.setSetValue(para);
+                        recipeParas.add(recipePara);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        } finally {
+            IOUtil.closeQuietly(os, bfr, fr);
+        }
+        sqlSession.close();
+        return recipeParas;
+    }
 }

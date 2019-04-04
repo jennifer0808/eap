@@ -5,38 +5,25 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.dek;
 
 
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.common.ws.WSUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tfinfo.jcauto.octopus.common.ws.WSUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.XmlUtil;
-import java.util.Date;
-import java.util.logging.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-/**
- * @author 贺从愿
- * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-3-25
- * @(#)EquipHost.java
- *
- * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
- * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
- * use and distribution are prohibited. Modification History: Modification Date
- * Author Reason class Description
- */
+import java.util.*;
+import java.util.logging.Level;
+
 public class DekHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
@@ -46,19 +33,24 @@ public class DekHost extends EquipHost {
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
 
-    //private Object synS2F41 = null;
-    public DekHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+
+    public DekHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public DekHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+    public Object clone() {
+        DekHost newEquip = new DekHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -139,17 +131,15 @@ public class DekHost extends EquipHost {
             } else if (tagName.equals("s6f11EquipStatusChange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
-                replyS6F12WithACK(data, ack);
+                replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            }else if (tagName.equalsIgnoreCase("s10f1in")) {
+            } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
             } else {
                 logger.debug("Received a message with tag = " + tagName
@@ -201,7 +191,10 @@ public class DekHost extends EquipHost {
                 rptid = 1003l;
                 ack = sendS2F35out(ceid, rptid);//15339 1001
             }
-            sendS2f33out(4l, 2031L, 2009L);
+            List list=new ArrayList();
+            list.add(2031L);
+            list.add(2009L);
+            sendS2f33out(4l, 2031L, list);
             sendS2f35out(4L, 4L, 4L);
             //SEND S2F37
             if (!"".equals(ack)) {
@@ -340,7 +333,8 @@ public class DekHost extends EquipHost {
         long[] ceid = new long[1];
         ceid[0] = pceid;
         s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", ceid);;
+        s2f37out.put("CollEventId", ceid);
+        ;
         try {
             activeWrapper.sendAwaitMessage(s2f37out);
         } catch (Exception e) {
@@ -511,7 +505,7 @@ public class DekHost extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -520,7 +514,7 @@ public class DekHost extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         return resultMap;
     }
 
@@ -712,7 +706,7 @@ public class DekHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -736,7 +730,7 @@ public class DekHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -767,7 +761,7 @@ public class DekHost extends EquipHost {
         resultMap.put("recipe", recipe);
         resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
-         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -787,7 +781,7 @@ public class DekHost extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -797,31 +791,16 @@ public class DekHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
 
     // </editor-fold> 
-    @Override
-    public Object clone() {
-        DekHost newEquip = new DekHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
-    @Override
+
+
     public void initRemoteCommand() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
