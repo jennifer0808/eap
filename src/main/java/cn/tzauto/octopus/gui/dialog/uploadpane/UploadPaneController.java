@@ -10,7 +10,7 @@ import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.guiUtil.CommonUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import javafx.beans.property.SimpleStringProperty;
@@ -169,7 +169,7 @@ public class UploadPaneController implements Initializable {
         Map resultMap = hostManager.getRecipeListFromDevice(deviceId);
         if (resultMap == null) {
 //            JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
-            CommonUtil.alert(Alert.AlertType.WARNING,"未正确收到回复，请检查设备通信状态！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING,"未正确收到回复，请检查设备通信状态！");
             return;
         }
         eppd = (ArrayList) resultMap.get("eppd");
@@ -193,12 +193,12 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING,"请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING,"请选中一条或多条Recipe！");
             return;
         }
 
         if (flag > 20) {
-            CommonUtil.alert(Alert.AlertType.WARNING,"批量上传一次不得多于20条，请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING,"批量上传一次不得多于20条，请重试！");
             return;
         }
 
@@ -219,7 +219,7 @@ public class UploadPaneController implements Initializable {
                 }
 
                 if (deviceCode.equals("")) {
-                    CommonUtil.alert(Alert.AlertType.WARNING,"请输入正确的用户名和密码！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING,"请输入正确的用户名和密码！");
                     GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                     return;
                 }
@@ -230,7 +230,7 @@ public class UploadPaneController implements Initializable {
 
 //        GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, rns);
 
-        CommonUtil.alert(Alert.AlertType.WARNING,"上传结束，请到Recipe管理界面进行查看！");
+        CommonUiUtil.alert(Alert.AlertType.WARNING,"上传结束，请到Recipe管理界面进行查看！");
 
         stage.close();
 

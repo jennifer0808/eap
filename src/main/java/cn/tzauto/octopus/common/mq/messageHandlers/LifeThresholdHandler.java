@@ -45,7 +45,7 @@ public class LifeThresholdHandler implements MessageHandler {
             deviceCode = mapMessage.getString("deviceCode").toString();
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备的当前刀片阀值");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);           
-            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceId());
+            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
             if (equipHost.getEquipState().isCommOn()) {
                 Map equipBladeThresholdMap = hostManager.getEquipBladeLifeThreshold(deviceInfo.getDeviceId());
                 if (equipBladeThresholdMap == null) {

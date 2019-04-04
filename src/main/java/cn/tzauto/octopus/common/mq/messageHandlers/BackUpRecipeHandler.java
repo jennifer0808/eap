@@ -91,7 +91,7 @@ public class BackUpRecipeHandler implements MessageHandler {
                 }
                 if (recipe1.getDeviceTypeCode().contains("ICOST")) {
                     deviceInfo = deviceService.selectDeviceInfoByDeviceCode(recipe1.getDeviceCode());
-                    Map map = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceId()).getRelativeFileInfo(localRecipeFilePath, recipe1.getRecipeName());
+                    Map map = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode()).getRelativeFileInfo(localRecipeFilePath, recipe1.getRecipeName());
                     String localHanRcpPath = String.valueOf(map.get("hanRcpPath"));
                     String hanRcpPath = localHanRcpPath.substring(localHanRcpPath.indexOf("/"));
                     String localCompRcpPath = String.valueOf(map.get("compRcpPath"));

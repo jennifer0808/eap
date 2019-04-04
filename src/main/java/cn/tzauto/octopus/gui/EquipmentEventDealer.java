@@ -158,9 +158,9 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                 + equipNodeBean.getDeviceCode());
         UiLogUtil.appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
-        stage.equipHosts.get(String.valueOf(deviceId)).setJsipReady(true);
-        stage.equipHosts.get(String.valueOf(deviceId)).setIsRestarting(false);
-        stage.equipHosts.get(String.valueOf(deviceId)).restartCnt = 0;
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(true);
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).setIsRestarting(false);
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).restartCnt = 0;
 
     }
 

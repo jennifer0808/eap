@@ -10,7 +10,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
-import cn.tzauto.octopus.gui.guiUtil.CommonUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -99,7 +99,7 @@ public class DownloadPaneController implements Initializable {
         List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByClientId(GlobalConstants.getProperty("clientId"));
         List<DeviceInfo> deviceInfostmp = new ArrayList<>();
         for (DeviceInfo deviceInfo : deviceInfos) {
-            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceId());
+            EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
             if (equipHost != null && AxisUtility.isEngineerMode(deviceInfo.getDeviceCode()) && equipHost.getEquipState().isCommOn()) {
                 deviceInfostmp.add(deviceInfo);
             }
@@ -157,14 +157,14 @@ public class DownloadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
             return;
         }
         if (flag > 1) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！");
             return;
         }
-        Optional<ButtonType> alert = CommonUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?");
+        Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?");
         if (alert.get() == ButtonType.OK) {
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
@@ -198,11 +198,11 @@ public class DownloadPaneController implements Initializable {
                         recipeOperationLog.setOperationResult("Y");
                         //手动下成功给服务端发mq
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                        CommonUtil.alert(Alert.AlertType.INFORMATION, "下载成功！");
+                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！");
 
                         UiLogUtil.appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
                     } else {
-                        CommonUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
 
                         UiLogUtil.appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                         mqMap.put("eventDesc", downloadResult);
@@ -215,7 +215,7 @@ public class DownloadPaneController implements Initializable {
                 }
 
             } catch (Exception e) {
-                CommonUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
                 GlobalConstants.sysLogger.error(e.toString());
                 sqlSession.rollback();
                 logger.error("Exception:", e);

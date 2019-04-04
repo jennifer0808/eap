@@ -60,7 +60,7 @@ public class UpdateVerNoHandler implements MessageHandler {
             return;
         }
         int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
         equipHost.lotId = lotId;
         Map map = new HashMap();
         map.put("WorkLot", lotId);

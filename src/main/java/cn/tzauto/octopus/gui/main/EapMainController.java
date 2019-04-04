@@ -13,7 +13,7 @@ import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
 import cn.tzauto.octopus.gui.dialog.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
-import cn.tzauto.octopus.gui.guiUtil.CommonUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController;
 import javafx.application.Platform;
@@ -99,7 +99,7 @@ public class EapMainController implements Initializable {
         userName = (TextField) root.lookup("#userName");
         // userNameStr = userName.getText();
         UiLogUtil.appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
-//        int i = CommonUtil.loginOut("是否注销？");
+//        int i = CommonUiUtil.loginOut("是否注销？");
 //
 //        if (i == 0) {
         JB_MainPage.setVisible(false);
@@ -171,8 +171,8 @@ public class EapMainController implements Initializable {
         sqlSession.close();
         if (userList == null || userList.isEmpty()) {
 //            window.close();
-//            CommonUtil.alert("请输入正确的用户名和密码！");
-            CommonUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+//            CommonUiUtil.alert("请输入正确的用户名和密码！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
             return false;
         }
         for (SysUser user : userList) {
@@ -247,7 +247,7 @@ public class EapMainController implements Initializable {
                 break;
             } else {
 //                window.close();
-                CommonUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
                 return false;
             }
         }

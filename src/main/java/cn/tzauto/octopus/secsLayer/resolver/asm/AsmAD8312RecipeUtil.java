@@ -5,15 +5,14 @@
  */
 package cn.tzauto.octopus.secsLayer.resolver.asm;
 
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +20,6 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 
 /**
  * 解析ASMAD8312系列机台的recipe
@@ -129,6 +126,114 @@ public class AsmAD8312RecipeUtil {
             }
         }
         return recipeParas;
+    }
+
+    public static List<RecipePara> transferRcpFromDBForPlus(String filePath, String deviceType) {
+        ZipInputStream zis = null;
+        InputStream is = null;
+        BufferedReader br = null;
+        List<RecipePara> recipeParas = new ArrayList<>();
+        List<String> recipeParaReadLines = new ArrayList<>();
+        try {
+            ZipFile zipFile = new ZipFile(filePath);
+            zis = new ZipInputStream(new FileInputStream(filePath));
+            ZipEntry ze = null;
+            while ((ze = zis.getNextEntry()) != null) {
+                if (ze.getName().contains("Parameter.txt")) {
+                    is = zipFile.getInputStream(ze);
+                    br = new BufferedReader(new InputStreamReader(is));
+                    boolean startFlag = false;
+                    String line = "";
+                    String tempGroupName = "";
+                    String groupName = "";
+                    String partName = "";
+                    while ((line = br.readLine()) != null) {
+                        if (line.contains("==============")) {
+                            startFlag = true;
+                        }
+                        if (!startFlag) {
+                            continue;
+                        }
+                        if ("".equals(line) || " ".equals(line)) {
+                            continue;
+                        }
+                        if (line.contains("*******")) {
+                            partName = line.replace("*", "");
+                            groupName = "";
+                            continue;
+                        }
+                        //如果此行包含"-----",则将之前行当成groupName;
+                        if (line.contains("-----")) {
+                            recipeParaReadLines.remove(recipeParaReadLines.size() - 1);
+                            groupName = tempGroupName.trim();
+                            continue;
+                        } else {
+                            //记录每行的读取
+                            tempGroupName = line.trim();
+                        }
+                        //真正解析数据
+                        //将每行保存
+//                        System.out.println(groupName + "-" + line.replace(":", "").replaceAll("\\s", "").trim());
+                        if (!"".equals(groupName) && !groupName.contains("-")) {
+                            groupName += "-";
+                        }
+//                        recipeParaReadLines.add(groupName + line.replace(":", "").replaceAll("\\s", "").trim());
+                        recipeParaReadLines.add((partName + "-" + groupName + line.replace(":", "")).replaceAll("\\s", "").trim());
+                    }
+                }
+            }
+            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            RecipeService recipeService = new RecipeService(sqlSession);
+            List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+            sqlSession.close();
+//            for(RecipeTemplate recipeTemplatetemp : recipeTemplates){
+//                System.out.println(recipeTemplatetemp);
+//            }
+            for (String readStr : recipeParaReadLines) {
+                System.out.println(readStr);
+                //System.out.println(readStr.split("\\-")[0]);
+//                RecipeTemplate recipeTemplate = new RecipeTemplate();
+                for (RecipeTemplate recipeTemplatetemp : recipeTemplates) {
+                    //System.out.println(recipeTemplatetemp.getGroupName());
+                    if (readStr.contains(recipeTemplatetemp.getGroupName() + "-" + recipeTemplatetemp.getParaName())) {
+                        String s = "";
+                        //System.out.println( s=recipeTemplatetemp.getParaName());
+//                        recipeTemplate = recipeTemplatetemp;
+                        //设置返回参数
+                        RecipePara recipePara = new RecipePara();
+                        String value = readStr.replace(recipeTemplatetemp.getGroupName() + "-" + recipeTemplatetemp.getParaName(), "");
+//                        System.out.println(recipeTemplatetemp.getGroupName());
+                        if (recipeTemplatetemp.getParaUnit() != null) {
+                            value = value.replace(recipeTemplatetemp.getParaUnit(), "");
+                        }
+                        recipePara.setSetValue(value);
+//                        System.out.println(value);
+                        recipePara.setParaName(recipeTemplatetemp.getParaName());
+                        recipePara.setParaCode(recipeTemplatetemp.getParaCode());
+                        recipePara.setParaMeasure(recipeTemplatetemp.getParaUnit());
+                        recipePara.setParaShotName(recipeTemplatetemp.getParaShotName());
+                        recipeParas.add(recipePara);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            logger.error("Excetion occur,transfer fail.Exception info：" + ex.getMessage());
+            recipeParas = null;
+        } finally {
+            try {
+                if (br == null) {
+                    logger.info("Recipe 内为未找到Parameter.txt文件,请确认设备软件已升级,并且已重新对recipe执行保存操作");
+
+                }
+                br.close();
+                is.close();
+                zis.close();
+            } catch (IOException ex) {
+            }
+            return recipeParas;
+        }
+
     }
 
     public static void main(String[] args) {

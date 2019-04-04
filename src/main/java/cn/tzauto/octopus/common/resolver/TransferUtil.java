@@ -1,27 +1,20 @@
 package cn.tzauto.octopus.common.resolver;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import org.apache.log4j.Logger;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author njtz
  */
 public class TransferUtil {
 
     private static Logger logger = Logger.getLogger(TransferUtil.class.getName());
 
-    public static ArrayList<Object> getIDValue(ArrayList list) {
-        ArrayList<Object> obj = new ArrayList<>();
+    public static ArrayList getIDValue(ArrayList list) {
+        ArrayList obj = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i) instanceof long[]) {
                 if (((long[]) list.get(i)).length == 0) {

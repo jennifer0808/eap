@@ -36,17 +36,17 @@ public class DeviceComm {
 //            @Override
 //            public Void doInBackground() {
         logger.info("DoInBackground,start comm... ");
-        String deviceId = equipNodeBean.getDeviceIdProperty();
+        String deviceCode = equipNodeBean.getDeviceCode();
         EquipmentEventDealer equipmentEventDealer = new EquipmentEventDealer(equipNodeBean, GlobalConstants.stage);
         //start the watch dog
         equipmentEventDealer.execute();
         //start the Host Thread
         MultipleEquipHostManager hostsManager = EapClient.hostManager;
-        hostsManager.startHostThread(deviceId);
+        hostsManager.startHostThread(deviceCode);
 
         //start the SECS protocols
         try {
-            hostsManager.startSECS(deviceId, equipmentEventDealer);
+            hostsManager.startSECS(deviceCode, equipmentEventDealer);
         } catch (NotInitializedException e1) {
             e1.printStackTrace();
 //                    return null;
@@ -63,7 +63,7 @@ public class DeviceComm {
         } catch (IllegalStateTransitionException e) {
             e.printStackTrace();
         }
-        EapClient.addWatchDog(deviceId, equipmentEventDealer);
+        EapClient.addWatchDog(deviceCode, equipmentEventDealer);
 //                return null;
 //            }
 //        };

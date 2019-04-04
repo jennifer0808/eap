@@ -50,7 +50,7 @@ public class UpdateVerNoWebservice implements BaseWebservice {
 
         }
         int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
         equipHost.lotId = lotId;
 
         webMap.put("WorkLot", lotId);

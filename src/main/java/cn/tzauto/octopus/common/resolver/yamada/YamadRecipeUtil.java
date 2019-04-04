@@ -4,11 +4,13 @@
  */
 package cn.tzauto.octopus.common.resolver.yamada;
 
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
+import org.apache.ibatis.session.SqlSession;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.ibatis.session.SqlSession;
 
 /**
  *
@@ -27,7 +28,6 @@ import org.apache.ibatis.session.SqlSession;
 public class YamadRecipeUtil {
 
     public static List<RecipeTemplate> yamadaRcpCfg() {
-//        File cfgfile = new File("C:\\SVN\\10.参考资料\\Equipment Secs Docs\\MOLD\\YAMADA\\YAMADAcfg.csv");
         File cfgfile = new File("D:\\SVN\\documents\\10.参考资料\\Equipment Secs Docs\\MOLD\\YAMADA\\YAMADAcfg.csv");
         List recipeParaList = new LinkedList();
         List<RecipeTemplate> recipeTemplates = new ArrayList<>();
@@ -59,9 +59,9 @@ public class YamadRecipeUtil {
                 recipeTemplate.setUpdateBy("lsy");
                 recipeTemplate.setUpdateDate(new Date());
                 recipeTemplate.setDelFlag("0");
-                recipeTemplate.setDeviceTypeCode("YAMADA120T");
-                recipeTemplate.setDeviceTypeId("f1af0e84-2d69-11e8-b7ac-00ffdd3aea2b");
-                recipeTemplate.setDeviceTypeName("YAMADA120T");
+                recipeTemplate.setDeviceTypeCode("YAMADA170T");
+                recipeTemplate.setDeviceTypeId("d1e93ca70c17471f923bf4665ae974a3");
+                recipeTemplate.setDeviceTypeName("YAMADA170T");
                 recipeTemplates.add(recipeTemplate);
             }
             br.close();
@@ -72,13 +72,13 @@ public class YamadRecipeUtil {
         return recipeTemplates;
     }
 
-    public static List transferYamadaRcp(String deviceType, String recipePath) {
+    public static List transferYamadaRcp(String recipePath) {
         String ppbody = TransferUtil.getPPBody(0, recipePath).get(0).toString();
         String[] ppbodys = ppbody.split(",");
         System.out.println("ppbodys size:" + ppbodys.length);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode("YAMADA170T", "RecipePara");
         sqlSession.close();
         List<RecipePara> recipeParas = new ArrayList<>();
         //防止ppbodys的大小超过模板里配置的参数数量
@@ -91,7 +91,6 @@ public class YamadRecipeUtil {
             recipePara.setParaName(recipeTemplates.get(i).getParaName());
             recipePara.setParaShotName(recipeTemplates.get(i).getParaShotName());
             recipePara.setSetValue(ppbodys[i]);
-            System.out.println(String.valueOf(recipePara));
             recipeParas.add(recipePara);
         }
 
@@ -99,9 +98,8 @@ public class YamadRecipeUtil {
     }
 
     public static void main(String aar[]) {
-
-        String recipePath = "E:\\1B 3-7 0.75-AT_V4.txt";//QFN-250x70-0.55-700_V0.txt    QFN-25070-0.55-G770_V0.txt
-        List<RecipePara> recipeParas = transferYamadaRcp("",recipePath);
-//        System.out.println(recipeParas.toString());
+        String recipePath = "C:\\Users\\wjy\\Desktop\\D3500-6035\\QFN0.75-0.85\\QFN0.75-0.85_V0.txt";//QFN-250x70-0.55-700_V0.txt    QFN-25070-0.55-G770_V0.txt
+        List<RecipePara> recipeParas = transferYamadaRcp(recipePath);
+        System.out.println(recipeParas.size());
     }
 }

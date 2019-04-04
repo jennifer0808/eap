@@ -35,14 +35,12 @@ public class AsmAD838Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    public String Datelength;
     private final long StripMapUpCeid = 237L;
+    private final long EquipStateChangeCeid = 6L;
 
 
-    public AsmAD838Host(String devId, String IpAddress, int TcpPort,
-                        String connectMode, String deviceType, String deviceCode) {
-        super(devId, IpAddress, TcpPort,
-                connectMode, deviceType, deviceCode);
+    public AsmAD838Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
     @Override
@@ -52,7 +50,7 @@ public class AsmAD838Host extends EquipHost {
         DataMsgMap msg = null;
         while (!this.isInterrupted()) {
             try {
-                while (!this.isJsipReady()) {
+                while (!this.isSdrReady()) {
                     AsmAD838Host.sleep(200);
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
@@ -163,15 +161,11 @@ public class AsmAD838Host extends EquipHost {
     @Override
     public Map sendS7F5out(String recipeName) {
 
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", mli.getDeviceId());
-        s7f5out.setTransactionId(mli.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = mli.sendS7F5out(recipeName);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -374,7 +368,7 @@ public class AsmAD838Host extends EquipHost {
     }
 
     private void processS6F11s6f11PPExecName(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", mli.getDeviceId());
+        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
         long reportID = 0l;
         try {
             out.setTransactionId(data.getTransactionId());
@@ -406,10 +400,10 @@ public class AsmAD838Host extends EquipHost {
                 this.deviceType, this.deviceCode);
         newEquip.startUp = this.startUp;
         newEquip.description = this.description;
-        newEquip.mli = this.mli;
+        newEquip.activeWrapper = this.activeWrapper;
         //newEquip.equipState = this.equipState;
         newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.mli.addInputMessageListenerToAll(newEquip);
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
         this.clear();
         return newEquip;
     }
@@ -437,10 +431,6 @@ public class AsmAD838Host extends EquipHost {
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
                 UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
-//                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
-//                realTimePara.setSize(1000, 650);
-//                SwingUtil.setWindowCenter(realTimePara);
-//                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
                     UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
@@ -463,11 +453,11 @@ public class AsmAD838Host extends EquipHost {
     }
 
     private void initRptPara() {
-//        sendS1F1out();
-//        super.findDeviceRecipe();
-//        sendS2F37outAll();
-//        sendS2F37outClose(267L);
-//        sendS5F3out(true);
+        sendS1F1out();
+        super.findDeviceRecipe();
+        sendS2F37outAll();
+        sendS2F37outClose(267L);
+        sendS5F3out(true);
 
     }
 
@@ -490,7 +480,10 @@ public class AsmAD838Host extends EquipHost {
             if (Long.parseLong(ceid) == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             }
-            mli.sendS6F12out((byte) 0, data.getTransactionId());
+            if (Long.parseLong(ceid) == EquipStateChangeCeid) {
+                processS6F11ControlStateChange(data);
+            }
+            activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             if (commState != 1) {
                 this.setCommState(1);
             }

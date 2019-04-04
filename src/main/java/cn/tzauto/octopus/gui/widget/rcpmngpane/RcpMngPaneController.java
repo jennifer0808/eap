@@ -11,7 +11,7 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.guiUtil.CommonUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.main.EapMainController;
 import cn.tzauto.octopus.gui.widget.paraviewpane.ParaViewPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
@@ -296,7 +296,7 @@ public class RcpMngPaneController implements Initializable {
         GlobalConstants.table = dataTable;
         ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
         if (selectedCells.size() == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
             return;
         }
         GlobalConstants.isDownload = true;
@@ -317,7 +317,7 @@ public class RcpMngPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
             return;
         }
 
@@ -327,7 +327,7 @@ public class RcpMngPaneController implements Initializable {
 //        alert.setContentText("");
 //        Optional result = alert.showAndWait();
 
-        Optional<ButtonType> result = CommonUtil.alert(Alert.AlertType.CONFIRMATION, "确定要删除所选数据吗?");
+        Optional<ButtonType> result = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "确定要删除所选数据吗?");
 
 
         if (result.get() == ButtonType.OK) {
@@ -354,7 +354,7 @@ public class RcpMngPaneController implements Initializable {
                             GlobalConstants.C2SRcpDeleteQueue.sendMessage(mqMap);
                         } else {
                             sqlSession.rollback();
-//                            CommonUtil.alert("删除失败");
+//                            CommonUiUtil.alert("删除失败");
                         }
                         sqlSession.close();
 
@@ -362,7 +362,7 @@ public class RcpMngPaneController implements Initializable {
 
                 }
             }
-            CommonUtil.alert(Alert.AlertType.WARNING, "删除成功");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "删除成功");
             dataTable.getItems().clear();
             showData();
 
@@ -376,7 +376,7 @@ public class RcpMngPaneController implements Initializable {
         ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
 
         if (selectedCells.size() == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
             return;
         }
 
@@ -532,7 +532,7 @@ public class RcpMngPaneController implements Initializable {
         ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
 
         if (selectedCells.size() == 0) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
             return;
         }
 
@@ -570,12 +570,12 @@ public class RcpMngPaneController implements Initializable {
             }
             recipeService.modifyRecipe(recipe);
             sqlSession.commit();
-            CommonUtil.alert(Alert.AlertType.INFORMATION, "当前Recipe " + recipe.getRecipeName() + "设置成功！");
+            CommonUiUtil.alert(Alert.AlertType.INFORMATION, "当前Recipe " + recipe.getRecipeName() + "设置成功！");
 //            reFreshRcpMng();
             dataTable.getItems().clear();
             showData();
         } catch (Exception e) {
-            CommonUtil.alert(Alert.AlertType.WARNING, "当前Recipe设置失败！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "当前Recipe设置失败！");
             sqlSession.rollback();
             logger.error("Exception:", e);
         } finally {

@@ -53,7 +53,7 @@ public class CheckRecipePapaHandler implements MessageHandler {
         DeviceService deviceService = new DeviceService(sqlSession);
         deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
         if (equipHost.getEquipState().isCommOn()) {
             
         }
