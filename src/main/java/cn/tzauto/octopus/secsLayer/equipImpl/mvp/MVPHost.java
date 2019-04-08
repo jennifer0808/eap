@@ -16,8 +16,6 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.WSUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.XmlUtil;
 import org.apache.ibatis.session.SqlSession;
@@ -416,52 +414,17 @@ public class MVPHost extends EquipHost {
         sendS2F35clear();
         //重新定义机台UpLoadStripMapping事件
         sendS2f33outMulti(3014L, 1037L, 1023L);
-        sendS2f35out(3014L, 3014L, 3014L);
+        sendS2F35out(3014L, 3014L, 3014L);
         sendS2F37out(3014L);
         logger.info("If the device software upgrades, you need to redefine the ceid=3043 event!！");
         List list = new ArrayList();
         list.add(1037L);
         sendS2F33Out(3043L, 3043L,list);
-        sendS2f35out(3043L, 3043L, 3043L);
+        sendS2F35out(3043L, 3043L, 3043L);
         sendS2F37out(3043L);
 //        sendS2F37outAll();
     }
 
-    @Override
-    public Map sendS1F3SingleCheck(String svidName) {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
-        try {
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            return null;
-        }
-        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
-        logger.info("resultMap=" + resultMap);
-//        sendS2F41outPPselect("4.es");
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
