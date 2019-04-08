@@ -60,7 +60,7 @@ public class DeviceComm {
             e.printStackTrace();
         } catch (HsmsProtocolNotSelectedException e) {
             e.printStackTrace();
-        }  catch (WrongStateTransitionNumberException e) {
+        } catch (IllegalStateTransitionException e) {
             e.printStackTrace();
         }
         EapClient.addWatchDog(deviceCode, equipmentEventDealer);

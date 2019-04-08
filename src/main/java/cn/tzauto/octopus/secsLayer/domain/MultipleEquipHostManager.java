@@ -373,7 +373,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, WrongStateTransitionNumberException {
+    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
