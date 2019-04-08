@@ -14,7 +14,6 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -23,7 +22,6 @@ import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -77,11 +75,11 @@ public class T740Host extends EquipHost {
                     super.findDeviceRecipe();
 
                     sendS2F37outClose(14010L);
-                    sendS2f35outDelete(14010L, 14010L);
+                    sendS2F35outDelete(14010L, 14010L);
                     sendS2f33outDelete(80006L);
 
                     sendS2f33outTape();
-                    sendS2f35out(14010L, 14010L, 80006L);
+                    sendS2F35out(14010L, 14010L, 80006L);
                     sendS2F37out(14010L);
                     rptDefineNum++;
                     updateLotId();
@@ -155,51 +153,6 @@ public class T740Host extends EquipHost {
     }
     // <editor-fold defaultstate="collapsed" desc="S1FX Code"> 
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-//            data = activeWrapper.sendAwaitMessage(s1f3out);
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S2FX Code"> 
@@ -482,22 +435,7 @@ public class T740Host extends EquipHost {
         if ("Idle".equalsIgnoreCase(equipStatus) || "UNKNOWN".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
             Recipe recipe = setRecipe(recipeName);
             recipePath = super.getRecipePathByConfig(recipe);
-            DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-            s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-            s7f5out.put("ProcessprogramID", recipeName);
-            DataMsgMap data = null;
-            try {
-//            data = activeWrapper.sendAwaitMessage(s7f5out);
-                data = sendMsg2Equip(s7f5out);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (data == null || data.isEmpty()) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
-                return null;
-            }
-
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) getPPBODY(recipeName);
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
             List<String> list = TrRecipeUtil.readRCP(recipePath);
             String rcpContent = "";
@@ -505,20 +443,10 @@ public class T740Host extends EquipHost {
                 if (str.contains("handler") || str.contains("component")) {
                     String recipePathTem = recipePath.substring(0, recipePath.lastIndexOf("/") + 1) + str + "_V" + recipe.getVersionNo() + ".txt";
                     String ppidTem = str.replace("@", "/");
-                    DataMsgMap s7f5outTem = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-                    s7f5outTem.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-                    s7f5outTem.put("ProcessprogramID", ppidTem);
-                    try {
-                        data = activeWrapper.sendAwaitMessage(s7f5outTem);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    if (data.get("ProcessprogramID") != null) {
-                        ppidTem = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
-                        byte[] ppbodyTem = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-                        TransferUtil.setPPBody(ppbodyTem, recipeType, recipePathTem);
-                        rcpContent = rcpContent + str;
-                    }
+                    byte[] ppbodyTem = (byte[]) getPPBODY(ppidTem);
+                    TransferUtil.setPPBody(ppbodyTem, recipeType, recipePathTem);
+                    rcpContent = rcpContent + str;
+
                 }
             }
             String rcpAnalyseSucceed = "Y";
@@ -613,7 +541,7 @@ public class T740Host extends EquipHost {
         DataMsgMap data = null;
         try {
 //            data = activeWrapper.sendAwaitMessage(s7f19out);
-            data = sendMsg2Equip(s7f19out);
+            data = activeWrapper.sendS7F19out();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -816,9 +744,6 @@ public class T740Host extends EquipHost {
         return attachs;
 
     }
-
-
-
 
 
     @Override

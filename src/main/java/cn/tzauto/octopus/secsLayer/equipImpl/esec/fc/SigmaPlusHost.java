@@ -268,7 +268,7 @@ public class SigmaPlusHost extends EquipHost {
     public String initRptPara() {
         try {
 //            sendS2f33outDelete(4905L);
-//            sendS2f35outDelete(4905L, 4905L);
+//            sendS2F35outDelete(4905L, 4905L);
             sendS2F33clear();
             sendS2F35clear();
 //            sendS2F37outAll();
@@ -285,7 +285,7 @@ public class SigmaPlusHost extends EquipHost {
             sendS2F37out(2L);
 
 //            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
-//            sendS2f35out(3255L, 3255L, 3255L);
+//            sendS2F35out(3255L, 3255L, 3255L);
             //SEND S2F37
             //StripMapping事件定义
 //            sendS2F33Out(403L, 290L, 738L);

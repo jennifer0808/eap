@@ -182,27 +182,6 @@ public class HongTeng7200Host extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-    public Map sendS2F41outStart(String batchName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outstart", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("BatchName", batchName);
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception occur,Exception info:" + e.getMessage());
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        return resultMap;
-    }
-    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6F11 Code">
 
 

@@ -218,7 +218,7 @@ public class HTDB730Host extends EquipHost {
 //            sendS2F35out(80l, 10002l);
 //            sendS2F37out(80l);
             //重新定义processing INIT·SETUP·READY·EXECUTING·PAUSE·ERROR·WAIT LOT status
-//            sendS2f35outSpecialDelete();
+//            sendS2F35outSpecialDelete();
             List list = new ArrayList();
             list.add(50062L);
             list.add(50070L);

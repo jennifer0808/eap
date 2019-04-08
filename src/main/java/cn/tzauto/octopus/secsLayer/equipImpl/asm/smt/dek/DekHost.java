@@ -96,10 +96,9 @@ public class DekHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
-            LastComDate = new Date().getTime();
+            LastComDate =  System.currentTimeMillis();
             long transactionId = data.getTransactionId();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
@@ -115,17 +114,9 @@ public class DekHost extends EquipHost {
                 processS2F36in(data);
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                processS6F11inStripMapUpload(data);
-                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equals("s6f11EquipStatusChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s14f1in")) {
+            }  else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
@@ -169,19 +160,19 @@ public class DekHost extends EquipHost {
                 ack = "";
                 ceid = 15339l;
                 rptid = 1001l;
-                ack = sendS2F35out(ceid, rptid);//15339 1001
+                sendS2F35out(ceid, rptid);//15339 1001
             }
             if (!"".equals(ack)) {
                 ack = "";
                 ceid = 15338l;
                 rptid = 1002l;
-                ack = sendS2F35out(ceid, rptid);//15339 1001
+                sendS2F35out(ceid, rptid);//15339 1001
             }
             if (!"".equals(ack)) {
                 ack = "";
                 ceid = 15328l;
                 rptid = 1003l;
-                ack = sendS2F35out(ceid, rptid);//15339 1001
+                sendS2F35out(ceid, rptid);//15339 1001
             }
             List list=new ArrayList();
             list.add(2031L);
@@ -285,52 +276,6 @@ public class DekHost extends EquipHost {
         } catch (Exception e) {
             e.printStackTrace();
             return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F35out(long ceid, long rptid) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f35out = new DataMsgMap("s2f35out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f35out.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        s2f35out.put("DataID", dataid);
-        s2f35out.put("CollEventID", eventid);
-        s2f35out.put("ReportID", reportid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f35out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2F37out(long pceid) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f37out = new DataMsgMap("s2f37out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37out.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = true;
-        long[] ceid = new long[1];
-        ceid[0] = pceid;
-        s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", ceid);
-        ;
-        try {
-            activeWrapper.sendAwaitMessage(s2f37out);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

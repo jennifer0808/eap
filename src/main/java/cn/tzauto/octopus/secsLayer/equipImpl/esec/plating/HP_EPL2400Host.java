@@ -175,7 +175,7 @@ public class HP_EPL2400Host extends EquipHost {
 //        //定义rpt，1011=Machine State,1501=recipe
 //        sendS2F33Out(27L, 1011L, 1501L);
 //        //关联10002->27
-//        sendS2f35out(1L, 27L, 10002L);
+//        sendS2F35out(1L, 27L, 10002L);
 //        //开启事件报告
 //        sendS2F37outAll();
 //        sendS2F37outCloseAll();

@@ -197,7 +197,7 @@ public class EsecDB2009Host extends EquipHost {
 //            this.sendS2F35clear();
 //            //重新定义Learn Device事件
 //            sendS2f33outMulti(3L, 6L, 8L);
-//            sendS2f35out(3L, 3L, 3L);
+//            sendS2F35out(3L, 3L, 3L);
 //            sendS2F37out(3L);
 //            //发送s2f33
 //            String ack = "";
@@ -238,7 +238,7 @@ public class EsecDB2009Host extends EquipHost {
 //                ack = sendS2F35out(ceid, rptid);//15339 1001
 //            }
 //            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
-//            sendS2f35out(3255L, 3255L, 3255L);
+//            sendS2F35out(3255L, 3255L, 3255L);
 //            //SEND S2F37
 //            if (!"".equals(ack)) {
 //                sendS2F37outAll();

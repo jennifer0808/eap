@@ -430,7 +430,7 @@ public class Opti750Host extends EquipHost {
         list.add(250L);
 
         sendS2F33Out(250L, 250L, list);
-        sendS2f35out(250L, 250L, 250L);
+        sendS2F35out(250L, 250L, 250L);
         sendS2F37out(250L);
         sendS2F37outAll();
         sendS5F3out(true);

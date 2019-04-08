@@ -21,7 +21,6 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.towa.TowaRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
@@ -39,6 +38,8 @@ public class TowaHost extends EquipHost {
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid=50007;
+
     }
 
 
@@ -146,7 +147,9 @@ public class TowaHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
                 putDataIntoWaitMsgValueMap(data);
-            } else {
+            }  else if (tagName.equalsIgnoreCase("s6f11in")) {
+                processS6F11EquipStatus(data);
+            }else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
@@ -209,7 +212,7 @@ public class TowaHost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid =(long) data.get("CEID");
             if (ceid == 50006 || ceid == 53) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 50005 || ceid == 52) {
@@ -226,6 +229,11 @@ public class TowaHost extends EquipHost {
                 }
             }
             updateCommStateInExt();
+
+            if(ceid==EquipStateChangeCeid){
+                processS6F11EquipStatusChange(data);
+                return;
+            }
             if ("TOWAPMC".equalsIgnoreCase(deviceType) || "TOWAY1E".equalsIgnoreCase(deviceType)) {
                 if (ceid == 2080) {
                     super.pressUseMap.clear();
@@ -286,29 +294,17 @@ public class TowaHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //更新页面显示内容
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID");
-        sqlSession.close();
-        if (recipeTemplates != null && recipeTemplates.size() > 0) {
-            for (int j = 0; j < recipeTemplates.size(); j++) {
-                long ceidtmp = Long.parseLong(recipeTemplates.get(j).getDeviceVariableId());
-                if (ceid == ceidtmp) {
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
-                    break;
-                }
-            }
-        }
+
     }
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long) data.get("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -470,16 +466,7 @@ public class TowaHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
