@@ -35,10 +35,7 @@ public class YAMADAHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(YAMADAHost.class.getName());
-    private  long equipstateCeid =  1111;
-    private long RunModeChangeCeid =  2222;
-    private long workloadedCeid = 105;
-    private long ppselectfinish = 601;
+    private long ppselectfinishCeid = 601;
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid=605;
@@ -71,31 +68,31 @@ public class YAMADAHost extends EquipHost {
                 } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
                     processS6F11EquipStatus(msg);
                 }
-//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-//                    try {
-//                        processS6F11EquipStatusChange(msg);
-//                    } catch (Exception e) {
-//                        logger.error("Exception:", e);
-//                    }
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate") || (msg.getMsgSfName().equalsIgnoreCase("s6f11lotstartready"))) {
-//                    try {
-//                        processS6F11EquipStatus(msg);
-//                    } catch (Exception e) {
-//                        logger.error("Exception:", e);
-//                    }
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11RunModeChange")) {
-//                    processS6F11EquipStatus(msg);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
-//                    processS6F11EquipStatus(msg);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-//                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-//                    Map map = new HashMap();
-//                    map.put("PPExecName", ppExecName);
-//                    changeEquipPanel(map);
-//                } else {
-//                    logger.info("A message in queue with tag = " + msg.getMsgSfName()
-//                            + " which I do not want to process! ");
-//                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+                    try {
+                        processS6F11EquipStatusChange(msg);
+                    } catch (Exception e) {
+                        logger.error("Exception:", e);
+                    }
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate") || (msg.getMsgSfName().equalsIgnoreCase("s6f11lotstartready"))) {
+                    try {
+                        processS6F11EquipStatus(msg);
+                    } catch (Exception e) {
+                        logger.error("Exception:", e);
+                    }
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11RunModeChange")) {
+                    processS6F11EquipStatus(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
+                    processS6F11EquipStatus(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    Map map = new HashMap();
+                    map.put("PPExecName", ppExecName);
+                    changeEquipPanel(map);
+                } else {
+                    logger.info("A message in queue with tag = " + msg.getMsgSfName()
+                            + " which I do not want to process! ");
+                }
 
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
@@ -173,9 +170,9 @@ public class YAMADAHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
+//        if (data == null || data.get("RESULT") == null) {
+//            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+//        }
         if (data == null || data.get("RESULT") == null) {
             return null;
         }
@@ -194,7 +191,7 @@ public class YAMADAHost extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            } else if (ceid == 102 || ceid == 601) {
+            } else if (ceid == 102 ) {
 //                sendS2f41Cmd("UNLOCK");
 //                UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
@@ -204,15 +201,14 @@ public class YAMADAHost extends EquipHost {
 //                    sendS2f41Cmd("UNLOCK");
 //                    UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
                 }
-            } else if (ceid == workloadedCeid) {
-                processS6F11EquipStatus(data);
-                return ;
-//                sendS2f41Cmd("UNLOCK");
             }else if(ceid == EquipStateChangeCeid){
                 processS6F11EquipStatusChange(data);
                 return;
-            }else if(ceid == ppselectfinish){
-                processS6F11EquipStatusChange(data);
+            }else if(ceid == ppselectfinishCeid){ //601
+                ppExecName = (String) ((SecsItem) data.get("PPExecName")).getData();
+                Map map = new HashMap();
+                map.put("PPExecName", ppExecName);
+                changeEquipPanel(map);
                 return ;
             }
 
