@@ -150,7 +150,9 @@ public class YAMADAHost extends EquipHost {
     }
 
     public List sendS1F3PressCheckout() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
+        //DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
+        DataMsgMap s1f3out = new DataMsgMap("s1f3out", activeWrapper.getDeviceId());
+
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s1f3out.setTransactionId(transactionId);
         long[] press1SV = new long[1];
@@ -406,21 +408,10 @@ public class YAMADAHost extends EquipHost {
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
 
-        getPPBODY(recipeName);
-
-
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbodys = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbodys, recipeType, recipePath);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
