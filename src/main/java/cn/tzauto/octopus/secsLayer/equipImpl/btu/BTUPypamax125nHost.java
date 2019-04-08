@@ -7,18 +7,13 @@ package cn.tzauto.octopus.secsLayer.equipImpl.btu;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -39,6 +34,7 @@ public class BTUPypamax125nHost extends EquipHost {
     public BTUPypamax125nHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
+
     public Object clone() {
         BTUPypamax125nHost newEquip = new BTUPypamax125nHost(deviceId,
                 this.iPAddress,
@@ -83,11 +79,11 @@ public class BTUPypamax125nHost extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long)msg.get("CEID");
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }
-                    if (ceid == 10060 || ceid == 10070|| ceid == 10080|| ceid == 10090|| ceid == 10100) {
+                    if (ceid == 10060 || ceid == 10070 || ceid == 10080 || ceid == 10090 || ceid == 10100) {
                         //TODO 获取状态变化的事件报告
                         processS6F11EquipStatusChange(msg);
                     } else if (ceid == 1010 || ceid == 1020 || ceid == 1030) {
@@ -102,7 +98,7 @@ public class BTUPypamax125nHost extends EquipHost {
             }
         }
     }
-    
+
 
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
@@ -119,7 +115,7 @@ public class BTUPypamax125nHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 //回复掉消息
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -131,7 +127,7 @@ public class BTUPypamax125nHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
                 putDataIntoWaitMsgValueMap(data);
-            }else if (tagName.equalsIgnoreCase("s10f1in")) {
+            } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
             } else {
                 logger.info("Received a message with tag = " + tagName
@@ -169,7 +165,7 @@ public class BTUPypamax125nHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -305,99 +301,11 @@ public class BTUPypamax125nHost extends EquipHost {
     }
 
 
-
-
-
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     private void initRptPara() {
         sendS2F37outAll();
     }
 
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
 
-    @Override
-    public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析      
-//            recipeParaList = getRecipeParasByECSV();
-            //设备发过来的参数部分为科学计数法，这里转为一般的
-//            recipeParaList = recipeParaBD2Str(recipeParaList);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f6");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipe", recipe);
-        resultMap.put("recipeNameMapping", null);
-        resultMap.put("recipeParaList", recipeParaList);
-        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
-        return resultMap;
-    }
-    @Override
-    public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-        }
-        logger.info("resultMap===="+ resultMap);
-        return resultMap;
-    }
     @Override
     public String checkPPExecName(String recipeName) {
         if (recipeName.equals(ppExecName)) {
@@ -405,23 +313,5 @@ public class BTUPypamax125nHost extends EquipHost {
         }
         return "0";
     }
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = 1;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
 }

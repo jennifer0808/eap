@@ -28,13 +28,9 @@ import java.util.*;
 
 public class AsmAD8312FCHost extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
+
     private static final Logger logger = Logger.getLogger(AsmAD8312FCHost.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
-    public String Datelength;
+
 
     public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -125,7 +121,7 @@ public class AsmAD8312FCHost extends EquipHost {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s7f20in")) {
                 putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
 //                processS6F11inStripMapUpload(data);
@@ -151,38 +147,7 @@ public class AsmAD8312FCHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-
-        }
-        if (data == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
         ppExecName = (String) listtmp.get(1);
         ppExecName = ppExecName.replace(".rcp", "");
@@ -576,11 +541,6 @@ public class AsmAD8312FCHost extends EquipHost {
      * @see java.lang.Object#clone()
      */
 
-
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     public void initRptPara() {
         sendS2F37outAll();

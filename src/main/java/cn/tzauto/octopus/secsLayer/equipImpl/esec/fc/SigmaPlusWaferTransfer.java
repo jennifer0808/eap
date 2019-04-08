@@ -5,7 +5,8 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.esec.fc;
 
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
+import org.apache.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,7 +15,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.apache.log4j.Logger;
 
 /**
  *

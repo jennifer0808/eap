@@ -1,15 +1,21 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.ismeca;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeNameMapping;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.equipImpl.sti.TR48MK5Host;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
@@ -17,11 +23,6 @@ import cn.tzauto.octopus.secsLayer.resolver.ismeca.NY20RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.MliBaseException;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -36,22 +37,25 @@ public class NY20Host extends EquipHost {
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 
-    public NY20Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                    int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    public NY20Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public NY20Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                    int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                    String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+
+    @Override
+    public Object clone() {
+        NY20Host newEquip = new NY20Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -92,7 +96,7 @@ public class NY20Host extends EquipHost {
                                 logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
                             }
                         }
-                    } catch (MliBaseException e) {
+                    } catch (SecsDriverBaseException e) {
                         e.printStackTrace();
                     }
 
@@ -117,19 +121,9 @@ public class NY20Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
-                long ceid = data.getSingleNumber("CollEventID");
-                processS6F11in(data);
-                if (ceid == 11 || ceid == 7) {
-                    this.inputMsgQueue.put(data);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
-                processS1F4in(data);
-            } else if (tagName.equalsIgnoreCase("s1f14in")) {
+            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -398,7 +392,7 @@ public class NY20Host extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
@@ -486,7 +480,7 @@ public class NY20Host extends EquipHost {
             ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
             resultMap.put("ppgnt", ppgnt[0]);
-            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+            resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ppgnt", 9);
@@ -519,7 +513,7 @@ public class NY20Host extends EquipHost {
             data = activeWrapper.sendAwaitMessage(s7f3out);
             ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
             resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -703,25 +697,7 @@ public class NY20Host extends EquipHost {
     }
     // </editor-fold>
 
-    @Override
-    public Object clone() {
-        NY20Host newEquip = new NY20Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
+
 }

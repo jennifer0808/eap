@@ -923,9 +923,6 @@ public class Horizon03ixHost extends EquipHost {
         }
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 
 }

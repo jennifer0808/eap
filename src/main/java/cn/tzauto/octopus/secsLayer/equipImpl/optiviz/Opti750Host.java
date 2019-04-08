@@ -1,23 +1,24 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.optiviz;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.*;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.*;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -34,18 +35,25 @@ public class Opti750Host extends EquipHost {
     private static final Logger logger = Logger.getLogger(Opti750Host.class.getName());
 
     //private Object synS2F41 = null;
-    public Opti750Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                       int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPath) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPath);
+    public Opti750Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public Opti750Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                       int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                       String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPath) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPath);
+
+    @Override
+    public Object clone() {
+        Opti750Host newEquip = new Opti750Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -95,7 +103,7 @@ public class Opti750Host extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
@@ -106,24 +114,8 @@ public class Opti750Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 250) {
-                    this.inputMsgQueue.put(data);
-                } else {
-                    byte[] ack = new byte[1];
-                    ack[0] = 0;
-                    replyS6F12WithACK(data, ack);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.contains("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -159,7 +151,7 @@ public class Opti750Host extends EquipHost {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
-        } catch (MliBaseException | InterruptedException e) {
+        } catch (InterruptedException e) {
             logger.error("Exception:", e);
         }
     }
@@ -216,8 +208,16 @@ public class Opti750Host extends EquipHost {
             if (data != null) {
                 setCommState(1);
             }
-        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | MessageNotListedInPfileException | NoConnectionException | T3TimeOutException | IOException e) {
+        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
             logger.error("Exception:", e);
+        } catch (StreamFunctionNotSupportException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        } catch (BrokenProtocolException e) {
+            e.printStackTrace();
         }
     }
     // </editor-fold>
@@ -228,8 +228,8 @@ public class Opti750Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
-        } catch (MliBaseException e) {
-            logger.error("Exception:", e);
+        } catch (SecsDriverBaseException e) {
+            e.printStackTrace();
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -334,8 +334,16 @@ public class Opti750Host extends EquipHost {
         s7f3out.put("Processprogram", secsItem);
         try {
             data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | MessageNotListedInPfileException | NoConnectionException | T3TimeOutException | IOException e) {
+        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
             logger.error("Exception:", e);
+        } catch (StreamFunctionNotSupportException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        } catch (BrokenProtocolException e) {
+            e.printStackTrace();
         }
         byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
         Map resultMap = new HashMap();
@@ -343,7 +351,7 @@ public class Opti750Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -382,29 +390,9 @@ public class Opti750Host extends EquipHost {
     }
 // </editor-fold> 
 
-    @Override
-    public Object clone() {
-        Opti750Host newEquip = new Opti750Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
-    @Override
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         try {
             long ceid = data.getSingleNumber("CollEventID");
@@ -431,14 +419,17 @@ public class Opti750Host extends EquipHost {
                 equipStatusMap.put("EquipStatus", equipStatus);
                 changeEquipPanel(equipStatusMap);
             }
-        } catch (MliBaseException e) {
-            logger.error("Exception:", e);
+        } catch (SecsDriverBaseException e) {
+            e.printStackTrace();
         }
 
     }
 
     public void initRptPara() {
-        sendS2f33out(250L, 250L);
+        List list = new ArrayList();
+        list.add(250L);
+
+        sendS2F33Out(250L, 250L, list);
         sendS2f35out(250L, 250L, 250L);
         sendS2F37out(250L);
         sendS2F37outAll();

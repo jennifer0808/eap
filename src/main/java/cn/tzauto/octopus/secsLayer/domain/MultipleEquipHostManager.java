@@ -6,38 +6,37 @@ import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.utils.DriverConfig;
 import cn.tzauto.generalDriver.utils.PropInitializer;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.biz.device.domain.DeviceType;
-import cn.tzauto.octopus.biz.recipe.domain.Attach;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
-import cn.tzauto.octopus.secsLayer.util.UtilityFengCe;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
+import cn.tzauto.octopus.biz.device.domain.DeviceType;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.resolver.RecipeTransfer;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.common.resolver.RecipeTransfer;
+import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.xml.parsers.ParserConfigurationException;
-
+import cn.tzauto.octopus.secsLayer.util.UtilityFengCe;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MultipleEquipHostManager {
 
@@ -53,8 +52,7 @@ public class MultipleEquipHostManager {
     public List<DeviceInfo> deviceInfos;
 
     public boolean initializeSecs(List<DeviceInfo> deviceInfos)
-            throws ParserConfigurationException, SAXException, IOException,
-            SecurityException,
+            throws ParserConfigurationException, SAXException, IOException, SecurityException,
             IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
         equipHosts = new HashMap<String, EquipHost>();
@@ -79,7 +77,7 @@ public class MultipleEquipHostManager {
                 value.initialize();
             } catch (Exception e) {
                 logger.error("Exception:", e);
-                logger.fatal(value.deviceId + "启动失败，SML文件不正确...");
+                logger.fatal(value.deviceId + "启动失败...");
             }
         }
 
@@ -271,7 +269,7 @@ public class MultipleEquipHostManager {
                         remoteTcpPort, activeMode, hostJavaClass, deviceType, deviceCode);
                 equip.setStartUp(isStart);
                 equip.setDaemon(true);
-                equipHosts.put(String.valueOf(deviceId), equip);
+                equipHosts.put(deviceCode, equip);
             } else {
                 result = false;
             }
@@ -375,7 +373,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
+    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, WrongStateTransitionNumberException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
@@ -1441,7 +1439,7 @@ public class MultipleEquipHostManager {
     }
 
     public boolean initialize() throws ParserConfigurationException, SAXException, IOException,
-            ParameterErrorException, DeviceNotRegisteredException, SecurityException,
+            SecurityException,
             IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException {
         boolean pass = false;

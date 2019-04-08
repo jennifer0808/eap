@@ -25,16 +25,12 @@ public class AsmAD832PHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(AsmAD832PHost.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
-    public String Datelength;
     private final long StripMapUpCeid = 237L;
-    //private Object synS2F41 = null;
+
 
     public AsmAD832PHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid = 4;
     }
 
     @Override
@@ -64,7 +60,7 @@ public class AsmAD832PHost extends EquipHost {
 
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
-                if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s14f1in")) {
+                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     if (msg.get("CollEventID") != null) {
@@ -79,6 +75,8 @@ public class AsmAD832PHost extends EquipHost {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11intodo")) {
                     processS6F11Filter(msg);
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    this.processS6F11in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -108,14 +106,14 @@ public class AsmAD832PHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
-                processS6F11in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                this.inputMsgQueue.put(data);
             } else if (tagName.toLowerCase().contains("s6f11intodo")) {
                 processS6F11in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s14f1in")) {
+            } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -256,6 +254,7 @@ public class AsmAD832PHost extends EquipHost {
             logger.error("Exception:", e);
         }
         //TODO ceid 可配置在数据库显示具体描述
+//TODO z这里为什么用的rptid判定
 
         if (reportId == 4) {
             processS6F11EquipStatusChange(data);
@@ -460,19 +459,16 @@ public class AsmAD832PHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         List<RecipePara> recipeParaList = new ArrayList();
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            byte[] ppbody = (byte[]) data.get("PPBODY");
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析   
             recipeParaList = getRecipeParasByECSV();
@@ -489,33 +485,6 @@ public class AsmAD832PHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
 // </editor-fold> 
 
     //释放机台
@@ -550,30 +519,6 @@ public class AsmAD832PHost extends EquipHost {
         return newEquip;
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public String checkPPExecName(String recipeName) {

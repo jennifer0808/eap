@@ -23,16 +23,11 @@ import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class AptHost extends EquipHost {
@@ -75,8 +70,8 @@ public class AptHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
                     try {
                         processS6F11EquipStatus(msg);
@@ -88,7 +83,7 @@ public class AptHost extends EquipHost {
                     //      + " which I do not want to process! ");
                 }
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+
                 logger.error("Exception:", e);
                 // logger.fatal("Caught Interruption", e);
             }
@@ -114,29 +109,11 @@ public class AptHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 //回复s6f11消息
                 byte[] ack = new byte[1];
                 ack[0] = 0;
                 replyS6F12WithACK(data, (byte) 0);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -191,7 +168,7 @@ public class AptHost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 1002) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 1003) {
@@ -258,29 +235,13 @@ public class AptHost extends EquipHost {
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
-            data = sendMsg2Equip(s1f3out);
             logger.info("1data == null:" + data == null);
-            logger.info("1data.get(RESULT) == null:" + data.get("RESULT") == null);
+            logger.info("1data.get(RESULT) == null:" + data.get("SV") == null);
+            return (ArrayList) sendS1F3SingleCheck("2107").get("SV");
         } catch (Exception e) {
             logger.error("Exception:getProfile", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-            logger.info("2data == null:" + data == null);
-            logger.info("2data.get(RESULT) == null:" + data.get("RESULT") == null);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            logger.info("3data == null:" + data == null);
-            logger.info("3data.get(RESULT) == null:" + data.get("RESULT") == null);
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            logger.info("list == null:" + list == null);
-            return null;
-        }
-
-        return TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
     }
 
     @Override
@@ -412,17 +373,14 @@ public class AptHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
+            msgdata = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        String ppbody = (String) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        String ppbody = (String) msgdata.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 0, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -439,7 +397,7 @@ public class AptHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
+
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -467,7 +425,7 @@ public class AptHost extends EquipHost {
     }
 
     private void initRptPara() {
-//        sendS2f33out(1401L, 2100L, 2302L, 2001L);
+//        sendS2F33Out(1401L, 2100L, 2302L, 2001L);
 //        sendS2f35out(1401L, 1401L, 1401L);
 //        sendS2F37out(1401L);
         sendS2F37outAll();
@@ -565,10 +523,7 @@ public class AptHost extends EquipHost {
         return svIdList;
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 
     /**
      * 在发送开机命令前检查设备的各项条件是否具备

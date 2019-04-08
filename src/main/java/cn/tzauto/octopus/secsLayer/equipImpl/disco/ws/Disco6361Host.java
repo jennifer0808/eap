@@ -23,7 +23,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -97,10 +96,10 @@ public class Disco6361Host extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11kerfCheck")) {
                     processS6F11KerfCheck(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 75 || ceid == 76) {
                             if (ceid == 75) {
@@ -117,6 +116,7 @@ public class Disco6361Host extends EquipHost {
                                 pauseDevice();
                                 kerfCheck = true;
                             }
+                            processS6F11KerfCheck(msg);
                         }
                         if (ceid == 13) {
                             if (equipStatus.equalsIgnoreCase("run")) {
@@ -160,20 +160,8 @@ public class Disco6361Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if ((ceid < 10150 && ceid > 10080) || (ceid == 75 || ceid == 76) || ceid == 7 || ceid == 13 || ceid == 150) {
-                    this.inputMsgQueue.put(data);
-                }
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11kerfCheck")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
@@ -485,12 +473,15 @@ public class Disco6361Host extends EquipHost {
         z2BladeEdgeId[0] = 1303l;
         s1f3BladeEdge.put("Z2BladeEdge", z2BladeEdgeId);
         DataMsgMap bladeEdgeDataHashtable = null;
+        List bladeidList = new ArrayList();
+        bladeidList.add(1302L);
+        bladeidList.add(1303L);
         try {
-            bladeEdgeDataHashtable = activeWrapper.sendAwaitMessage(s1f3BladeEdge);
+            bladeEdgeDataHashtable = activeWrapper.sendS1F3out(bladeidList, svFormat);
         } catch (Exception e) {
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) bladeEdgeDataHashtable.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = (ArrayList) bladeEdgeDataHashtable.get("SV");
+
         long[] bladeEdges = new long[2];
         bladeEdges[0] = Long.valueOf(String.valueOf(listtmp.get(0)));
         bladeEdges[1] = Long.valueOf(String.valueOf(listtmp.get(1)));
@@ -682,23 +673,17 @@ public class Disco6361Host extends EquipHost {
         Map map = new HashMap();
         String z1bladeId = "";
         String z2bladeId = "";
-        DataMsgMap s2f13out = new DataMsgMap("s2f13BLADEIDout", activeWrapper.getDeviceId());
-        long[] blade_id1 = new long[1];
-        blade_id1[0] = 4922L;
-        long[] blade_id2 = new long[1];
-        blade_id2[0] = 4923L;
-        s2f13out.put("BladeId1", blade_id1);
-        s2f13out.put("BladeId2", blade_id2);
-        s2f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        List list = new ArrayList();
+        list.add(4922L);
+        list.add(4923L);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13out);
+            data = activeWrapper.sendS2F13out(list, ecFormat);
         } catch (Exception e) {
             logger.error("Exception", e);
         }
-        if (data != null && data.get("RESULT") != null) {
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        if (data != null && data.get("EC") != null) {
+            ArrayList listtmp = (ArrayList) data.get("EC");
             z1bladeId = String.valueOf(listtmp.get(0));
             z2bladeId = String.valueOf(listtmp.get(1));
             map.put("Z1", z1bladeId);
@@ -820,12 +805,6 @@ public class Disco6361Host extends EquipHost {
     }
 
 
-
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     public Map pauseDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -854,29 +833,11 @@ public class Disco6361Host extends EquipHost {
     void initRptPara() {
         sendS2F33clear();
         sendS2F35clear();
-//        sendS2f33out(7, 7613, 7615);
-//        sendS2f33out(7, 7602, 7603);
-//        sendS2f33out(7, 1400, 1401);
+//        sendS2F33Out(7, 7613, 7615);
+//        sendS2F33Out(7, 7602, 7603);
+//        sendS2F33Out(7, 1400, 1401);
 //        sendS2f35out(7, 7, 7);
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
 }

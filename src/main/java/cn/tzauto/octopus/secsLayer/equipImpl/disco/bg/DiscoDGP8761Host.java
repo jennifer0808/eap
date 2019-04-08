@@ -19,7 +19,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -85,10 +84,10 @@ public class DiscoDGP8761Host extends EquipHost {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 83 || ceid == 84) {
                             if (ceid == 83) {
@@ -130,15 +129,13 @@ public class DiscoDGP8761Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
                 replyS6F12WithACK(data, ack[0]);
                 long ceid = 0l;
                 try {
-                    ceid = data.getSingleNumber("CollEventID");
+                    ceid = (long) data.get("CEID");
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
@@ -169,16 +166,19 @@ public class DiscoDGP8761Host extends EquipHost {
         DataMsgMap s1f3out = new DataMsgMap("s1f3CassUse", activeWrapper.getDeviceId());
         s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
+        List cassIdlist = new ArrayList();
+        cassIdlist.add(1004L);
+        cassIdlist.add(1005L);
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            data = activeWrapper.sendS1F3out(cassIdlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        ArrayList<SecsItem> list = new ArrayList<>();
+        ArrayList listtmp = new ArrayList<>();
         if (data != null) {
-            list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+            listtmp = (ArrayList) data.get("SV");
         }
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+
         long cassA = (long) listtmp.get(0);
         long cassB = (long) listtmp.get(1);
         if (cassA != 0 && cassA != 5) {
@@ -298,8 +298,9 @@ public class DiscoDGP8761Host extends EquipHost {
         //回复s6f11消息
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long) data.get("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -433,17 +434,9 @@ public class DiscoDGP8761Host extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+//        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
@@ -452,7 +445,6 @@ public class DiscoDGP8761Host extends EquipHost {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -495,8 +487,4 @@ public class DiscoDGP8761Host extends EquipHost {
     }
 
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 }

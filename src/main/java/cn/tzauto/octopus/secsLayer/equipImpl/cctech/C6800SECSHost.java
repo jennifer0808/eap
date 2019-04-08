@@ -38,6 +38,7 @@ public class C6800SECSHost extends EquipHost {
     public C6800SECSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
+
     public Object clone() {
         C6800SECSHost newEquip = new C6800SECSHost(deviceId,
                 this.iPAddress,
@@ -82,15 +83,15 @@ public class C6800SECSHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11incommon")) {
-                    long ceid = msg.getSingleNumber("CollEventID");
-                    if(ceid == 3 || ceid == 7) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
+                    long ceid = (long) msg.get("CEID");
+                    if (ceid == 3 || ceid == 7) {
                         setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
                         processEquipStatusChange(msg);
-                    }else if (ceid == 1) {
+                    } else if (ceid == 1) {
                         processPressStartButton(msg);
                     }
-                }else {
+                } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -138,19 +139,13 @@ public class C6800SECSHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11incommon")) {
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 4 || ceid == 5 || ceid == 6) {
-                    processS6F11in(data);
-                    //processEquipStatusChange(data);
-                } else {
-                    processS6F11in(data);
-                    this.inputMsgQueue.put(data);
-                }
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equals("s6f11inStatusChange")) {
                 processS6F11in(data);
 //                this.inputMsgQueue.put(data);
-            }  else if (tagName.equalsIgnoreCase("s14f1in")) {
+            } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
                 this.inputMsgQueue.put(data);
@@ -170,12 +165,13 @@ public class C6800SECSHost extends EquipHost {
         }
     }
 
-    public void initRptPara() {}
+    public void initRptPara() {
+    }
 
     public void processEquipStatusChange(DataMsgMap msg) {
         long ceid = 0l;
         try {
-            ceid = msg.getSingleNumber("CollEventID");
+            ceid = (long)msg.get("CEID");
             //刷新当前机台状态
             sendS1F3Check();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
@@ -202,10 +198,10 @@ public class C6800SECSHost extends EquipHost {
             //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
-        }catch (Exception e) {
+        } catch (Exception e) {
             sqlSession.rollback();
             logger.info("Exception occure:" + e);
-        }finally {
+        } finally {
             sqlSession.close();
         }
     }

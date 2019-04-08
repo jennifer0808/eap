@@ -130,7 +130,7 @@ public class FicoHost extends EquipHost {
         }
     }
 
-   
+
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -146,7 +146,7 @@ public class FicoHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
+            } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s2f34in")) {
                 processS2F34in(data);
@@ -202,7 +202,7 @@ public class FicoHost extends EquipHost {
         return listtmp;
     }
 
-   
+
     public Map sendS1F3RcpParaCheckout(List svidlist) {
         DataMsgMap s1f3out = new DataMsgMap("s1f3FICORcpPara", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
@@ -236,54 +236,26 @@ public class FicoHost extends EquipHost {
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-    public void sendS2f33outMulti(long reportId, long svid0, long svid1, long svid2) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33outmulti", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] variableID0 = new long[1];
-        variableID0[0] = svid0;
-        long[] variableID1 = new long[1];
-        variableID1[0] = svid1;
-        long[] variableID2 = new long[1];
-        variableID2[0] = svid2;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID0", variableID0);
-        s2f33out.put("VariableID1", variableID1);
-        s2f33out.put("VariableID2", variableID2);
-        try {
-            activeWrapper.sendAwaitMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S5FX Code">
     @SuppressWarnings("unchecked")
-   
+
     public Map processS5F1in(DataMsgMap data) {
-        long ALID = 0l;
-        try {
-            ALID = data.getSingleNumber("ALID");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ALCD = (byte[]) ((SecsItem) data.get("ALCD")).getData();
-        String ALTX = ((SecsItem) data.get("ALTX")).getData().toString();
-        logger.info("Received s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD[0] + " means " + ACKDescription.description(ALCD[0], "ALCD") + ", and the ALTX is: " + ALTX);
+        long ALID = (long) data.get("ALID");
+        byte ALCD = (byte) data.get("ALCD");
+        String ALTX = data.get("ALTX").toString();
+        logger.info("Received s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD + " means " + ACKDescription.description(ALCD, "ALCD") + ", and the ALTX is: " + ALTX);
         UiLogUtil.appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("deviceId", deviceId);
         resultMap.put("ALID", ALID);
-        resultMap.put("ALCD", ALCD[0]);
+        resultMap.put("ALCD", ALCD);
         resultMap.put("ALTX", ALTX);
-        resultMap.put("Description", ACKDescription.description(ALCD[0], "ALCD"));
+        resultMap.put("Description", ACKDescription.description(ALCD, "ALCD"));
         resultMap.put("TransactionId", data.getTransactionId());
         String[] ALIDs = {"100020361", "100020401", "100020441", "100020637", "100020657", "100020677", "100020695",
                 "100020697", "100020699", "100021389", "100021391", "100021393", "100021371", "100021373", "100021375"};
@@ -298,7 +270,7 @@ public class FicoHost extends EquipHost {
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-   
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -323,20 +295,6 @@ public class FicoHost extends EquipHost {
 //            }
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-        //更新页面显示内容
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID");
-        sqlSession.close();
-        if (recipeTemplates != null && recipeTemplates.size() > 0) {
-            for (int j = 0; j < recipeTemplates.size(); j++) {
-                long ceidtmp = Long.parseLong(recipeTemplates.get(j).getDeviceVariableId());
-                if (ceid == ceidtmp) {
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "CEID：" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
-                    break;
-                }
-            }
         }
     }
 
@@ -363,13 +321,13 @@ public class FicoHost extends EquipHost {
         }
     }
 
-   
+
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long) data.get("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -530,7 +488,6 @@ public class FicoHost extends EquipHost {
     /**
      * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
      *
-
      * @param targetRecipeName
      * @return
      */
@@ -558,7 +515,7 @@ public class FicoHost extends EquipHost {
         return resultMap;
     }
 
-   
+
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
@@ -592,7 +549,7 @@ public class FicoHost extends EquipHost {
         return resultMap;
     }
 
-   
+
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
@@ -637,7 +594,7 @@ public class FicoHost extends EquipHost {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S10FX Code">
-   
+
     protected void processS10F1in(DataMsgMap data) {
         String text = "";
         try {
@@ -669,7 +626,6 @@ public class FicoHost extends EquipHost {
     // </editor-fold>
 
 
-
     public void getUsingPress() {
         List pressResults = sendS1F3PressCheckout();
         super.pressUseMap.clear();
@@ -688,7 +644,7 @@ public class FicoHost extends EquipHost {
      * @param checkRecipe
      * @param type
      */
-   
+
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -930,7 +886,7 @@ public class FicoHost extends EquipHost {
         return svIdList;
     }
 
-   
+
     public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -966,7 +922,7 @@ public class FicoHost extends EquipHost {
         super.sendS5F3out(enable);
     }
 
-   
+
     public void sendTerminalMsg2EqpSingle(String msg) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -979,7 +935,7 @@ public class FicoHost extends EquipHost {
         }
     }
 
-   
+
     public Map holdDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -1000,14 +956,14 @@ public class FicoHost extends EquipHost {
         }
     }
 
-   
+
     public Map releaseDevice() {
         Map map = this.sendS2f41Cmd("RESUME");
         this.setAlarmState(0);
         return map;
     }
 
-   
+
     public String getOutputData() {
         String outputSVID = "114";
         Map resultMap = sendS1F3SingleCheck(outputSVID);
@@ -1018,63 +974,6 @@ public class FicoHost extends EquipHost {
         }
     }
 
-    /**
-     * 从设备获取指定SVID的数据
-     *
-     * @param dataIdList-->svidlist
-     * @return
-     */
-   
-    public Map getSpecificSVData(List dataIdList) {
-        Map resultMap = new HashMap();
-        List svidList = dataIdList;
-        List svValueList = new ArrayList();
-        //发送查询SV命令，并取值
-        if (svidList.size() > 0) {
-            DataMsgMap s1f3out = new DataMsgMap("s1f3Specific", activeWrapper.getDeviceId());
-            long transactionId = activeWrapper.getNextAvailableTransactionId();
-            s1f3out.setTransactionId(transactionId);
-            SecsItem vRoot = new SecsItem();
-            vRoot.setFormatCode(FormatCode.SECS_LIST);
-            ArrayList rootData = new ArrayList();
-            for (Object svid : svidList) {
-                long[] u1 = new long[1];
-                u1[0] = Long.valueOf(String.valueOf(svid));
-                SecsItem sItem1 = new SecsItem(u1, svFormat);
-                rootData.add(sItem1);
-            }
-            vRoot.setData(rootData);
-            s1f3out.put("DATA", vRoot);
-            try {
-                DataMsgMap data = null;
-                data = activeWrapper.sendAwaitMessage(s1f3out);
-                if (data == null || data.isEmpty()) {
-                    data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-                }
-                if (data != null && data.get("RESULT") != null) {
-                    ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-                    svValueList = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-                    for (int i = 0; i < svValueList.size(); i++) {
-                        resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
-                    }
-                    logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
-                }
-                if (data == null || data.isEmpty()) {
-                    logger.error("Query SV List error[" + JsonMapper.toJsonString(data) + "]");
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "Query SV List error！");
-                }
-                //真空值和合模压力从数据库中获取
-                Map<Long, String> specialSvMap = getSpecialSVMap();
-                logger.info("真空值和合模压力从数据库中获取，结果为" + specialSvMap);
-                for (Map.Entry<Long, String> entry : specialSvMap.entrySet()) {
-                    resultMap.put(entry.getKey(), entry.getValue());
-                }
-            } catch (Exception e) {
-                logger.error("Exception:", e);
-            }
-        }
-        return resultMap;
-    }
 
     //获取特定的sv
     public Map getSpecialSVMap() {
@@ -1141,36 +1040,76 @@ public class FicoHost extends EquipHost {
         List list1 = new ArrayList();
         list1.add(15l);
         list1.add(97l);
-        sendS2f33out(10l, 15l, list1);
-        sendS2f35out(10l, 10l, 10l);
+        sendS2F33Out(10l, 15l, list1);
+        sendS2F35out(10l, 10l, 10l);
 //        sendS2F37out(10l);
 
         //重定义ppchange事件
         List list = new ArrayList();
         list.add(97l);
 
-        sendS2f33out(4l, 60l, list);
-//        sendS2f33out(60l, 97l);
-        sendS2f35out(60l, 60l, 60l);
+        sendS2F33Out(4l, 60l, list);
+//        sendS2F33Out(60l, 97l);
+        sendS2F35out(60l, 60l, 60l);
 //        sendS2F37out(60l);
 
         //重定义1551,1555,1559事件
-        sendS2f33outMulti(1551l, 3300l, 3371l, 3370l);
-        sendS2f35out(1551l, 1551l, 1551l);
-        sendS2f33outMulti(1555l, 3400l, 3471l, 3470l);
-        sendS2f35out(1555l, 1555l, 1555l);
-        sendS2f33outMulti(1559l, 3500L, 3571L, 3570L);
-        sendS2f35out(1559l, 1559l, 1559l);
+        List list2 = new ArrayList();
+        list2.add(3300l);
+        list2.add(3371l);
+        list2.add(3370l);
+        sendS2F33Out(1551L, 1551L, list2);
+//        sendS2f33outMulti(1551l, 3300l, 3371l, 3370l);
+        sendS2F35out(1551l, 1551l, 1551l);
+        List list3 = new ArrayList();
+        list3.add(3400l);
+        list3.add(3471l);
+        list3.add(3470l);
+        sendS2F33Out(1555l, 1555l, list3);
+//        sendS2f33outMulti(1555l, 3400l, 3471l, 3470l);
+        sendS2F35out(1555l, 1555l, 1555l);
+        List list4 = new ArrayList();
+        list4.add(3500L);
+        list4.add(3571L);
+        list4.add(3570L);
+        sendS2F33Out(1559l, 1559l, list4);
+//        sendS2f33outMulti(1559l, 3500L, 3571L, 3570L);
+        sendS2F35out(1559l, 1559l, 1559l);
 
 //        super.sendS2F37outCloseAll(activeWrapper);
         long[] ceids = {70l, 2l, 3l, 60l, 62l, 1l, 22l, 18l, 11l, 10l, 20l, 17l, 1550l, 1551l, 1552l, 1553l, 1554l, 1555l, 1556l, 1557l, 1558l, 1559l, 1560l, 1561l};
+        List ceidList = new ArrayList();
+        for (int i = 0; i < ceids.length; i++) {
+            ceidList.add(ceids[i]);
+        }
+        try {
+            activeWrapper.sendS2F37out(true, ceidList, ceFormat);
+        } catch (HsmsProtocolNotSelectedException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (StreamFunctionNotSupportException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ItemIntegrityException e) {
+            e.printStackTrace();
+        } catch (MessageDataException e) {
+            e.printStackTrace();
+        } catch (BrokenProtocolException e) {
+            e.printStackTrace();
+        } catch (T3TimeOutException e) {
+            e.printStackTrace();
+        } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        }
         //todo sendS2F37outMuilt
 //        super.sendS2F37outMuilt(true, ceids);
 //        super.sendS2F37outAll(activeWrapper);
 
     }
 
-   
+
     public void initRemoteCommand() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

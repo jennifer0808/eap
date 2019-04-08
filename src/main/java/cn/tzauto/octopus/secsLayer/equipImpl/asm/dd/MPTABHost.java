@@ -11,7 +11,6 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
@@ -29,7 +28,6 @@ import java.util.*;
  * @Company 南京钛志信息系统有限公司
  * @Create Date 2018-8-24
  * @(#)EquipHost.java
- *
  * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
  * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
  * use and distribution are prohibited. Modification History: Modification Date
@@ -37,19 +35,15 @@ import java.util.*;
  */
 public class MPTABHost extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(MPTABHost.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
-    public String Datelength;
 
+    private static final Logger logger = Logger.getLogger(MPTABHost.class.getName());
 
 
     public MPTABHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid = 1011;
     }
+
     public Object clone() {
         MPTABHost newEquip = new MPTABHost(deviceId,
                 this.iPAddress,
@@ -96,13 +90,14 @@ public class MPTABHost extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                }  else if (msg.getMsgSfName().toLowerCase().contains("s6f11incommon")) {
-                    long ceid=0;
-                    ceid = msg.getSingleNumber("CollEventID");
-                    if (ceid == 1011) {
-                        processS6F11EquipStatusChange(msg);
-                    }
-                }else {
+                } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
+//                    long ceid = 0;
+//                    ceid = msg.getSingleNumber("CollEventID");
+//                    if (ceid == 1011) {
+//                        processS6F11EquipStatusChange(msg);
+//                    }
+                } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -131,13 +126,8 @@ public class MPTABHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
-                long ceid=0;
-                ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 1011) {
-                    this.inputMsgQueue.put(data);
-                }
-                processS6F11in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                this.inputMsgQueue.put(data);
             } else if (tagName.equals("s6f11EquipStatusChange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
@@ -162,33 +152,7 @@ public class MPTABHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         ppExecName = (String) listtmp.get(1);
         ppExecName = ppExecName.replace(".rcp", "");
@@ -197,27 +161,13 @@ public class MPTABHost extends EquipHost {
         panelMap.put("PPExecName", ppExecName);
         //由于TOWA的controlstate暂时无法获取，所以暂不处理
 //        if (!deviceType.contains("TOWA")) {
-        controlState = ACKDescription.describeControlState((byte)listtmp.get(2), deviceType);
+        controlState = ACKDescription.describeControlState((byte) listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
 //        }
         changeEquipPanel(panelMap);
         return panelMap;
     }
 
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 
@@ -553,10 +503,6 @@ public class MPTABHost extends EquipHost {
 
     // </editor-fold>
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public String checkPPExecName(String recipeName) {

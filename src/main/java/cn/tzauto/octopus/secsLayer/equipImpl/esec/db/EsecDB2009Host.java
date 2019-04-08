@@ -1,27 +1,28 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.esec.db;
 
-import cn.tfinfo.jcauto.octopus.biz.alarm.service.AutoAlter;
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -41,19 +42,25 @@ public class EsecDB2009Host extends EquipHost {
     protected long downFlatNotchLocation;
     protected long upFlatNotchLocation;
 
-    //private Object synS2F41 = null;
-    public EsecDB2009Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                          int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public EsecDB2009Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public EsecDB2009Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                          int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                          String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+
+    @Override
+    public Object clone() {
+        EsecDB2009Host newEquip = new EsecDB2009Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -84,7 +91,7 @@ public class EsecDB2009Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inCommand")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11LearnDevice(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     processS6F11inStripMapUpload(msg);
@@ -129,23 +136,8 @@ public class EsecDB2009Host extends EquipHost {
                 processS2F36in(data);
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                processS6F11inStripMapUpload(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11inCommon")) {
+            } else if (tagName.contains("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equals("s6f11EquipStatusChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11inCommand")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -185,36 +177,19 @@ public class EsecDB2009Host extends EquipHost {
         }
     }
 
-    private void sendS2f33outMulti(long reportId, long svid0, long svid1) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33outmulti", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] variableID0 = new long[1];
-        variableID0[0] = svid0;
-        long[] variableID1 = new long[1];
-        variableID1[0] = svid1;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID0", variableID0);
-        s2f33out.put("VariableID1", variableID1);
-        try {
-            activeWrapper.sendAwaitMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     public String initRptPara() {
         try {
             logger.debug("initRptPara+++++++++++++++++++");
-            sendS2f33out(100000L, 20002L);
-            sendS2f33out(100001L, 20004L);
-            sendS2f35out(3L, 301L, 100000L);
-            sendS2f35outDelete(4L, 302L);
-            sendS2f35out(5L, 302L, 100001L);
+            List list = new ArrayList();
+            list.add(20002L);
+            sendS2F33Out(100000L, 100000L, list);
+            List list1 = new ArrayList();
+            list1.add(20004L);
+            sendS2F33Out(100001L, 100001L, list1);
+            sendS2F35out(3L, 301L, 100000L);
+            sendS2F35outDelete(4L, 302L);
+            sendS2F35out(5L, 302L, 100001L);
             sendS2F37outAll();
 //            sendS2F37out(301L);
 
@@ -262,7 +237,7 @@ public class EsecDB2009Host extends EquipHost {
 //                rptid = 1003l;
 //                ack = sendS2F35out(ceid, rptid);//15339 1001
 //            }
-//            sendS2f33out(3255L, 2031L, 2009L, 2028L);
+//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
 //            sendS2f35out(3255L, 3255L, 3255L);
 //            //SEND S2F37
 //            if (!"".equals(ack)) {
@@ -326,76 +301,6 @@ public class EsecDB2009Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-    @SuppressWarnings("unchecked")
-    public String sendS2F33out(long rptid, long vid) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f33out.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        long[] variableid = new long[1];
-        variableid[0] = vid;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", variableid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f33out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F35out(long ceid, long rptid) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f35out = new DataMsgMap("s2f35out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f35out.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        s2f35out.put("DataID", dataid);
-        s2f35out.put("CollEventID", eventid);
-        s2f35out.put("ReportID", reportid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f35out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2F37out(long pceid) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f37out = new DataMsgMap("s2f37out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37out.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = true;
-        long[] ceid = new long[1];
-        ceid[0] = pceid;
-        s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", ceid);;
-        try {
-            activeWrapper.sendAwaitMessage(s2f37out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     @SuppressWarnings("unchecked")
     public void sendS2F15outLotSizeAssign(String lotId, int lotQuantity) {
@@ -431,20 +336,20 @@ public class EsecDB2009Host extends EquipHost {
         System.out.println("EAC = " + ((value == null) ? "" : value[0]));
     }
 
-    @SuppressWarnings("unchecked")
+
     public Map sendS2F41outPPselect(String recipeName) {
         DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("PPID", recipeName + ".dbrcp");
         byte[] hcack = new byte[1];
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName + ".dbrcp");
             //选中成功标识
             if (data != null) {
                 ppselectFlag = true;
             }
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -453,7 +358,7 @@ public class EsecDB2009Host extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         return resultMap;
     }
 
@@ -646,7 +551,8 @@ public class EsecDB2009Host extends EquipHost {
         String command = "";
         String commandName = "";
         try {
-            ceid = data.getSingleNumber("CollEventId");
+            //todo 需要知道Learn device 的 ceid 然后从REPORT中获取到OpreatorCommandName
+            ceid = (long) data.get("CEID");
             command = ((SecsItem) data.get("OpreatorCommand")).getData().toString();
             commandName = ((SecsItem) data.get("OpreatorCommandName")).getData().toString();
             logger.info("=========command=" + command);
@@ -716,7 +622,7 @@ public class EsecDB2009Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -740,7 +646,7 @@ public class EsecDB2009Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -778,7 +684,7 @@ public class EsecDB2009Host extends EquipHost {
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
-    
+
     /**
      * 在recipe被选中后删除原有recipe需要延迟删除
      *
@@ -864,7 +770,7 @@ public class EsecDB2009Host extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -874,7 +780,7 @@ public class EsecDB2009Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -915,7 +821,8 @@ public class EsecDB2009Host extends EquipHost {
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 
-/**
+
+    /**
      * WaferMappingInfo Upload
      *
      * @param DataMsgMap
@@ -950,6 +857,7 @@ public class EsecDB2009Host extends EquipHost {
         }
         return null;
     }
+
     /**
      * WaferMapping Upload (Simple)
      *
@@ -972,8 +880,8 @@ public class EsecDB2009Host extends EquipHost {
                 if (upFlatNotchLocation == 90 || upFlatNotchLocation == 270) {
                     _uploadWaferMappingRow = uploadWaferMappingCol;
                     _uploadWaferMappingCol = uploadWaferMappingRow;
-                } 
-            } 
+                }
+            }
             //上传旋转后的行列数及mapping
             AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
             UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
@@ -992,27 +900,7 @@ public class EsecDB2009Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
 
     // </editor-fold> 
-    @Override
-    public Object clone() {
-        EsecDB2009Host newEquip = new EsecDB2009Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     private List<RecipePara> recipeParaBD2Str(List<RecipePara> recipeParas) {
         if (recipeParas != null && recipeParas.size() > 0) {

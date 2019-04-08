@@ -4,35 +4,27 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.smt.dek;
 
-
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.common.ws.WSUtility;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.XmlUtil;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
 import java.util.logging.Level;
 
-
 public class DekHost extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
+
     private static final Logger logger = Logger.getLogger(DekHost.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
+
 
     public DekHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -128,6 +120,11 @@ public class DekHost extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
+            } else if (tagName.equals("s6f11EquipStatusChange")) {
+                byte[] ack = new byte[1];
+                ack[0] = 0;
+                replyS6F12WithACK(data, ack[0]);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -186,11 +183,11 @@ public class DekHost extends EquipHost {
                 rptid = 1003l;
                 ack = sendS2F35out(ceid, rptid);//15339 1001
             }
-            List list = new ArrayList();
+            List list=new ArrayList();
             list.add(2031L);
             list.add(2009L);
-            sendS2f33out(4l, 2031L, list);
-            sendS2f35out(4L, 4L, 4L);
+            sendS2F33Out(4l, 2031L, list);
+            sendS2F35out(4L, 4L, 4L);
             //SEND S2F37
             if (!"".equals(ack)) {
                 sendS2F37outAll();
@@ -263,7 +260,7 @@ public class DekHost extends EquipHost {
         }
     }
 
-    // </editor-fold> 
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
     @SuppressWarnings("unchecked")
     public String sendS2F33out(long rptid, long vid) {
@@ -500,7 +497,7 @@ public class DekHost extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-//            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -509,159 +506,14 @@ public class DekHost extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("HCACK", hcack[0]);
-//        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         return resultMap;
     }
-    // </editor-fold> 
+
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    @SuppressWarnings({"unchecked", "hiding"})
-    public void processS6F11InInit(DataMsgMap data) {
-        System.out.println("Received s6f11InInit data.getTransactionId() = " + data.getTransactionId());
-        long ceid = 0;
-        try {
-            if (data.get("CollEventId") != null) {
-                ceid = data.getSingleNumber("CollEventId");
-            }
-            if (ceid != 106) {
-                System.out.println("Received a s6f11InInit with CEID = " + ceid + ". Ignored");
-                return;
-            }
-            String equipId = null;
-            if (data.get("EquipmentId") != null) {
-                equipId = (String) ((SecsItem) data.get("EquipmentId")).getData();
-            }
-            String installationDate = null;
-            if (data.get("InstallationDate") != null) {
-                installationDate = (String) ((SecsItem) data.get("InstallationDate")).getData();
-            }
-            String lotId = null;
-            String leftEpoxyId = null;
-            String leadFrameTypeID = null;
-            long rptId = 0;
-            if (data.get("ReportId033") != null) {
-                rptId = data.getSingleNumber("ReportId033");
-            }
-            if (rptId == 33) {
-                if (data.get("LotID") != null) {
-                    lotId = (String) ((SecsItem) data.get("LotID")).getData();
-                }
-            } else if (rptId == 108) {
-                if (data.get("LotID") != null) {
-                    leftEpoxyId = (String) ((SecsItem) data.get("LotID")).getData();
-                }
-            } else if (rptId == 109) {
-                if (data.get("LotID") != null) {
-                    leadFrameTypeID = (String) ((SecsItem) data.get("LotID")).getData();
-                }
-            }
-            rptId = 0;
-            if (data.get("ReportId108") != null) {
-                rptId = data.getSingleNumber("ReportId108");
-            }
-            if (rptId == 33) {
-                if (data.get("LeftEpoxyId") != null) {
-                    lotId = (String) ((SecsItem) data.get("LeftEpoxyId")).getData();
-                }
-            } else if (rptId == 108) {
-                if (data.get("LeftEpoxyId") != null) {
-                    leftEpoxyId = (String) ((SecsItem) data.get("LeftEpoxyId")).getData();
-                }
-            } else if (rptId == 109) {
-                if (data.get("LeftEpoxyId") != null) {
-                    leadFrameTypeID = (String) ((SecsItem) data.get("LeftEpoxyId")).getData();
-                }
-            }
-            rptId = 0;
-            if (data.get("ReportId109") != null) {
-                rptId = data.getSingleNumber("ReportId109");
-            }
-            if (rptId == 33) {
-                if (data.get("LeadFrameTypeID") != null) {
-                    lotId = (String) ((SecsItem) data.get("LeadFrameTypeID")).getData();
-                }
-            } else if (rptId == 108) {
-                if (data.get("LeadFrameTypeID") != null) {
-                    leftEpoxyId = (String) ((SecsItem) data.get("LeadFrameTypeID")).getData();
-                }
-            } else if (rptId == 109) {
-                if (data.get("LeadFrameTypeID") != null) {
-                    leadFrameTypeID = (String) ((SecsItem) data.get("LeadFrameTypeID")).getData();
-                }
-            }
 
-            System.out.println("Data got from received SECS message s6f11 is: ");
-            System.out.println("Equipment Id = " + equipId);
-            System.out.println("Installation Date = " + installationDate);
-            System.out.println("Lot Id = " + lotId);
-            System.out.println("Left Epoxy Id = " + leftEpoxyId);
-            System.out.println("Lead Frame Type ID = " + leadFrameTypeID);
-
-            //Equip_Id = equipId;
-            Installation_Date = installationDate;
-            Lot_Id = lotId;
-            Left_Epoxy_Id = leftEpoxyId;
-            Lead_Frame_Type_Id = leadFrameTypeID;
-
-            String stripMapXml = null;
-            if (data.get("StripMapData") != null) {
-                if (((SecsItem) data.get("StripMapData")).getData() instanceof String) {
-                    stripMapXml = (String) ((SecsItem) data.get("StripMapData")).getData();
-                }
-            }
-            System.out.print(WSUtility.binSet(stripMapXml, this.deviceCode));
-
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            System.out.println("Host begin Epoxy Verification ................................");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void processS6F11inStripMapUpload(DataMsgMap data) {
-        System.out.println("----Received from Equip Strip Map Upload event - S6F11");
-        try {
-            //获取xml字符串
-            String stripMapXml = null;
-            if (data.get("StripMapData") != null) {
-                if (((SecsItem) data.get("StripMapData")).getData() instanceof String) {
-                    stripMapXml = (String) ((SecsItem) data.get("StripMapData")).getData();
-                }
-            }
-            String stripId = XmlUtil.getStripIdFromXml(stripMapXml);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
-//            String finishFlag="1";
-//            if(Integer.parseInt("15338")==ceid){
-//                finishFlag="0";
-//            }
-            //通过Web Service上传mapping
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = WSUtility.binSet(stripMapXml, deviceCode).getBytes()[0];
-            if (ack[0] == '0') {//上传成功
-                ack[0] = 0;
-                UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
-            } else {//上传失败
-                ack[0] = 1;
-                UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
-            }
-            out.put("AckCode", ack);
-            out.setTimeStamp(new Date());
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            System.out.println(" ----- s6f12 sended - Strip Upload Completed-----.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
     public void processS6f5in(DataMsgMap data) {
         try {
             DataMsgMap out = new DataMsgMap("s6f6out", activeWrapper.getDeviceId());
@@ -677,7 +529,7 @@ public class DekHost extends EquipHost {
         }
     }
 
-    // </editor-fold> 
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
@@ -731,12 +583,11 @@ public class DekHost extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        String ppid = recipeName;
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
         s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", ppid + ".dbrcp");
+        s7f5out.put("ProcessprogramID", recipeName + ".dbrcp");
         DataMsgMap data = null;
         try {
             data = activeWrapper.sendAwaitMessage(s7f5out);
@@ -747,9 +598,9 @@ public class DekHost extends EquipHost {
         if (data != null && !data.isEmpty()) {
             byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
-            //Recipe解析      
-//            recipeParaList = getRecipeParasByECSV();
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            //Recipe解析
+            recipeParaList = getRecipeParasByECSV();
         }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
@@ -758,7 +609,7 @@ public class DekHost extends EquipHost {
         resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + ppid + " from equip " + deviceCode);
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
 
@@ -796,8 +647,5 @@ public class DekHost extends EquipHost {
     // </editor-fold> 
 
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 }

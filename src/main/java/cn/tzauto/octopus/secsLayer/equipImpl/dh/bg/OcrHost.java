@@ -3,7 +3,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.dh.bg;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -17,7 +16,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.dh.bg.OCRRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -25,7 +23,6 @@ import org.apache.log4j.MDC;
 
 import java.util.*;
 
-@SuppressWarnings("serial")
 public class OcrHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
@@ -35,6 +32,7 @@ public class OcrHost extends EquipHost {
     public OcrHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
+
     public Object clone() {
         OcrHost newEquip = new OcrHost(deviceId,
                 this.iPAddress,
@@ -114,9 +112,9 @@ public class OcrHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -143,32 +141,27 @@ public class OcrHost extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    // </editor-fold> 
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 1001) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
             } else if (ceid == 1003) {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
-            updateCommStateInExt();
-
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        showCollectionsEventInfo(ceid);
     }
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = data.getSingleNumber("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -282,70 +275,13 @@ public class OcrHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".ini");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-//        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
-        return resultMap;
-    }
 
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName + ".ini");
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-//        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName+".ini");
         Recipe recipe = setRecipe(recipeName.replace(".ini", ""));
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
@@ -373,7 +309,6 @@ public class OcrHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
     public Map sendS7F17out(String recipeName) {
         DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
         s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -383,8 +318,10 @@ public class OcrHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         byte[] ackc7 = new byte[1];
+        List recipeNameList = new ArrayList();
+        recipeNameList.add(recipeName);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(recipeNameList);
             logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
             ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
             if (ackc7[0] == 0) {
@@ -401,33 +338,28 @@ public class OcrHost extends EquipHost {
         }
         return resultMap;
     }
+
     @Override
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
+            data = activeWrapper.sendS7F19out();
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
         }
         if (data == null || data.get("EPPD") == null) {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) data.get("EPPD");
             ArrayList list1 = new ArrayList();
             for (int i = 0; i < listtmp.size(); i++) {
                 list1.add(listtmp.get(i).toString().replace(".ini", ""));
@@ -440,7 +372,6 @@ public class OcrHost extends EquipHost {
     // </editor-fold>
     @Override
     public Map findEqptStatus() {
-        //TOWA设备由于获取不了controlstate，所以设备状态从deviceInfoExt表中获取
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
@@ -452,13 +383,6 @@ public class OcrHost extends EquipHost {
     }
 
 
-
-
-    private void initRptPara() {
-    }
-
-    //hold机台，先停再锁
-    @Override
     public Map holdDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -476,7 +400,6 @@ public class OcrHost extends EquipHost {
         }
     }
 
-    //释放机台
     @Override
     public Map releaseDevice() {
         this.setAlarmState(0);
@@ -491,8 +414,5 @@ public class OcrHost extends EquipHost {
         return svIdList;
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 }

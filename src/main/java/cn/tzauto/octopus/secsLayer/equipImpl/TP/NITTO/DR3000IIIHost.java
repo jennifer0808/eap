@@ -5,8 +5,20 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.TP.NITTO;
 
 
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TPRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
@@ -28,18 +40,25 @@ public class DR3000IIIHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(DR3000IIIHost.class.getName());
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
-    public DR3000IIIHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+    public DR3000IIIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public DR3000IIIHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+
+    @Override
+    public Object clone() {
+        DR3000IIIHost newEquip = new DR3000IIIHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -129,14 +148,9 @@ public class DR3000IIIHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                processS6F11in(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11incommon")) {
+            } else if (tagName.contains("s6f11in")) {
                 long ceid = 0l;
                 try {
                     ceid = data.getSingleNumber("CollEventID");
@@ -149,8 +163,6 @@ public class DR3000IIIHost extends EquipHost {
                 } else {
                     this.processS6F11in(data);
                 }
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -198,7 +210,8 @@ public class DR3000IIIHost extends EquipHost {
             s1f3out.put("PPExecName", pPExecNames);
             s1f3out.put("ControlState", controlStates);
             logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            data = activeWrapper.sendS1F3CheckAwaitMessage(s1f3out);
+            //todo  data = activeWrapper.sendS1F3out(s1f3out,svFormat);
+//            data = activeWrapper.sendS1F3out(s1f3out,svFormat);
             logger.info("received Message=S1F3===================>" + JSONArray.toJSON(data));
         } catch (Exception e) {
             e.printStackTrace();
@@ -399,8 +412,8 @@ public class DR3000IIIHost extends EquipHost {
         }
         if (goldRecipe == null) {
             //TODO  这里需要讨论做试产时的情况
-            GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备" + deviceCode + "执行开机检查，清模程序例外。请联系PE处理！\n");
-            DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+
+            //todo 显示界面日志
         }
         try {
             if (deviceInfoExt == null) {
@@ -538,22 +551,6 @@ public class DR3000IIIHost extends EquipHost {
     }
     // </editor-fold>
 
-    @Override
-    public Object clone() {
-        DR3000IIIHost newEquip = new DR3000IIIHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     private void initRptPara() {
     }
@@ -577,8 +574,7 @@ public class DR3000IIIHost extends EquipHost {
             }
             return cmdMap;
         } else {
-            GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 设备：" + deviceCode + " 未设置锁机！\n");
-            DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
+            //todo 显示界面锁机日志
             return null;
         }
     }
@@ -620,7 +616,7 @@ public class DR3000IIIHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
         List<RecipePara> recipeParasdiff = this.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();

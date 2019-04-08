@@ -1,14 +1,15 @@
 package cn.tzauto.octopus.common.mq;
 
+import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
+import org.apache.log4j.Logger;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-
-import org.apache.log4j.Logger;
+import java.io.IOException;
 
 /**
  * Created by wxy on 2016/8/4. modified by lsy @ 20170805
@@ -56,6 +57,24 @@ public class MessageProcess implements MessageHandler {
                         } catch (IllegalAccessException ex) {
                             ex.printStackTrace();
                             mqLogger.error(ex);
+                        } catch (T3TimeOutException e) {
+                            e.printStackTrace();
+                        } catch (StreamFunctionNotSupportException e) {
+                            e.printStackTrace();
+                        } catch (MessageDataException e) {
+                            e.printStackTrace();
+                        } catch (HsmsProtocolNotSelectedException e) {
+                            e.printStackTrace();
+                        } catch (ItemIntegrityException e) {
+                            e.printStackTrace();
+                        } catch (T6TimeOutException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (BrokenProtocolException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
 
                     }

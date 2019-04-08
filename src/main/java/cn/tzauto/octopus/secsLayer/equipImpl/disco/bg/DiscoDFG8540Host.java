@@ -16,7 +16,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -86,10 +85,10 @@ public class DiscoDFG8540Host extends EquipHost {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 10103 || ceid == 10104) {
                             if (ceid == 10103) {
@@ -159,28 +158,21 @@ public class DiscoDFG8540Host extends EquipHost {
     @SuppressWarnings("unchecked")
     private void sendS1F3CheckCassUse() {
         DataMsgMap s1f3out = new DataMsgMap("s1f3CassUse", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
+        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
+        List cassIdlist = new ArrayList();
+        cassIdlist.add(1004L);
+        cassIdlist.add(1005L);
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-
+            data = activeWrapper.sendS1F3out(cassIdlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-
-        }
-        if (data == null || data.get("RESULT") == null) {
-
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备Port状态失败，请重新安放Casstte！");
-            return;
+        ArrayList listtmp = new ArrayList<>();
+        if (data != null) {
+            listtmp = (ArrayList) data.get("SV");
         }
 
-        ArrayList<SecsItem> list = new ArrayList<>();
-        list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         long cassA = (long) listtmp.get(0);
         long cassB = (long) listtmp.get(1);
         if (cassA != 0 && cassA != 5) {
@@ -474,17 +466,8 @@ public class DiscoDFG8540Host extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
@@ -545,8 +528,4 @@ public class DiscoDFG8540Host extends EquipHost {
     }
 
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 }

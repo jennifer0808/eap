@@ -1,27 +1,24 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.sti;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeNameMapping;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.sti.TR48MK5RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -36,22 +33,25 @@ public class TR48MK5Host extends EquipHost {
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 
-    public TR48MK5Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                       int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    public TR48MK5Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public TR48MK5Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-                       int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-                       String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+
+    @Override
+    public Object clone() {
+        TR48MK5Host newEquip = new TR48MK5Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     @Override
@@ -107,14 +107,14 @@ public class TR48MK5Host extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 long ceid = 0l;
                 processS6F11in(data);
                 ceid = data.getSingleNumber("CollEventID");
@@ -123,9 +123,7 @@ public class TR48MK5Host extends EquipHost {
                 }
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
-                processS1F4in(data);
-            } else if (tagName.equalsIgnoreCase("s1f14in")) {
+            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -186,63 +184,36 @@ public class TR48MK5Host extends EquipHost {
 
     }
 
-    @Override
-    public Map sendS1F3SingleCheck(String svidName) {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
-        try {
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            return null;
-        }
-        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
-        logger.info("resultMap=" + resultMap);
-        return resultMap;
-
-    }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
+    @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
             ceid = data.getSingleNumber("CollEventID");
-            findDeviceRecipe();
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception:", e);
         }
+        if (ceid == 73) {
+            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+        }
+        Map map = new HashMap();
+        map.put("EquipStatus", equipStatus);
+        map.put("PPExecName", ppExecName);
+        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
         try {
-            //从数据库中获取当前设备模型信息
+            //检查模型信息
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
+                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -251,149 +222,48 @@ public class TR48MK5Host extends EquipHost {
             //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
-            if (AxisUtility.isEngineerMode(deviceCode)) {
+            String busniessMod = deviceInfoExt.getBusinessMod();
+            if ("Engineer".equals(busniessMod) && equipStatus.equalsIgnoreCase("run")) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-                sqlSession.close();
-                return;
-            }
-            //设备状态切换到run时检查开机check是否通过的
-            //UiLogUtil.appendLog2EventTab(deviceCode, "查询服务端锁机状态：" + this.checkLockFlagFromServerByWS(deviceCode) + "本地锁机状态：" + startCheckPass);
-            if (equipStatus.equalsIgnoreCase("RUN")) {
-                if (holdFlag || this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备已被锁");
-                    holdDevice();
-                }
-            }
-            //获取设备状态为ready时检查领料记录
-            if (equipStatus.equalsIgnoreCase("RUN")) {
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
-                }
-                //1、获取设备需要校验的信息类型,
-                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
-                    //startCheckPass = false;
-                    holdFlag = true;
-                }
-                if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
-                    //startCheckPass = false;
-                    checkNameFlag = false;
-                    //holdFlag= true;
-                } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
-                    checkNameFlag = true;
-                }
-                if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机检查模式!");
-                }
-
-//                if (recipeParaChange) {
-                if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
-                    //查询trackin时的recipe和GoldRecipe
-                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-                    boolean hasGoldRecipe = true;
-                    //查询客户端数据库是否存在GoldRecipe
-                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                        hasGoldRecipe = false;
+            } else //开机check
+            {
+                if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
+                    if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        this.holdDevice();
+                        return;
                     }
-                    //首先判断下载的Recipe类型
-                    //1、如果下载的是Unique版本，那么执行完全比较
-                    String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                    if (false) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数绝对值Check");
-                        this.startCheckRecipePara(downLoadRecipe, "abs");
-                    } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
-                        if (!hasGoldRecipe) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
-                            //不允许开机
-                            checkParaFlag = false;
-                        } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            checkParaFlag = this.startCheckRecipeParaReturnFlag(downLoadGoldRecipe.get(0));
-                        }
+                    if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
                     }
-                } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                    //如果未设置参数比对模式，默认参数比对通过
-                    checkParaFlag = true;
-                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    //检查程序是否存在 GOLD
+                    Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
+                    if (goldRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (checkRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                        this.holdDevice();
+                    } else {
+                        this.startCheckRecipePara(checkRecipe);
+                    }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception:", e);
             sqlSession.rollback();
         } finally {
             sqlSession.close();
-            //总结是否需要锁机
-            if (checkNameFlag && checkParaFlag) {
-                //不锁机
-                holdFlag = false;
-            } else {
-                holdFlag = true;
-            }
-            //更新界面
-            if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
-                this.setAlarmState(0);
-            } else {
-                this.setAlarmState(2);
-            }
-        }
-    }
-
-    /**
-     * 开机check recipe参数
-     *
-     * @param checkRecipe
-     * @param type
-     */
-    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe, String type) {
-        boolean checkParaFlag = false;
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        MonitorService monitorService = new MonitorService(sqlSession);
-        //List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        //获取卡控的数值，直接用svid查询需要卡控参数的数值
-        List<RecipePara> equipRecipeParas = transferECSVValue2RecipePara(new ArrayList<RecipeTemplate>(), recipeService.searchRecipeTemplateMonitor(deviceCode));
-        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
-        try {
-            Map mqMap = new HashMap();
-            mqMap.put("msgName", "eqpt.StartCheckWI");
-            mqMap.put("deviceCode", deviceCode);
-            mqMap.put("recipeName", ppExecName);
-            mqMap.put("EquipStatus", equipStatus);
-            mqMap.put("lotId", lotId);
-            String eventDesc = "";
-            if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
-                this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
-                checkParaFlag = false;
-//                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
-//                realTimePara.setSize(1000, 650);
-//                SwingUtil.setWindowCenter(realTimePara);
-//                realTimePara.setVisible(true);
-                for (RecipePara recipePara : recipeParasdiff) {
-                    eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
-                }
-                monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
-            } else {
-                checkParaFlag = true;
-                this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
-                eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
-                logger.info("设备：" + deviceCode + " 开机Check成功");
-            }
-            mqMap.put("eventDesc", eventDesc);
-            GlobalConstants.C2SLogQueue.sendMessage(mqMap);
-            sqlSession.commit();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return checkParaFlag;
-        } finally {
-            sqlSession.close();
-            return checkParaFlag;
         }
     }
 
@@ -418,7 +288,7 @@ public class TR48MK5Host extends EquipHost {
             data = activeWrapper.sendAwaitMessage(s7f3out);
             ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
             resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -523,9 +393,9 @@ public class TR48MK5Host extends EquipHost {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + PPID);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -560,9 +430,9 @@ public class TR48MK5Host extends EquipHost {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to CHECK the LotConfig");
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -586,9 +456,9 @@ public class TR48MK5Host extends EquipHost {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
             logger.info("The equip " + deviceCode + " request to Start the Lot");
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -648,27 +518,8 @@ public class TR48MK5Host extends EquipHost {
     }
     // </editor-fold>
 
-    @Override
-    public Object clone() {
-        TR48MK5Host newEquip = new TR48MK5Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 
 //    @Override
 //    public Map sendS2f41Cmd(String Remotecommand){

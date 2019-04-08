@@ -22,10 +22,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AsmAD838Host extends EquipHost {
 
@@ -408,10 +405,7 @@ public class AsmAD838Host extends EquipHost {
         return newEquip;
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 
     @Override
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
@@ -458,7 +452,18 @@ public class AsmAD838Host extends EquipHost {
         sendS2F37outAll();
         sendS2F37outClose(267L);
         sendS5F3out(true);
-
+        List list = new ArrayList();
+        list.add(2031L);
+        list.add(2009L);
+        list.add(2028L);
+//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
+        sendS2F33Out(3255L, 3255L, list);
+        sendS2F35out(3255L, 3255L, 3255L);
+        sendS2F35clear();
+        sendS2F35outDelete(222l,222l);
+        sendS2F33clear();
+        sendS2f33outDelete(123);
+        sendS2F37outCloseAll();
     }
 
     @Override
@@ -481,7 +486,7 @@ public class AsmAD838Host extends EquipHost {
                 processS6F11inStripMapUpload(data);
             }
             if (Long.parseLong(ceid) == EquipStateChangeCeid) {
-                processS6F11ControlStateChange(data);
+                processS6F11EquipStatusChange(data);
             }
             activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             if (commState != 1) {

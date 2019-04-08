@@ -39,8 +39,7 @@ public class FileUtil {
     /**
      * save file accroding to physical directory infomation
      *
-     * @param physicalDir physical directory
-     * @param fname file name of destination
+
      * @param istream input stream of destination file
      * @return
      */
@@ -181,7 +180,7 @@ public class FileUtil {
      * @param dir 要删除的目录
      * @return 删除成功时返回true，否则返回false。
      */
-    public boolean deleteDirectory(File dir) {
+    public static boolean deleteDirectory(File dir) {
         File[] entries = dir.listFiles();
         int sz = entries.length;
         for (int i = 0; i < sz; i++) {
@@ -419,15 +418,7 @@ public class FileUtil {
         }
     }
 
-    /**
-     * This method is used to log the messages with timestamp,error code and the
-     * method details
-     *
-     * @param errorCd String
-     * @param className String
-     * @param methodName String
-     * @param msg String
-     */
+
     public static void writeLog(String logFile, String batchId, String exceptionInfo) {
 
         DateFormat df = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.JAPANESE);

@@ -13,7 +13,6 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
@@ -123,7 +122,7 @@ public class ASM120THost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -158,37 +157,7 @@ public class ASM120THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         ppExecName = (String) listtmp.get(1);
         controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
@@ -205,55 +174,7 @@ public class ASM120THost extends EquipHost {
     }
 
 
-    public Map sendS1F3RcpAndStateCheck() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3rcpandstate", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] preEquipStatuss = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            //有些设备无法获取前一个状态，故先判断是否存在
-            List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PreProcessStatus");
-            if (recipeTemplates != null && !recipeTemplates.isEmpty()) {
-                preEquipStatuss[0] = Long.parseLong(recipeTemplates.get(0).getDeviceVariableId());
-            } else {
-                sqlSession.close();
-                return null;
-            }
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PreProcessStatus", preEquipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(2);
-        if (ppExecName.contains(".prp")) {
-            ppExecName = ppExecName.replace(".prp", "");
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("EquipStatus", equipStatus);
-        resultMap.put("PreProcessStatus", preEquipStatus);
-        resultMap.put("PPExecName", ppExecName);
-        return resultMap;
-    }
+
 
     public List sendS1F3PressCheckout() {
         DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
@@ -271,20 +192,21 @@ public class ASM120THost extends EquipHost {
         long[] press4SV = new long[1];
         press4SV[0] = 223l;
         s1f3out.put("Press4", press4SV);
+        List list=new ArrayList();
+        list.add(163L);
+        list.add(183L);
+        list.add(203L);
+        list.add(223L);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            data = activeWrapper.sendS1F3out(list,svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         return listtmp;
     }
 
@@ -708,7 +630,7 @@ public class ASM120THost extends EquipHost {
     public void sendUphData2Server() {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
         //获取前一状态与当前状态
-        sendS1F3RcpAndStateCheck();
+       sendS1F3Check();
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);
@@ -773,15 +695,12 @@ public class ASM120THost extends EquipHost {
 
 
     private void initRptPara() {
-//        sendS2f33out(5l, 8l, 19l);
+//        sendS2F33Out(5l, 8l, 19l);
 //        sendS2f35out(5l, 5l, 5l);
 //        sendS2F37out(5l);
 
         sendS2F37outAll();
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 }

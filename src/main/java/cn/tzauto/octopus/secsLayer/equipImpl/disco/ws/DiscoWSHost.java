@@ -25,7 +25,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -34,7 +33,6 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -51,6 +49,7 @@ public class DiscoWSHost extends EquipHost {
     public DiscoWSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
+
     public Object clone() {
         DiscoWSHost newEquip = new DiscoWSHost(deviceId,
                 this.iPAddress,
@@ -100,10 +99,10 @@ public class DiscoWSHost extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11kerfCheck")) {
                     processS6F11KerfCheck(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 75 || ceid == 76) {
                             if (ceid == 75) {
@@ -120,6 +119,7 @@ public class DiscoWSHost extends EquipHost {
                                 pauseDevice();
                                 kerfCheck = true;
                             }
+                            processS6F11KerfCheck(msg);
                         }
                         if (ceid == 13) {
                             if (equipStatus.equalsIgnoreCase("run")) {
@@ -161,21 +161,9 @@ public class DiscoWSHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
-                processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if ((ceid < 10150 && ceid > 10080) || (ceid == 75 || ceid == 76) || ceid == 7 || ceid == 13 || ceid == 150) {
-                    this.inputMsgQueue.put(data);
-                }
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11kerfCheck")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
@@ -243,37 +231,37 @@ public class DiscoWSHost extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode) && equipStatus.equalsIgnoreCase("run")) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-            if (equipStatus.equalsIgnoreCase("run")) {
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    this.holdDevice();
-                    return;
-                }
-                if (!checkBladeId()) {
-                    holdDevice();
-                    return;
-                }
-                Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                if (checkRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + shortName + "！ 请确认是否已审核通过！");
-                    this.holdDevice();
-                    return;
-                }
-                if (!shortName.equals(checkRecipe.getRecipeName())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + shortName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
-                    this.holdDevice();
-                    return;
-                }
-                //检查程序是否存在 GOLD
-                Recipe goldRecipe = recipeService.getGoldRecipe(shortName, deviceCode, deviceType);
-                if (goldRecipe == null) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + shortName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                    this.holdDevice();
-                    return;
-                }
+                if (equipStatus.equalsIgnoreCase("run")) {
+                    if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (!checkBladeId()) {
+                        holdDevice();
+                        return;
+                    }
+                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                    if (checkRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + shortName + "！ 请确认是否已审核通过！");
+                        this.holdDevice();
+                        return;
+                    }
+                    if (!shortName.equals(checkRecipe.getRecipeName())) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + shortName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        this.holdDevice();
+                        return;
+                    }
+                    //检查程序是否存在 GOLD
+                    Recipe goldRecipe = recipeService.getGoldRecipe(shortName, deviceCode, deviceType);
+                    if (goldRecipe == null) {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + shortName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        this.holdDevice();
+                        return;
+                    }
 //                    startCheckEC();
-                this.startCheckRecipePara(checkRecipe);
-            }
+                    this.startCheckRecipePara(checkRecipe);
+                }
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
@@ -284,6 +272,7 @@ public class DiscoWSHost extends EquipHost {
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+
     /**
      * 获取下载Recipe的许可，将原有的recipe使用新的名字下载
      *
@@ -525,21 +514,16 @@ public class DiscoWSHost extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="BladeEdge">
     public long[] getBladeEdge() {
-        DataMsgMap s1f3BladeEdge = new DataMsgMap("s1f3BladeEdge", activeWrapper.getDeviceId());
-        s1f3BladeEdge.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] z1BladeEdgeId = new long[1];
-        z1BladeEdgeId[0] = 1302l;
-        s1f3BladeEdge.put("Z1BladeEdge", z1BladeEdgeId);
-        long[] z2BladeEdgeId = new long[1];
-        z2BladeEdgeId[0] = 1303l;
-        s1f3BladeEdge.put("Z2BladeEdge", z2BladeEdgeId);
         DataMsgMap bladeEdgeDataHashtable = null;
+        List bladeidList = new ArrayList();
+        bladeidList.add(1302L);
+        bladeidList.add(1303L);
         try {
-            bladeEdgeDataHashtable = activeWrapper.sendAwaitMessage(s1f3BladeEdge);
+            bladeEdgeDataHashtable = activeWrapper.sendS1F3out(bladeidList, svFormat);
         } catch (Exception e) {
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) bladeEdgeDataHashtable.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = (ArrayList) bladeEdgeDataHashtable.get("SV");
+
         long[] bladeEdges = new long[2];
         bladeEdges[0] = Long.valueOf(String.valueOf(listtmp.get(0)));
         bladeEdges[1] = Long.valueOf(String.valueOf(listtmp.get(1)));
@@ -730,29 +714,11 @@ public class DiscoWSHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         try {
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-            if (data == null || data.get("RESULT") == null) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-                logger.error("获取设备:" + deviceCode + "状态信息失败.");
-                return null;
-            }
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            List listtmp = getNcessaryData();
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
             shortName = (String) listtmp.get(1);
             ppExecName = getDevIdFromEqp(Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "DEVID").get(0).getDeviceVariableId()));
@@ -773,20 +739,16 @@ public class DiscoWSHost extends EquipHost {
 
     private String getDevIdFromEqp(long DEVID) {
         String devid = "--";
-        DataMsgMap s2f13out = new DataMsgMap("s2f13DEVIDout", activeWrapper.getDeviceId());
-        long[] devids = new long[1];
-        devids[0] = DEVID;
-        s2f13out.put("DevID", devids);
-        s2f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
+        List list = new ArrayList();
+        list.add(DEVID);
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13out);
+            data = activeWrapper.sendS2F13out(list, ecFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data != null && data.get("RESULT") != null) {
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) data.get("EC");
             devid = String.valueOf(listtmp.get(0));
         }
         return devid;
@@ -796,23 +758,17 @@ public class DiscoWSHost extends EquipHost {
         Map map = new HashMap();
         String z1bladeId = "";
         String z2bladeId = "";
-        DataMsgMap s2f13out = new DataMsgMap("s2f13BLADEIDout", activeWrapper.getDeviceId());
-        long[] blade_id1 = new long[1];
-        blade_id1[0] = 4922L;
-        long[] blade_id2 = new long[1];
-        blade_id2[0] = 4923L;
-        s2f13out.put("BladeId1", blade_id1);
-        s2f13out.put("BladeId2", blade_id2);
-        s2f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        List list = new ArrayList();
+        list.add(4922L);
+        list.add(4923L);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13out);
+            data = activeWrapper.sendS2F13out(list, ecFormat);
         } catch (Exception e) {
             logger.error("Exception", e);
         }
-        if (data != null && data.get("RESULT") != null) {
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        if (data != null && data.get("EC") != null) {
+            ArrayList listtmp = (ArrayList) data.get("EC");
             z1bladeId = String.valueOf(listtmp.get(0));
             z2bladeId = String.valueOf(listtmp.get(1));
             map.put("Z1", z1bladeId);
@@ -954,20 +910,13 @@ public class DiscoWSHost extends EquipHost {
     }
 
 
-
-
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     void initRptPara() {
 
         sendS2F33clear();
         sendS2F35clear();
-//        sendS2f33out(7, 7613, 7615);
-//        sendS2f33out(7, 7602, 7603);
-//        sendS2f33out(7, 1400, 1401);
+//        sendS2F33Out(7, 7613, 7615);
+//        sendS2F33Out(7, 7602, 7603);
+//        sendS2F33Out(7, 1400, 1401);
 //        sendS2f35out(7, 7, 7);
     }
 

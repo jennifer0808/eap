@@ -1,19 +1,25 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
-import cn.tfinfo.jcauto.octopus.biz.alarm.service.AutoAlter;
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.util.ftp.FtpUtil;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.common.ws.WSUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
+import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.common.ws.WSUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
@@ -21,12 +27,6 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.HsmsProtocolNotSelectedException;
-import cn.tzinfo.smartSecsDriver.exception.NoConnectionException;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -38,7 +38,6 @@ import java.util.*;
  * @Company 南京钛志信息系统有限公司
  * @Create Date 2016-3-25
  * @(#)EquipHost.java
- *
  * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
  * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
  * use and distribution are prohibited. Modification History: Modification Date
@@ -59,20 +58,28 @@ public class HTDB800Host extends EquipHost {
     private boolean checkParaFlag = true;
     private boolean ppselectDoneFlag = false;
 
-    //private Object synS2F41 = null;
-    public HTDB800Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
+
+    public HTDB800Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public HTDB800Host(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
+
+    @Override
+    public Object clone() {
+        HTDB800Host newEquip = new HTDB800Host(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
+
 
     @Override
     public void run() {
@@ -148,30 +155,12 @@ public class HTDB800Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6f11Common(data);
                 long ceid = data.getSingleNumber("CollEventID");
                 if (ceid == 26) {
                     processS6F11SpecialEvent(data);
                 }
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11EquipStatusChange")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                //接受到切换recipe成功，置ppselectDoneFlag为true
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 80) {
-                    ppselectDoneFlag = true;
-                }
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
@@ -200,7 +189,7 @@ public class HTDB800Host extends EquipHost {
                 processS12F17in(data);
             } else if (tagName.equalsIgnoreCase("s12f19in")) {
                 processS12F19in(data);
-            }else if (tagName.equalsIgnoreCase("s6f83in")){
+            } else if (tagName.equalsIgnoreCase("s6f83in")) {
                 processS6F83in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
@@ -220,7 +209,10 @@ public class HTDB800Host extends EquipHost {
             sendS2F37outCloseAll();
             logger.info("initRptPara+++++++++++++++++++");
             //重新定义processing INIT·SETUP·READY·EXECUTING·PAUSE·ERROR· status
-            sendS2f33out(10002L, 50062L, 50070L);//50062:当前状态,50070：当前recipe
+            List list = new ArrayList();
+            list.add(50062L);
+            list.add(50070L);
+            sendS2F33Out(10002L, 10002L, list);//50062:当前状态,50070：当前recipe
             long[] ceids2 = new long[7];
             ceids2[0] = 3L;
             ceids2[1] = 4L;
@@ -233,7 +225,8 @@ public class HTDB800Host extends EquipHost {
             for (int i = 0; i < ceids2.length; i++) {
                 sendS2F35out(ceids2[i], 10002L);
             }
-            sendS2F37outMuilt(true, ceids2);
+            //todo sendS2F37outMuilt
+//            sendS2F37outMuilt(true, ceids2);
             //单独开启CEID=88(参数改变事件)，以防部分机台未升级
             sendS2F35out(88L, 10002L);
             sendS2F37out(88L);
@@ -438,9 +431,9 @@ public class HTDB800Host extends EquipHost {
             }
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
@@ -728,6 +721,7 @@ public class HTDB800Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+
     /**
      * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
      *
@@ -758,7 +752,7 @@ public class HTDB800Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -795,7 +789,7 @@ public class HTDB800Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -924,7 +918,7 @@ public class HTDB800Host extends EquipHost {
             if (ackc7[0] == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -934,7 +928,7 @@ public class HTDB800Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
         return resultMap;
     }
 
@@ -1004,22 +998,6 @@ public class HTDB800Host extends EquipHost {
     }
     // </editor-fold> 
 
-    @Override
-    public Object clone() {
-        HTDB800Host newEquip = new HTDB800Host(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
     //hold机台，先停再锁
     @Override
@@ -1155,7 +1133,8 @@ public class HTDB800Host extends EquipHost {
         }
     }
 
-    public boolean testInitLink() throws HsmsProtocolNotSelectedException, NoConnectionException {
+    @Override
+    public boolean testInitLink() throws HsmsProtocolNotSelectedException {
         try {
             DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
             s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -1167,10 +1146,6 @@ public class HTDB800Host extends EquipHost {
             e.printStackTrace();
             logger.error("Exception:", e);
             throw new HsmsProtocolNotSelectedException("HsmsProtocolNotSelectedException");
-        } catch (NoConnectionException e) {
-            e.printStackTrace();
-            logger.error("Exception:", e);
-            throw new NoConnectionException("NoConnectionException");
         } catch (Exception e) {
             logger.error("Exception:", e);
             return false;

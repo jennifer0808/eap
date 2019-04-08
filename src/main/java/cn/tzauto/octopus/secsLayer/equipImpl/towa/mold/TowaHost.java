@@ -1,36 +1,35 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.towa.mold;
 
-import cn.tfinfo.jcauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tfinfo.jcauto.octopus.biz.device.service.DeviceService;
-import cn.tfinfo.jcauto.octopus.biz.monitor.service.MonitorService;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.Recipe;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tfinfo.jcauto.octopus.biz.recipe.domain.RecipeTemplate;
-import cn.tfinfo.jcauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.secsLayer.resolver.towa.TowaRecipeUtil;
-import cn.tfinfo.jcauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tfinfo.jcauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tfinfo.jcauto.octopus.common.util.tool.JsonMapper;
-import cn.tfinfo.jcauto.octopus.common.ws.AxisUtility;
-import cn.tfinfo.jcauto.octopus.gui.guiUtil.UiLogUtil;
+
+import cn.tzauto.generalDriver.api.MsgArrivedEvent;
+import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.towa.TowaRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzinfo.smartSecsDriver.exception.MliBaseException;
-import java.util.*;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
-import cn.tzinfo.smartSecsDriver.representation.secsii.FormatCode;
-import cn.tzinfo.smartSecsDriver.userapi.MsgArrivedEvent;
-import cn.tzinfo.smartSecsDriver.userapi.DataMsgMap;
-import cn.tzinfo.smartSecsDriver.userapi.SecsItem;
-import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class TowaHost extends EquipHost {
@@ -38,22 +37,25 @@ public class TowaHost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(TowaHost.class.getName());
 
-    public TowaHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort, deviceType, deviceCode, recipeType, iconPtah);
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        this.ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+        super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
-    public TowaHost(String devId, String equipmentId, String smlFileFullPath, String localIpAddress,
-            int localTcpPort, String remoteIpAddress, int remoteTcpPort,
-            String connectMode, String protocolType, String deviceType, String deviceCode, int recipeType, String iconPtah) {
-        super(devId, equipmentId, smlFileFullPath, localIpAddress,
-                localTcpPort, remoteIpAddress, remoteTcpPort,
-                connectMode, protocolType, deviceType, deviceCode, recipeType, iconPtah);
-        this.svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        this.ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+
+    @Override
+    public Object clone() {
+        TowaHost newEquip = new TowaHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
     }
 
     public void run() {
@@ -125,40 +127,6 @@ public class TowaHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f112dcodereview")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if ((ceid < 50014 && ceid > 50000) || (ceid < 58 && ceid > 50) || (ceid <= 2051 && ceid >= 2020) || (ceid <= 235 && ceid >= 222) || ceid == 10) {
-                    this.inputMsgQueue.put(data);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -206,7 +174,7 @@ public class TowaHost extends EquipHost {
             press2SV[0] = 2211L;
             press3SV[0] = 3211L;
             press4SV[0] = 4211L;
-        }else if ("TOWAYPS".equals(deviceType)) {
+        } else if ("TOWAYPS".equals(deviceType)) {
             press1SV[0] = 100L;
             press2SV[0] = 200L;
             press3SV[0] = 300L;
@@ -233,43 +201,11 @@ public class TowaHost extends EquipHost {
         return listtmp;
     }
 
-    public Map sendS1F3SingleCheck(String svidName) {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
-        try {
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            return null;
-        }
-        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
-        logger.info("resultMap=" + resultMap);
-        return resultMap;
-    }
     // </editor-fold> 
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    @Override
+
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
@@ -507,25 +443,25 @@ public class TowaHost extends EquipHost {
     }
 
     protected void processS6f11StripIDReview(DataMsgMap data) {
-            Long pressNoInt = 0L;
-            String pressNo = "";
+        Long pressNoInt = 0L;
+        String pressNo = "";
         try {
-           pressNoInt = data.getSingleNumber("PressNo");   
-           pressNo = pressNoInt.toString();
-        } catch (MliBaseException ex) {
-            ex.printStackTrace();
+            pressNoInt = data.getSingleNumber("PressNo");
+            pressNo = pressNoInt.toString();
+        } catch (SecsDriverBaseException e) {
+            e.printStackTrace();
         }
-            String recipeName = ((SecsItem) data.get("RecipeName")).getData().toString();
-            String formingNo = ((SecsItem) data.get("FormingNo")).getData().toString();
-            String leftStripID = ((SecsItem) data.get("LeftStripID")).getData().toString();
-            String rightStripID = ((SecsItem) data.get("RightStripID")).getData().toString();
-            try {
-                logger.info("pressNo=" + pressNo +"; recipeName="+ recipeName + "; formingNo="+formingNo + "; leftStripID=" + leftStripID + "; rightStripID=" +rightStripID);
-                Map resultMap = AxisUtility.get2DCode(deviceCode, pressNo, recipeName, formingNo, leftStripID, rightStripID);
+        String recipeName = ((SecsItem) data.get("RecipeName")).getData().toString();
+        String formingNo = ((SecsItem) data.get("FormingNo")).getData().toString();
+        String leftStripID = ((SecsItem) data.get("LeftStripID")).getData().toString();
+        String rightStripID = ((SecsItem) data.get("RightStripID")).getData().toString();
+        try {
+            logger.info("pressNo=" + pressNo + "; recipeName=" + recipeName + "; formingNo=" + formingNo + "; leftStripID=" + leftStripID + "; rightStripID=" + rightStripID);
+            Map resultMap = AxisUtility.get2DCode(deviceCode, pressNo, recipeName, formingNo, leftStripID, rightStripID);
         } catch (Exception ex) {
             logger.error("Exception:", ex);
         }
-            
+
     }
     //</editor-fold>
 
@@ -607,24 +543,7 @@ public class TowaHost extends EquipHost {
 //        resultMap.put("ControlState", deviceInfoExt.getConnectionStatus());
 //        return resultMap;
 //    }
-    @Override
-    public Object clone() {
-        TowaHost newEquip = new TowaHost(deviceId, this.deviceCode,
-                this.smlFilePath, this.localIPAddress,
-                this.localTCPPort, this.remoteIPAddress,
-                this.remoteTCPPort, this.connectMode,
-                this.protocolType, this.deviceType, this.deviceCode, recipeType, this.iconPath);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        newEquip.checkNotComm = this.checkNotComm;
-        newEquip.checkNotReady = this.checkNotReady;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
+
 
     private void sendS2f33outMulti(long reportId, long svid0, long svid1, long svid2, long svid3, long svid4) {
         DataMsgMap s2f33out = new DataMsgMap("s2f33outmulti", activeWrapper.getDeviceId());
@@ -660,12 +579,20 @@ public class TowaHost extends EquipHost {
     private void initRptPara() {
         //重定义towa 机台的equipstatuschange事件报告 用于在设备状态改变时获取equipstatus和ppexecname
         if (!deviceType.equals("TOWAYPM")) {
-            sendS2f33out(50007l, 902l, 906l);
-            sendS2f35out(50007l, 50007l, 50007l);
+            List list = new ArrayList();
+            list.add(902l);
+            list.add(906l);
+//            sendS2F33Out(50007l, 902l, 906l);
+            sendS2F33Out(50007l, 50007l, list);
+            sendS2F35out(50007l, 50007l, 50007l);
             sendS2F37out(50007l);
         } else {
-            sendS2f33out(271l, 102l, 111l);
-            sendS2f35out(271l, 271l, 271l);
+            List list = new ArrayList();
+            list.add(102l);
+            list.add(111l);
+//            sendS2F33Out(271l, 102l, 111l);
+            sendS2F33Out(271l, 271l, list);
+            sendS2F35out(271l, 271l, 271l);
             sendS2F37out(271l);
         }
 //        sendS2F37outAll(this.activeWrapper);
@@ -673,36 +600,44 @@ public class TowaHost extends EquipHost {
 
         if (deviceType.equals("TOWAY1R")) { //deviceType.equals("TOWAY1E") ||
             //重定义 ppselect完成事件报告
-            sendS2f33out(50013l, 906l);
-            sendS2f35out(50013l, 50013l, 50013l);
+            List list = new ArrayList();
+            list.add(906l);
+
+            sendS2F33Out(50013l, 50013l, list);
+            sendS2F35out(50013l, 50013l, 50013l);
             sendS2F37out(50013l);
             //重定义 2DCode追溯事件报告
             sendS2f33outMulti(19005L, 1052L, 906L, 1053L, 1050L, 1051L);
-            sendS2f35out(19005L, 19005L, 19005L);
+            sendS2F35out(19005L, 19005L, 19005L);
             sendS2F37out(19005L);
 
             sendS2f33outMulti(19006L, 2052L, 906L, 2053L, 2050L, 2051L);
-            sendS2f35out(19006L, 19006L, 19006L);
+            sendS2F35out(19006L, 19006L, 19006L);
             sendS2F37out(19006L);
 
             sendS2f33outMulti(19007L, 3052L, 906L, 3053L, 3050L, 3051L);
-            sendS2f35out(19007L, 19007L, 19007L);
+            sendS2F35out(19007L, 19007L, 19007L);
             sendS2F37out(19007L);
 
             sendS2f33outMulti(19008L, 4052L, 906L, 4053L, 4050L, 4051L);
-            sendS2f35out(19008L, 19008L, 19008L);
+            sendS2F35out(19008L, 19008L, 19008L);
             sendS2F37out(19008L);
         }
         if (deviceType.equals("TOWAPMC")) {
+            List list = new ArrayList();
+            list.add(906l);
+
             //重定义 recipe change事件报告
-            sendS2f33out(50010l, 906l);
-            sendS2f35out(50010l, 50010l, 50010l);
+            sendS2F33Out(50010l, 50010l, list);
+            sendS2F35out(50010l, 50010l, 50010l);
             sendS2F37out(50010l);
         }
         if (deviceType.equals("TOWAY1E")) {
             //重定义 recipe change事件报告
-            sendS2f33out(5001400l, 906l);
-            sendS2f35out(5001400l, 50014l, 5001400l);
+            List list = new ArrayList();
+            list.add(906l);
+            sendS2F33Out(5001400l, 5001400l,list);
+            sendS2F35out(5001400l, 50014l, 5001400l);
             sendS2F37out(50014l);
         }
     }
@@ -891,23 +826,8 @@ public class TowaHost extends EquipHost {
         if (recipeTemplatesAll != null || !recipeTemplatesAll.isEmpty()) {
             List svIdListAll = getSvIdList(recipeTemplatesAll);
             List svIdList = getSvIdList(recipeTemplates);
-            resultMap = sendS1F3RcpParaCheckout(svIdListAll);
-            if (resultMap != null && resultMap.size() > 0) {
-                ArrayList svListAll = (ArrayList) resultMap.get("SVList");
-                if (svIdListAll.size() != svIdList.size() && !svIdList.isEmpty()) {
-//                    ArrayList svList = new ArrayList();
-                    for (int i = 0; i < svIdListAll.size(); i++) {
-                        if (!svIdList.contains(svIdListAll.get(i))) {
-                            svListAll.set(i, "-1");
-                        }
-                    }
-                }
-                Map svValueMap = new HashMap();
-                for (int i = 0; i < svIdListAll.size(); i++) {
-                    svValueMap.put(String.valueOf(svIdListAll.get(i)), String.valueOf(svListAll.get(i)));
-                }
-                svMap.put("svList", JsonMapper.toJsonString(svValueMap));
-            }
+            //todo sendS1F3RcpParaCheckout
+
         }
         GlobalConstants.C2SEqptLogQueue.sendMessage(svMap);
         UiLogUtil.appendLog2SeverTab(deviceCode, "成功发送设备清模状态sv参数信息到服务端");
@@ -921,31 +841,33 @@ public class TowaHost extends EquipHost {
         List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
         sqlSession.close();
         //获取前一状态与当前状态
-        sendS1F3RcpAndStateCheck();
-        Map shotCountMap = sendS1F3SVShotCountCheckout(svidlist);
-        //towa设备取产量乘以2，用shotCount表示产量
-        if (shotCountMap != null && !shotCountMap.isEmpty()) {
-            Set<Map.Entry> entry = shotCountMap.entrySet();
-            for (Map.Entry e : entry) {
-                double value = Double.parseDouble(e.getValue().toString());
-                value = value * 2;
-                shotCountMap.put(e.getKey(), value);
-            }
-        }
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "UphDataTransfer");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("equipStatus", equipStatus);
-        mqMap.put("preEquipStatus", preEquipStatus);
-        mqMap.put("currentRecipe", ppExecName);
-        mqMap.put("lotId", lotId);
-        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
-        mqMap.put("output", output);
-        mqMap.put("unit", "");
-        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
-        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-        UiLogUtil.appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
-        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
+        //todo sendS1F3RcpAndStateCheck();
+//        sendS1F3RcpAndStateCheck();
+        //todo sendS1F3SVShotCountCheckout
+//        Map shotCountMap = sendS1F3SVShotCountCheckout(svidlist);
+//        //towa设备取产量乘以2，用shotCount表示产量
+//        if (shotCountMap != null && !shotCountMap.isEmpty()) {
+//            Set<Map.Entry> entry = shotCountMap.entrySet();
+//            for (Map.Entry e : entry) {
+//                double value = Double.parseDouble(e.getValue().toString());
+//                value = value * 2;
+//                shotCountMap.put(e.getKey(), value);
+//            }
+//        }
+//        Map mqMap = new HashMap();
+//        mqMap.put("msgName", "UphDataTransfer");
+//        mqMap.put("deviceCode", deviceCode);
+//        mqMap.put("equipStatus", equipStatus);
+//        mqMap.put("preEquipStatus", preEquipStatus);
+//        mqMap.put("currentRecipe", ppExecName);
+//        mqMap.put("lotId", lotId);
+//        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
+//        mqMap.put("output", output);
+//        mqMap.put("unit", "");
+//        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
+//        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+//        UiLogUtil.appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+//        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
 //        UiLogUtil.appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
@@ -993,7 +915,8 @@ public class TowaHost extends EquipHost {
         List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
         sqlSession.close();
         if (svidlist != null && !svidlist.isEmpty()) {
-            resultMap = sendS1F3SVShotCountCheckout(svidlist);
+            //todo sendS1F3SVShotCountCheckout
+//            resultMap = sendS1F3SVShotCountCheckout(svidlist);
         }
         return resultMap;
     }
@@ -1009,7 +932,7 @@ public class TowaHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();

@@ -53,7 +53,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
     private int alarmState = 0;
-    private boolean jsipReady = false;
+    private boolean sdrReady = false;
 
     public String iPAddress;
     protected int tCPPort;
@@ -70,7 +70,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String manufacturer;//生产厂商
     protected String deviceCode;//设备代码;
     protected String ProcessProgramID;
-    protected int recipeType;
+    protected int recipeType = 1;
     protected String Mdln = "";
     protected String SoftRev = "";
     protected String recipePath = "";
@@ -91,6 +91,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected short svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short rptFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected long lastStartCheckTime;
     protected long startCheckIntervalTime = 60;
     protected boolean holdFlag = false;
@@ -110,7 +111,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String uploadWaferMappingCol = "";
     //延迟删除的标识，判断是否是切换recipe之后,用于DB800,DB730
     public boolean ppselectFlag = false;
-    EquipSecsBean equipSecsBean;
+    //    EquipSecsBean equipSecsBean;
+    protected long StripMapUpCeid;
+    protected long EquipStateChangeCeid;
+    protected String RCMD_PPSELECT = "PP-SELECT";
+    protected String CPN_PPID = "PPID";
 
     public EquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
                      String connectMode, String deviceType, String deviceCode) {
@@ -123,14 +128,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
         threadUsed = false;
         this.deviceType = deviceType;
         this.deviceCode = deviceCode;
-        equipSecsBean = new EquipSecsBean(deviceCode, deviceType);
+//        equipSecsBean = new EquipSecsBean(deviceCode, deviceType);
+        EquipStateChangeCeid = -1;
+        StripMapUpCeid = -1;
     }
 
     public void initialize() throws DeviceNotRegisteredException {
         logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
-        ;
     }
 
 
@@ -149,21 +155,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.inputMsgQueue = null;
         commState = NOT_COMMUNICATING;
         controlState = FengCeConstant.CONTROL_OFFLINE;
-        jsipReady = false;
+        sdrReady = false;
     }
 
-    /**
-     * @return the jsipReady
-     */
+
     public boolean isSdrReady() {
-        return jsipReady;
+        return sdrReady;
     }
 
-    /**
-     * @param jsipReady the jsipReady to set
-     */
-    public synchronized void setSdrReady(boolean jsipReady) {
-        this.jsipReady = jsipReady;
+
+    public synchronized void setSdrReady(boolean sdrReady) {
+        this.sdrReady = sdrReady;
     }
 
     // <editor-fold defaultstate="collapsed" desc="getset Code">
@@ -189,12 +191,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         if (commState == 1) {
             equipState.setCommOn(true);
-            this.jsipReady = true;
+            this.sdrReady = true;
 //            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
         }
         if (commState == 0) {
             equipState.setCommOn(false);
-            this.jsipReady = false;
+            this.sdrReady = false;
         }
         this.commState = commState;
         Map resultMap = new HashMap();
@@ -538,7 +540,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void sendS1F1out() {
         try {
             DataMsgMap s1f2in = activeWrapper.sendS1F1out();
@@ -560,9 +561,23 @@ public abstract class EquipHost extends Thread implements MsgListener {
      *
      * @return
      */
-    @SuppressWarnings("unchecked")
-    public Map sendS1F3Check() {
 
+    public Map sendS1F3Check() {
+        List listtmp = getNcessaryData();
+        if (listtmp != null) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        }
+        Map panelMap = new HashMap();
+        panelMap.put("EquipStatus", equipStatus);
+        panelMap.put("PPExecName", ppExecName);
+        panelMap.put("ControlState", controlState);
+        changeEquipPanel(panelMap);
+        return panelMap;
+    }
+
+    protected List getNcessaryData() {
         DataMsgMap data = null;
         try {
             List<Long> statusList = new ArrayList<>();
@@ -583,22 +598,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return null;
         }
         logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList listtmp = (ArrayList) data.get("SV");
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = String.valueOf(listtmp.get(1));
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
+        return (ArrayList) data.get("SV");
+
     }
 
-    public Map sendS1F3SingleCheck(String svidName) {
+    public Map sendS1F3SingleCheck(String svid) {
 
         List svidlist = new ArrayList();
-        svidlist.add(svidName);
+        svidlist.add(svid);
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
@@ -626,7 +633,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map findDeviceRecipe() {
         if (!this.isSdrReady()) {
-            logger.error("JSIP Not Ready");
+            logger.error("sdrReady Not Ready");
             logger.error("isInterrupted:[" + isInterrupted() + "]isStartUp:[" + isStartUp() + "]isThreadUsed:[" + isThreadUsed() + "]");
             return null;
         }
@@ -666,7 +673,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public boolean testInitLink() throws BrokenProtocolException {
+    public boolean testInitLink() throws BrokenProtocolException, HsmsProtocolNotSelectedException {
         try {
 
             DataMsgMap s1f14in = activeWrapper.sendS1F13out();
@@ -830,9 +837,20 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
 
     @SuppressWarnings("unchecked")
-    public void sendS2f33out(long dataid, long reportId, List svidList) {
+    public void sendS2F33Out(long dataid, long reportId, List svidList) {
         try {
             activeWrapper.sendS2F33out(dataid, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                    , svidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    public void sendS2F33Out(long reportId, long svid) {
+        List svidList = new ArrayList();
+        svidList.add(svid);
+        try {
+            activeWrapper.sendS2F33out(reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
                     , svidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -868,38 +886,29 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param rptid
      */
     @SuppressWarnings("unchecked")
-    public void sendS2f35out(long dataid, long ceid, long rptid) {
-        DataMsgMap s2f35out = new DataMsgMap("s2f35out", activeWrapper.getDeviceId());
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataId = new long[1];
-        dataId[0] = dataid;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        s2f35out.put("DataID", dataId);
-        s2f35out.put("CollEventID", eventid);
-        s2f35out.put("ReportID", reportid);
+    public void sendS2F35out(long dataid, long ceid, long rptid) {
+        List reportidList = new ArrayList();
+        reportidList.add(rptid);
         try {
-            activeWrapper.sendAwaitMessage(s2f35out);
+            activeWrapper.sendS2F35out(dataid, svFormat, ceid, ceFormat, reportidList, rptFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public void sendS2f35outDelete(long dataid, long ceid) {
-        DataMsgMap s2f35out = new DataMsgMap("s2f35zeroout", activeWrapper.getDeviceId());
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataId = new long[1];
-        dataId[0] = dataid;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        s2f35out.put("DataID", dataId);
-        s2f35out.put("CollEventID", eventid);
-
+    public void sendS2F35out( long ceid, long rptid) {
+        List reportidList = new ArrayList();
+        reportidList.add(rptid);
         try {
-            activeWrapper.sendAwaitMessage(s2f35out);
+            activeWrapper.sendS2F35out(rptid, svFormat, ceid, ceFormat, reportidList, rptFormat);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public void sendS2F35outDelete(long dataid, long ceid) {
+        try {
+            activeWrapper.sendS2F35out(dataid, svFormat, ceid, ceFormat, null, rptFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -914,17 +923,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F37out(long ceid) {
-        DataMsgMap s2f37out = new DataMsgMap("s2f37out", activeWrapper.getDeviceId());
-        s2f37out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] CollEventId = new long[1];
-        CollEventId[0] = ceid;
-        boolean[] flag = new boolean[1];
-        flag[0] = true;
-        s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", CollEventId);
-        //s1f13out.put("SoftRev", "9.25.5");
+        List ceidList = new ArrayList();
+        ceidList.add(ceid);
         try {
-            activeWrapper.sendAwaitMessage(s2f37out);
+            activeWrapper.sendS2F37out(true, ceidList, ceFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -981,8 +983,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param commandKey
      * @return
      */
+    //TODO 此方法异常 有时间再修改
     public Map sendCommandByDymanic(String commandKey) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outConfig", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("S2F41OUT", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         CommandDomain commandDomain = this.remoteCommandMap.get(commandKey);
         if (commandDomain != null) {
@@ -1047,7 +1050,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
@@ -1100,19 +1103,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param enable true->open ；false-->close
      */
     public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
+        byte aled;
         boolean[] flag = new boolean[1];
         flag[0] = enable;
         if (enable) {
-            aled[0] = -128;
+            aled = -128;
         } else {
-            aled[0] = 0;
+            aled = 0;
         }
-        s5f3out.put("ALED", aled);
         try {
-            activeWrapper.sendS5F3out(aled[0], -1, svFormat);
+            activeWrapper.sendS5F3out(aled, -1, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1161,10 +1161,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void processS6F11in(DataMsgMap data) {
-        String ceid = "";
+        long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = String.valueOf(data.get("CEID"));
+                ceid = Long.parseLong(data.get("CEID").toString());
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 //            if (equipSecsBean.collectionReports.get(ceid) != null) {
@@ -1178,7 +1178,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
 //            }
             //TODO 根据ceid分发处理事件
-            activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            }
+            if (ceid == EquipStateChangeCeid) {
+                processS6F11EquipStatusChange(data);
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+            }
+
             if (commState != 1) {
                 this.setCommState(1);
             }
@@ -1362,26 +1369,32 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]，与改机后程序一致，核对通过！");
                         }
                     }
-                    if (checkResult && "A".equals(startCheckMod)) {
-                        //首先判断下载的Recipe类型
-                        //1、如果下载的是Unique版本，那么执行完全比较
-                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                        if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
-                            this.startCheckRecipePara(downLoadRecipe, "abs");
-                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
-                            if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                                //不允许开机
-                                this.holdDeviceAndShowDetailInfo();
-                            } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "[" + ppExecName + "]开始WI参数Check");
-                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
+                    if (checkResult) {
+                        if ("A".equals(startCheckMod)) {
+                            //首先判断下载的Recipe类型
+                            //1、如果下载的是Unique版本，那么执行完全比较
+                            String downloadRcpVersionType = downLoadRecipe.getVersionType();
+                            if ("Unique".equals(downloadRcpVersionType)) {
+                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                                this.startCheckRecipePara(downLoadRecipe, "abs");
+                            } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
+                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                                if (!hasGoldRecipe) {
+                                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                    //不允许开机
+                                    this.holdDeviceAndShowDetailInfo();
+                                } else {
+                                    UiLogUtil.appendLog2EventTab(deviceCode, "[" + ppExecName + "]开始WI参数Check");
+                                    this.startCheckRecipePara(downLoadGoldRecipe.get(0));
+                                }
                             }
+                        } else if ("B".equals(startCheckMod)) {
+                            startSVcheckPass = false;
+                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
+                            startSVcheck();
+                        } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
+                            UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
                         }
-                    } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -1481,7 +1494,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
+
     public void processS7F3in(DataMsgMap data) {
 //不允许从机台直接上传Recipe此段已注释，勿删！        
 //        String ppid = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
@@ -1505,7 +1518,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void processS7F5in(DataMsgMap data) {
         try {
 //            DataMsgMap s7f6out = new DataMsgMap("s7f6out", activeWrapper.getDeviceId());
@@ -1532,13 +1544,48 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public Map sendS7F5out(String recipeName) {
+    protected Object getPPBODY(String recipeName) {
         try {
-            //todo 把解析的逻辑加进来
-            activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception w) {
+            return activeWrapper.sendS7F5out(recipeName).get("PPBODY");
+        } catch (HsmsProtocolNotSelectedException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (StreamFunctionNotSupportException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ItemIntegrityException e) {
+            e.printStackTrace();
+        } catch (MessageDataException e) {
+            e.printStackTrace();
+        } catch (BrokenProtocolException e) {
+            e.printStackTrace();
+        } catch (T3TimeOutException e) {
+            e.printStackTrace();
+        } catch (T6TimeOutException e) {
+            e.printStackTrace();
         }
         return null;
+    }
+
+    public Map sendS7F5out(String recipeName) {
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = getRecipePathByConfig(recipe);
+        List<RecipePara> recipeParaList = null;
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f6");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipe", recipe);
+        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+        return resultMap;
     }
 
 
@@ -1710,7 +1757,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @throws NotInitializedException
      */
     public void startSecs(EqpEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, WrongStateTransitionNumberException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException {
+            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, WrongStateTransitionNumberException {
         if (this.activeWrapper == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.deviceId + " is not initialized yet.");
@@ -2337,7 +2384,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public abstract void initRemoteCommand();
+    public void initRemoteCommand() {
+    }
 
     // </editor-fold> 
     // </editor-fold> 
@@ -2606,7 +2654,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return ecsvIdList;
     }
 
-    private List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
+    protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
         List<RecipeTemplate> totaltTemplates = null;
         Map totalValueMap = null;
         Map svvalueMap = null;
@@ -2660,8 +2708,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return checkResult;
     }
 
-    public DataMsgMap sendMsg2Equip(DataMsgMap DataMsgMap) {
-        final DataMsgMap dataHashtable = DataMsgMap;
+    public DataMsgMap sendMsg2EquipOld(DataMsgMap dataMsgMap) {
+        final DataMsgMap dataMsgMapTemp = dataMsgMap;
         DataMsgMap result = null;
         ExecutorService exec = Executors.newSingleThreadExecutor();
         Callable<DataMsgMap> call = new Callable<DataMsgMap>() {
@@ -2669,7 +2717,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             @Override
             public DataMsgMap call() throws Exception {
                 //开始执行耗时操作  
-                return activeWrapper.sendAwaitMessage(dataHashtable);
+                return activeWrapper.sendAwaitMessage(dataMsgMapTemp);
             }
         };
 
@@ -2919,12 +2967,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F33clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f33clear", activeWrapper.getDeviceId());
+        DataMsgMap s2f37outAll = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s2f37outAll.setTransactionId(transactionId);
 
         try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
+            activeWrapper.sendS2F33out(0, svFormat, 0, svFormat, null, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

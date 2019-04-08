@@ -12,7 +12,6 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
@@ -69,18 +68,13 @@ public class AsmAD8312Host extends EquipHost {
 
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
-                if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s14f1in")) {
+                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-
                     processS6F11inStripMapUpload(msg);
-                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11ControlStateChange")) {
-                    processS6F11ControlStateChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11LoginUserChange")) {
-                    processS6F11LoginUserChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
@@ -94,7 +88,7 @@ public class AsmAD8312Host extends EquipHost {
     }
 
     @Override
-    public void inputMessageArrived(MsgArrivedEvent event) {
+        public void inputMessageArrived(MsgArrivedEvent event) {
 
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -113,50 +107,9 @@ public class AsmAD8312Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                processS6F11inStripMapUpload(data);
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 237L) {
-                    this.inputMsgQueue.put(data);
-                } else {
-                    byte[] ack = new byte[1];
-                    ack[0] = 0;
-                    replyS6F12WithACK(data, ack[0]);
-                }
-            } else if (tagName.equals("s6f11EquipStatusChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11ControlStateChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11LoginUserChange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11PPExecName")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s14f1in")) {
+            }else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data); 
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -198,64 +151,22 @@ public class AsmAD8312Host extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
-    @SuppressWarnings("unchecked")
+
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         ppExecName = (String) listtmp.get(1);
         ppExecName = ppExecName.replace(".rcp", "");
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
-        //由于TOWA的controlstate暂时无法获取，所以暂不处理
-//        if (!deviceType.contains("TOWA")) {
         controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
-//        }
         changeEquipPanel(panelMap);
         return panelMap;
     }
 
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 
@@ -497,27 +408,27 @@ public class AsmAD8312Host extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+
         recipeName = recipeName.replace(".rcp", "");
         if ("ASMAD8312PLUS".equals(deviceType)) {
-            s7f5out.put("ProcessprogramID", recipeName);
+
         } else {
-            s7f5out.put("ProcessprogramID", recipeName + ".rcp");
+            recipeName = recipeName + ".rcp";
+
         }
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         List<RecipePara> recipeParaList = null;
         List<RecipePara> recipeParaListExtra = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            byte[] ppbody = (byte[]) (data.get("PPBODY"));
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 //            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
             //Recipe解析   
@@ -679,10 +590,6 @@ public class AsmAD8312Host extends EquipHost {
         return newEquip;
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public String checkPPExecName(String recipeName) {
@@ -722,7 +629,7 @@ public class AsmAD8312Host extends EquipHost {
             byte[] ack = new byte[]{0};
             s12f2out.put("SDACK", ack);
             s12f2out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f2out);
+            activeWrapper.sendS12F2out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -735,13 +642,12 @@ public class AsmAD8312Host extends EquipHost {
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0;
         try {
-            if (data.get("CollEventID") != null) {
+            if (data.get("CEID") != null) {
                 ceid = data.getSingleNumber("CollEventID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             if (ceid == 411) {
-                logger.info("检测到设备触发LearnDevice事件，请求将设备ProductionAccess改成“disabled”!");
-                // TODO 需要检查下MES状态，判断是否需要发送锁机指令
+                logger.info("检测到设备触发LearnDevice事件");
                 Map resultMap = new HashMap();
                 resultMap.put("msgType", "s5f1");
                 resultMap.put("deviceCode", deviceCode);
@@ -758,7 +664,7 @@ public class AsmAD8312Host extends EquipHost {
             ack[0] = 0;
             out.put("AckCode", ack);
             out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
+            activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             this.setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);

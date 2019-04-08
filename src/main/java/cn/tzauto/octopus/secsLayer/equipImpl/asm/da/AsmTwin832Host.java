@@ -30,14 +30,14 @@ public class AsmTwin832Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    public String Datelength;
     private final long StripMapUpCeid = 237L;
-
 
 
     public AsmTwin832Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid = 4;
     }
+
     public Object clone() {
         AsmTwin832Host newEquip = new AsmTwin832Host(deviceId,
                 this.iPAddress,
@@ -92,8 +92,6 @@ public class AsmTwin832Host extends EquipHost {
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11intodo")) {
-                    processS6F11Filter(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -123,7 +121,7 @@ public class AsmTwin832Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.toLowerCase().contains("s6f11intodo")) {
                 processS6F11in(data);
@@ -174,44 +172,10 @@ public class AsmTwin832Host extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
 
-    //根据ReportId来处理不同事件报告
-    protected void processS6F11Filter(DataMsgMap data) {
-        long ceid = 0l;
-        long reportId = 0l;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            reportId = data.getSingleNumber("ReportId");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        //TODO ceid 可配置在数据库显示具体描述
-
-        if (reportId == 4) {
-            processS6F11EquipStatusChange(data);
-        } else if (reportId == 1) {
-            processS6F11ControlStateChange(data);
-        } else if (reportId == 175) {
-            processS6F11PPExecNameChange(data);
-        }
-
-    }
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
@@ -261,7 +225,7 @@ public class AsmTwin832Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
-           if (AxisUtility.isEngineerMode(deviceCode)){
+            if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                 sqlSession.close();
                 return;
@@ -435,7 +399,7 @@ public class AsmTwin832Host extends EquipHost {
         return resultMap;
     }
 
-// </editor-fold> 
+    // </editor-fold>
     //释放机台
     @Override
     public Map releaseDevice() {
@@ -450,31 +414,23 @@ public class AsmTwin832Host extends EquipHost {
 
     // </editor-fold>
 
-
     @Override
     public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
+        byte aled;
         boolean[] flag = new boolean[1];
         flag[0] = enable;
         if (enable) {
-            aled[0] = 1;
+            aled = 1;
         } else {
-            aled[0] = 0;
+            aled = 0;
         }
-        s5f3out.put("ALED", aled);
         try {
-            activeWrapper.sendAwaitMessage(s5f3out);
+            activeWrapper.sendS5F3out(aled, -1, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
     @Override
     public String checkPPExecName(String recipeName) {

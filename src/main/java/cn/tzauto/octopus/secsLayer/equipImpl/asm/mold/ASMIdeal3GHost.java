@@ -122,7 +122,7 @@ public class ASMIdeal3GHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -193,7 +193,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //    }
 //
 //    @SuppressWarnings("unchecked")
-//    public void sendS2f33out() {
+//    public void sendS2F33Out() {
 //
 //        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
 //        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -411,20 +411,21 @@ public class ASMIdeal3GHost extends EquipHost {
         press4SV[0] = 404l;
         s1f3out.put("Press4", press4SV);
         DataMsgMap data = null;
+        List list=new ArrayList();
+        list.add(104L);
+        list.add(204L);
+        list.add(304);
+        list.add(404L);
         try {
             data = activeWrapper.sendAwaitMessage(s1f3out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        return listtmp;
+        ArrayList listtmp = (ArrayList) data.get("SV");
+        return  listtmp;
     }
 
     // </editor-fold>
@@ -732,8 +733,5 @@ public class ASMIdeal3GHost extends EquipHost {
     private void initRptPara() {
     }
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+
 }

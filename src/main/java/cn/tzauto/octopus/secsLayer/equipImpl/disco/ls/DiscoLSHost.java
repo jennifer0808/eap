@@ -24,7 +24,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.equipImpl.disco.bg.DiscoBGHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
@@ -97,10 +96,10 @@ public class DiscoLSHost extends EquipHost {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 75 || ceid == 76) {
                             if (ceid == 75) {
@@ -110,6 +109,9 @@ public class DiscoLSHost extends EquipHost {
                             }
                             changeEquipPanel(panelMap);
 //                            processS6F11EquipStatus(msg);
+                        }
+                        if (ceid == 150) {
+                            processS6F11EquipStatusChange(msg);
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
@@ -135,8 +137,6 @@ public class DiscoLSHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
             } else if (tagName.contains("s6f11equipstatuschange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
@@ -147,13 +147,13 @@ public class DiscoLSHost extends EquipHost {
                 ack[0] = 0;
                 replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
                 replyS6F12WithACK(data, ack[0]);
                 long ceid = 0l;
                 try {
-                    ceid = data.getSingleNumber("CollEventID");
+                    ceid = (long) data.get("CEID");
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
@@ -179,49 +179,6 @@ public class DiscoLSHost extends EquipHost {
     }
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        try {
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-            if (data == null || data.get("RESULT") == null) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-                logger.error("获取设备:" + deviceCode + "状态信息失败.");
-                return null;
-            }
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-            ppExecName = getDevIdFromEqp(Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "DEVID").get(0).getDeviceVariableId()));
-            Map panelMap = new HashMap();
-            panelMap.put("EquipStatus", equipStatus);
-            panelMap.put("PPExecName", ppExecName);
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-            panelMap.put("ControlState", controlState);
-            changeEquipPanel(panelMap);
-            return panelMap;
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return null;
-        } finally {
-            sqlSession.close();
-        }
-
-    }
 
     // </editor-fold> 
     private String getDevIdFromEqp(long DEVID) {
@@ -250,7 +207,7 @@ public class DiscoLSHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
             super.findDeviceRecipe();
@@ -375,23 +332,11 @@ public class DiscoLSHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
         RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
         String shortNameOK = "Y";
         String realRecipeName = "";
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析      
@@ -516,8 +461,4 @@ public class DiscoLSHost extends EquipHost {
     }
 
 
-    @Override
-    public void initRemoteCommand() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 }
