@@ -426,7 +426,7 @@ public class AptHost extends EquipHost {
 
     private void initRptPara() {
 //        sendS2F33Out(1401L, 2100L, 2302L, 2001L);
-//        sendS2f35out(1401L, 1401L, 1401L);
+//        sendS2F35out(1401L, 1401L, 1401L);
 //        sendS2F37out(1401L);
         sendS2F37outAll();
         if (changeEqptControlStateAndShowDetailInfo("REMOTE")) {

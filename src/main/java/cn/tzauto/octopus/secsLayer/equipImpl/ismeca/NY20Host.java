@@ -184,43 +184,6 @@ public class NY20Host extends EquipHost {
 
     }
 
-    @Override
-    public Map sendS1F3SingleCheck(String svidName) {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
-        try {
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        if (list == null) {
-            return null;
-        }
-        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
-        logger.info("resultMap=" + resultMap);
-//        sendS2F41outPPselect("4X3.65debug");
-//        sendS2f41Cmd("STOP");
-        return resultMap;
-
-    }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">

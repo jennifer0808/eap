@@ -41,10 +41,9 @@ public class AWD300TXHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(AWD300TXHost.class.getName());
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
-    private final long EquipStateChangeCeid = 301L;
-
     public AWD300TXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid = 301L;
     }
 
     @Override
@@ -599,18 +598,17 @@ public class AWD300TXHost extends EquipHost {
 
     @Override
     public void processS6F11in(DataMsgMap data) {
-        String ceid = "";
+        long ceid  = 0L;
         try {
             if (data.get("CEID") != null) {
-                ceid = String.valueOf(data.get("CEID"));
+                ceid  = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             //TODO 根据ceid分发处理事件
-            if (Long.parseLong(ceid) == EquipStateChangeCeid) {
+            if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
             }
             //ceid == 272 || ceid == 273
-
 
             activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             if (commState != 1) {

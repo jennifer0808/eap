@@ -268,7 +268,7 @@ public class SigmaPlusHost extends EquipHost {
     public String initRptPara() {
         try {
 //            sendS2f33outDelete(4905L);
-//            sendS2f35outDelete(4905L, 4905L);
+//            sendS2F35outDelete(4905L, 4905L);
             sendS2F33clear();
             sendS2F35clear();
 //            sendS2F37outAll();
@@ -285,7 +285,7 @@ public class SigmaPlusHost extends EquipHost {
             sendS2F37out(2L);
 
 //            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
-//            sendS2f35out(3255L, 3255L, 3255L);
+//            sendS2F35out(3255L, 3255L, 3255L);
             //SEND S2F37
             //StripMapping事件定义
 //            sendS2F33Out(403L, 290L, 738L);
@@ -458,7 +458,7 @@ public class SigmaPlusHost extends EquipHost {
                 + "</datacon_parameters>";
         out.put("ECID", u1);
         out.put("ECV", ecv);
-        try {
+        try {//todo s2f15增加
             activeWrapper.sendAwaitMessage(out);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -510,7 +510,7 @@ public class SigmaPlusHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
 //            ppExecName = ppExecName.replace(".dbrcp", "");
@@ -891,7 +891,6 @@ public class SigmaPlusHost extends EquipHost {
     }
 
 
-
     private List<RecipePara> recipeParaBD2Str(List<RecipePara> recipeParas) {
         if (recipeParas != null && recipeParas.size() > 0) {
             for (RecipePara recipePara : recipeParas) {
@@ -929,11 +928,11 @@ public class SigmaPlusHost extends EquipHost {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) data.get("EPPD");
+        ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) data.get("EPPD");
             ArrayList list1 = new ArrayList();
             for (Object object : listtmp) {
                 if (String.valueOf(object).contains("Production/")) {

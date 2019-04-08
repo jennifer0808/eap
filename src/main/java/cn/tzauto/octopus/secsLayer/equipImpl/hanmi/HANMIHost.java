@@ -7,7 +7,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hanmi;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -23,10 +22,12 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -80,10 +81,10 @@ public class HANMIHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }
@@ -110,7 +111,7 @@ public class HANMIHost extends EquipHost {
             return;
         }
         try {
-            LastComDate =System.currentTimeMillis();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -119,10 +120,10 @@ public class HANMIHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 //回复掉消息
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
                 setCommState(1);
                 this.inputMsgQueue.put(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -158,7 +159,7 @@ public class HANMIHost extends EquipHost {
                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
             }
             changeEquipPanel(panelMap);
-            showCollectionsEventInfo(ceid);
+
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -168,7 +169,7 @@ public class HANMIHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid =(long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -277,19 +278,7 @@ public class HANMIHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (msgdata == null) {
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -337,27 +326,8 @@ public class HANMIHost extends EquipHost {
         return null;
     }
 
-    @Override
-    public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41start", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        return resultMap;
-    }
+
     // </editor-fold>
-
-
-
 
 
     private void initRptPara() {
@@ -365,20 +335,5 @@ public class HANMIHost extends EquipHost {
         sendS5F3out(true);
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = null;
-        if (enable) {
-            s5f3out = new DataMsgMap("s5f3enableAllout", activeWrapper.getDeviceId());
-        } else {
-            s5f3out = new DataMsgMap("s5f3disableAllout", activeWrapper.getDeviceId());
-        }
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
 }

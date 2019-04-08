@@ -513,7 +513,7 @@ public class Pg300Host extends EquipHost {
 //sendS6F23clear();
         //重写事件 报告
 //            sendS2F33Out(50007l, 902l, 906l);
-//            sendS2f35out(50007l, 50007l, 50007l);
+//            sendS2F35out(50007l, 50007l, 50007l);
 //            sendS2F37out(50007l);
         sendS2F37outCloseAll();
         sendS2F33clear();

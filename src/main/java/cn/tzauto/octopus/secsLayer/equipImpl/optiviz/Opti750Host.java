@@ -65,7 +65,7 @@ public class Opti750Host extends EquipHost {
                 while (!this.isSdrReady()) {
                     Opti750Host.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != Opti750Host.COMMUNICATING) {
                     sendS1F13out();
                 }
 
@@ -430,7 +430,7 @@ public class Opti750Host extends EquipHost {
         list.add(250L);
 
         sendS2F33Out(250L, 250L, list);
-        sendS2f35out(250L, 250L, 250L);
+        sendS2F35out(250L, 250L, 250L);
         sendS2F37out(250L);
         sendS2F37outAll();
         sendS5F3out(true);

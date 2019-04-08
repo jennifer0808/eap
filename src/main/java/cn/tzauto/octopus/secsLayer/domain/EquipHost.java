@@ -1043,22 +1043,20 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselect(String recipeName) {
-
-        byte[] hcack = new byte[1];
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            byte hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
         }
         return resultMap;
     }
@@ -1158,7 +1156,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     // </editor-fold>   
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    @SuppressWarnings("unchecked")
     public void processS6F11in(DataMsgMap data) {
         long ceid = -12345679;
         try {
@@ -1179,9 +1176,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            }
-            if (ceid == EquipStateChangeCeid) {
+            } else if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             }
 

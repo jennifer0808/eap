@@ -166,9 +166,7 @@ public class HTDB730Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11in")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                long ceid = data.getSingleNumber("CollEventID");
+                long ceid = (long) data.get("CEID");
                 if (ceid == 26 || ceid == 27) {
                     processS6F11SpecialEvent(data);
                 }
@@ -220,11 +218,12 @@ public class HTDB730Host extends EquipHost {
 //            sendS2F35out(80l, 10002l);
 //            sendS2F37out(80l);
             //重新定义processing INIT·SETUP·READY·EXECUTING·PAUSE·ERROR·WAIT LOT status
-            sendS2f35outSpecialDelete();
+//            sendS2F35outSpecialDelete();
             List list = new ArrayList();
             list.add(50062L);
             list.add(50070L);
             sendS2F33Out(10002L, 10002L, list);//50062,50070
+            List ceids2list = new ArrayList();
             long[] ceids2 = new long[9];
             ceids2[0] = 3L;
             ceids2[1] = 4L;
@@ -236,27 +235,28 @@ public class HTDB730Host extends EquipHost {
             ceids2[7] = 80L;
             ceids2[8] = 88L;
             for (int i = 0; i < ceids2.length; i++) {
+                activeWrapper.sendS2F35out(99999, svFormat, ceids2[i], ceFormat, null, rptFormat);
                 sendS2F35out(ceids2[i], 10002L);
+                ceids2list.add(ceids2[i]);
             }
             //发送s2f33
             String ack = "";
             long rptid = 10001l;
             long vid = 50200l;
             long ceid = 115l;
-            ack = sendS2F33out(rptid, vid);//115
+            sendS2F33Out(rptid, vid);//115
 
             //SEND S2F35
-            if (!"".equals(ack)) {
-                ack = "";
-                ack = sendS2F35out(ceid, rptid);//115 10001
-            }
+
+            sendS2F35out(115l, 10001l);//115 10001
+
 
             //SEND S2F37
-            if (!"".equals(ack)) {
-                ack = "";
-                ack = sendS2F37outAll(false);
-            }
-            sendS2F37outMuilt(true, ceids2);
+
+//            sendS2F37outAll(false);
+            activeWrapper.sendS2F37out(false, null, ceFormat);
+            activeWrapper.sendS2F37out(true, ceids2list, ceFormat);
+//            sendS2F37out(true, ceids2);
             logger.debug("sendS2F37outAll:==" + ack);
             //SEND S2F37 115 发送lf unload事件
 //            if (!"".equals(ack)) {
@@ -308,8 +308,8 @@ public class HTDB730Host extends EquipHost {
              */
             //解锁绑定
             sendS2f33outDelete(10003L);
-            sendS2f35outDelete(26L, 26L);
-            sendS2f35outDelete(27L, 27L);
+            sendS2F35outDelete(26L, 26L);
+            sendS2F35outDelete(27L, 27L);
             //开启特殊事件报告
 
             List list1 = new ArrayList();
@@ -346,572 +346,32 @@ public class HTDB730Host extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    public void processS1F1in(DataMsgMap data) {
-        try {
-            DataMsgMap s1f2out = new DataMsgMap("s1f2out", activeWrapper.getDeviceId());
-            //String mdln = "SteveLan";
-//            s1f2out.put("Mdln", mdln);
-//            String softRev = "01.114/04";
-//            s1f2out.put("SoftRev", softRev);
-            s1f2out.setTimeStamp(new Date());
-            s1f2out.setTransactionId(data.getTransactionId());
-//            s1f2out.put("Mdln", Mdln);
-//            s1f2out.put("---", SoftRev);
-            activeWrapper.respondMessage(s1f2out);
-            System.out.println("s1f2out sended.");
-            if (this.getCommState() != this.COMMUNICATING) {
-                this.setCommState(this.COMMUNICATING);
-            }
-            if (this.getControlState() != FengCeConstant.CONTROL_REMOTE_ONLINE) {
-                this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
-    @SuppressWarnings("unchecked")
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outFull", activeWrapper.getDeviceId());
-        s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s1f13out.put("Mdln", Mdln);
-        s1f13out.put("SoftRev", SoftRev);
-        try {
-            activeWrapper.sendAwaitMessage(s1f13out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    /**
-     * Insert the method's description here. Creation date: (11/17/2001 12:11:06
-     * PM)
-     */
-    public void processS1F14in(DataMsgMap s1f14in) {
-        if (s1f14in == null) {
-            return;
-        }
-        this.setCommState(this.COMMUNICATING);
-        System.out.println("-----Received s1f14in----.");
-        if (this.getCommState() != this.COMMUNICATING) {
-            this.setCommState(this.COMMUNICATING);
-        }
-    }
-
-    /**
-     * Insert the method's description here. Creation date: (11/12/01 3:01:56
-     * PM)
-     */
-    public void processS1F2in(DataMsgMap s1f2in) {
-        if (s1f2in == null) {
-            return;
-        }
-        Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-        SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
-        long transactionId = s1f2in.getTransactionId();
-        System.out.println("processS1F2in Mdln = " + Mdln);
-        System.out.println("processS1F2in SoftRev = " + SoftRev);
-        System.out.println("processS1F2in transactionId = " + transactionId);
-        System.out.println("processS1F2in" + new Date());
-        if (this.getCommState() != this.COMMUNICATING) {
-            this.setCommState(this.COMMUNICATING);
-        }
-        if (this.getControlState() != FengCeConstant.CONTROL_REMOTE_ONLINE) {
-            this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-        }
-    }
-
-    public void processS1F13in(DataMsgMap data) {
-        try {
-            DataMsgMap s1f14out = new DataMsgMap("s1f14out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            s1f14out.put("AckCode", ack);
-            s1f14out.setTimeStamp(new Date());
-            s1f14out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(s1f14out);
-            System.out.println("s1f14out sended.");
-            if (this.getCommState() != this.COMMUNICATING) {
-                this.setCommState(this.COMMUNICATING);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
 
-    @SuppressWarnings("unchecked")
-    public String sendS2F33out(long rptid, long vid) {
 
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        long[] variableid = new long[1];
-        variableid[0] = vid;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", variableid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f33out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void processS2F34in(DataMsgMap data) {
-        System.out.println("----------Received s2f34in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        System.out.println();
-        System.out.println("ackCode = " + ((ack == null) ? "" : ack[0]));
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F35out(long ceid, long rptid) {
-        DataMsgMap s2f35out = new DataMsgMap("s2f35out", activeWrapper.getDeviceId());
-
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        s2f35out.put("DataID", dataid);
-        s2f35out.put("CollEventID", eventid);
-        s2f35out.put("ReportID", reportid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f35out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2f35outSpecialDelete() {
-        DataMsgMap s2f35out = new DataMsgMap("s2f35SpecialDeleteRpt", activeWrapper.getDeviceId());
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(s2f35out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F35outMuilt(long[] ceids, long rptid) {
-        DataMsgMap s2f35outMuilt = new DataMsgMap("s2f35outMuilt", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f35outMuilt.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        SecsItem vRoot = new SecsItem();//第一个list
-        vRoot.setFormatCode(FormatCode.SECS_LIST);
-        ArrayList rootData = new ArrayList();
-        for (long ceid : ceids) {
-            SecsItem vRoot2 = new SecsItem();//第二个
-            vRoot2.setFormatCode(FormatCode.SECS_LIST);
-            ArrayList rootData2 = new ArrayList();
-
-            long[] u1 = new long[1];
-            u1[0] = ceid;
-            SecsItem sItem1 = new SecsItem(u1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-
-            SecsItem vRoot3 = new SecsItem();//第三个
-            vRoot3.setFormatCode(FormatCode.SECS_LIST);
-            ArrayList rootData3 = new ArrayList();
-            long[] reportid = new long[1];
-            reportid[0] = rptid;
-            SecsItem sItem2 = new SecsItem(reportid, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-            rootData3.add(sItem2);
-            vRoot3.setData(rootData3);
-
-            rootData2.add(sItem1);
-            rootData2.add(vRoot3);
-
-            vRoot2.setData(rootData2);
-
-            rootData.add(vRoot2);
-
-        }
-        vRoot.setData(rootData);//very important
-        s2f35outMuilt.put("CEIDList", vRoot);
-
-        try {
-            DataMsgMap s2f38in = activeWrapper.sendAwaitMessage(s2f35outMuilt);
-            byte[] ack = (byte[]) ((SecsItem) s2f38in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void processS2F36in(DataMsgMap data) {
-        System.out.println("----------Received s2f36in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        System.out.println();
-        System.out.println("ackCode = " + ((ack == null) ? "" : ack[0]));
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2F37out(long pceid) {
-        DataMsgMap s2f37out = new DataMsgMap("s2f37out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37out.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = true;
-        long[] ceid = new long[1];
-        ceid[0] = pceid;
-        s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", ceid);
-        try {
-            activeWrapper.sendAwaitMessage(s2f37out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2F37out() {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f37out = new DataMsgMap("s2f37out", activeWrapper.getDeviceId());
-
-        s2f37out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        boolean[] flag = new boolean[1];
-        flag[0] = true;
-        long[] ceid = new long[1];
-        ceid[0] = 115;
-        s2f37out.put("Booleanflag", flag);
-        s2f37out.put("CollEventId", ceid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            activeWrapper.sendAwaitMessage(s2f37out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F37outAll(boolean openFlag) {
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f37outAll", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = openFlag;
-        s2f37outAll.put("Booleanflag", flag);
-        try {
-            DataMsgMap s2f38in = activeWrapper.sendAwaitMessage(s2f37outAll);
-            byte[] ack = (byte[]) ((SecsItem) s2f38in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F37outMuilt(boolean openFlag, long[] ceidList) {
-        DataMsgMap s2f37outMuilt = new DataMsgMap("s2f37outMuilt", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outMuilt.setTransactionId(transactionId);
-        boolean[] flag = new boolean[1];
-        flag[0] = openFlag;
-        s2f37outMuilt.put("Booleanflag", flag);
-
-        SecsItem vRoot = new SecsItem();
-        vRoot.setFormatCode(FormatCode.SECS_LIST);
-        ArrayList rootData = new ArrayList();
-        for (long ceid : ceidList) {
-            long[] u1 = new long[1];
-            u1[0] = ceid;
-            SecsItem sItem1 = new SecsItem(u1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-            rootData.add(sItem1);
-        }
-        vRoot.setData(rootData);//very important
-        s2f37outMuilt.put("CEIDList", vRoot);
-
-        try {
-            DataMsgMap s2f38in = activeWrapper.sendAwaitMessage(s2f37outMuilt);
-            byte[] ack = (byte[]) ((SecsItem) s2f38in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void processS2F38in(DataMsgMap data) {
-        System.out.println("----------Received s2f38in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        System.out.println();
-        System.out.println("ackCode = " + ((ack == null) ? "" : ack[0]));
-    }
-
-    @SuppressWarnings("unchecked")
-    /*
-     * whichOne = 1 => ascii; 2 => 1 byte unsigned; 3 => 2 byte unsigned; 4 => 4 byte unsigned
-     */
-    public void sendS2f41EpoxyVerificationAD838(int whichOne) {
-        DataMsgMap out = new DataMsgMap("s2f41outAD838", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-
-        out.put("RCMD", "LIV");
-        out.put("CPnameResult", "Result");
-        SecsItem sItem2 = null;
-        int formatCode = 0;
-        if (whichOne == 1) {
-            sItem2 = new SecsItem("0", FormatCode.SECS_ASCII); //Verification Pass
-        } else {
-            if (whichOne == 2) {
-                formatCode = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
-            } else if (whichOne == 3) {
-                formatCode = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-            } else if (whichOne == 4) {
-                formatCode = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-            }
-            long[] u2 = new long[1];
-            u2[0] = 0;  //Verification Pass
-            sItem2 = new SecsItem(u2, formatCode);
-        }
-
-        out.put("CPvalResult", sItem2);
-
-        out.put("CPnameErrorMessage", "ErrorMessage");
-        out.put("CPvalErrorMessage", "");
-
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    /*
-     * whichOne = 1 => ascii; 2 => 1 byte unsigned; 3 => 2 byte unsigned; 4 => 4 byte unsigned
-     */
-    @SuppressWarnings("unchecked")
-    public void sendS2f41EpoxyVerificationAD830(int whichOne, String stripCount, String lastFlag) {
-        DataMsgMap out = new DataMsgMap("s2f41outAD830", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-
-        out.put("RCMD", "LIV");
-        out.put("CPnameResult", "Result");
-        SecsItem sItem2 = null;
-        int formatCode = 0;
-        if (whichOne == 1) {
-            sItem2 = new SecsItem("0", FormatCode.SECS_ASCII); //Verification Pass
-        } else {
-            if (whichOne == 2) {
-                formatCode = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
-            } else if (whichOne == 3) {
-                formatCode = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-            } else if (whichOne == 4) {
-                formatCode = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-            }
-            long[] u2 = new long[1];
-            u2[0] = 0;  //Verification Pass
-            sItem2 = new SecsItem(u2, formatCode);
-        }
-
-        out.put("CPvalResult", sItem2);
-
-        out.put("CPnameErrorMessage", "ErrorMessage");
-        out.put("CPvalErrorMessage", "");
-
-        out.put("CPnameStripCount", "StripCount");
-        out.put("CPvalStripCount", stripCount);
-
-        out.put("CPnameLastFlag", "LastFlag");
-        out.put("CPvalLastFlag", lastFlag);
-
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void processS2f42in(DataMsgMap in) {
-        if (in == null) {
-            return;
-        }
-        System.out.println("--------Received s2f42in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("HCACK")).getData();
-        System.out.println();
-        //System.out.println("CPNAme[0] = " + cpName);
-        System.out.println("HCACK = " + ((value == null) ? "" : value[0]));
-    }
-
-    public void sendS2f41Stop() {
-        DataMsgMap out = new DataMsgMap("s2f41outSTOP", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void sendS2f41Start() {
-        DataMsgMap out = new DataMsgMap("s2f41outSTART", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void sendS2f41Pause() {
-        DataMsgMap out = new DataMsgMap("s2f41outPAUSE", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void sendS2f41Resume() {
-        DataMsgMap out = new DataMsgMap("s2f41outRESUME", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS2F15outLotSizeAssign(String lotId, int lotQuantity) {
-        DataMsgMap out = new DataMsgMap("s2f15out", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] u1 = new long[1];
-        u1[0] = 96; //ECID = 96
-        out.put("EC096", u1);
-        out.put("NextLotId", lotId);
-
-        long[] u2 = new long[1];
-        u2[0] = 97;  //ECID  = 97
-        out.put("EC097", u2);
-        long[] u3 = new long[1];
-        u3[0] = lotQuantity;
-        out.put("NextLotQuantity", u3);
-
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void processS2f16in(DataMsgMap in) {
-        if (in == null) {
-            return;
-        }
-        System.out.println("--------Received s2f16in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
-        System.out.println();
-        //System.out.println("CPNAme[0] = " + cpName);
-        System.out.println("EAC = " + ((value == null) ? "" : value[0]));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
         Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
         try {
             logger.info("Wait 3 Seconds");
             sleep(3000);
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            //选中成功标识
-            if (data != null) {
-                ppselectFlag = true;
-            }
-            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            return super.sendS2F41outPPselect(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
         }
         return resultMap;
     }
 
     // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S3FX Code">
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S4FX Code">
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S5FX Code">
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = null;
-        if (enable) {
-            s5f3out = new DataMsgMap("s5f3enableAllout", activeWrapper.getDeviceId());
-        } else {
-            s5f3out = new DataMsgMap("s5f3disableAllout", activeWrapper.getDeviceId());
-        }
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-
-    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    public void processS6f11Common(DataMsgMap data) {
-        try {
-
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     private void processS6F11SpecialEvent(DataMsgMap data) {
         long ceid = 0L;
         String event = "";
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 26) {
                 event = "BONDING REC REG";
             } else if (ceid == 27) {
