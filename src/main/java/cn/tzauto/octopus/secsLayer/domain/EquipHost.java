@@ -133,7 +133,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         StripMapUpCeid = -1;
     }
 
-    public void initialize() throws DeviceNotRegisteredException {
+    public void initialize() {
         logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
@@ -896,7 +896,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public void sendS2F35out( long ceid, long rptid) {
+    public void sendS2F35out(long ceid, long rptid) {
         List reportidList = new ArrayList();
         reportidList.add(rptid);
         try {
@@ -905,6 +905,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("Exception:", e);
         }
     }
+
     @SuppressWarnings("unchecked")
     public void sendS2F35outDelete(long dataid, long ceid) {
         try {
@@ -1042,9 +1043,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
+
         byte[] hcack = new byte[1];
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
@@ -1757,7 +1756,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @throws NotInitializedException
      */
     public void startSecs(EqpEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, WrongStateTransitionNumberException {
+            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
         if (this.activeWrapper == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.deviceId + " is not initialized yet.");

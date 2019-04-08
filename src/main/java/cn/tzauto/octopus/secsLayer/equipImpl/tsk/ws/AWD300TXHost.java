@@ -41,35 +41,31 @@ public class AWD300TXHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(AWD300TXHost.class.getName());
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
+    private final long EquipStateChangeCeid = 301L;
+
     public AWD300TXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    AWD300TXHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
-//                    this.sleep(10000);
-                    this.sendS1F13out();
-                }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-                    sendS1F17out();
-//                    this.sleep(30000);
+                if (this.getCommState() != AWD300TXHost.COMMUNICATING) {
+                    sendS1F13out();
                     sendS1F1out();
-                    //为了能调整为online remote
-//                    sendS1F17out();
-                    //获取设备开机状态
-
-                    super.findDeviceRecipe();
-//                    this.sendS1F3Check();
-
-//                    initRptPara();
                 }
+
+                if (rptDefineNum < 1) {
+                    initRptPara();
+                    rptDefineNum++;
+                }
+
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
@@ -106,41 +102,26 @@ public class AWD300TXHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
             } else if (tagName.equalsIgnoreCase("s6f5in")) {
                 processS6F5in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11incommon")) {
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (ceid == 301 || ceid == 272 || ceid == 273) {
-//                    this.processS6F11in(data);
-                    this.inputMsgQueue.put(data);
-                } else {
-                    this.processS6F11in(data);
-                }
             }else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -433,6 +414,9 @@ public class AWD300TXHost extends EquipHost {
     }
 
     private void initRptPara() {
+        sendS1F17out();
+        sendS1F1out();
+        super.findDeviceRecipe();
     }
 
     //hold机台，先停再锁
@@ -613,19 +597,25 @@ public class AWD300TXHost extends EquipHost {
         return wirecipeParaDiff;
     }
 
+    @Override
     public void processS6F11in(DataMsgMap data) {
-        long ceid = 0;
+        String ceid = "";
         try {
-            if (data.get("CollEventID") != null) {
-                ceid = data.getSingleNumber("CollEventID");
+            if (data.get("CEID") != null) {
+                ceid = String.valueOf(data.get("CEID"));
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
+            //TODO 根据ceid分发处理事件
+            if (Long.parseLong(ceid) == EquipStateChangeCeid) {
+                processS6F11EquipStatusChange(data);
+            }
+            //ceid == 272 || ceid == 273
+
+
+            activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+            if (commState != 1) {
+                this.setCommState(1);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

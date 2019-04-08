@@ -78,10 +78,10 @@ public class TR48MK5Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0l;
                     try {
-                        ceid = msg.getSingleNumber("CollEventID");
+                        ceid = (long) msg.get("CEID");
                         if (ceid == 11) {
                             processS6F11EquipStatusChange(msg);
                         }else if(ceid ==1){
@@ -117,7 +117,7 @@ public class TR48MK5Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 long ceid = 0l;
                 processS6F11in(data);
-                ceid = data.getSingleNumber("CollEventID");
+                ceid =(long) data.get("CEID");
                 if (ceid == 11 || ceid == 1) {
                     this.inputMsgQueue.put(data);
                 }
@@ -138,60 +138,13 @@ public class TR48MK5Host extends EquipHost {
             logger.error("Exception:", e);
         }
     }
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        try {
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-            if (data == null || data.get("RESULT") == null) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-                logger.error("获取设备:" + deviceCode + "状态信息失败.");
-                return null;
-            }
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
-            ppExecName = listtmp.get(1).toString();
-            Map panelMap = new HashMap();
-            panelMap.put("EquipStatus", equipStatus);
-            panelMap.put("PPExecName", ppExecName);
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-            panelMap.put("ControlState", controlState);
-            changeEquipPanel(panelMap);
-            return panelMap;
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return null;
-        } finally {
-            sqlSession.close();
-        }
-
-    }
-
-
-    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long)data.get("CEID");
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
@@ -285,7 +238,7 @@ public class TR48MK5Host extends EquipHost {
         resultMap.put("ppid", targetRecipeName);
         byte[] ackc7 = new byte[1];
         try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName,ppbody,FormatCode.SECS_BINARY);
             ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
             resultMap.put("ACKC7", ackc7[0]);
             resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
@@ -319,24 +272,12 @@ public class TR48MK5Host extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
         RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
         String shortNameOK = "Y";
         String realRecipeName = "";
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[])getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析      
         recipeParaList = TR48MK5RecipeUtil.transferRcpFromDB(recipePath, recipeName, deviceType);
@@ -369,7 +310,7 @@ public class TR48MK5Host extends EquipHost {
 
     private boolean rcpInEqp(String recipeName) {
         boolean rcpInEqp = false;
-        ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
+        ArrayList eppd = (ArrayList) sendS7F19out().get("EPPD");
         for (int i = 0; i < eppd.size(); i++) {
             String rcpNameString = eppd.get(i).toString();
             if (recipeName.equals(rcpNameString)) {
