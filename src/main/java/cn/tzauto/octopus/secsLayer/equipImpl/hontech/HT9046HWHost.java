@@ -8,8 +8,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hontech;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -18,17 +16,13 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -101,8 +95,8 @@ public class HT9046HWHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
-                    long ceid = msg.getSingleNumber("CollEventID");
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
+                    long ceid = (long) msg.get("CEID");
                     if (ceid == 1) {
 //                        processPressStartButton(msg);
                     } else if (ceid == 27) {
@@ -162,9 +156,9 @@ public class HT9046HWHost extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11in")) {
-                long ceid = data.getSingleNumber("CollEventID");
+                long ceid = (long) data.get("CEID");
                 if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49) {
-                    processS6F11in(data);
+                    replyS6F12WithACK(data, (byte) 0);
                     this.inputMsgQueue.put(data);
                     //processEquipStatusChange(data);
                 } else {
@@ -211,55 +205,6 @@ public class HT9046HWHost extends EquipHost {
         sendS5F3out(true);
     }
 
-    /**
-     * Get SVList from equip
-     *
-     * @return
-     */
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = String.valueOf(listtmp.get(0));
-        ppExecName = String.valueOf(listtmp.get(1));
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        panelMap.put("CommState", 1);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
 
     /**
      * 打开或者关闭所有报警信息报告
@@ -273,7 +218,7 @@ public class HT9046HWHost extends EquipHost {
         boolean[] flag = new boolean[1];
         flag[0] = enable;
         if (enable) {
-            aled[0] = -128 ;
+            aled[0] = -128;
         } else {
             aled[0] = 0;
         }
@@ -635,89 +580,14 @@ public class HT9046HWHost extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
-    /**
-     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
-     *
-     * @param localFilePath
-     * @param targetRecipeName
-     * @return
-     */
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
 
-    /**
-     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
-     *
-     * @param targetRecipeName
-     * @return
-     */
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        String ppbody = (String) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (msgdata == null || msgdata.isEmpty()) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传请求被设备拒绝,请调整设备状态重试.");
-            return null;
-        }
-        //
-        String ppbody = (String) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        String ppbody = (String) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 0, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
@@ -736,38 +606,10 @@ public class HT9046HWHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName
-    ) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
+
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-
 
 
     //hold机台，先停再锁
@@ -847,8 +689,5 @@ public class HT9046HWHost extends EquipHost {
         //调用父类的方法，生成公用命令，如果不支持，可以删掉，如果不公用，直接覆盖
         initCommonRemoteCommand();
     }
-
-
-
 
 }

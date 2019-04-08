@@ -30,9 +30,7 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
- *
  */
 public class HP_EPL2400Host extends EquipHost {
 
@@ -99,8 +97,8 @@ public class HP_EPL2400Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
-                    long ceid = msg.getSingleNumber("CollEventID");
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    long ceid = (long) msg.get("CEID");
                     if (ceid == 4810100) {
                         processEquipStatusChange(msg);
                     }
@@ -145,18 +143,18 @@ public class HP_EPL2400Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11incommon")) {
-                long ceid = data.getSingleNumber("CollEventID");
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                long ceid = (long) data.get("CEID");
                 if (ceid == 4810100) {
                     processS6F11in(data);
                     this.inputMsgQueue.put(data);
                 } else {
-                    processS6F11in(data);
+                    replyS6F12WithACK(data, (byte) 0);
                 }
             } else if (tagName.equals("s6f11inStatusChange")) {
                 processS6F11in(data);
 //                this.inputMsgQueue.put(data);
-            }else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
+            } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
                 //或者重新发送参数
@@ -191,7 +189,7 @@ public class HP_EPL2400Host extends EquipHost {
         //TODO 开机check;
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             //刷新当前机台状态
             findDeviceRecipe();
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
@@ -299,7 +297,7 @@ public class HP_EPL2400Host extends EquipHost {
                     holdFlag = false;
                 }
                 //更新界面
-                if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {                  
+                if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
                     this.setAlarmState(0);
                 } else {
                     holdDevice();
@@ -318,6 +316,7 @@ public class HP_EPL2400Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+
     /**
      * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
      *
@@ -450,8 +449,6 @@ public class HP_EPL2400Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-
-
 
 
     //hold机台，先停再锁

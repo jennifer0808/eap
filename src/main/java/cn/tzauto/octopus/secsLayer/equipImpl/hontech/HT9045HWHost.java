@@ -18,7 +18,6 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -26,14 +25,15 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
@@ -171,7 +171,7 @@ public class HT9045HWHost extends EquipHost {
                 } else {
                     processS6F11in(data);
                 }
-            }else if (tagName.equalsIgnoreCase("s14f1in")) {
+            } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
                 this.inputMsgQueue.put(data);
@@ -212,79 +212,6 @@ public class HT9045HWHost extends EquipHost {
         sendS5F3out(true);
     }
 
-    /**
-     * Get SVList from equip
-     *
-     * @return
-     */
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = String.valueOf(listtmp.get(0));
-        ppExecName = String.valueOf(listtmp.get(1));
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        panelMap.put("CommState", 1);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
-
-    /**
-     * 打开或者关闭所有报警信息报告
-     *
-     * @param enable true->open ；false-->close
-     */
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128 ;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     protected void processEquipStatusChange2(DataMsgMap data) {
@@ -476,7 +403,7 @@ public class HT9045HWHost extends EquipHost {
 //                holdDevice();
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
                     UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
-                    recipeParasDiffText.append("\r\nRecipe Error!MES Download Recipe:["+deviceInfoExt.getRecipeName()+"]");
+                    recipeParasDiffText.append("\r\nRecipe Error!MES Download Recipe:[" + deviceInfoExt.getRecipeName() + "]");
                     checkNameFlag = false;
                 } else {
                     UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
@@ -703,30 +630,14 @@ public class HT9045HWHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (msgdata == null || msgdata.isEmpty()) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传请求被设备拒绝,请调整设备状态重试.");
-            return null;
-        }
-        //
-        String ppbody = (String) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //Recipe解析
+        String ppbody = (String) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 0, recipePath);
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
             recipeParaList = HT9045HWUtil.getRecipePara(recipePath, deviceType);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -737,38 +648,10 @@ public class HT9045HWHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName
-    ) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
+
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-
 
 
     //hold机台，先停再锁
@@ -848,8 +731,6 @@ public class HT9045HWHost extends EquipHost {
         //调用父类的方法，生成公用命令，如果不支持，可以删掉，如果不公用，直接覆盖
         initCommonRemoteCommand();
     }
-
-
 
 
 }

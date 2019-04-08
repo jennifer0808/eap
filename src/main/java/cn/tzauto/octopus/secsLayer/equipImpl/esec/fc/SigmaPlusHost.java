@@ -458,7 +458,7 @@ public class SigmaPlusHost extends EquipHost {
                 + "</datacon_parameters>";
         out.put("ECID", u1);
         out.put("ECV", ecv);
-        try {
+        try {//todo s2f15增加
             activeWrapper.sendAwaitMessage(out);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -510,7 +510,7 @@ public class SigmaPlusHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
 //            ppExecName = ppExecName.replace(".dbrcp", "");
@@ -891,7 +891,6 @@ public class SigmaPlusHost extends EquipHost {
     }
 
 
-
     private List<RecipePara> recipeParaBD2Str(List<RecipePara> recipeParas) {
         if (recipeParas != null && recipeParas.size() > 0) {
             for (RecipePara recipePara : recipeParas) {
@@ -929,11 +928,11 @@ public class SigmaPlusHost extends EquipHost {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) data.get("EPPD");
+        ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) data.get("EPPD");
             ArrayList list1 = new ArrayList();
             for (Object object : listtmp) {
                 if (String.valueOf(object).contains("Production/")) {

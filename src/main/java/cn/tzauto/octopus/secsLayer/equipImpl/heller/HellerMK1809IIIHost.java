@@ -8,26 +8,20 @@ package cn.tzauto.octopus.secsLayer.equipImpl.heller;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- *
  * @author luosy
  */
 public class HellerMK1809IIIHost extends EquipHost {
@@ -127,7 +121,7 @@ public class HellerMK1809IIIHost extends EquipHost {
                 processS2F36in(data);
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            } else if (tagName.contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -147,169 +141,36 @@ public class HellerMK1809IIIHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    @Override
+
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-            logger.error("获取设备:" + deviceCode + "状态信息失败.");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
         String ppName = String.valueOf(listtmp.get(1));
-        ppExecName =ppName.substring(ppName.lastIndexOf("\\")+1,ppName.lastIndexOf("."));
+        ppExecName = ppName.substring(ppName.lastIndexOf("\\") + 1, ppName.lastIndexOf("."));
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
         controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
-//        }
         changeEquipPanel(panelMap);
         return panelMap;
     }
 
     // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-    public void sendS2f41Stop() {
-        DataMsgMap out = new DataMsgMap("s2f41outSTOP", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
-    public void sendS2f41Start() {
-        DataMsgMap out = new DataMsgMap("s2f41outSTART", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        return resultMap;
-    }
-
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
 
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析      
-            recipeParaList = null;
-        }
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        //Recipe解析
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -320,57 +181,6 @@ public class HellerMK1809IIIHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
-
     // </editor-fold>
-
-
-
-
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
 }

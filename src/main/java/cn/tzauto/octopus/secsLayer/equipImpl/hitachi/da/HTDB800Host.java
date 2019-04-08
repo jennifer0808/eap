@@ -155,11 +155,12 @@ public class HTDB800Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6f11Common(data);
-                long ceid = data.getSingleNumber("CollEventID");
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                long ceid = (long) data.get("CEID");
                 if (ceid == 26) {
                     processS6F11SpecialEvent(data);
+                } else {
+                    processS6F11in(data);
                 }
             } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
@@ -250,11 +251,11 @@ public class HTDB800Host extends EquipHost {
             long rptid = 10001l;
             long vid = 50200l;
             long ceid = 115l;
-            ack = sendS2F33out(rptid, vid);//115
+            sendS2F33Out(rptid, vid);//115
             //SEND S2F35
             if (!"".equals(ack)) {
                 ack = "";
-                ack = sendS2F35out(ceid, rptid);//115 10001
+                sendS2F35out(ceid, rptid);//115 10001
             }
             //SEND S2F37
             if (!"".equals(ack)) {
@@ -269,200 +270,14 @@ public class HTDB800Host extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    public void processS1F1in(DataMsgMap data) {
-        try {
-            DataMsgMap s1f2out = new DataMsgMap("s1f2out", activeWrapper.getDeviceId());
-            //String mdln = "SteveLan";
-//            s1f2out.put("Mdln", mdln);
-//            String softRev = "01.114/04";
-//            s1f2out.put("SoftRev", softRev);
-            s1f2out.setTimeStamp(new Date());
-            s1f2out.setTransactionId(data.getTransactionId());
-//            s1f2out.put("Mdln", Mdln);
-//            s1f2out.put("SoftRev", SoftRev);
-            activeWrapper.respondMessage(s1f2out);
-            if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-                this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s1f13out.put("Mdln", Mdln);
-//        s1f13out.put("SoftRev", SoftRev);
-        try {
-            activeWrapper.sendAwaitMessage(s1f13out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    /**
-     * Insert the method's description here. Creation date: (11/17/2001 12:11:06
-     * PM)
-     */
-    public void processS1F14in(DataMsgMap s1f14in) {
-        if (s1f14in == null) {
-            return;
-        }
-        this.setCommState(this.COMMUNICATING);
-        logger.info("-----Received s1f14in----.");
-        if (this.getCommState() != this.COMMUNICATING) {
-            this.setCommState(this.COMMUNICATING);
-        }
-    }
-
-    /**
-     * Insert the method's description here. Creation date: (11/12/01 3:01:56
-     * PM)
-     */
-    /**
-     * Insert the method's description here. Creation date: (11/12/01 3:01:56
-     * PM)
-     */
-    public void processS1F2in(DataMsgMap s1f2in) {
-        if (s1f2in == null) {
-            return;
-        }
-        Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-        SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
-        long transactionId = s1f2in.getTransactionId();
-        logger.info("processS1F2in Mdln = " + Mdln);
-        logger.info("processS1F2in SoftRev = " + SoftRev);
-        logger.info("processS1F2in transactionId = " + transactionId);
-        if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-            this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-        }
-    }
-
-    public void processS1F13in(DataMsgMap data) {
-        try {
-            DataMsgMap s1f14out = new DataMsgMap("s1f14out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            s1f14out.put("AckCode", ack);
-            s1f14out.setTimeStamp(new Date());
-            s1f14out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(s1f14out);
-            logger.info("s1f14out sended.");
-            if (this.getCommState() != this.COMMUNICATING) {
-                this.setCommState(this.COMMUNICATING);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F33out(long rptid, long vid) {
-
-        //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        long[] variableid = new long[1];
-        variableid[0] = vid;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", variableid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f33out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public String sendS2F35out(long ceid, long rptid) {
-        DataMsgMap s2f35out = new DataMsgMap("s2f35out", activeWrapper.getDeviceId());
-
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = 1001l;
-        long[] eventid = new long[1];
-        eventid[0] = ceid;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        s2f35out.put("DataID", dataid);
-        s2f35out.put("CollEventID", eventid);
-        s2f35out.put("ReportID", reportid);
-        //s1f13out.put("SoftRev", "9.25.5");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f35out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
-
-    @Override
-    public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            //选中成功标识
-            if (data != null) {
-                ppselectFlag = true;
-            }
-            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-        }
-        return resultMap;
-    }
-
-    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    public void processS6f11Common(DataMsgMap data) {
-        try {
 
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     private void processS6F11SpecialEvent(DataMsgMap data) {
         long ceid = 0L;
         String event = "";
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 26) {
                 event = "BONDING REC REG";
             } else if (ceid == 27) {
