@@ -65,7 +65,7 @@ public class Opti750Host extends EquipHost {
                 while (!this.isSdrReady()) {
                     Opti750Host.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != Opti750Host.COMMUNICATING) {
                     sendS1F13out();
                 }
 
