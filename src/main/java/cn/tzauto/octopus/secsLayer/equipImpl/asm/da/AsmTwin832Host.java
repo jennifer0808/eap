@@ -2,6 +2,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -20,21 +21,24 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AsmTwin832Host extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
+
     private static final Logger logger = Logger.getLogger(AsmTwin832Host.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
 
     public AsmTwin832Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 4;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -173,10 +177,10 @@ public class AsmTwin832Host extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
+// <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
 
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
+// </editor-fold>
+// <editor-fold defaultstate="collapsed" desc="S6FXin Code">
 
     @Override
     public void processS6F11in(DataMsgMap data) {
@@ -185,7 +189,7 @@ public class AsmTwin832Host extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            }else {
+            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
@@ -383,7 +387,7 @@ public class AsmTwin832Host extends EquipHost {
         }
 
     }
-    // </editor-fold>
+// </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
@@ -392,7 +396,7 @@ public class AsmTwin832Host extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data =activeWrapper.sendS7F5out(recipeName);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -401,7 +405,7 @@ public class AsmTwin832Host extends EquipHost {
             byte[] ppbody = (byte[])  data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
             logger.info("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析，暂无      
+            //Recipe解析，暂无
             recipeParaList = getRecipeParasByECSV();
         }
         //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
@@ -416,7 +420,7 @@ public class AsmTwin832Host extends EquipHost {
     }
 
     // </editor-fold>
-    //释放机台
+//释放机台
     @Override
     public Map releaseDevice() {
         Map map = new HashMap();// this.sendS2f41Cmd("START");
@@ -428,7 +432,7 @@ public class AsmTwin832Host extends EquipHost {
         return map;
     }
 
-    // </editor-fold>
+// </editor-fold>
 
     @Override
     public void sendS5F3out(boolean enable) {

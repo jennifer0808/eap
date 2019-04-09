@@ -8,6 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.ws;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -47,6 +48,7 @@ public class Disco6340Host extends EquipHost {
 
     public Disco6340Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     public Object clone() {

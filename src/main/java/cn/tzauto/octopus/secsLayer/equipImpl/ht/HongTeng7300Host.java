@@ -33,6 +33,10 @@ public class HongTeng7300Host extends EquipHost {
 
     public HongTeng7300Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -87,7 +91,7 @@ public class HongTeng7300Host extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) {
                     logger.info("====需要比对批次号，一致则发送Start指令====");
                     processS6F11LotCheck(msg);
-                }  else {
+                } else {
                     //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                     //      + " which I do not want to process! ");
                 }
@@ -97,7 +101,6 @@ public class HongTeng7300Host extends EquipHost {
         }
 
     }
-
 
 
     @Override
@@ -437,7 +440,6 @@ public class HongTeng7300Host extends EquipHost {
         sqlSession.close();
         return checkResult;
     }
-
 
 
     @Override

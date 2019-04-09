@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -21,7 +22,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +36,14 @@ public class AsmAD838Host extends EquipHost {
     public String Lead_Frame_Type_Id;
 
 
-
     public AsmAD838Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 6L;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -65,26 +68,8 @@ public class AsmAD838Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
                     processS14F1in(msg);
-                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
-                }
-                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CollEventID") != null) {
-                        long ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == StripMapUpCeid) {
-                            processS6F11inStripMapUpload(msg);
-                        } else {
-                            processS6F11in(msg);
-                        }
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11ControlStateChange")) {
-                    processS6F11ControlStateChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11inPreProcessState")) {
-                    initRptPara();
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11PPExecName")) {
-                    processS6F11PPExecName(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -120,7 +105,8 @@ public class AsmAD838Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("S6F11IN")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
             } else if (tagName.equalsIgnoreCase("s7f3in")) {
@@ -197,8 +183,7 @@ public class AsmAD838Host extends EquipHost {
         return resultMap;
     }
 
-    // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
-    // </editor-fold>
+
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
@@ -240,7 +225,7 @@ public class AsmAD838Host extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("Idle Remote")) {
-                lastStartCheckTime =System.currentTimeMillis();
+                lastStartCheckTime = System.currentTimeMillis();
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
@@ -318,7 +303,7 @@ public class AsmAD838Host extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
+    private void processS6F11ControlStateChange(DataMsgMap data) {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
@@ -390,12 +375,7 @@ public class AsmAD838Host extends EquipHost {
     }
 
     // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="processS14FXin Code">
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="sendS1FXout Code">
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
-    // </editor-fold>
+
     @Override
     public Object clone() {
         AsmAD838Host newEquip = new AsmAD838Host(deviceId,
@@ -411,7 +391,6 @@ public class AsmAD838Host extends EquipHost {
         this.clear();
         return newEquip;
     }
-
 
 
     @Override
@@ -480,7 +459,7 @@ public class AsmAD838Host extends EquipHost {
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            }else {
+            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);

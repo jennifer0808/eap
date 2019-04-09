@@ -36,6 +36,10 @@ public class Pg300Host extends EquipHost {
 
     public Pg300Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -121,7 +125,7 @@ public class Pg300Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            }  else if (tagName.contains("s6f11in")) {
+            } else if (tagName.contains("s6f11in")) {
                 //回复s6f11消息
                 byte[] ack = new byte[1];
                 ack[0] = 0;

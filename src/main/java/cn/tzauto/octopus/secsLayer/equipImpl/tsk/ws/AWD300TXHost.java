@@ -7,6 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.tsk.ws;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
@@ -44,6 +45,10 @@ public class AWD300TXHost extends EquipHost {
     public AWD300TXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 301L;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -121,7 +126,7 @@ public class AWD300TXHost extends EquipHost {
                 processS6F5in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-            }else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -442,7 +447,7 @@ public class AWD300TXHost extends EquipHost {
         }
     }
 
-//    public Map releaseDevice() {
+    //    public Map releaseDevice() {
 //        Map map = new HashMap();
 //        map.put("HCACK", 0);
 //        return map;
@@ -598,10 +603,10 @@ public class AWD300TXHost extends EquipHost {
 
     @Override
     public void processS6F11in(DataMsgMap data) {
-        long ceid  = 0L;
+        long ceid = 0L;
         try {
             if (data.get("CEID") != null) {
-                ceid  = (long) data.get("CEID");
+                ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             //TODO 根据ceid分发处理事件

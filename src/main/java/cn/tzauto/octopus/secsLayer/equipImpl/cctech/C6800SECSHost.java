@@ -37,6 +37,10 @@ public class C6800SECSHost extends EquipHost {
 
     public C6800SECSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     public Object clone() {
@@ -171,7 +175,7 @@ public class C6800SECSHost extends EquipHost {
     public void processEquipStatusChange(DataMsgMap msg) {
         long ceid = 0l;
         try {
-            ceid = (long)msg.get("CEID");
+            ceid = (long) msg.get("CEID");
             //刷新当前机台状态
             sendS1F3Check();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");

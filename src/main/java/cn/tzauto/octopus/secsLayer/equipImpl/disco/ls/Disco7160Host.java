@@ -38,6 +38,8 @@ public class Disco7160Host extends EquipHost {
 
     public Disco7160Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+
     }
 
     public Object clone() {

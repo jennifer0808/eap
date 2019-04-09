@@ -7,6 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.mvp;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -25,7 +26,6 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -36,6 +36,10 @@ public class MVPHost extends EquipHost {
 
     public MVPHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -122,7 +126,7 @@ public class MVPHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -358,7 +362,6 @@ public class MVPHost extends EquipHost {
     // </editor-fold>
 
 
-
     @SuppressWarnings("unchecked")
     public void sendS2F33clear() {
         DataMsgMap s2f37outAll = new DataMsgMap("s2f33clear", activeWrapper.getDeviceId());
@@ -383,7 +386,6 @@ public class MVPHost extends EquipHost {
             logger.error("Exception:", e);
         }
     }
-
 
 
     private void sendS2f33outMulti(long reportId, long svid0, long svid1) {
@@ -419,7 +421,7 @@ public class MVPHost extends EquipHost {
         logger.info("If the device software upgrades, you need to redefine the ceid=3043 event!！");
         List list = new ArrayList();
         list.add(1037L);
-        sendS2F33Out(3043L, 3043L,list);
+        sendS2F33Out(3043L, 3043L, list);
         sendS2F35out(3043L, 3043L, 3043L);
         sendS2F37out(3043L);
 //        sendS2F37outAll();

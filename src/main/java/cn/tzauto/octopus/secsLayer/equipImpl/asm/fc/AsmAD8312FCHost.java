@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.fc;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -35,6 +36,10 @@ public class AsmAD8312FCHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 4L;
         StripMapUpCeid = 237L;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -180,7 +185,7 @@ public class AsmAD8312FCHost extends EquipHost {
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }
-                if(ceid == 120L){
+                if (ceid == 120L) {
                     processS6F11LoginUserChange(data);
                 }
             }
@@ -195,7 +200,7 @@ public class AsmAD8312FCHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -319,12 +324,12 @@ public class AsmAD8312FCHost extends EquipHost {
         long controlStateTmp = 0L;
         try {
             out.setTransactionId(data.getTransactionId());
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             controlStateTmp = data.getSingleNumber("ControlState");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (ceid == 1 ) {
+        if (ceid == 1) {
             Map panelMap = new HashMap();
             if (controlStateTmp == 0) {
                 controlState = FengCeConstant.CONTROL_OFFLINE;
@@ -351,7 +356,7 @@ public class AsmAD8312FCHost extends EquipHost {
         String loginUserName = "";
         try {
             out.setTransactionId(data.getTransactionId());
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
             if (ceid == 9L) {
                 Map map = new HashMap();
@@ -361,7 +366,7 @@ public class AsmAD8312FCHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (ceid == 120 ) {
+        if (ceid == 120) {
             UiLogUtil.appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
         }
     }
