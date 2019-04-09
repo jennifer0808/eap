@@ -42,6 +42,8 @@ public class YAMADAHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        CPN_PPID = "PP-ID";
+
     }
 
     public void run() {
@@ -160,7 +162,13 @@ public class YAMADAHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
                 return;
             } else if (ceid == ppselectfinishCeid) { //601L
-                ppExecName = (String) ((SecsItem) data.get("PPExecName")).getData();
+                List list = (List)data.get("REPORT");
+
+                List listCollection = (List) list.get(0);
+                List listName = (List) listCollection.get(1);
+
+                ppExecName= (String) listName.get(0);
+
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
                 changeEquipPanel(map);

@@ -16,12 +16,10 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
@@ -46,6 +44,7 @@ public class Horizon03ixHost extends EquipHost {
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         Horizon03ixHost newEquip = new Horizon03ixHost(deviceId,
                 this.iPAddress,
@@ -61,15 +60,16 @@ public class Horizon03ixHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    Horizon03ixHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != Horizon03ixHost.COMMUNICATING) {
                     this.sendS1F13out();
                     this.sendS2F37outAll();
                     //this.sendS14F1out();
@@ -83,8 +83,11 @@ public class Horizon03ixHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
-                    long ceid = 0l;
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")){
+                    processS6F11inAll(msg);
+                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
+                    long ceid = 0L;
                     try {
                         ceid = msg.getSingleNumber("CollEventID");
                         if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
@@ -105,13 +108,14 @@ public class Horizon03ixHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -120,7 +124,9 @@ public class Horizon03ixHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
-            } else if (tagName.contains("s6f11incommon")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                //回复s6f11消息
+                replyS6F12WithACK(data, (byte) 0);
                 processS6F11inAll(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -146,70 +152,13 @@ public class Horizon03ixHost extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (data == null || data.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-            logger.error("获取设备:" + deviceCode + "状态信息失败.");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-
-//        if (controlState.equalsIgnoreCase("OnlineLocal")) {
-//            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-//        } else if (controlState.equalsIgnoreCase("OnlineRemote")) {
-//            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-//        } else if (controlState.equalsIgnoreCase("EquipmentOffline")) {
-//            controlState = FengCeConstant.CONTROL_OFFLINE;
-//        }
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        data = null;
-        return panelMap;
-    }
-    // </editor-fold> 
-
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
 
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            this.sendS1F3Check();
-//            equipStatus = newMap.get("EquipStatus").toString();
-//            ppExecName = newMap.get("PPExecName").toString();
-//            controlState = newMap.get("ControlState").toString();
-//            equipStatus = ACKDescription.descriptionStatus(data.getSingleNumber("EquipStatus"), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-//            controlState = ACKDescription.describeControlState(data.getSingleNumber("ControlState"), deviceType);
+            ceid = (long)data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -590,7 +539,7 @@ public class Horizon03ixHost extends EquipHost {
         byte[] ack = new byte[1];
         ack[0] = 0;
         out.put("AckCode", ack);
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             out.setTransactionId(data.getTransactionId());
             activeWrapper.respondMessage(out);
@@ -670,19 +619,8 @@ public class Horizon03ixHost extends EquipHost {
     }
 
     private void processS6F11inAll(DataMsgMap msg) throws InterruptedException {
-//        long ceid = 0l;
-//        ceid = msg.getSingleNumber("CollEventID");
-//        if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
-//            this.inputMsgQueue.put(msg);
-//        } else if (ceid == 31450 || ceid == 31451 || ceid == 31452 || ceid == 31265 || ceid == 31456 || ceid == 31267) {
-//            processS6F11in(msg);
-//            this.inputMsgQueue.put(msg);
-//        } else {
-//            processS6F11in(msg);
-//        }
-        long ceid = 0l;
-        ceid = (Long) msg.get("CollEventID");
-
+        long ceid = 0L;
+        ceid = (long) msg.get("CEID");
         if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
             if (ceid == 90001) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "设备重置中...");
@@ -699,7 +637,6 @@ public class Horizon03ixHost extends EquipHost {
             } else if (ceid == 90007) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "设备进入Down状态.");
             }
-            processS6F11in(msg);
             processS6F11EquipStatusChange(msg);
         } else if (ceid == 31450 || ceid == 31451 || ceid == 31452 || ceid == 31265 || ceid == 31456 || ceid == 31267) {
             if (ceid == 31265) {
@@ -715,55 +652,21 @@ public class Horizon03ixHost extends EquipHost {
             } else if (ceid == 31456) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "Operator command issued.");
             }
-            processS6F11in(msg);
             //刷新状态
             findDeviceRecipe();
-        } else {
-            processS6F11in(msg);
         }
 
     }
 
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = 0;
-        try {
-            if (data.get("CollEventID") != null) {
-                ceid = data.getSingleNumber("CollEventID");
-                logger.info("Received a s6f11in with CEID = " + ceid);
-            }
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F5out(String recipeName) {
-//        this.sendS1F3Check();
-        String ppid = recipeName;
         Recipe recipe = setRecipe(recipeName);
-//        if (!ppExecName.equalsIgnoreCase(ppid)) {
-//            JOptionPane.showMessageDialog(null, "请先选中要上传的Recipe，否则无法上传！");
-//            return null;
-//        }
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-//        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + deviceCode + "/" + ppid.replace("/", "@").replace(".", "#") + "/" + ppid.replace("/", "@").replace(".", "#") + "_V" + recipe.getVersionNo() + ".txt";
-        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + ppid.replace("/", "@") + "_V" + recipe.getVersionNo() + ".txt";
-        sqlSession.close();
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", ppid);
+        recipePath = getRecipePathByConfig(recipe);
         DataMsgMap msgData = null;
         try {
-            msgData = activeWrapper.sendAwaitMessage(s7f5out);
+            msgData = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -772,10 +675,9 @@ public class Horizon03ixHost extends EquipHost {
             logger.error("获取设备:" + deviceCode + "参数信息失败.");
             return null;
         }
-        ppid = (String) ((SecsItem) msgData.get("ProcessprogramID")).getData();
-        byte[] ppbody = (byte[]) ((SecsItem) msgData.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
+        byte[] ppbody = (byte[]) msgData.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
@@ -799,7 +701,7 @@ public class Horizon03ixHost extends EquipHost {
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + ppid + " from equip " + deviceCode);
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
     // </editor-fold>
@@ -838,6 +740,7 @@ public class Horizon03ixHost extends EquipHost {
 //        map.put("HCACK", 0);
 //        return map;
 //    }
+    @Override
     public Map releaseDevice() {
         try {
             sleep(5000);
@@ -851,6 +754,7 @@ public class Horizon03ixHost extends EquipHost {
         return map;
     }
 
+    @Override
     public void processS2F17in(DataMsgMap msg) {
 //        throw new UnsupportedOperationException("Not yet implemented");
         try {

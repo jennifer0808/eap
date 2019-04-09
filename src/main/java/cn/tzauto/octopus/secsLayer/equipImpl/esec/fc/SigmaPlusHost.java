@@ -54,6 +54,8 @@ public class SigmaPlusHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT";
+        CPN_PPID = "PROGRAM";
     }
 
 

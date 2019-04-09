@@ -71,7 +71,7 @@ public class BTUPypamax125nHost extends EquipHost {
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
                     //重定义 机台的equipstatuschange事件报告
-                    initRptPara();
+                    sendS2F37outAll();
                     sendS5F3out(true);
                     updateLotId();
 //                    upLoadAllRcp();
@@ -149,7 +149,7 @@ public class BTUPypamax125nHost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             Map panelMap = new HashMap();
             if (ceid == 1010) {
                 panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);//Online_Local
@@ -166,137 +166,8 @@ public class BTUPypamax125nHost extends EquipHost {
         }
     }
 
-    @Override
-    protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
-        try {
-            ceid = (long) data.get("CEID");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        //获取当前设备状态
-        sendS1F3Check();
 
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        RecipeService recipeService = new RecipeService(sqlSession);
 
-        try {
-            //从数据库中获取当前设备模型信息
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            boolean dataReady = false;
-            //判断当前执行程序是否是清模程序 Y代表清模程序
-            boolean isCleanRecipe = false;
-            List<Recipe> cleanRecipes = recipeService.searchRecipeByRcpType(ppExecName, "Y");
-            if (cleanRecipes != null && cleanRecipes.size() > 1) {
-                isCleanRecipe = true;
-            }
-            // 更新设备模型
-            if (deviceInfoExt == null) {
-                logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
-            } else {
-                deviceInfoExt.setDeviceStatus(equipStatus);
-                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                sqlSession.commit();
-                dataReady = true;
-            }
-
-            //保存到设备操作记录数据库
-            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
-            sqlSession.commit();
-
-            boolean checkResult = false;
-            //获取设备当前运行状态，如果是Run，执行开机检查逻辑
-            if (!isCleanRecipe && dataReady && equipStatus.equalsIgnoreCase("run")) {
-                //1、获取设备需要校验的信息类型,
-                String startCheckMod = deviceInfoExt.getStartCheckMod();
-                boolean hasGoldRecipe = true;
-                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-//                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
-                    return;
-                }
-                //查询trackin时的recipe和GoldRecipe
-                Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-
-                //查询客户端数据库是否存在GoldRecipe
-                if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                    hasGoldRecipe = false;
-                }
-
-                //首先从服务端获取机台是否处于锁机状态
-                //如果设备应该是锁机，那么首先发送锁机命令给机台
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    holdDeviceAndShowDetailInfo("Equipment has been set and locked by Server");
-                } else {
-                    //根据检查模式执行开机检查逻辑
-                    //1、A1-检查recipe名称是否一致
-                    //2、A-检查recipe名称和参数
-                    //3、B-检查SV
-                    //4、AB都检查
-                    if (startCheckMod != null && !"".equals(startCheckMod)) {
-                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
-                        if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
-                            //不允许开机
-                            holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
-                        } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
-                        }
-                    }
-                    if (checkResult && "A".equals(startCheckMod)) {
-                        //首先判断下载的Recipe类型
-                        //1、如果下载的是Unique版本，那么执行完全比较
-                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                        if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
-                            this.startCheckRecipePara(downLoadRecipe, "abs");
-                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
-                            if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                                //不允许开机
-                                this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
-                            } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
-                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
-                            }
-                        }
-                    } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            sqlSession.rollback();
-        } finally {
-            sqlSession.close();
-        }
-    }
-
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
-    @Override
-    public Map holdDevice() {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            Map map = this.sendS2f41Cmd("STOP");//Map map = this.sendS2f41Cmd("LOCK");
-            if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
-                this.setAlarmState(2);
-            }
-            return map;
-        } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
-            return null;
-        }
-    }
 
     //释放机台
     @Override
