@@ -3,7 +3,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.yamada.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -37,6 +36,7 @@ public class YAMADAHost extends EquipHost {
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 605;
+        CPN_PPID = "PP-ID";
 
     }
 
@@ -116,10 +116,10 @@ public class YAMADAHost extends EquipHost {
     public List sendS1F3PressCheckout() {
         DataMsgMap data = null;
         List list=new ArrayList();
-        list.add(5101l);
-        list.add(5201l);
-        list.add(5301l);
-        list.add(5401l);
+        list.add(5101L);
+        list.add(5201L);
+        list.add(5301L);
+        list.add(5401L);
         try {
             data = activeWrapper.sendS1F3out(list,svFormat);
         } catch (Exception e) {
@@ -156,7 +156,14 @@ public class YAMADAHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
                 return;
             } else if (ceid == ppselectfinishCeid) { //601L
-                ppExecName = (String) ((SecsItem) data.get("PPExecName")).getData();
+               List list = (List)data.get("REPORT");
+
+                List listCollection = (List) list.get(0);
+                List listName = (List) listCollection.get(1);
+                for(Object name : listName){
+                    ppExecName = (String) name;
+                }
+
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
                 changeEquipPanel(map);
