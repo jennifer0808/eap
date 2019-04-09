@@ -12,25 +12,26 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AsmAD832PHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(AsmAD832PHost.class.getName());
-    private final long StripMapUpCeid = 237L;
-
 
     public AsmAD832PHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 4;
+        StripMapUpCeid = 237L;
+        EquipStateChangeCeid = 4L;
     }
 
     @Override
@@ -40,9 +41,9 @@ public class AsmAD832PHost extends EquipHost {
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    AsmAD832PHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != AsmAD832PHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -62,6 +63,8 @@ public class AsmAD832PHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                    this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     if (msg.get("CollEventID") != null) {
                         long ceid = msg.getSingleNumber("CollEventID");
@@ -71,12 +74,10 @@ public class AsmAD832PHost extends EquipHost {
                             processS6F11in(msg);
                         }
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
-                    this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11intodo")) {
                     processS6F11Filter(msg);
-                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    this.processS6F11in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -95,7 +96,7 @@ public class AsmAD832PHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
@@ -107,11 +108,6 @@ public class AsmAD832PHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11intodo")) {
-                processS6F11in(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
@@ -243,34 +239,48 @@ public class AsmAD832PHost extends EquipHost {
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
+
     //根据ReportId来处理不同事件报告
     protected void processS6F11Filter(DataMsgMap data) {
-        long ceid = 0l;
-        long reportId = 0l;
+        long ceid = 0L;
+        long reportId = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            reportId = data.getSingleNumber("ReportId");
+            ceid = (long) data.get("CEID");
+//            reportId = data.get("ReportId");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         //TODO ceid 可配置在数据库显示具体描述
-//TODO z这里为什么用的rptid判定
+        //TODO z这里为什么用的rptid判定
 
-        if (reportId == 4) {
+        if (ceid == 4) {
             processS6F11EquipStatusChange(data);
-        } else if (reportId == 1) {
+        } else if (ceid == 1) {
             processS6F11ControlStateChange(data);
-        } else if (reportId == 175) {
+        } else if (ceid == 175) {
             processS6F11PPExecNameChange(data);
         }
 
     }
 
-    protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-
+            ceid = (long) data.get("CEID");
+            //TODO rpt id  : 1 4 175
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            }else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 1) {
+                    processS6F11ControlStateChange(data);
+                } else if (ceid == 175) {
+                    processS6F11PPExecNameChange(data);
+                }
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -281,9 +291,8 @@ public class AsmAD832PHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("PreEquipStatus")), deviceType);
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
             return;
@@ -422,10 +431,10 @@ public class AsmAD832PHost extends EquipHost {
     }
 
     private void processS6F11PPExecNameChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -437,8 +446,8 @@ public class AsmAD832PHost extends EquipHost {
 
     protected void processS6F11LoginUserChange(DataMsgMap data) {
         DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0l;
-        long reportID = 0l;
+        long ceid = 0L;
+        long reportID = 0L;
         String loginUserName = "";
         try {
             out.setTransactionId(data.getTransactionId());

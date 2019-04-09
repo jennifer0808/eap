@@ -39,15 +39,16 @@ public class AptHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    AptHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != AptHost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
@@ -90,6 +91,7 @@ public class AptHost extends EquipHost {
         }
     }
 
+    @Override
     public Map sendS1F3SingleCheck(String svidName) {
         CSVUtil.setCSVFile(getProfile(), deviceCode, ppExecName);
         return null;
@@ -103,7 +105,7 @@ public class AptHost extends EquipHost {
         }
         try {
             secsMsgTimeoutTime = 0;
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
                 processS1F13in(data);
@@ -111,8 +113,6 @@ public class AptHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 //回复s6f11消息
-                byte[] ack = new byte[1];
-                ack[0] = 0;
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
@@ -166,7 +166,7 @@ public class AptHost extends EquipHost {
     // </editor-fold> 
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 1002) {
@@ -353,7 +353,7 @@ public class AptHost extends EquipHost {
         s7f3out.put("Processprogram", ppbody);
         try {
             sleep(1000);
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_ASCII);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -370,6 +370,7 @@ public class AptHost extends EquipHost {
         return resultMap;
     }
 
+    @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
@@ -409,6 +410,7 @@ public class AptHost extends EquipHost {
     }
     // </editor-fold>
 
+    @Override
     public Object clone() {
         AptHost newEquip = new AptHost(deviceId,
                 this.iPAddress,

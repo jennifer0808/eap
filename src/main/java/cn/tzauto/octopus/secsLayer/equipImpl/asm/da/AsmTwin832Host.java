@@ -30,14 +30,14 @@ public class AsmTwin832Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    private final long StripMapUpCeid = 237L;
-
 
     public AsmTwin832Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        StripMapUpCeid = 237L;
         EquipStateChangeCeid = 4;
     }
 
+    @Override
     public Object clone() {
         AsmTwin832Host newEquip = new AsmTwin832Host(deviceId,
                 this.iPAddress,
@@ -60,9 +60,9 @@ public class AsmTwin832Host extends EquipHost {
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    AsmTwin832Host.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != AsmTwin832Host.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -92,6 +92,8 @@ public class AsmTwin832Host extends EquipHost {
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    this.processS6F11in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -110,7 +112,7 @@ public class AsmTwin832Host extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
@@ -122,7 +124,7 @@ public class AsmTwin832Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                this.inputMsgQueue.put(data);
             } else if (tagName.toLowerCase().contains("s6f11intodo")) {
                 processS6F11in(data);
                 this.inputMsgQueue.put(data);
@@ -176,9 +178,26 @@ public class AsmTwin832Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
 
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            }else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
 
@@ -305,8 +324,8 @@ public class AsmTwin832Host extends EquipHost {
 
     protected void processS6F11ControlStateChange(DataMsgMap data) {
         //回复s6f11消息
-        long ceid = 0l;
-        long reportID = 0l;
+        long ceid = 0L;
+        long reportID = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
             reportID = data.getSingleNumber("ReportId");
@@ -333,7 +352,7 @@ public class AsmTwin832Host extends EquipHost {
     }
 
     private void processS6F11PPExecNameChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
             ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
@@ -348,8 +367,8 @@ public class AsmTwin832Host extends EquipHost {
 
     protected void processS6F11LoginUserChange(DataMsgMap data) {
         DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0l;
-        long reportID = 0l;
+        long ceid = 0L;
+        long reportID = 0L;
         String loginUserName = "";
         try {
             out.setTransactionId(data.getTransactionId());
@@ -371,12 +390,9 @@ public class AsmTwin832Host extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName); //+ ".rcp"
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data =activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

@@ -21,7 +21,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author WangDanfeng
@@ -41,9 +44,11 @@ public class MPTABHost extends EquipHost {
 
     public MPTABHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 1011;
+        EquipStateChangeCeid = 1011L;
+        svFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         MPTABHost newEquip = new MPTABHost(deviceId,
                 this.iPAddress,
@@ -66,9 +71,9 @@ public class MPTABHost extends EquipHost {
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    MPTABHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != MPTABHost.COMMUNICATING) {
                     sendS1F13out();
                 }
 //                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -115,7 +120,7 @@ public class MPTABHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
@@ -150,6 +155,7 @@ public class MPTABHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
@@ -175,7 +181,7 @@ public class MPTABHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-//            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             findDeviceRecipe();
         } catch (Exception e) {
@@ -321,47 +327,21 @@ public class MPTABHost extends EquipHost {
         return resultMap;
     }
 
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
             byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 //            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
             //Recipe解析  没有参数解析 
@@ -481,6 +461,7 @@ public class MPTABHost extends EquipHost {
         return resultMap;
     }
 
+    @Override
     public Map holdDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

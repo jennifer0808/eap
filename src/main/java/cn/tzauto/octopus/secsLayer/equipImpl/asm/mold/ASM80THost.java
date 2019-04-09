@@ -3,7 +3,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -26,7 +25,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 
 @SuppressWarnings("serial")
@@ -36,8 +34,10 @@ public class ASM80THost extends EquipHost {
 
     public ASM80THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+
     }
 
+    @Override
     public Object clone() {
         ASM80THost newEquip = new ASM80THost(deviceId,
                 this.iPAddress,
@@ -53,15 +53,16 @@ public class ASM80THost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    ASM80THost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != ASM80THost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
 
@@ -80,6 +81,8 @@ public class ASM80THost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
@@ -108,13 +111,14 @@ public class ASM80THost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -122,7 +126,9 @@ public class ASM80THost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                //回复s6f11消息
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -152,6 +158,7 @@ public class ASM80THost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 //    @SuppressWarnings("unchecked")
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
@@ -176,25 +183,25 @@ public class ASM80THost extends EquipHost {
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s1f3out.setTransactionId(transactionId);
         long[] press1SV = new long[1];
-        press1SV[0] = 163l;
+        press1SV[0] = 163L;
         s1f3out.put("Press1", press1SV);
         long[] press2SV = new long[1];
-        press2SV[0] = 183l;
+        press2SV[0] = 183L;
         s1f3out.put("Press2", press2SV);
         long[] press3SV = new long[1];
-        press3SV[0] = 203l;
+        press3SV[0] = 203L;
         s1f3out.put("Press3", press3SV);
         long[] press4SV = new long[1];
-        press4SV[0] = 223l;
+        press4SV[0] = 223L;
         s1f3out.put("Press4", press4SV);
-        List list=new ArrayList();
+        List list = new ArrayList();
         list.add(163L);
         list.add(183L);
         list.add(203L);
         list.add(223L);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendS1F3out(list,svFormat);
+            data = activeWrapper.sendS1F3out(list, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -236,11 +243,39 @@ public class ASM80THost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        //回复s6f11消息
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+
+            if(ceid == 39 ||ceid == 40 ||ceid == 1 ){
+                processS6F11EquipStatus(data);
+            }
+            if(ceid == 120 ||ceid == 121 ||ceid == 122 ||ceid == 123){
+                processS6F11EquipStatusChange(data);
+            }
+            if(ceid == 232){
+                findDeviceRecipe();
+                if (ppExecName.contains(".prp")) {
+                    ppExecName = ppExecName.replace(".prp", "");
+                }
+                Map map = new HashMap();
+                map.put("PPExecName", ppExecName);
+                changeEquipPanel(map);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+
+    }
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         //回复s6f11消息
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 39) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 40) {
@@ -271,10 +306,10 @@ public class ASM80THost extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -390,69 +425,26 @@ public class ASM80THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".prp");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
+        return  super.sendS7F1out(localFilePath,targetRecipeName+ ".prp");
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName + ".prp");
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-//        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
+        return super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".prp");
     }
 
+    @Override
     public Map sendS7F5out(String recipeName) {
-        recipeName = recipeName.replace(".prp", "");//去除后缀
-        Recipe recipe = setRecipe(recipeName);
+        Recipe recipe = setRecipe(recipeName.replace(".prp", ""));
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName + ".prp");
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
+            msgdata = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[])  msgdata.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -472,6 +464,7 @@ public class ASM80THost extends EquipHost {
         return resultMap;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
@@ -515,36 +508,6 @@ public class ASM80THost extends EquipHost {
     }
     // </editor-fold>
 
-    public DataMsgMap handleOverTime(DataMsgMap s7f19out) {
-        final DataMsgMap s7f19outF = s7f19out;
-        DataMsgMap result = null;
-//        ExecutorService exec = Executors.newFixedThreadPool(1);
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Callable<DataMsgMap> call = new Callable<DataMsgMap>() {
-
-            public DataMsgMap call() throws Exception {
-                //开始执行耗时操作  
-                return activeWrapper.sendAwaitMessage(s7f19outF);
-            }
-        };
-
-        Future<DataMsgMap> future = exec.submit(call);
-        try {
-            result = future.get(1000, TimeUnit.MILLISECONDS); //任务处理超时时间设为 1 秒  
-            logger.info("任务执行成功");
-        } catch (TimeoutException e) {
-            future.cancel(true);//取消该Future里关联的Callable任务
-            logger.error("处理超时....", e);
-        } catch (Exception e) {
-            future.cancel(true);
-            logger.error("处理失败....", e);
-        } finally {
-            // 关闭线程池  
-            exec.shutdown();
-            return result;
-        }
-    }
-
     @Override
     public String getOutputData() {
         String outputSVID = "251";  //shotcount
@@ -556,6 +519,7 @@ public class ASM80THost extends EquipHost {
         }
     }
 
+    @Override
     public void sendUphData2Server() {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
 //        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -619,6 +583,7 @@ public class ASM80THost extends EquipHost {
     }
 
     //释放机台
+    @Override
     public Map releaseDevice() {
         Map map = this.sendS2f41Cmd("RESUME");
         if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {

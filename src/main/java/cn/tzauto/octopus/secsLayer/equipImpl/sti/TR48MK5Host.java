@@ -144,7 +144,7 @@ public class TR48MK5Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {

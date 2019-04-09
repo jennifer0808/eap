@@ -1176,11 +1176,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) {
-                processS6F11EquipStatusChange(data);
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
             }
 
             if (commState != 1) {
@@ -1280,20 +1280,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        map.put("ControlState", controlState);
-        changeEquipPanel(map);
+        findDeviceRecipe();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

@@ -16,13 +16,15 @@ import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AsmAD838Host extends EquipHost {
 
@@ -32,12 +34,13 @@ public class AsmAD838Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    private final long StripMapUpCeid = 237L;
-    private final long EquipStateChangeCeid = 6L;
+
 
 
     public AsmAD838Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        StripMapUpCeid = 237L;
+        EquipStateChangeCeid = 6L;
     }
 
     @Override
@@ -62,7 +65,10 @@ public class AsmAD838Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
+                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     if (msg.get("CollEventID") != null) {
                         long ceid = msg.getSingleNumber("CollEventID");
                         if (ceid == StripMapUpCeid) {
@@ -78,7 +84,7 @@ public class AsmAD838Host extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11inPreProcessState")) {
                     initRptPara();
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11PPExecName")) {
-                    processS6F11s6f11PPExecName(msg);
+                    processS6F11PPExecName(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -93,13 +99,14 @@ public class AsmAD838Host extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
@@ -112,7 +119,7 @@ public class AsmAD838Host extends EquipHost {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.contains("S6F11IN")) {
+            } else if (tagName.equalsIgnoreCase("S6F11IN")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
@@ -170,7 +177,7 @@ public class AsmAD838Host extends EquipHost {
         if (data != null && !data.isEmpty()) {
             byte[] ppbody = (byte[]) data.get("PPBODY");
 //            String ppbody = (String) data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
             recipeParaList = getRecipeParasByECSV();
@@ -197,7 +204,7 @@ public class AsmAD838Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             preEquipStatus = equipStatus;
             findDeviceRecipe();
         } catch (Exception e) {
@@ -233,7 +240,7 @@ public class AsmAD838Host extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("Idle Remote")) {
-                lastStartCheckTime = new Date().getTime();
+                lastStartCheckTime =System.currentTimeMillis();
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
@@ -312,9 +319,9 @@ public class AsmAD838Host extends EquipHost {
     }
 
     protected void processS6F11ControlStateChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -335,11 +342,10 @@ public class AsmAD838Host extends EquipHost {
             UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
         }
         if (ceid == 7) {
-
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
             try {
-                equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+                findDeviceRecipe();
                 panelMap.put("EquipStatus", equipStatus);
                 //从数据库中获取当前设备模型信息
                 DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
@@ -364,9 +370,9 @@ public class AsmAD838Host extends EquipHost {
 
     }
 
-    private void processS6F11s6f11PPExecName(DataMsgMap data) {
+    private void processS6F11PPExecName(DataMsgMap data) {
         DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long reportID = 0l;
+        long reportID = 0L;
         try {
             out.setTransactionId(data.getTransactionId());
             reportID = data.getSingleNumber("ReportId");
@@ -390,6 +396,7 @@ public class AsmAD838Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     // </editor-fold>
+    @Override
     public Object clone() {
         AsmAD838Host newEquip = new AsmAD838Host(deviceId,
                 this.iPAddress,
@@ -460,7 +467,7 @@ public class AsmAD838Host extends EquipHost {
         sendS2F33Out(3255L, 3255L, list);
         sendS2F35out(3255L, 3255L, 3255L);
         sendS2F35clear();
-        sendS2F35outDelete(222l,222l);
+        sendS2F35outDelete(222L,222L);
         sendS2F33clear();
         sendS2f33outDelete(123);
         sendS2F37outCloseAll();
@@ -474,21 +481,29 @@ public class AsmAD838Host extends EquipHost {
         return "0";
     }
 
+    @Override
     public void processS6F11in(DataMsgMap data) {
-        String ceid = "";
+        long ceid = 0L;
         try {
             if (data.get("CEID") != null) {
-                ceid = String.valueOf(data.get("CEID"));
+                ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             //TODO 根据ceid分发处理事件
-            if (Long.parseLong(ceid) == StripMapUpCeid) {
+            if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
+            }else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+                if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
+                    processS6F11ControlStateChange(data);
+                }
             }
-            if (Long.parseLong(ceid) == EquipStateChangeCeid) {
-                processS6F11EquipStatusChange(data);
-            }
-            activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             if (commState != 1) {
                 this.setCommState(1);
             }
