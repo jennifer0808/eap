@@ -12,7 +12,6 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -28,8 +27,12 @@ public class DekHost extends EquipHost {
 
     public DekHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        //todo 根据日志找到对应CEID
+        StripMapUpCeid = 0L;
+        EquipStateChangeCeid= 0L;
     }
 
+    @Override
     public Object clone() {
         DekHost newEquip = new DekHost(deviceId,
                 this.iPAddress,
@@ -45,6 +48,7 @@ public class DekHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
@@ -52,9 +56,9 @@ public class DekHost extends EquipHost {
 
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    DekHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != DekHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -78,6 +82,8 @@ public class DekHost extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else {
                     logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -90,6 +96,7 @@ public class DekHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -115,7 +122,7 @@ public class DekHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                this.inputMsgQueue.put(data);
             }  else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -138,46 +145,46 @@ public class DekHost extends EquipHost {
             logger.debug("initRptPara+++++++++++++++++++");
             //发送s2f33
             String ack = "";
-            long rptid = 1001l;
-            long vid = 269352993l;
-            long ceid = 15338l;
+            long rptid = 1001L;
+            long vid = 269352993L;
+            long ceid = 15338L;
             ack = sendS2F33out(rptid, vid);//15339
 
             if (!"".equals(ack)) {
                 ack = "";
-                rptid = 1002l;
+                rptid = 1002L;
                 ack = sendS2F33out(rptid, vid);//15338
             }
             if (!"".equals(ack)) {
                 ack = "";
-                rptid = 1003l;
-                vid = 269352995l;
+                rptid = 1003L;
+                vid = 269352995L;
                 ack = sendS2F33out(rptid, vid);//15328
             }
 
             //SEND S2F35
             if (!"".equals(ack)) {
                 ack = "";
-                ceid = 15339l;
-                rptid = 1001l;
+                ceid = 15339L;
+                rptid = 1001L;
                 sendS2F35out(ceid, rptid);//15339 1001
             }
             if (!"".equals(ack)) {
                 ack = "";
-                ceid = 15338l;
-                rptid = 1002l;
+                ceid = 15338L;
+                rptid = 1002L;
                 sendS2F35out(ceid, rptid);//15339 1001
             }
             if (!"".equals(ack)) {
                 ack = "";
-                ceid = 15328l;
-                rptid = 1003l;
+                ceid = 15328L;
+                rptid = 1003L;
                 sendS2F35out(ceid, rptid);//15339 1001
             }
             List list=new ArrayList();
             list.add(2031L);
             list.add(2009L);
-            sendS2F33Out(4l, 2031L, list);
+            sendS2F33Out(4L, 2031L, list);
             sendS2F35out(4L, 4L, 4L);
             //SEND S2F37
             if (!"".equals(ack)) {
@@ -192,6 +199,7 @@ public class DekHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
+    @Override
     @SuppressWarnings("unchecked")
     public void processS1F1in(DataMsgMap data) {
         try {
@@ -216,14 +224,15 @@ public class DekHost extends EquipHost {
      * Insert the method's description here. Creation date: (11/17/2001 12:11:06
      * PM)
      */
+    @Override
     public void processS1F14in(DataMsgMap s1f14in) {
         Map a = new HashMap();
         if (s1f14in == null) {
             return;
         }
         System.out.println("-----Received s1f14in----.");
-        if (this.getCommState() != this.COMMUNICATING) {
-            this.setCommState(this.COMMUNICATING);
+        if (this.getCommState() != DekHost.COMMUNICATING) {
+            this.setCommState(DekHost.COMMUNICATING);
         }
     }
 
@@ -235,6 +244,7 @@ public class DekHost extends EquipHost {
      * Insert the method's description here. Creation date: (11/12/01 3:01:56
      * PM)
      */
+    @Override
     public void processS1F2in(DataMsgMap s1f2in) {
         if (s1f2in == null) {
             return;
@@ -260,7 +270,7 @@ public class DekHost extends EquipHost {
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s2f33out.setTransactionId(transactionId);
         long[] dataid = new long[1];
-        dataid[0] = 1001l;
+        dataid[0] = 1001L;
         long[] reportid = new long[1];
         reportid[0] = rptid;
         long[] variableid = new long[1];
@@ -279,6 +289,7 @@ public class DekHost extends EquipHost {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void sendS2F37outAll() {
         //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
@@ -433,31 +444,14 @@ public class DekHost extends EquipHost {
         System.out.println("EAC = " + ((value == null) ? "" : value[0]));
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName + ".dbrcp");
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        return resultMap;
+        return super.sendS2F41outPPselect(recipeName + ".dbrcp");
     }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-
 
     public void processS6f5in(DataMsgMap data) {
         try {
@@ -478,71 +472,28 @@ public class DekHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
+        return super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
+        return super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
     }
 
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName + ".dbrcp");
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out( recipeName + ".dbrcp");
         } catch (Exception e) {
             e.printStackTrace();
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
             byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析
             recipeParaList = getRecipeParasByECSV();
@@ -561,30 +512,7 @@ public class DekHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        recipeName = recipeName + ".dbrcp";
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
+        return super.sendS7F17out(recipeName + ".dbrcp");
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
