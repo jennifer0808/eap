@@ -66,7 +66,7 @@ public class BTUPypamax125nHost extends EquipHost {
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
                     //重定义 机台的equipstatuschange事件报告
-                    initRptPara();
+                    sendS2F37outAll();
                     sendS5F3out(true);
                     updateLotId();
 //                    upLoadAllRcp();
@@ -144,7 +144,7 @@ public class BTUPypamax125nHost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             Map panelMap = new HashMap();
             if (ceid == 1010) {
                 panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);//Online_Local
@@ -273,25 +273,7 @@ public class BTUPypamax125nHost extends EquipHost {
         }
     }
 
-    // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
-    @Override
-    public Map holdDevice() {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            Map map = this.sendS2f41Cmd("STOP");//Map map = this.sendS2f41Cmd("LOCK");
-            if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
-                this.setAlarmState(2);
-            }
-            return map;
-        } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
-            return null;
-        }
-    }
+
 
     //释放机台
     @Override
