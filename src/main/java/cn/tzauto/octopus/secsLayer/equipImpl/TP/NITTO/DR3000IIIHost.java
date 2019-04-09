@@ -42,8 +42,6 @@ public class DR3000IIIHost extends EquipHost {
 
     public DR3000IIIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 9;
-//        StripMapUpCeid = 0;
         RCMD_PPSELECT = "PPSELECT";
     }
 
@@ -67,7 +65,13 @@ public class DR3000IIIHost extends EquipHost {
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
-
+        if("A1400-0007".equals(deviceCode)){
+            Map panelMap = new HashMap();
+            panelMap.put("EquipStatus", "READY");
+            panelMap.put("PPExecName", "12-N-140HM-01");
+            panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
+            changeEquipPanel(panelMap);
+        }
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -89,7 +93,7 @@ public class DR3000IIIHost extends EquipHost {
 
 //                    initRptPara();
                 }
-                if (rptDefineNum < 1) {
+                if (rptDefineNum < 2) {
 //                    sendS1F1out();
 //                    //为了能调整为online remote
 //                    sendS1F17out();
@@ -105,20 +109,20 @@ public class DR3000IIIHost extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     replyS5F2Directly(msg);
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+                    try {
+                        processS6F11EquipStatusChange(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
                     long ceid = 0l;
                     try {
-                        ceid = (long) msg.get("CEID");
+                        ceid = msg.getSingleNumber("CollEventID");
                         if (ceid == 22) {
 //                            this.processS6F11EquipStatusChange(msg);
-                            processS6F11in(msg);
                             super.findDeviceRecipe();
-                        } else {
-                            processS6F11in(msg);
                         }
-//                        else if (ceid == EquipStateChangeCeid) {
-//                            processS6F11EquipStatusChange(msg);
-//                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -147,8 +151,19 @@ public class DR3000IIIHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                this.inputMsgQueue.put(data);
+            } else if (tagName.contains("s6f11in")) {
+                long ceid = 0l;
+                try {
+                    ceid = data.getSingleNumber("CollEventID");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (ceid == 22) {
+                    this.processS6F11in(data);
+                    this.inputMsgQueue.put(data);
+                } else {
+                    this.processS6F11in(data);
+                }
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -179,7 +194,6 @@ public class DR3000IIIHost extends EquipHost {
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
         DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-//        DataMsgMap s1f3out = new DataMsgMap("s1f3out", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s1f3out.setTransactionId(transactionId);
         long[] equipStatuss = new long[1];
@@ -253,7 +267,7 @@ public class DR3000IIIHost extends EquipHost {
         data = null;
         return panelMap;
     }
-    // </editor-fold>
+    // </editor-fold> 
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
@@ -266,9 +280,9 @@ public class DR3000IIIHost extends EquipHost {
         try {
             out.setTransactionId(data.getTransactionId());
             activeWrapper.respondMessage(out);
-            ceid = (long) data.get("CEID");
+            ceid = data.getSingleNumber("CollEventID");
             this.sendS1F3Check();
-            preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("PreviousEquipStatus")), deviceType);
+            preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("PreviousEquipStatus")), deviceType);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -380,8 +394,8 @@ public class DR3000IIIHost extends EquipHost {
         try {
             out.setTransactionId(data.getTransactionId());
             activeWrapper.respondMessage(out);
-            ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(data.get("EquipStatus"), deviceType);
+            ceid = data.getSingleNumber("CollEventID");
+//            equipStatus = ACKDescription.descriptionStatus(data.getSingleNumber("EquipStatus"), deviceType);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -508,9 +522,8 @@ public class DR3000IIIHost extends EquipHost {
             return null;
         }
         ppid = (String) ((SecsItem) msgData.get("ProcessprogramID")).getData();
-//        byte[] ppbody = (byte[]) ((SecsItem) msgData.get("Processprogram")).getData();
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        byte[] ppbody = (byte[]) ((SecsItem) msgData.get("Processprogram")).getData();
+        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -567,7 +580,7 @@ public class DR3000IIIHost extends EquipHost {
         }
     }
 
-    //    public Map releaseDevice() {
+//    public Map releaseDevice() {
 //        Map map = new HashMap();
 //        map.put("HCACK", 0);
 //        return map;
@@ -721,7 +734,25 @@ public class DR3000IIIHost extends EquipHost {
         return wirecipeParaDiff;
     }
 
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0;
+        try {
+            if (data.get("CollEventID") != null) {
+                ceid = data.getSingleNumber("CollEventID");
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
+            byte[] ack = new byte[1];
+            ack[0] = 0;
+            out.put("AckCode", ack);
+            out.setTransactionId(data.getTransactionId());
+            activeWrapper.respondMessage(out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    @SuppressWarnings("unchecked")
     public void sendS6F23clear() {
         DataMsgMap s2f37outAll = new DataMsgMap("s6f23out", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();

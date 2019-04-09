@@ -37,6 +37,7 @@ public class ASM120THost extends EquipHost {
 
     public ASM120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        RCMD_PPSELECT = "PP_SELECT";
     }
 
     public Object clone() {
