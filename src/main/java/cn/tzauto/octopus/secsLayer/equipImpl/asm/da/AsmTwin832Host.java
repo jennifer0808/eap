@@ -398,7 +398,7 @@ public class AsmTwin832Host extends EquipHost {
         }
         List<RecipePara> recipeParaList = new ArrayList();
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[])  data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
             logger.info("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析，暂无      

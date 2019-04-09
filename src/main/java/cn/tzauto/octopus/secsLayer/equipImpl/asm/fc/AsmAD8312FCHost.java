@@ -407,7 +407,7 @@ public class AsmAD8312FCHost extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
@@ -513,24 +513,7 @@ public class AsmAD8312FCHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName + ".rcp");
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        return resultMap;
+        return super.sendS2F41outPPselect(recipeName+".rcp");
     }
 
     // </editor-fold>

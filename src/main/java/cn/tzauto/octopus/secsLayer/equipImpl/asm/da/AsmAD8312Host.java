@@ -552,18 +552,14 @@ public class AsmAD8312Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        if ("ASMAD8312PLUS".equals(deviceType)) {
-            s2f41out.put("PPID", recipeName);
-        } else {
-            s2f41out.put("PPID", recipeName + ".rcp");
+        if (!"ASMAD8312PLUS".equals(deviceType)) {
+            recipeName = recipeName + ".rcp";
         }
-        byte[] hcack = new byte[1];
+        byte hcack = (byte) 9;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName);
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -571,8 +567,8 @@ public class AsmAD8312Host extends EquipHost {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
 

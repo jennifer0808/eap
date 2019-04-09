@@ -492,7 +492,7 @@ public class DekHost extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析

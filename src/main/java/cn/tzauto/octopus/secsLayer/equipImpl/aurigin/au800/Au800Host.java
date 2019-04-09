@@ -43,6 +43,7 @@ public class Au800Host extends EquipHost {
         EquipStateChangeCeid = 5000;
     }
 
+    @Override
     public Object clone() {
         Au800Host newEquip = new Au800Host(deviceId,
                 this.iPAddress,
@@ -58,6 +59,7 @@ public class Au800Host extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
