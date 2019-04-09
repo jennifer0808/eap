@@ -156,13 +156,12 @@ public class YAMADAHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
                 return;
             } else if (ceid == ppselectfinishCeid) { //601L
-               List list = (List)data.get("REPORT");
+                List list = (List)data.get("REPORT");
 
                 List listCollection = (List) list.get(0);
                 List listName = (List) listCollection.get(1);
-                for(Object name : listName){
-                    ppExecName = (String) name;
-                }
+
+                ppExecName= (String) listName.get(0);
 
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
