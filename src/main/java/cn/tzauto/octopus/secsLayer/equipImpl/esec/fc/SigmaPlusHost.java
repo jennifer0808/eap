@@ -50,6 +50,8 @@ public class SigmaPlusHost extends EquipHost {
     //private Object synS2F41 = null;
     public SigmaPlusHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        RCMD_PPSELECT = "PP_SELECT";
+        CPN_PPID = "PROGRAM";
     }
 
 

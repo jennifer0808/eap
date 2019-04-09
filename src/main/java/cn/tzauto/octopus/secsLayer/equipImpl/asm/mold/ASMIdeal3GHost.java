@@ -41,6 +41,7 @@ public class ASMIdeal3GHost extends EquipHost {
 
     public ASMIdeal3GHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        RCMD_PPSELECT = "PP_SELECT";
     }
 
     @Override

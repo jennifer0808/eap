@@ -48,6 +48,7 @@ public class EsecDB2100FCHost extends EquipHost {
 
     public EsecDB2100FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        CPN_PPID = "PPNAME";
     }
 
 
