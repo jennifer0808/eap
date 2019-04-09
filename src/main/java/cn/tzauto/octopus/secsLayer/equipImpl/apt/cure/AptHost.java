@@ -4,12 +4,10 @@ package cn.tzauto.octopus.secsLayer.equipImpl.apt.cure;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -20,14 +18,15 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class AptHost extends EquipHost {
@@ -37,6 +36,8 @@ public class AptHost extends EquipHost {
 
     public AptHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -143,23 +144,21 @@ public class AptHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     private List sendf3beforeStartCheck() {
-        DataMsgMap s1f3beforeStartCheck = new DataMsgMap("s1f3beforeStartCheck", activeWrapper.getDeviceId());
-        long transActionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3beforeStartCheck.setTransactionId(transActionId);
+        List list = new ArrayList();
+        list.add(2202);
+        list.add(2306);
+        list.add(2311);
+        list.add(2303);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3beforeStartCheck);
+            data = activeWrapper.sendS1F3out(list, svFormat);
             logger.debug("get data from s1f3beforeStartCheck." + JsonMapper.toJsonString(data));
         } catch (Exception e) {
         }
         if (data == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transActionId);
-        }
-        if (data == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList<Object> listtmp = (ArrayList) data.get("SV");
         return listtmp;
     }
 
@@ -345,12 +344,7 @@ public class AptHost extends EquipHost {
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         String ppbody = String.valueOf(TransferUtil.getPPBody(2, localRecipeFilePath).get(0));
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", ppbody);
         try {
             sleep(1000);
             data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_ASCII);
@@ -360,13 +354,13 @@ public class AptHost extends EquipHost {
         if (data == null) {
             return null;
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte ackc7 = (byte) data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -490,20 +484,16 @@ public class AptHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
+
     public Map sendS2F41outPPselect(String recipeName) {
         if (!FengCeConstant.CONTROL_REMOTE_ONLINE.equals(controlState)) {
             changeEqptControlStateAndShowDetailInfo("REMOTE");
         }
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
+        byte hcack = -1;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            Map data = super.sendS2F41outPPselect(recipeName);
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -512,19 +502,10 @@ public class AptHost extends EquipHost {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
-
-    public List getSvIdList(List<RecipeTemplate> recipeTemplates) {
-        List svIdList = new ArrayList();
-        for (int i = 0; i < recipeTemplates.size(); i++) {
-            svIdList.add(recipeTemplates.get(i).getDeviceVariableId());
-        }
-        return svIdList;
-    }
-
 
 
     /**
@@ -584,56 +565,21 @@ public class AptHost extends EquipHost {
     }
 
     private float getCanStartTemperature() {
-        DataMsgMap s2f13CanStartTemperature = new DataMsgMap("s2f13CanStartTemperature", activeWrapper.getDeviceId());
-        s2f13CanStartTemperature.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
+        List listEC = new ArrayList();
+        listEC.add(21);
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13CanStartTemperature);
+            data = activeWrapper.sendS2F13out(listEC, ecFormat);
         } catch (Exception e) {
         }
         if (data == null) {
             logger.debug("Get the CanStartTemperature failed");
             return Float.MAX_VALUE;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("EC");
         float canStartTemperature = Float.valueOf(String.valueOf(listtmp.get(0)));
         logger.debug("Get the CanStartTemperature:[" + canStartTemperature + "]");
         return canStartTemperature;
     }
 
-    /**
-     * @param transactionId
-     * @return
-     */
-    @Override
-    public DataMsgMap getMsgDataFromWaitMsgValueMapByTransactionId(long transactionId) {
-        int i = 0;
-        logger.info("Can not get value directly,will try to get value from message queue");
-        while (i < 10) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                logger.error("Exception occur，Exception info：从WaitMsgValueMap中获取消息时，线程中断。设备编号：" + deviceCode);
-                ex.printStackTrace();
-            }
-            DataMsgMap DataMsgMap = this.waitMsgValueMap.get(transactionId);
-            logger.info("try===>" + i);
-            if (DataMsgMap != null) {
-                logger.info("Had get value from message queue ===>" + JSONArray.toJSON(DataMsgMap));
-                return DataMsgMap;
-            }
-            i++;
-        }
-        if (i >= 10) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "从设备获取数据失败，请检查设备通讯状态！");
-            logger.error("从设备获取数据失败，设备编号：" + deviceCode);
-            return null;
-        }
-        waitMsgValueMap.remove(transactionId);
-        if (waitMsgValueMap.entrySet().size() > 1000) {
-            waitMsgValueMap.clear();
-        }
-        return null;
-    }
 }

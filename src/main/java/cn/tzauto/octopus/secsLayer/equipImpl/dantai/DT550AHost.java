@@ -8,6 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.dantai;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -48,7 +49,12 @@ public class DT550AHost extends EquipHost {
 
     public DT550AHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
+
     public Object clone() {
         DT550AHost newEquip = new DT550AHost(deviceId,
                 this.iPAddress,
@@ -138,7 +144,7 @@ public class DT550AHost extends EquipHost {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
-            }else if (tagName.equalsIgnoreCase("s2f34in")) {
+            } else if (tagName.equalsIgnoreCase("s2f34in")) {
                 processS2F34in(data);
             } else if (tagName.equalsIgnoreCase("s2f36in")) {
                 processS2F36in(data);
@@ -155,8 +161,7 @@ public class DT550AHost extends EquipHost {
                 } else {
                     processS6F11in(data);
                 }
-            }
-            else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
+            } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
                 //或者重新发送参数
@@ -450,9 +455,6 @@ public class DT550AHost extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-
-
-
 
 
     //hold机台，先停再锁

@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.parmi;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -19,7 +20,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class ParmiHost extends EquipHost {
@@ -29,6 +33,10 @@ public class ParmiHost extends EquipHost {
 
     public ParmiHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -113,9 +121,9 @@ public class ParmiHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            }   else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -153,7 +161,7 @@ public class ParmiHost extends EquipHost {
         String pUserName = "";
         String pUserNo = "";
         String snt = "";
-        String snt1 ="";
+        String snt1 = "";
         String pSampleValues = "";
         String pSampleValues1 = "";
         if (count == 5) {
@@ -172,16 +180,16 @@ public class ParmiHost extends EquipHost {
                     value[i] = ((SecsItem) data.get("Value" + i)).getData().toString();
                     logger.info("Value" + i + "=" + value[i]);
                 }
-                pSampleValues = value[0] + "," + value[1] +","+ value[2] +","+ value[3] +","+ value[4];
+                pSampleValues = value[0] + "," + value[1] + "," + value[2] + "," + value[3] + "," + value[4];
             } catch (Exception e) {
                 e.printStackTrace();
             }
             UiLogUtil.appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-            UiLogUtil.appendLog2EventTab(deviceCode,"钢网厚度："+ snt);
-            UiLogUtil.appendLog2EventTab(deviceCode,"实测厚度："+ pSampleValues);
+            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度：" + snt);
+            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
-            logger.info("snt ="+ snt + "pSampleValues ="+ pSampleValues);
-            Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo,snt,deviceCode);
+            logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
+            Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
             UiLogUtil.appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
         if (count == 10) {
@@ -202,21 +210,21 @@ public class ParmiHost extends EquipHost {
                     value[i] = ((SecsItem) data.get("Value" + i)).getData().toString();
                     logger.info("Value" + i + "=" + value[i]);
                 }
-                pSampleValues = value[0] +","+ value[2] +","+ value[4] +","+ value[6] +","+ value[8];
-                pSampleValues1 = value[1] +","+ value[3] +","+ value[5] +","+ value[7] +","+ value[9];
+                pSampleValues = value[0] + "," + value[2] + "," + value[4] + "," + value[6] + "," + value[8];
+                pSampleValues1 = value[1] + "," + value[3] + "," + value[5] + "," + value[7] + "," + value[9];
             } catch (Exception e) {
                 e.printStackTrace();
             }
             UiLogUtil.appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-            UiLogUtil.appendLog2EventTab(deviceCode,"钢网厚度1："+ snt);
-            UiLogUtil.appendLog2EventTab(deviceCode,"实测厚度："+ pSampleValues);
-            UiLogUtil.appendLog2EventTab(deviceCode,"钢网厚度2："+ snt1);
-            UiLogUtil.appendLog2EventTab(deviceCode,"实测厚度："+ pSampleValues1);
+            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度1：" + snt);
+            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
+            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度2：" + snt1);
+            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues1);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
-            logger.info("snt ="+ snt + "pSampleValues ="+ pSampleValues);
-            logger.info("snt1 ="+ snt1 + "pSampleValues1 ="+ pSampleValues1);
-            Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo,snt,deviceCode);
-            Map resultMap1 = AxisUtility.getSPCdata(stripId, pSampleValues1, pUserName, pUserNo,snt1,deviceCode);
+            logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
+            logger.info("snt1 =" + snt1 + "pSampleValues1 =" + pSampleValues1);
+            Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
+            Map resultMap1 = AxisUtility.getSPCdata(stripId, pSampleValues1, pUserName, pUserNo, snt1, deviceCode);
             UiLogUtil.appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
     }
@@ -416,7 +424,7 @@ public class ParmiHost extends EquipHost {
 //            return "选中Recipe失败，PPID=" + recipeName + ", 设备消息回复错误，请联系CIM人员处理";
 //        }
 
-//    }
+    //    }
     //hold机台，先停再锁
     @Override
     public Map holdDevice() {

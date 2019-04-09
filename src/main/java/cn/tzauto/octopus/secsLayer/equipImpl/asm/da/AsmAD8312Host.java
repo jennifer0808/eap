@@ -17,7 +17,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -31,19 +30,17 @@ import java.util.Map;
 
 public class AsmAD8312Host extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(AsmAD8312Host.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
-    public String Datelength;
 
 
     public AsmAD8312Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 4L;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -58,12 +55,7 @@ public class AsmAD8312Host extends EquipHost {
                 if (this.getCommState() != AsmAD8312Host.COMMUNICATING) {
                     sendS1F13out();
                 }
-//                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-//                    sendS1F1out();
-//                }
                 if (rptDefineNum < 1) {
-                    //为了能调整为online remote
-//                    sendS1F17out();
                     super.findDeviceRecipe();
                     rptDefineNum++;
                     sendS2F37outAll();
@@ -77,10 +69,6 @@ public class AsmAD8312Host extends EquipHost {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
-                    processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -88,7 +76,6 @@ public class AsmAD8312Host extends EquipHost {
                             + " which I do not want to process! ");
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 logger.fatal("Caught Interruption", e);
             }
         }
@@ -115,7 +102,6 @@ public class AsmAD8312Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data); 
@@ -359,21 +345,17 @@ public class AsmAD8312Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        long length = TransferUtil.getPPLength(localFilePath);
         if ("ASMAD8312PLUS".equals(deviceType)) {
-            s7f1out.put("ProcessprogramID", targetRecipeName);
+
         } else {
-            s7f1out.put("ProcessprogramID", targetRecipeName + ".rcp");
+            targetRecipeName = targetRecipeName + ".rcp";
         }
-        s7f1out.put("Length", length);
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
+        byte ppgnt = -1;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -382,37 +364,32 @@ public class AsmAD8312Host extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        resultMap.put("ppgnt", ppgnt);
+        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
         if ("ASMAD8312PLUS".equals(deviceType)) {
-            s7f3out.put("ProcessprogramID", targetRecipeName);
         } else {
-            s7f3out.put("ProcessprogramID", targetRecipeName + ".rcp");
+            targetRecipeName = targetRecipeName + ".rcp";
         }
-        s7f3out.put("Processprogram", secsItem);
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception:", e);
             return null;
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte ackc7 = (byte) data.get("AckCode");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -434,7 +411,7 @@ public class AsmAD8312Host extends EquipHost {
         List<RecipePara> recipeParaList = null;
         List<RecipePara> recipeParaListExtra = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) (data.get("PPBODY"));
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 //            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
@@ -450,7 +427,6 @@ public class AsmAD8312Host extends EquipHost {
                 logger.info(result);
             }
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -465,23 +441,21 @@ public class AsmAD8312Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        //TODO
         if ("ASMAD8312PLUS".equals(deviceType)) {
-            s7f17out.put("ProcessprogramID", recipeName);
         } else {
-            s7f17out.put("ProcessprogramID", recipeName + ".rcp");
+            recipeName = recipeName + ".rcp";
         }
-        byte[] ackc7 = new byte[1];
+        List list = new ArrayList();
+        list.add(recipeName);
+        byte ackc7 = -1;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(list);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+            ackc7 = (byte) data.get("ACKC7");
+            if (ackc7 == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -490,8 +464,8 @@ public class AsmAD8312Host extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -501,27 +475,23 @@ public class AsmAD8312Host extends EquipHost {
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
+
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
+            data = activeWrapper.sendS7F19out();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
+
         if (data == null || data.get("EPPD") == null) {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) data.get("EPPD");
             ArrayList list1 = new ArrayList();
             for (int i = 0; i < listtmp.size(); i++) {
                 list1.add(listtmp.get(i).toString().replace(".rcp", ""));
@@ -531,37 +501,28 @@ public class AsmAD8312Host extends EquipHost {
         return resultMap;
     }
 // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="processS14FXin Code">
 
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="sendS1FXout Code">
-    // </editor-fold>
+
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     //释放机台
     @Override
     public Map releaseDevice() {
-        Map map = new HashMap();// this.sendS2f41Cmd("START");
-//        if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
-//            this.setAlarmState(0);
-//        }
+        Map map = new HashMap();
         map.put("HCACK", 0);
         setAlarmState(0);
         return map;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
+
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+
         if ("ASMAD8312PLUS".equals(deviceType)) {
-            s2f41out.put("PPID", recipeName);
         } else {
-            s2f41out.put("PPID", recipeName + ".rcp");
+            recipeName = recipeName + ".rcp";
         }
         byte[] hcack = new byte[1];
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            Map data = super.sendS2F41outPPselect(recipeName);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
             logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
@@ -577,10 +538,6 @@ public class AsmAD8312Host extends EquipHost {
     }
 
     // </editor-fold>
-    /*
-     * (non-Javadoc) It only copies field member values except Mli.
-     * @see java.lang.Object#clone()
-     */
 
     @Override
     public Object clone() {
@@ -607,46 +564,7 @@ public class AsmAD8312Host extends EquipHost {
         return "0";
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 
 
-    /**
-     * WaferMappingInfo Upload
-     *
-     * @param dataMsgMap
-     * @return
-     */
-    @Override
-    public Map processS12F1in(DataMsgMap dataMsgMap) {
-        try {
-            String MaterialID = (String) ((SecsItem) dataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) dataMsgMap.get("IDTYP")).getData());
-            upFlatNotchLocation = dataMsgMap.getSingleNumber("FlatNotchLocation");
-//            long FileFrameRotation = DataMsgMap.getSingleNumber("FileFrameRotation");
-            byte[] OriginLocation = ((byte[]) ((SecsItem) dataMsgMap.get("OriginLocation")).getData());
-            long RowCountInDieIncrements = dataMsgMap.getSingleNumber("RowCountInDieIncrements");
-            long ColumnCountInDieIncrements = dataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
-            uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
-            uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
-            //kong
-            //String NullBinCodeValue = (String)((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
-            UiLogUtil.appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
-            DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
-            //TODO 调用webservices回传waferMapping信息
-            byte[] ack = new byte[]{0};
-            s12f2out.put("SDACK", ack);
-            s12f2out.setTransactionId(dataMsgMap.getTransactionId());
-            activeWrapper.sendS12F2out((byte) 0, dataMsgMap.getTransactionId());
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0;
         try {
@@ -658,7 +576,6 @@ public class AsmAD8312Host extends EquipHost {
                 processS6F11inStripMapUpload(data);
             } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }
@@ -676,12 +593,6 @@ public class AsmAD8312Host extends EquipHost {
                 resultMap.put("TransactionId", data.getTransactionId());
                 AutoAlter.alter(resultMap);
             }
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-
             this.setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);

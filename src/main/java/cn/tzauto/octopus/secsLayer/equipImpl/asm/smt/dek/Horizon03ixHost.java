@@ -7,6 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.smt.dek;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
@@ -39,6 +40,10 @@ public class Horizon03ixHost extends EquipHost {
 
     public Horizon03ixHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     public Object clone() {
@@ -642,7 +647,7 @@ public class Horizon03ixHost extends EquipHost {
             if (goldRecipe == null) {
 //                GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
 //                DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
-                UiLogUtil.appendLog2EventTab(deviceCode,"");
+                UiLogUtil.appendLog2EventTab(deviceCode, "");
                 //不允许开机
                 this.holdDevice();
             } else {
@@ -650,7 +655,7 @@ public class Horizon03ixHost extends EquipHost {
                 if (checkRecipe == null) {
 //                    GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过！\n");
 
-                    UiLogUtil.appendLog2EventTab(deviceCode,"");
+                    UiLogUtil.appendLog2EventTab(deviceCode, "");
                     this.startCheckRecipePara(goldRecipe);
                 } else {
                     this.startCheckRecipePara(checkRecipe);
@@ -922,7 +927,6 @@ public class Horizon03ixHost extends EquipHost {
             return null;
         }
     }
-
 
 
 }
