@@ -67,13 +67,7 @@ public class DR3000IIIHost extends EquipHost {
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
-        if ("A1400-0007".equals(deviceCode)) {
-            Map panelMap = new HashMap();
-            panelMap.put("EquipStatus", "READY");
-            panelMap.put("PPExecName", "12-N-140HM-01");
-            panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
-            changeEquipPanel(panelMap);
-        }
+
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -95,7 +89,7 @@ public class DR3000IIIHost extends EquipHost {
 
 //                    initRptPara();
                 }
-                if (rptDefineNum < 2) {
+                if (rptDefineNum < 1) {
 //                    sendS1F1out();
 //                    //为了能调整为online remote
 //                    sendS1F17out();
@@ -727,25 +721,7 @@ public class DR3000IIIHost extends EquipHost {
         return wirecipeParaDiff;
     }
 
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = 0;
-        try {
-            if (data.get("CEID") != null) {
-                ceid = (long) data.get("CEID");
-                logger.info("Received a s6f11in with CEID = " + ceid);
-            }
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
-    @SuppressWarnings("unchecked")
     public void sendS6F23clear() {
         DataMsgMap s2f37outAll = new DataMsgMap("s6f23out", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();

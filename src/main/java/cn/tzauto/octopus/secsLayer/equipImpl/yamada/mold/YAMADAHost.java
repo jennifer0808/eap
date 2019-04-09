@@ -9,7 +9,6 @@ import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -17,7 +16,6 @@ import cn.tzauto.octopus.common.resolver.yamada.YamadRecipeUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -27,7 +25,6 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author njtz
  */
 @SuppressWarnings("serial")
@@ -36,9 +33,10 @@ public class YAMADAHost extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(YAMADAHost.class.getName());
     private long ppselectfinishCeid = 601;
+
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid=605;
+        EquipStateChangeCeid = 605;
 
     }
 
@@ -65,31 +63,9 @@ public class YAMADAHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11EquipStatus(msg);
-                }
-                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    try {
-                        processS6F11EquipStatusChange(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate") || (msg.getMsgSfName().equalsIgnoreCase("s6f11lotstartready"))) {
-                    try {
-                        processS6F11EquipStatus(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11RunModeChange")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
-                } else {
+                }  else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -116,22 +92,13 @@ public class YAMADAHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-               this.inputMsgQueue.put(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
-                putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.equalsIgnoreCase("s2f17in")) {
-                processS2F17in(data);
-            } else if (tagName.equalsIgnoreCase("s2f34in")) {
-                processS2F34in(data);
-            } else if (tagName.equalsIgnoreCase("s2f36in")) {
-                processS2F36in(data);
-            } else if (tagName.equalsIgnoreCase("s2f38in")) {
-                processS2F38in(data);
-            } else if (tagName.equalsIgnoreCase("s5f1in")) {
+            }  else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -147,37 +114,21 @@ public class YAMADAHost extends EquipHost {
     }
 
     public List sendS1F3PressCheckout() {
-        //DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
-        DataMsgMap s1f3out = new DataMsgMap("s1f3out", activeWrapper.getDeviceId());
-
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] press1SV = new long[1];
-        press1SV[0] = 5101l;
-        s1f3out.put("Press1", press1SV);
-        long[] press2SV = new long[1];
-        press2SV[0] = 5201l;
-        s1f3out.put("Press2", press2SV);
-        long[] press3SV = new long[1];
-        press3SV[0] = 5301l;
-        s1f3out.put("Press3", press3SV);
-        long[] press4SV = new long[1];
-        press4SV[0] = 5401l;
-        s1f3out.put("Press4", press4SV);
         DataMsgMap data = null;
+        List list=new ArrayList();
+        list.add(5101l);
+        list.add(5201l);
+        list.add(5301l);
+        list.add(5401l);
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            data = activeWrapper.sendS1F3out(list,svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        if (data == null || data.get("RESULT") == null) {
-//            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-//        }
-        if (data == null || data.get("RESULT") == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList)  data.get("SV");
         return listtmp;
     }
 
@@ -191,25 +142,25 @@ public class YAMADAHost extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            } else if (ceid == 102 ) {
+            } else if (ceid == 102) {
 //                sendS2f41Cmd("UNLOCK");
 //                UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
-                runMode = data.getSingleNumber("RunMode");
+//                runMode = data.getSingleNumber("RunMode");
                 if (runMode == 0 || runMode == 2) {
 //                    sendS2f41Cmd("UNLOCK");
 //                    UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
                 }
-            }else if(ceid == EquipStateChangeCeid){
+            } else if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
                 return;
-            }else if(ceid == ppselectfinishCeid){ //601
+            } else if (ceid == ppselectfinishCeid) { //601L
                 ppExecName = (String) ((SecsItem) data.get("PPExecName")).getData();
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
                 changeEquipPanel(map);
-                return ;
+                return;
             }
 
             updateCommStateInExt();
@@ -217,20 +168,8 @@ public class YAMADAHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //更新页面显示内容
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID");
-        sqlSession.close();
-        if (recipeTemplates != null && recipeTemplates.size() > 0) {
-            for (int j = 0; j < recipeTemplates.size(); j++) {
-                long ceidtmp = Long.parseLong(recipeTemplates.get(j).getDeviceVariableId());
-                if (ceid == ceidtmp) {
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
-                    break;
-                }
-            }
-        }
+
+
     }
 
     @Override
@@ -239,10 +178,10 @@ public class YAMADAHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
 
-          //  ceid = data.getSingleNumber("CollEventID");
-         //   equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            //  ceid = data.getSingleNumber("CollEventID");
+            //   equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 
-           findDeviceRecipe();
+            findDeviceRecipe();
             if (equipStatus.equalsIgnoreCase("idle") || equipStatus.equalsIgnoreCase("setup")) {
 //                sendS2f41Cmd("UNLOCK");
             }
@@ -354,7 +293,7 @@ public class YAMADAHost extends EquipHost {
             sqlSession.close();
         }
     }
-    
+
     @Override
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -441,49 +380,6 @@ public class YAMADAHost extends EquipHost {
         newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
         this.clear();
         return newEquip;
-    }
-    
-     @Override
-    public void sendTerminalMsg2EqpSingle(String msg) {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            byte[] tid = new byte[1];
-            tid[0] = 0;
-            sendS10F3(tid[0], msg);
-        }
-    }
-    @Override
-    public Map holdDevice() {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            Map map = sendS2f41Cmd("STOP");
-            if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
-                this.setAlarmState(2);
-            }
-            return map;
-        } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
-            return null;
-        }
-    }
-
-    public Map releaseDevice() {
-
-        Map map = new HashMap();
-        map.put("HCACK", "0");
-        map.put("Description", "OK");
-
-//        this.sendS2f41Cmd("START");
-//        if ((byte) map.get("HCACK") == 0) {
-        this.setAlarmState(0);
-//        }
-        return map;
     }
 
     //获取当前使用的Press
