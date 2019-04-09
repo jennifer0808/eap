@@ -173,22 +173,7 @@ public class ASM80THost extends EquipHost {
 
 
     public List sendS1F3PressCheckout() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] press1SV = new long[1];
-        press1SV[0] = 163l;
-        s1f3out.put("Press1", press1SV);
-        long[] press2SV = new long[1];
-        press2SV[0] = 183l;
-        s1f3out.put("Press2", press2SV);
-        long[] press3SV = new long[1];
-        press3SV[0] = 203l;
-        s1f3out.put("Press3", press3SV);
-        long[] press4SV = new long[1];
-        press4SV[0] = 223l;
-        s1f3out.put("Press4", press4SV);
-        List list=new ArrayList();
+        List list = new ArrayList();
         list.add(163L);
         list.add(183L);
         list.add(203L);

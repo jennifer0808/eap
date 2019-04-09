@@ -18,7 +18,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
@@ -45,6 +44,7 @@ public class ASMIdeal3GHost extends EquipHost {
         RCMD_PPSELECT = "PP_SELECT";
     }
 
+    @Override
     public Object clone() {
         ASMIdeal3GHost newEquip = new ASMIdeal3GHost(deviceId,
                 this.iPAddress,
@@ -60,15 +60,16 @@ public class ASMIdeal3GHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    ASMIdeal3GHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != ASMIdeal3GHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
@@ -86,6 +87,8 @@ public class ASMIdeal3GHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
@@ -110,13 +113,14 @@ public class ASMIdeal3GHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -124,7 +128,9 @@ public class ASMIdeal3GHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                //回复s6f11消息
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -396,29 +402,14 @@ public class ASMIdeal3GHost extends EquipHost {
 //        return panelMap;
 //    }
     public List sendS1F3PressCheckout() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] press1SV = new long[1];
-        press1SV[0] = 104l;
-        s1f3out.put("Press1", press1SV);
-        long[] press2SV = new long[1];
-        press2SV[0] = 204l;
-        s1f3out.put("Press2", press2SV);
-        long[] press3SV = new long[1];
-        press3SV[0] = 304l;
-        s1f3out.put("Press3", press3SV);
-        long[] press4SV = new long[1];
-        press4SV[0] = 404l;
-        s1f3out.put("Press4", press4SV);
         DataMsgMap data = null;
-        List list=new ArrayList();
+        List list = new ArrayList();
         list.add(104L);
         list.add(204L);
         list.add(304);
         list.add(404L);
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            data = activeWrapper.sendS1F3out(list, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -426,16 +417,43 @@ public class ASMIdeal3GHost extends EquipHost {
             return null;
         }
         ArrayList listtmp = (ArrayList) data.get("SV");
-        return  listtmp;
+        return listtmp;
     }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
+
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        //回复s6f11消息
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+
+            if (ceid == 5 || ceid == 6 || ceid == 1) {
+                processS6F11EquipStatus(data);
+            }
+            if (ceid == 32 || ceid == 52 || ceid == 72 || ceid == 92) {
+                processS6F11EquipStatusChange(data);
+            }
+            if (ceid == 13) {
+                findDeviceRecipe();
+                Map map = new HashMap();
+                map.put("PPExecName", ppExecName);
+                changeEquipPanel(map);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+
+    }
+
+
     protected void processS6F11EquipStatus(DataMsgMap data) {
         //回复s6f11消息
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             if (ceid == 5) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 6) {
@@ -467,10 +485,10 @@ public class ASMIdeal3GHost extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -590,17 +608,14 @@ public class ASMIdeal3GHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
+            msgdata = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[])msgdata.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -620,6 +635,7 @@ public class ASMIdeal3GHost extends EquipHost {
         return resultMap;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
         Map resultMap = new HashMap();
@@ -704,6 +720,7 @@ public class ASMIdeal3GHost extends EquipHost {
         UiLogUtil.appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
+    @Override
     public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
