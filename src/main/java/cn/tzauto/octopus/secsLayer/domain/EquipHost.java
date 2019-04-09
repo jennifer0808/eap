@@ -3061,18 +3061,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map processS12F11in(DataMsgMap DataMsgMap) {
         try {
-            String MaterialID = DataMsgMap.get("MaterialID").toString();
+            String MaterialID = DataMsgMap.get("MID").toString();
 
-            byte IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData())[0];
+            byte IDTYP = (byte) DataMsgMap.get("IDTYP");
 
             String binList = DataMsgMap.get("XYPOSBinList").toString();
 
-            DataMsgMap s12f12out = new DataMsgMap("s12f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            s12f12out.put("MDACK", ack);
-            s12f12out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f12out);
+            activeWrapper.sendS12F2out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3149,33 +3144,30 @@ public abstract class EquipHost extends Thread implements MsgListener {
     /**
      * WaferMappingInfo Upload
      *
-     * @param DataMsgMap
+     * @param dataMsgMap
      * @return
      */
-    public Map processS12F1in(DataMsgMap DataMsgMap) {
+    public Map processS12F1in(DataMsgMap dataMsgMap) {
         try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            String MaterialID = (String) dataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            upFlatNotchLocation = DataMsgMap.getSingleNumber("FlatNotchLocation");
-//            long FileFrameRotation = DataMsgMap.getSingleNumber("FileFrameRotation");
-            byte[] OriginLocation = ((byte[]) ((SecsItem) DataMsgMap.get("OriginLocation")).getData());
-            long RowCountInDieIncrements = DataMsgMap.getSingleNumber("RowCountInDieIncrements");
-            long ColumnCountInDieIncrements = DataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
+            byte IDTYP = ((byte) dataMsgMap.get("IDTYP"));
+            upFlatNotchLocation = (long) dataMsgMap.get("FNLOC");
+//            long FileFrameRotation = dataMsgMap.getSingleNumber("FileFrameRotation");
+            byte OriginLocation = ((byte) dataMsgMap.get("ORLOC"));
+            long RowCountInDieIncrements = (long) dataMsgMap.get("ROWCT");
+            long ColumnCountInDieIncrements = (long) dataMsgMap.get("COWCT");
+
             uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
             uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
             //kong
-            //String NullBinCodeValue = (String)((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
+            //String NullBinCodeValue = (String)((SecsItem) dataMsgMap.get("NullBinCodeValue")).getData();
+            //byte[] ProcessAxis = ((byte[]) ((SecsItem) dataMsgMap.get("ProcessAxis")).getData());
             UiLogUtil.appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
             UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
             DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
             //TODO 调用webservices回传waferMapping信息
-            byte[] ack = new byte[]{0};
-            s12f2out.put("SDACK", ack);
-            s12f2out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f2out);
-
+            activeWrapper.sendS12F2out((byte) 0, dataMsgMap.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -3190,14 +3182,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map processS12F9in(DataMsgMap DataMsgMap) {
         try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            String MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
-            SecsItem BinListItem = (SecsItem) DataMsgMap.get("BinList");
+            byte[] IDTYP = (byte[]) DataMsgMap.get("IDTYP");
+            int[] STRPxSTRPy = (int[]) DataMsgMap.get("STRP");
+            Object BinListItem = DataMsgMap.get("BINLT");
             String binList = "";
-            if (BinListItem.getData() instanceof Long[] || BinListItem.getData() instanceof long[]) {
-                long[] binlists = (long[]) BinListItem.getData();
+            if (BinListItem instanceof Long[] || BinListItem instanceof long[]) {
+                long[] binlists = (long[]) BinListItem;
                 StringBuffer binBuffer = new StringBuffer();
                 for (Long binlistLong : binlists) {
                     int temp = binlistLong.intValue();
@@ -3206,7 +3198,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
                 binList = binBuffer.toString();
             } else {
-                binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
+                binList = (String) DataMsgMap.get("BINLT");
             }
             logger.info("waferid:" + MaterialID + "binlist:" + binList);
             UiLogUtil.appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
@@ -3228,7 +3220,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             byte[] ack = new byte[]{0};
             s12f10out.put("MDACK", ack);
             s12f10out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f10out);
+            activeWrapper.sendS12F10out((byte) 0, DataMsgMap.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -3246,17 +3238,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         String MaterialID = "";
         try {
             //DataMsgMap s12f4out = new DataMsgMap("s12f4out2", activeWrapper.getDeviceId());
-            MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            byte[] MapDataFormatType = ((byte[]) ((SecsItem) DataMsgMap.get("MapDataFormatType")).getData());
-            downFlatNotchLocation = DataMsgMap.getSingleNumber("FlatNotchLocation");
-            byte[] OriginLocation = ((byte[]) ((SecsItem) DataMsgMap.get("OriginLocation")).getData());
-            byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
+            byte IDTYP = ((byte) DataMsgMap.get("IDTYP"));
+            byte MapDataFormatType = (byte) DataMsgMap.get("MAPFT");
+            downFlatNotchLocation = DataMsgMap.getSingleNumber("FNLOC");
+            byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
+            byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
 //            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
 //            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
-            SecsItem BinCodeEquivalents = ((SecsItem) DataMsgMap.get("BinCodeEquivalents"));
-            SecsItem NullBinCodeValue = ((SecsItem) DataMsgMap.get("NullBinCodeValue"));
+            Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
+            Object NullBinCodeValue = DataMsgMap.get("NULBC");
             UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
             UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
             Map<String, String> mappingInfo = AxisUtility.downloadWaferMap(deviceCode, MaterialID);
@@ -3337,7 +3329,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 logger.info("准备发送服务器端数据至wafer软件" + commond);
                 iSecsHost.executeCommand3("START," + commond + ",END;");
             }
+            try {
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
+                activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                        , mapRow, mapCol, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, mapRow * mapCol, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                );
+                UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
+            } catch (Exception ex) {
+                logger.error("Exception:", ex);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
             try {
@@ -3349,13 +3350,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 logger.error("Exception:", e);
             }
         }
-        try {
-            s12f4out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f4out);
-            UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
-        } catch (Exception ex) {
-            logger.error("Exception:", ex);
-        }
+
         return null;
     }
 
@@ -3370,9 +3365,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
         DataMsgMap s12f16out = null;
         String MaterialID = "";
         try {
-            MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
+            MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
+            byte IDTYP = (byte) DataMsgMap.get("IDTYP");
             UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping！WaferId：[" + MaterialID + "]");
             UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping！WaferId：[" + MaterialID + "]");
 
@@ -3383,7 +3378,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
             SecsItem BinList = new SecsItem(waferMappingbins, FormatCode.SECS_ASCII);
             s12f16out.put("BinList", BinList);
             s12f16out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f16out);
+            long[] strps = new long[2];
+            strps[0] = 0;
+            strps[1] = 0;
+            activeWrapper.sendS12F16out(MaterialID, FormatCode.SECS_ASCII, IDTYP, strps, FormatCode.SECS_2BYTE_SIGNED_INTEGER,
+                    waferMappingbins, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
             UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping至机台！WaferId：[" + MaterialID + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3401,9 +3400,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public Map processS12F81in(DataMsgMap DataMsgMap) {
         try {
-            DataMsgMap s12f81out = new DataMsgMap("s12f81out", activeWrapper.getDeviceId());
-            s12f81out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f81out);
+            activeWrapper.sendS12F82out((byte) 0, DataMsgMap.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -3413,7 +3410,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map processS6F83in(DataMsgMap DataMsgMap) {
         if (this.deviceType.contains("HITACHI")) {
             try {
-                long[] IDTYP = ((long[]) ((SecsItem) DataMsgMap.get("PickedupPosition")).getData());
+                long[] IDTYP = (long[]) DataMsgMap.get("PICKxPICKy");
 
                 String row = "" + IDTYP[0];//X坐标
                 String col = "" + IDTYP[1];//Y坐标
