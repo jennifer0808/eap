@@ -825,19 +825,19 @@ public class EsecDB2009Host extends EquipHost {
     /**
      * WaferMappingInfo Upload
      *
-     * @param DataMsgMap
+     * @param dataMsgMap
      * @return
      */
     @Override
-    public Map processS12F1in(DataMsgMap DataMsgMap) {
+    public Map processS12F1in(DataMsgMap dataMsgMap) {
         try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            upFlatNotchLocation = DataMsgMap.getSingleNumber("FlatNotchLocation");
+            String MaterialID = (String) ((SecsItem) dataMsgMap.get("MaterialID")).getData();
+            byte[] IDTYP = ((byte[]) ((SecsItem) dataMsgMap.get("IDTYP")).getData());
+            upFlatNotchLocation = dataMsgMap.getSingleNumber("FlatNotchLocation");
 //            long FileFrameRotation = DataMsgMap.getSingleNumber("FileFrameRotation");
-            byte[] OriginLocation = ((byte[]) ((SecsItem) DataMsgMap.get("OriginLocation")).getData());
-            long RowCountInDieIncrements = DataMsgMap.getSingleNumber("RowCountInDieIncrements");
-            long ColumnCountInDieIncrements = DataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
+            byte[] OriginLocation = ((byte[]) ((SecsItem) dataMsgMap.get("OriginLocation")).getData());
+            long RowCountInDieIncrements = dataMsgMap.getSingleNumber("RowCountInDieIncrements");
+            long ColumnCountInDieIncrements = dataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
             uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
             uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
             //kong
@@ -849,7 +849,7 @@ public class EsecDB2009Host extends EquipHost {
             //TODO 调用webservices回传waferMapping信息
             byte[] ack = new byte[]{0};
             s12f2out.put("SDACK", ack);
-            s12f2out.setTransactionId(DataMsgMap.getTransactionId());
+            s12f2out.setTransactionId(dataMsgMap.getTransactionId());
             activeWrapper.respondMessage(s12f2out);
 
         } catch (Exception e) {

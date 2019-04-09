@@ -452,18 +452,8 @@ public class AsmAD838Host extends EquipHost {
         sendS2F37outAll();
         sendS2F37outClose(267L);
         sendS5F3out(true);
-        List list = new ArrayList();
-        list.add(2031L);
-        list.add(2009L);
-        list.add(2028L);
-//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
-        sendS2F33Out(3255L, 3255L, list);
-        sendS2F35out(3255L, 3255L, 3255L);
-        sendS2F35clear();
-        sendS2F35outDelete(222l,222l);
-        sendS2F33clear();
-        sendS2f33outDelete(123);
-        sendS2F37outCloseAll();
+
+
     }
 
     @Override
