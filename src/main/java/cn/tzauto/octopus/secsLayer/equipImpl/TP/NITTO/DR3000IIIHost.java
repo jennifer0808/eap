@@ -106,14 +106,11 @@ public class DR3000IIIHost extends EquipHost {
                     replyS5F2Directly(msg);
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
                     try {
-                        ceid = (long) msg.get("CEID");
+                        long ceid = (long) msg.get("CEID");
+                        processS6F11in(msg);
                         if (ceid == 22) {
-                            processS6F11in(msg);
                             super.findDeviceRecipe();
-                        } else {
-                            processS6F11in(msg);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -288,32 +285,12 @@ public class DR3000IIIHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         String ppid = recipeName;
         Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-//        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + deviceCode + "/" + ppid.replace("/", "@").replace(".", "#") + "/" + ppid.replace("/", "@").replace(".", "#") + "_V" + recipe.getVersionNo() + ".txt";
-        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + ppid.replace("/", "@") + "_V" + recipe.getVersionNo() + ".txt";
-        sqlSession.close();
-        DataMsgMap msgData = null;
-        try {
-            msgData = activeWrapper.sendS7F5out(ppid);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (msgData == null || msgData.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备参数信息失败，可能原因是当前设备为RUN状态，请检查！");
-            logger.error("获取设备:" + deviceCode + "参数信息失败，可能原因是当前机台为RUN状态！");
-            return null;
-        }
-        ppid = (String) ((SecsItem) msgData.get("ProcessprogramID")).getData();
-//        byte[] ppbody = (byte[]) ((SecsItem) msgData.get("Processprogram")).getData();
+        recipePath = getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
-//            recipeParaList = TowaRecipeUtil.transferTowaRcp(TowaRecipeUtil.Y1R_RECIPE_CONFIG, ppbody);
             recipeParaList = TPRecipeUtil.tPRecipeTran(recipePath);// TowaRecipeUtil.transferTowaRcpFromDB(deviceType, ppbody);
             for (int i = 0; i < recipeParaList.size(); i++) {
                 String paraName = recipeParaList.get(i).getParaName();
@@ -365,7 +342,7 @@ public class DR3000IIIHost extends EquipHost {
         }
     }
 
-//    public Map releaseDevice() {
+    //    public Map releaseDevice() {
 //        Map map = new HashMap();
 //        map.put("HCACK", 0);
 //        return map;
