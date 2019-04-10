@@ -426,12 +426,16 @@ public class ASM120THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath, targetRecipeName + ".prp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".prp");
+        Map resultMap =  super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override

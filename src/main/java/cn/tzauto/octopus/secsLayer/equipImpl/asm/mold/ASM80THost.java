@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -40,6 +41,7 @@ public class ASM80THost extends EquipHost {
         RCMD_PPSELECT = "PP_SELECT";
     }
 
+    @Override
     public Object clone() {
         ASM80THost newEquip = new ASM80THost(deviceId,
                 this.iPAddress,
@@ -393,12 +395,16 @@ public class ASM80THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return  super.sendS7F1out(localFilePath,targetRecipeName+ ".prp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".prp");
+        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -435,33 +441,10 @@ public class ASM80THost extends EquipHost {
     @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-//        if (data == null || data.get("EPPD") == null) {
-//            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-//        }
-        if (data == null || data.get("EPPD") == null) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        Map resultMap = super.sendS7F19out();
+        ArrayList recipeList = (ArrayList) resultMap.get("eppd");
+        if(recipeList.size()!=0){
+            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
             List<Object> recipeNames = new ArrayList<>();
             for (Object obj : listtmp) {
                 String recipeName = String.valueOf(obj);

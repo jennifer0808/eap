@@ -92,6 +92,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected short ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short rptFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short lengthFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected long lastStartCheckTime;
     protected long startCheckIntervalTime = 60;
     protected boolean holdFlag = false;
@@ -1437,7 +1438,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         DataMsgMap data = null;
 
         try {
-            data = activeWrapper.sendS7F1out(targetRecipeName, length, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, lengthFormat);
             byte ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
             resultMap.put("ppgnt", ppgnt);
