@@ -4,8 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.plasmacleaning;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -24,6 +22,7 @@ import org.apache.log4j.MDC;
 
 import javax.jms.MapMessage;
 import javax.jms.Message;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,9 +87,11 @@ public class VSP88DNHTHost extends EquipHost {
                 if (msg.getMsgSfName() != null) {
                     if (msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                         processS14F1in(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
+                    } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                        processS6F11EquipStatus(msg);
+                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) { //3
                         processS6F11inStripMapUpload(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {// 1
                         long ceid = msg.getSingleNumber("CollEventID");
                         if (ceid == 1010L) {
                             processS6F11EquipStatusChange(msg);
@@ -101,9 +102,9 @@ public class VSP88DNHTHost extends EquipHost {
                             //todo processS6F11EquipStatus
 //                            processS6F11EquipStatus(msg);
                         }
-                    } else if (msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
+                    } else if (msg.getMsgSfName().equals("s6f11EquipStatusChange")) { // 1
                         processS6F11EquipStatusChange(msg);
-                    } else if (msg.getMsgSfName().equals("s6f11stripIdRead")) {
+                    } else if (msg.getMsgSfName().equals("s6f11stripIdRead")) {//2
                         processS6F11stripIdRead(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
@@ -118,6 +119,28 @@ public class VSP88DNHTHost extends EquipHost {
             }
         }
     }
+
+
+    protected void processS6F11EquipStatus(DataMsgMap data) {
+        long ceid = 0l;
+        try {
+            ceid = (long) data.get("CEID");
+            if (ceid == 1010L || ceid == 1101L) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 1002L || ceid == 1011L) {
+                logger.info("将设备控制状态由Local调整为Remote");
+                sendS2f41Cmd("REMOTE");
+            }else if(ceid ==1103L || ceid == 1104L){
+                processS6F11stripIdRead(data);
+            }else{
+                processS6F11inStripMapUpload(data);
+            }
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
 
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
@@ -142,7 +165,9 @@ public class VSP88DNHTHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s7f20in")) {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
+              //  processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
@@ -161,10 +186,11 @@ public class VSP88DNHTHost extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public void sendS2f33stripout() {
-        DataMsgMap s2f35out = new DataMsgMap("s2f33striploadout", activeWrapper.getDeviceId());
-        s2f35out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
+        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         try {
-            activeWrapper.sendAwaitMessage(s2f35out);
+            //TODO activeWrapper.sendS2F33out();
+            activeWrapper.sendAwaitMessage(s2f33out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -175,7 +201,7 @@ public class VSP88DNHTHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             findDeviceRecipe();
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             if (equipStatus.equalsIgnoreCase("Run")) {
@@ -294,22 +320,26 @@ public class VSP88DNHTHost extends EquipHost {
     protected void processS6F11stripIdRead(DataMsgMap data) {
         //webserverice  校验
         String stripId = "";
-        Long ceid = 0L;
+        long ceid = 0L;
         String funcType = "";
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            stripId = ((SecsItem) data.get("stripid")).getData().toString();
+            ceid = (long) data.get("CEID");
+            ArrayList reportList = (ArrayList) data.get("REPORT");
+            List list = (List) reportList.get(0);
+            List idList = (List) list.get(1);
+            stripId = (String) idList.get(1);
+          //TODO  stripId = ((SecsItem) data.get("stripid")).getData().toString();
 
-        }catch (SecsDriverBaseException e) {
+        }catch (Exception e) {
             e.printStackTrace();
         }
         Map msgMap = new HashMap();
 
-        if (ceid == 1103) {
+        if (ceid == 1103L) {
             msgMap.put("msgName", "MesAolotLoad");
             funcType = "load";
         }
-        if (ceid == 1104) {
+        if (ceid == 1104L) {
             msgMap.put("msgName", "MesAolotUnload");
             funcType = "unload";
         }
@@ -350,16 +380,10 @@ public class VSP88DNHTHost extends EquipHost {
     }
 
     protected void sends2f41stripReply(boolean isOk) {
-        DataMsgMap out = null;
-        if (isOk) {
-            out = new DataMsgMap("s2f41stripOk", activeWrapper.getDeviceId());
-        } else {
-            out = new DataMsgMap("s2f41stripFail", activeWrapper.getDeviceId());
-        }
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            activeWrapper.sendAwaitMessage(out);
+      try{
+          activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM","RESULT", String.valueOf(isOk));
         } catch (Exception ex) {
+          logger.error("Exception:", ex);
         }
     }
 
@@ -367,76 +391,68 @@ public class VSP88DNHTHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".rcp");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+
+        long length= TransferUtil.getPPLength(localFilePath);
+        if(length == 0){
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
+            return resultMap;
+        }
+
+        DataMsgMap data = null;
+        try {
+            data = activeWrapper.sendS7F1out(targetRecipeName + ".rcp",length,FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            byte  ppgnt = (byte) data.get("PPGNT");
+            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+            resultMap.put("ppgnt", ppgnt);
+            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", e.getMessage());
+
+        }
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName + ".rcp");
-        s7f3out.put("Processprogram", secsItem);
         try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName + ".rcp",ppbody,FormatCode.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte ackc7  = (byte) data.get("ACKC7");
+
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
+
         recipeName = recipeName.replace(".rcp", "");
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+
         List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析      
-            recipeParaList = null; //AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-        }
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        //Recipe解析
+        recipeParaList = null; //AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
         //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
@@ -452,19 +468,20 @@ public class VSP88DNHTHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         recipeName = recipeName + ".rcp";
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
+        byte ackc7 = 0;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            List recipeIDlist = new ArrayList();
+            recipeIDlist.add(recipeName);
+            DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+
+            ackc7 = (byte) data.get("ACKC7");
+
+            if (ackc7 == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -473,8 +490,8 @@ public class VSP88DNHTHost extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 // </editor-fold> 
@@ -491,14 +508,13 @@ public class VSP88DNHTHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName + ".rcp");
-        byte[] hcack = new byte[1];
+        byte hcack=0;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT,CPN_PPID,recipeName + ".rcp");
+
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -506,8 +522,8 @@ public class VSP88DNHTHost extends EquipHost {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
 
