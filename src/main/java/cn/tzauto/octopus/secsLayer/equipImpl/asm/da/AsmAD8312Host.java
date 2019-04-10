@@ -514,17 +514,17 @@ public class AsmAD8312Host extends EquipHost {
     }
 
 
+    @Override
     public Map sendS2F41outPPselect(String recipeName) {
-
-        if ("ASMAD8312PLUS".equals(deviceType)) {
-        } else {
+        if (!"ASMAD8312PLUS".equals(deviceType)) {
             recipeName = recipeName + ".rcp";
         }
-        byte[] hcack = new byte[1];
+        byte hcack = (byte) 9;
         try {
+
             Map data = super.sendS2F41outPPselect(recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -532,8 +532,8 @@ public class AsmAD8312Host extends EquipHost {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
 
@@ -565,6 +565,7 @@ public class AsmAD8312Host extends EquipHost {
     }
 
 
+    @Override
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0;
         try {

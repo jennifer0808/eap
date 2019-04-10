@@ -190,18 +190,14 @@ public class YAMADAHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
 
-            //  ceid = data.getSingleNumber("CollEventID");
-            //   equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-
             findDeviceRecipe();
+
             if (equipStatus.equalsIgnoreCase("idle") || equipStatus.equalsIgnoreCase("setup")) {
 //                sendS2f41Cmd("UNLOCK");
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-//        sendS1F3Check();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

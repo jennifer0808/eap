@@ -237,26 +237,7 @@ public class ASM120THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName + ".prp");
-        byte[] hcack = new byte[1];
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-//            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-        }
-        return resultMap;
+        return super.sendS2F41outPPselect(recipeName + ".prp");
     }
     //</editor-fold>
 
@@ -445,12 +426,16 @@ public class ASM120THost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath, targetRecipeName + ".prp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".prp");
+        Map resultMap =  super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".prp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -535,7 +520,7 @@ public class ASM120THost extends EquipHost {
 //        ExecutorService exec = Executors.newFixedThreadPool(1);
         ExecutorService exec = Executors.newSingleThreadExecutor();
         Callable<DataMsgMap> call = new Callable<DataMsgMap>() {
-
+            @Override
             public DataMsgMap call() throws Exception {
                 //开始执行耗时操作  
                 return activeWrapper.sendAwaitMessage(s7f19outF);

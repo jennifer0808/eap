@@ -11,6 +11,10 @@
     -fx-background-color: #FBC372;
 }
 
+.button:pressed{
+    -fx-background-color: #F9A125;
+}
+
 /*设置表格头靠左、字体大小，字体颜色*/
 .table-view .column-header .label{
     -fx-alignment: center;

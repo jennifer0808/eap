@@ -5,7 +5,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="390.0" prefWidth="850.0" style="-fx-background-color: white;" stylesheets="@style/rcpmngpane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController">
+<?import java.net.URL?>
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="390.0" prefWidth="850.0" style="-fx-background-color: white;"  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController">
+    <stylesheets>
+        <URL value="@rcpmngpane.css" />
+    </stylesheets>
     <children>
         <GridPane>
             <columnConstraints>
@@ -57,14 +61,14 @@
                 </GridPane>
                 <FlowPane fx:id="functionPane" alignment="CENTER_RIGHT" hgap="10.0" prefHeight="29.0" prefWidth="850.0" vgap="10.0" GridPane.rowIndex="2">
                     <children>
-                        <Button fx:id="BTN_save" mnemonicParsing="false" onAction="#JB_RcpClear" onMouseExited="#saveExited" onMouseMoved="#saveMoved" onMousePressed="#savePressed" onMouseReleased="#saveReleased" text="%reserve" textFill="WHITE" />
-                        <Button fx:id="BTN_query" mnemonicParsing="false" onAction="#btnQueryClick" onMouseExited="#queryExited" onMouseMoved="#queryMoved" onMousePressed="#queryPressed" onMouseReleased="#queryReleased" text="%query" textFill="WHITE" />
+                        <Button fx:id="BTN_save" mnemonicParsing="false" onAction="#JB_RcpClear" text="%reserve" textFill="WHITE" />
+                        <Button fx:id="BTN_query" mnemonicParsing="false" onAction="#btnQueryClick"  text="%query" textFill="WHITE" />
                         <!--<Button fx:id="BTN_save" mnemonicParsing="false" onMouseExited="#saveExited" onMouseMoved="#saveMoved" onMousePressed="#savePressed" onMouseReleased="#saveReleased" text="保留/不保留" GridPane.columnIndex="2" />-->
-                        <Button fx:id="BTN_view" mnemonicParsing="false" onAction="#btnViewClick" onMouseExited="#viewExited" onMouseMoved="#viewMoved" onMousePressed="#viewPressed" onMouseReleased="#viewReleased" text="%browse" textFill="WHITE" />
-                        <Button fx:id="BTN_upload" mnemonicParsing="false" onAction="#btnUploadClick" onMouseExited="#uploadExited" onMouseMoved="#uploadMoved" onMousePressed="#uploadPressed" onMouseReleased="#uploadReleased" text="%uploadRecipe" textFill="WHITE" />
-                        <Button fx:id="BTN_download" mnemonicParsing="false" onAction="#btnDownloadClick" onMouseExited="#downloadExited" onMouseMoved="#downloadMoved" onMousePressed="#downloadPressed" onMouseReleased="#downloadReleased" text="%downloadRecipe" textFill="WHITE" />
+                        <Button fx:id="BTN_view" mnemonicParsing="false" onAction="#btnViewClick"  text="%browse" textFill="WHITE" />
+                        <Button fx:id="BTN_upload" mnemonicParsing="false" onAction="#btnUploadClick"  text="%uploadRecipe" textFill="WHITE" />
+                        <Button fx:id="BTN_download" mnemonicParsing="false" onAction="#btnDownloadClick" text="%downloadRecipe" textFill="WHITE" />
                         <!--<Button fx:id="BTN_view" mnemonicParsing="false" onMouseExited="#viewExited" onMouseMoved="#viewMoved" onMousePressed="#viewPressed" onMouseReleased="#viewReleased" text="浏览" GridPane.columnIndex="4" />-->
-                        <Button fx:id="BTN_delete" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#btnDelClick" onMouseExited="#deleteExited" onMouseMoved="#deleteMoved" onMousePressed="#deletePressed" onMouseReleased="#deleteReleased" text="%delete" textFill="WHITE" />
+                        <Button fx:id="BTN_delete" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#btnDelClick"  text="%delete" textFill="WHITE" />
                     </children>
                 </FlowPane>
 

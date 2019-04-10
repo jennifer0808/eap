@@ -259,7 +259,13 @@ public class EsecDB2100FCHost extends EquipHost {
         s2f41out.put("PPID", recipeName + ".dbrcp");
         byte[] hcack = new byte[1];
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName + ".dbrcp");
+            Map cp = new HashMap();
+            cp.put(CPN_PPID, recipeName + ".dbrcp");
+            Map cpName = new HashMap();
+            cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValue = new HashMap();
+            cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cp, cpName, cpValue);
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
             logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);

@@ -476,12 +476,16 @@ public class DekHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap =  super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -496,7 +500,7 @@ public class DekHost extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析
@@ -516,7 +520,9 @@ public class DekHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        return super.sendS7F17out(recipeName + ".dbrcp");
+        Map resultMap = super.sendS7F17out(recipeName + ".dbrcp");
+        resultMap.put("ppid",recipeName);
+        return resultMap;
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 

@@ -348,7 +348,14 @@ public class EsecDB2009Host extends EquipHost {
         s2f41out.put("PPID", recipeName + ".dbrcp");
         byte[] hcack = new byte[1];
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName + ".dbrcp");
+            Map cp = new HashMap();
+            cp.put(CPN_PPID, recipeName + ".dbrcp");
+            Map cpName = new HashMap();
+            cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValue = new HashMap();
+            cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cp, cpName, cpValue);
+
             //选中成功标识
             if (data != null) {
                 ppselectFlag = true;
