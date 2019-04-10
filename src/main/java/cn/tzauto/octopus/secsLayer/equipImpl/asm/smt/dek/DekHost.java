@@ -476,12 +476,16 @@ public class DekHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap =  super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -516,7 +520,9 @@ public class DekHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        return super.sendS7F17out(recipeName + ".dbrcp");
+        Map resultMap = super.sendS7F17out(recipeName + ".dbrcp");
+        resultMap.put("ppid",recipeName);
+        return resultMap;
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
