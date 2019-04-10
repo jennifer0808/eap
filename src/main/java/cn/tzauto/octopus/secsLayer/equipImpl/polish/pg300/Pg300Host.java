@@ -111,6 +111,8 @@ public class Pg300Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                //回复s6f11消息
+                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -135,19 +137,12 @@ public class Pg300Host extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     private void sendS1F3CheckPort() {
-//        DataMsgMap s1f3out = new DataMsgMap("s1f3portstatecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-//        s1f3out.setTransactionId(transactionId);
         DataMsgMap data = null;
         try {
             List svidlist = new ArrayList();
             data = activeWrapper.sendS1F3out(svidlist,svFormat);
-//            data = activeWrapper.sendAwaitMessage(s1f3out);
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
         }
         if (data == null || data.get("RESULT") == null) {
             return;
@@ -167,6 +162,7 @@ public class Pg300Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS1F3RcpParaCheckout(List svidlist) {
+        //// TODO: 2019/4/10 sml文件中没有找到对应的消息体
         DataMsgMap s1f3out = new DataMsgMap("s1f3" + deviceType + "RcpPara", activeWrapper.getDeviceId());
         DataMsgMap dataHashtable = null;
         s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -199,7 +195,7 @@ public class Pg300Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        // TODO: 2019/4/10  portIdL暂时没法拆分
+        // TODO: 2019/4/10  Pg300的s2f41outPPselect中需要多个list，并且portIdL（料盒口）必传
         DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         long[] portIdL = new long[1];
         if ("1".equals(this.portId)) {
@@ -233,16 +229,12 @@ public class Pg300Host extends EquipHost {
     }
 
     private Map sendS2F41Grant() {
-        // TODO: 2019/4/10  参考sendS2F41outPPselect和sml文件进行修改
-//        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
-//        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         byte[] hcack = new byte[1];
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, null);
-//            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out("GRANT", null, null);
             logger.info("The equip " + deviceCode + " request to Grand");
             hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
@@ -269,9 +261,8 @@ public class Pg300Host extends EquipHost {
                     ceid == 46 || ceid == 57 || ceid == 59 || ceid == 56 || ceid == 58) {
                 processS6F11EquipStatus(data);
             } else {
-                ppExecName = (String) ((SecsItem) data.get("PPExecName")).getData();
                 Map map = new HashMap();
-                map.put("PPExecName", ppExecName);
+                map.put("PPExecName", findDeviceRecipe().get("PPExecName"));
                 changeEquipPanel(map);
             }
         } catch (Exception e) {
