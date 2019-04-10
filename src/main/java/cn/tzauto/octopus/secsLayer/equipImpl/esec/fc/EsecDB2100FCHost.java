@@ -26,28 +26,21 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Level;
 
-/**
- * @author 贺从愿
- * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-3-25
- * @(#)EquipHost.java
- * @Modified
- * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
- * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
- * use and distribution are prohibited. Modification History: Modification Date
- * Author Reason class Description
- */
+
 public class EsecDB2100FCHost extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
+
     private static final Logger logger = Logger.getLogger(EsecDB2100FCHost.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
+
 
     public EsecDB2100FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        EquipStateChangeCeid = 3255;
+        StripMapUpCeid = 15339;
         CPN_PPID = "PPNAME";
     }
 
@@ -104,8 +97,8 @@ public class EsecDB2100FCHost extends EquipHost {
 //                            processS6F11in(msg);
 //                        }
 //                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
-                    processS6F11EquipStatusChange(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -113,7 +106,6 @@ public class EsecDB2100FCHost extends EquipHost {
                             + " which I do not want to process! ");
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 logger.fatal("Caught Interruption", e);
             }
         }
@@ -143,7 +135,7 @@ public class EsecDB2100FCHost extends EquipHost {
                 processS2F36in(data);
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            } else if (tagName.contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
@@ -288,9 +280,9 @@ public class EsecDB2100FCHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long) data.get("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
             ppExecName = ppExecName.replace(".dbrcp", "");
             preEquipStatus = equipStatus;
             findDeviceRecipe();
@@ -612,25 +604,6 @@ public class EsecDB2100FCHost extends EquipHost {
         return "0";
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     private List<RecipePara> recipeParaBD2Str(List<RecipePara> recipeParas) {
         if (recipeParas != null && recipeParas.size() > 0) {

@@ -839,8 +839,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     @SuppressWarnings("unchecked")
     public void sendS2F33Out(long dataid, long reportId, List svidList) {
         try {
-            activeWrapper.sendS2F33out(dataid, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                    , svidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            activeWrapper.sendS2F33out(dataid, svFormat, reportId, rptFormat, svidList, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -850,8 +849,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List svidList = new ArrayList();
         svidList.add(svid);
         try {
-            activeWrapper.sendS2F33out(reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, reportId, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                    , svidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            activeWrapper.sendS2F33out(reportId, svFormat, reportId, rptFormat, svidList, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1131,8 +1129,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        String ALID = (String) data.get("ALID");
         byte ALCD = (byte) data.get("ALCD");
+        long ALID = (long) data.get("ALID");
         String ALTX = (String) data.get("ALTX");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
@@ -1641,7 +1639,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         String objType = null;
         if (data.get("OBJTYPE") != null) {
-            objType = (String) data.get("ObjectType");
+            objType = (String) data.get("OBJTYPE");
         }
         String stripId = "";
         if (data.get("OBJID") != null) {
@@ -1656,9 +1654,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map stripIDformatMap = new HashMap();
         stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
         byte objack = 0;
-        String stripMapData = WSUtility.binGet(stripId, deviceCode);
+//        String stripMapData = WSUtility.binGet(stripId, deviceCode);
 //        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
-//        String stripMapData = "<stripmaptest12312313";
+        String stripMapData = "<stripmaptest12312313";
         if (stripMapData == null) {//stripId不存在
             out = new DataMsgMap("s14f2outNoExist", activeWrapper.getDeviceId());
             long[] u1 = new long[1];
@@ -2437,7 +2435,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public void changeEquipPanel(Map resultMap) {
         //ArrayList<EquipNodeBean> equipBeans = GlobalConstants.stage.equipBeans;
         for (EquipNodeBean equipNodeBean : GlobalConstants.stage.equipBeans) {
-            if (equipNodeBean.getDeviceIdProperty().equals(this.deviceId)) {
+            if (equipNodeBean.getDeviceCode().equals(this.deviceCode)) {
                 EquipPanel oldPanel = (EquipPanel) equipNodeBean.getEquipPanelProperty();
                 EquipPanel newPanel = (EquipPanel) equipNodeBean.getEquipPanelProperty().clone();
                 if (resultMap.get("PPExecName") != null) {
@@ -2958,9 +2956,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F33clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
 
         try {
             activeWrapper.sendS2F33out(0, svFormat, 0, svFormat, null, svFormat);

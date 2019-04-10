@@ -50,6 +50,8 @@ public class HP_EPL2400Host extends EquipHost {
 
     public HP_EPL2400Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 

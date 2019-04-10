@@ -5,13 +5,13 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.hylax.laserReink;
 
 /**
- *
  * @author njtz
  */
 
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
@@ -34,7 +34,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class HM2128FFWMHost extends EquipHost {
@@ -45,6 +48,9 @@ public class HM2128FFWMHost extends EquipHost {
 
     public HM2128FFWMHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -140,7 +146,7 @@ public class HM2128FFWMHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            }  else if (tagName.contains("s6f11in")) {
+            } else if (tagName.contains("s6f11in")) {
                 long ceid = 0l;
                 try {
                     ceid = data.getSingleNumber("CollEventID");
@@ -148,7 +154,7 @@ public class HM2128FFWMHost extends EquipHost {
                     e.printStackTrace();
                 }
                 processS6F11in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -809,7 +815,6 @@ public class HM2128FFWMHost extends EquipHost {
     }
 
 
-
     private void initRptPara() {
     }
 
@@ -839,7 +844,7 @@ public class HM2128FFWMHost extends EquipHost {
         }
     }
 
-//    public Map releaseDevice() {
+    //    public Map releaseDevice() {
 //        Map map = new HashMap();
 //        map.put("HCACK", 0);
 //        return map;

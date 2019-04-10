@@ -41,8 +41,11 @@ public class Au800Host extends EquipHost {
     public Au800Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 5000;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         Au800Host newEquip = new Au800Host(deviceId,
                 this.iPAddress,
@@ -58,6 +61,7 @@ public class Au800Host extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);

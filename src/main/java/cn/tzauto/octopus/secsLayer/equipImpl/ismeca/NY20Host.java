@@ -39,6 +39,10 @@ public class NY20Host extends EquipHost {
 
     public NY20Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -123,7 +127,7 @@ public class NY20Host extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
+            } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -320,10 +324,10 @@ public class NY20Host extends EquipHost {
                 if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
                     this.setAlarmState(0);
                 } else {
-                    if(checkNameFlag){
+                    if (checkNameFlag) {
                         this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!\r\n"
-                                +"Recipe Setup Error！！！");
-                    }else{
+                                + "Recipe Setup Error！！！");
+                    } else {
                         this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
                     }
                     this.setAlarmState(2);
@@ -659,8 +663,6 @@ public class NY20Host extends EquipHost {
         return resultMap;
     }
     // </editor-fold>
-
-
 
 
 }
