@@ -1,32 +1,32 @@
 package cn.tzauto.octopus.common.mq.messageHandlers;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.biz.device.domain.DeviceType;
-import cn.tzauto.octopus.biz.recipe.domain.Attach;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.domain.DeviceType;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeOperationLog;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
+import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 
 public class DownLoadHandler implements MessageHandler {
 
@@ -144,7 +144,7 @@ public class DownLoadHandler implements MessageHandler {
                 String downLoadResultString = "";
                 //验证机台状态
                 MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-                String deviceId = deviceInfo.getDeviceId();
+                String deviceId = deviceInfo.getDeviceCode();
                 String recipeName = recipe.getRecipeName();
                 downLoadResultString = hostManager.checkBeforeDownload(deviceId, recipeName);
                 if ("0".equals(downLoadResultString)) {

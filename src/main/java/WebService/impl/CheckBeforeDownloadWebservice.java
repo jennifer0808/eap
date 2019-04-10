@@ -38,7 +38,7 @@ public class CheckBeforeDownloadWebservice implements BaseWebservice {
             deviceCode =  String.valueOf(map.get("deviceCode"));
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前通信状态");
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            Map resultMap = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceId());
+            Map resultMap = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
             if (resultMap != null && !resultMap.isEmpty()) {
                 flag = "Y";
                 UiLogUtil.appendLog2SeverTab(deviceCode, "设备通信正常，可以正常改机");

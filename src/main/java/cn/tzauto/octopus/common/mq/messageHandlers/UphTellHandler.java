@@ -40,7 +40,7 @@ public class UphTellHandler implements MessageHandler {
         sqlSession.close();
         if (deviceInfos != null && !deviceInfos.isEmpty()) {
             for (DeviceInfo deviceInfo : deviceInfos) {
-                EquipHost equipHost = hostManager.getAllEquipHosts().get(deviceInfo.getDeviceId());
+                EquipHost equipHost = hostManager.getAllEquipHosts().get(deviceInfo.getDeviceCode());
                 if (equipHost == null || !equipHost.getEquipState().isCommOn()) {
                     continue;
                 }

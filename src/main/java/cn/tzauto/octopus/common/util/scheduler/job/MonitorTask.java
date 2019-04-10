@@ -6,31 +6,28 @@
 package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
-import cn.tzauto.octopus.biz.monitor.service.MonitorService;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.slf4j.MDC;
+
+import java.util.*;
 
 /**
  *
@@ -161,8 +158,6 @@ public class MonitorTask implements Job {
      * 获取机台所有的参数
      *
      * @param recipeTemplates
-     * @param equipHost
-     * @param svList
      * @param deviceRealtimeParas
      * @return
      */
@@ -287,8 +282,8 @@ public class MonitorTask implements Job {
             if (holdFlag) {
                 AxisUtility.setInlineLock(deviceInfo.getDeviceCode(), "Y", "RealTimeValueErrorLock");
                 UiLogUtil.appendLog2EventTab(deviceCode, "实时参数检查不通过，设备将被锁");
-                GlobalConstants.stage.hostManager.stopDevice(deviceInfo.getDeviceId());
-//            GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceId()).sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
+                GlobalConstants.stage.hostManager.stopDevice(deviceInfo.getDeviceCode());
+//            GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()()).sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
 
             } else {
                 AxisUtility.setInlineLock(deviceInfo.getDeviceCode(), "N", "RealTimeValueErrorLock");

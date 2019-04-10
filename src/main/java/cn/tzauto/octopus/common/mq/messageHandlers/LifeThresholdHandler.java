@@ -6,22 +6,19 @@
 package cn.tzauto.octopus.common.mq.messageHandlers;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -47,7 +44,7 @@ public class LifeThresholdHandler implements MessageHandler {
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);           
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
             if (equipHost.getEquipState().isCommOn()) {
-                Map equipBladeThresholdMap = hostManager.getEquipBladeLifeThreshold(deviceInfo.getDeviceId());
+                Map equipBladeThresholdMap = hostManager.getEquipBladeLifeThreshold(deviceInfo.getDeviceCode());
                 if (equipBladeThresholdMap == null) {
                     z1LifeThreshold = "取值失败";
                     z2LifeThreshold = "取值失败";

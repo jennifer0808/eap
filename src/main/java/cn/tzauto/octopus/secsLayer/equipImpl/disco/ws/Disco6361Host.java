@@ -24,6 +24,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -196,15 +197,12 @@ public class Disco6361Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -273,7 +271,7 @@ public class Disco6361Host extends EquipHost {
     protected void processS6F11KerfCheck(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             long offset1 = data.getSingleNumber("Z1");
             long offset2 = data.getSingleNumber("Z2");
 
@@ -841,5 +839,31 @@ public class Disco6361Host extends EquipHost {
 //        sendS2F35out(7, 7, 7);
     }
 
-
+    public Map sendS2F41outPPselect(String recipeName) {
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        try {
+            Map cpmap = new HashMap();
+            cpmap.put("Port", (byte) 1);
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameMap = new HashMap();
+            cpNameMap.put("Port", FormatCode.SECS_ASCII);
+            cpNameMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValueMp = new HashMap();
+            cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
+            cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameMap, cpValueMp);
+            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+            byte hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
+        }
+        return resultMap;
+    }
 }

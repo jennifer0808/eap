@@ -554,8 +554,8 @@ public class MultipleEquipHostManager {
      * 下载Recipe到机台
      */
     public String downLoadRcp2DeviceComplete(String recipeFilePath, DeviceInfo deviceInfo, Recipe recipe) {
-        if (equipHosts.get(deviceInfo.getDeviceId()) != null) {
-            EquipHost equipHost = equipHosts.get(deviceInfo.getDeviceId());
+        if (equipHosts.get(deviceInfo.getDeviceCode()) != null) {
+            EquipHost equipHost = equipHosts.get(deviceInfo.getDeviceCode());
             //直接从FTP下载，如果本地有就覆盖，如果FTP不存在，那么下载失败
             String localRecipeFilePath = GlobalConstants.localRecipePath + recipeFilePath;
             if (deviceInfo.getDeviceType().contains("HITACHIDB8")) {
@@ -646,7 +646,7 @@ public class MultipleEquipHostManager {
      * 下载Recipe到机台for TP
      */
     public String downLoadRcp2DeviceCompleteForTP(String recipeFilePath, DeviceInfo deviceInfo, Recipe recipe) {
-        EquipHost equipHost = equipHosts.get(Integer.parseInt(deviceInfo.getDeviceId()));
+        EquipHost equipHost = equipHosts.get(deviceInfo.getDeviceCode());
         //直接从FTP下载，如果本地有就覆盖，如果FTP不存在，那么下载失败
         String localRecipeFilePath = GlobalConstants.localRecipePath + recipeFilePath;
         if (!GlobalConstants.isLocalMode) {
@@ -1468,8 +1468,8 @@ public class MultipleEquipHostManager {
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
             sqlSession.close();
-            if (equipHosts.get(deviceInfo.getDeviceId()) != null) {
-                return equipHosts.get(deviceInfo.getDeviceId()).uploadRcpFile2FTP(localRcpPath, remoteRcpPath, recipe);
+            if (equipHosts.get(deviceInfo.getDeviceCode()) != null) {
+                return equipHosts.get(deviceInfo.getDeviceCode()).uploadRcpFile2FTP(localRcpPath, remoteRcpPath, recipe);
             } else {
                 return false;
             }
@@ -1637,7 +1637,7 @@ public class MultipleEquipHostManager {
     public DeviceInfo getDeviceInfo(String deviceId, String deviceCode) {
         if (deviceId != null) {
             for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
-                if (deviceId.equals(deviceInfo.getDeviceId())) {
+                if (deviceId.equals(deviceInfo.getDeviceCode())) {
                     return deviceInfo;
                 }
             }

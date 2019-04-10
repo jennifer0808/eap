@@ -11,16 +11,12 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -43,7 +39,7 @@ public class SpecificDataTransferHandler implements MessageHandler {
 //            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求从设备获取数据...");
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            Map resultMap = GlobalConstants.stage.hostManager.getSpecificData(deviceInfo.getDeviceId(), dataIdMap);
+            Map resultMap = GlobalConstants.stage.hostManager.getSpecificData(deviceInfo.getDeviceCode(), dataIdMap);
             Map mqMap = new HashMap();
             String resultMapString = "";
             if (resultMap != null) {

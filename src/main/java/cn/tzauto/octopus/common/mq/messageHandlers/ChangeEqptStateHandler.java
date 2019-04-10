@@ -5,22 +5,18 @@
 package cn.tzauto.octopus.common.mq.messageHandlers;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
-
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -67,7 +63,7 @@ public class ChangeEqptStateHandler implements MessageHandler {
             //更新deviceInfoLock表
             deviceService.updateDeviceInfoLock(deviceCode, type, lockStatus);
             sqlSession.commit();
-            String deviceId = deviceInfo.getDeviceId();
+            String deviceId = deviceInfo.getDeviceCode();
             Map equipState = hostManager.getEquipInitState(deviceId);
             if (equipState != null && equipState.get("EquipStatus") != null) {
                 equipStatus = equipState.get("EquipStatus").toString();
@@ -81,7 +77,7 @@ public class ChangeEqptStateHandler implements MessageHandler {
                         mqMap.put("eventDesc", executResult);
                     }
                 } else {
-                    boolean result = hostManager.changeEqptState(deviceInfo.getDeviceId(), state, type);
+                    boolean result = hostManager.changeEqptState(deviceInfo.getDeviceCode(), state, type);
                     if ("ICOST640".equals(deviceInfo.getDeviceType()) && ("READY".equals(equipStatus) || "IDLE".equals(equipStatus))) {
                         mqMap.put("eventStatus", "Y");
                         mqMap.put("eventDesc", state);

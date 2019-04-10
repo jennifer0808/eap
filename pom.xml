@@ -168,8 +168,14 @@
         </dependency>
         <!-- https://mvnrepository.com/artifact/net.sf.sevenzipjbinding/sevenzipjbinding -->
         <dependency>
+        <groupId>net.sf.sevenzipjbinding</groupId>
+        <artifactId>sevenzipjbinding</artifactId>
+        <version>9.20-2.00beta</version>
+    </dependency>
+        <!-- https://mvnrepository.com/artifact/net.sf.sevenzipjbinding/sevenzipjbinding-all-platforms -->
+        <dependency>
             <groupId>net.sf.sevenzipjbinding</groupId>
-            <artifactId>sevenzipjbinding</artifactId>
+            <artifactId>sevenzipjbinding-all-platforms</artifactId>
             <version>9.20-2.00beta</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.directory.studio/org.apache.commons.io -->

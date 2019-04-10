@@ -34,7 +34,7 @@ public class GetSpecificDataWebservice implements BaseWebservice {
 //            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求从设备获取数据...");
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            Map resultMap = GlobalConstants.stage.hostManager.getSpecificData(deviceInfo.getDeviceId(), dataIdMap);
+            Map resultMap = GlobalConstants.stage.hostManager.getSpecificData(deviceInfo.getDeviceCode(), dataIdMap);
 
             String resultMapString = "";
             if (resultMap != null) {

@@ -8,7 +8,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.ws;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
@@ -50,6 +49,9 @@ public class DiscoWSHost extends EquipHost {
     public DiscoWSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT_S";
+        CPN_PPID = "DEV_NO";
+
     }
 
     public Object clone() {
@@ -198,15 +200,11 @@ public class DiscoWSHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -284,17 +282,12 @@ public class DiscoWSHost extends EquipHost {
      */
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
+        long length = TransferUtil.getPPLength(localFilePath);
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
+        byte ppgnt = -1;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -303,8 +296,8 @@ public class DiscoWSHost extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        resultMap.put("ppgnt", ppgnt);
+        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
@@ -312,23 +305,11 @@ public class DiscoWSHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
         RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
         String shortNameOK = "Y";
         String realRecipeName = "";
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析      
@@ -363,8 +344,6 @@ public class DiscoWSHost extends EquipHost {
         } finally {
             sqlSession.close();
         }
-
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -432,23 +411,6 @@ public class DiscoWSHost extends EquipHost {
         return map;//this.sendS2f41Cmd("RESUME_H");
     }
 
-    @Override
-    public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41start", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        return resultMap;
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="StartECCheck">
@@ -925,7 +887,7 @@ public class DiscoWSHost extends EquipHost {
     protected void processS6F11KerfCheck(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             long offset1 = data.getSingleNumber("Z1");
             long offset2 = data.getSingleNumber("Z2");
 
@@ -953,4 +915,33 @@ public class DiscoWSHost extends EquipHost {
             kerfCheck = true;
         }
     }
+
+    public Map sendS2F41outPPselect(String recipeName) {
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        try {
+            Map cpmap = new HashMap();
+            cpmap.put("Port", (byte) 1);
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameMap = new HashMap();
+            cpNameMap.put("Port", FormatCode.SECS_ASCII);
+            cpNameMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValueMp = new HashMap();
+            cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
+            cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameMap, cpValueMp);
+            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+            byte hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
+        }
+        return resultMap;
+    }
+
 }

@@ -414,10 +414,12 @@ public class NY20RecipeUtil {
         return getItemParaMap(root);
     }
 
-    public static void main(String args[]) {
-        String filePath = "C:\\Users\\SunTao\\Desktop\\长电\\NY20\\AGD_LGA4X6.8_V0";
+    public static void main(String args[]) throws SevenZipNativeInitializationException {
+        net.sf.sevenzipjbinding.SevenZip.initSevenZipFromPlatformJAR();
+        net.sf.sevenzipjbinding.SevenZip.initLoadedLibraries();
+        String filePath = "D:\\RECIPE\\T5\\FT\\IsmecaNY20\\Engineer\\E4400-1114\\AAI-T-LGA-3X4.2-3000-5633\\AAI-T-LGA-3X4.2-3000-5633_V0.txt";
         // transferRcpFromDB(filePath, filePath);
-        List<RecipePara> recipeParas = transferRcpFromDB2(filePath, "AGD_LGA4X6.8", "IsmecaNY20");
+        List<RecipePara> recipeParas = transferRcpFromDB2(filePath, "", "IsmecaNY20");
         for (RecipePara r : recipeParas) {
             System.out.println(r.getParaName() + ":" + r.getSetValue());
         }

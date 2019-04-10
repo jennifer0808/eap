@@ -14,14 +14,14 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -59,7 +59,6 @@ public class UpdateVerNoHandler implements MessageHandler {
             UiLogUtil.appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
             return;
         }
-        int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
         equipHost.lotId = lotId;
         Map map = new HashMap();

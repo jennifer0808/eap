@@ -26,6 +26,7 @@ Class-Path: axis-1.4.jar xmlschema-core-2.2.1.jar HikariCP-java6-2.3.1
  ngs-xml-3.1.6.jar mybatis-3.2.8.jar spring-asm-3.0.7.RELEASE.jar gero
  nimo-j2ee-management_1.1_spec-1.0.1.jar kahadb-5.7.0.jar commons-net-
  3.6.jar commons-compress-1.18.jar jasypt-1.9.0.jar quartz-2.3.0.jar s
- lf4j-api-1.7.25.jar
+ lf4j-api-1.7.25.jar sevenzipjbinding-9.20-2.00beta.jar sevenzipjbindi
+ ng-all-platforms-9.20-2.00beta.jar
 Main-Class: cn.tzauto.octopus.gui.main.EapClient
 

@@ -57,7 +57,7 @@ public class ChangDeviceStateWebservice implements BaseWebservice {
             //更新deviceInfoLock表
             deviceService.updateDeviceInfoLock(deviceCode, type, lockStatus);
             sqlSession.commit();
-            String deviceId = deviceInfo.getDeviceId();
+            String deviceId = deviceInfo.getDeviceCode();
             Map equipState = hostManager.getEquipInitState(deviceId);
             if (equipState != null && equipState.get("EquipStatus") != null) {
                 equipStatus = equipState.get("EquipStatus").toString();
@@ -71,7 +71,7 @@ public class ChangDeviceStateWebservice implements BaseWebservice {
                         webMap.put("eventDesc", executResult);
                     }
                 } else {
-                    boolean result = hostManager.changeEqptState(deviceInfo.getDeviceId(), state, type);
+                    boolean result = hostManager.changeEqptState(deviceInfo.getDeviceCode(), state, type);
                     if ("ICOST640".equals(deviceInfo.getDeviceType()) && ("READY".equals(equipStatus) || "IDLE".equals(equipStatus))) {
                         webMap.put("eventStatus", "Y");
                         webMap.put("eventDesc", state);

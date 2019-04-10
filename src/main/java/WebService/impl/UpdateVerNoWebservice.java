@@ -49,7 +49,6 @@ public class UpdateVerNoWebservice implements BaseWebservice {
             UiLogUtil.appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
 
         }
-        int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
         equipHost.lotId = lotId;
 

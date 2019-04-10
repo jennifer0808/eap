@@ -4,24 +4,19 @@ package cn.tzauto.octopus.secsLayer.equipImpl.ismeca;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.equipImpl.sti.TR48MK5Host;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.ismeca.NY20RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -32,8 +27,8 @@ import java.util.*;
 @SuppressWarnings("serial")
 public class NY20Host extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(TR48MK5Host.class.getName());
+
+    private static final Logger logger = Logger.getLogger(NY20Host.class.getName());
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 
@@ -86,22 +81,18 @@ public class NY20Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = 0;
-                    try {
-                        ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == 11) {
-                            processEquipStatusChange(msg);
-                        } else {
-                            if (ceid == 7) {
-                                //刷新当前机台状态
-                                logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
-                                findDeviceRecipe();
-                                logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
-                            }
+                    ceid = (long) msg.get("CEID");
+                    if (ceid == 11) {
+                        processEquipStatusChange(msg);
+                    } else {
+                        if (ceid == 7) {
+                            //刷新当前机台状态
+                            logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
+                            findDeviceRecipe();
+                            logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
                         }
-                    } catch (SecsDriverBaseException e) {
-                        e.printStackTrace();
                     }
 
                 }
@@ -134,6 +125,9 @@ public class NY20Host extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
@@ -142,61 +136,13 @@ public class NY20Host extends EquipHost {
             logger.error("Exception:", e);
         }
     }
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        try {
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-            if (data == null || data.get("RESULT") == null) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-                logger.error("获取设备:" + deviceCode + "状态信息失败.");
-                return null;
-            }
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
-            ppExecName = listtmp.get(1).toString();
-            Map panelMap = new HashMap();
-            panelMap.put("EquipStatus", equipStatus);
-            panelMap.put("PPExecName", ppExecName);
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-            panelMap.put("ControlState", controlState);
-            changeEquipPanel(panelMap);
-            return panelMap;
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return null;
-        } finally {
-            sqlSession.close();
-        }
-
-    }
-
-
-    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
     protected void processEquipStatusChange(DataMsgMap data) {
         //TODO 开机check;
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             //刷新当前机台状态
             findDeviceRecipe();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
@@ -428,26 +374,21 @@ public class NY20Host extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        if (length[0] == 0) {
+        long length = -1;
+        length = TransferUtil.getPPLength(localFilePath);
+        if (length == 0) {
             resultMap.put("ppgnt", 9);
             resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
             return resultMap;
         }
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + "");
-        s7f1out.put("Length", length);
-
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
+        byte ppgnt = -1;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-            resultMap.put("ppgnt", ppgnt[0]);
-            resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+            resultMap.put("ppgnt", ppgnt);
+            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ppgnt", 9);
@@ -465,22 +406,17 @@ public class NY20Host extends EquipHost {
      */
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/") + "");
-        s7f3out.put("Processprogram", secsItem);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        byte[] ackc7 = new byte[1];
+        byte ackc7 = -1;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+            data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_BINARY);
+            ackc7 = (byte) data.get("AckCode");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -493,44 +429,23 @@ public class NY20Host extends EquipHost {
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathByConfig(recipe);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
-        RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
-        String shortNameOK = "Y";
-        String realRecipeName = "";
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        //Recipe解析      
         try {
             recipeParaList = NY20RecipeUtil.transferRcpFromDB2(recipePath, recipeName, deviceType);
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.error("解析文件出错！", ex);
         } finally {
-
-            //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
             Map resultMap = new HashMap();
             resultMap.put("msgType", "s7f6");
             resultMap.put("deviceCode", deviceCode);
             resultMap.put("recipe", recipe);
             resultMap.put("recipeNameMapping", null);
             resultMap.put("recipeParaList", recipeParaList);
-            resultMap.put("realRecipeName", realRecipeName);
-            resultMap.put("shortNameOK", shortNameOK);
             resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
             resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
             return resultMap;
@@ -581,62 +496,6 @@ public class NY20Host extends EquipHost {
         }
         return rcpInEqp;
     }
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
-
-//    public Map sendS2f41CmdPPSelect(String PPID) {
-//        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-//        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s2f41out.put("PPID", PPID);
-//        byte[] hcack = new byte[1];
-//        Map resultMap = new HashMap();
-//        resultMap.put("msgType", "s2f42");
-//        resultMap.put("deviceCode", deviceCode);
-//        try {
-//            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-//            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + PPID);
-//            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-//            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
-//            resultMap.put("HCACK", hcack[0]);
-//            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//            resultMap.put("HCACK", 9);
-//            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-//        }
-//        return resultMap;
-//    }
-//    @Override
-//    public Map holdDevice() {
-//        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-//        DeviceService deviceService = new DeviceService(sqlSession);
-//        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-//        sqlSession.close();
-//        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-////            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
-//            Map cmdMap = this.sendS2f41Cmd("STOP");
-//            if (cmdMap.get("HCACK").toString().equals("0")) {
-//                Map panelMap = new HashMap();
-//                panelMap.put("AlarmState", 2);
-//                changeEquipPanel(panelMap);
-//                holdSuccessFlag = true;
-//            } else {
-//                holdSuccessFlag = false;
-//            }
-//            return cmdMap;
-//        } else {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！\n");
-//            return null;
-//        }
-//    }
-
-//    @Override
-//    public Map releaseDevice() {
-////        这里这样写是因为DFD6361 的hold指令使用的是Stop 设备从ready到run过程时间较长，stop后直接结束全自动模式，不用发RESUME
-//        Map map = new HashMap();
-//        map.put("HCACK", 0);
-//        return map;//this.sendS2f41Cmd("RESUME_H");
-//    }
 
     //释放机台
     @Override
@@ -647,19 +506,17 @@ public class NY20Host extends EquipHost {
 
     @Override
     public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outCommand", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
+        Map data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
+            this.sendS2f41Cmd("START");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+        byte hcack = (byte) data.get("HCACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
+        resultMap.put("HCACK", hcack);
         return resultMap;
     }
     // </editor-fold>

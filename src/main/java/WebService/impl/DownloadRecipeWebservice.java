@@ -45,10 +45,10 @@ public class DownloadRecipeWebservice implements BaseWebservice {
     public String handle(String message) {
         String eventId = "";
         try {
-            HashMap map = (HashMap) JsonMapper.fromJsonString(message.replace("\n",""),HashMap.class);
+            HashMap map = (HashMap) JsonMapper.fromJsonString(message.replace("\n", ""), HashMap.class);
 
             eventId = String.valueOf(map.get("eventId"));
-            deviceCode =  String.valueOf(map.get("deviceCode"));
+            deviceCode = String.valueOf(map.get("deviceCode"));
             recipeParaList = (List<RecipePara>) JsonMapper.String2List(JSON.toJSONString(map.get("recipeParaList")), RecipePara.class);
             attachs = (List<Attach>) JsonMapper.String2List(JSON.toJSONString(map.get("attachsList")), Attach.class);
 
@@ -147,9 +147,8 @@ public class DownloadRecipeWebservice implements BaseWebservice {
                 String downLoadResultString = "";
                 //验证机台状态
                 MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-                String deviceId = deviceInfo.getDeviceId();
                 String recipeName = recipe.getRecipeName();
-                downLoadResultString = hostManager.checkBeforeDownload(deviceId, recipeName);
+                downLoadResultString = hostManager.checkBeforeDownload(deviceInfo.getDeviceCode(), recipeName);
                 if ("0".equals(downLoadResultString)) {
                     if ("2".equals(deviceType.getProtocolType())) {
                         downLoadResultString = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
@@ -199,5 +198,5 @@ public class DownloadRecipeWebservice implements BaseWebservice {
         }
     }
 
-    }
+}
 

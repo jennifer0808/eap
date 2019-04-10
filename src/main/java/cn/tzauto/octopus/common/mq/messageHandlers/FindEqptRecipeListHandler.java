@@ -4,25 +4,22 @@
  */
 package cn.tzauto.octopus.common.mq.messageHandlers;
 
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import com.alibaba.fastjson.JSONArray;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+
+import javax.jms.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -44,7 +41,7 @@ public class FindEqptRecipeListHandler implements MessageHandler {
             String deviceCode = mapMessage.getString("deviceCode");
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            String deviceId = deviceInfo.getDeviceId();
+            String deviceId = deviceInfo.getDeviceCode();
             List equipRecipeList = new ArrayList();
             Map equipRecipeListState = hostManager.getRecipeListFromDevice(deviceId);
             if (equipRecipeListState != null) {

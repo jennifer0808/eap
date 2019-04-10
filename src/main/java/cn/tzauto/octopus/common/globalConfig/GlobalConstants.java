@@ -275,6 +275,7 @@ public class GlobalConstants {
                 SqlSession sqlSession = MybatisSqlSession.getSqlSession();
                 DeviceService deviceService = new DeviceService(sqlSession);
                 List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByClientId(clientId);
+                GlobalConstants.stage.deviceInfos = deviceInfos;
                 sqlSession.close();
                 String clientVersion = getProperty("CLIENT_VERSION") == null ? "" : GlobalConstants.getProperty("CLIENT_VERSION").toString();
                 if (deviceInfos != null && !deviceInfos.isEmpty()) {

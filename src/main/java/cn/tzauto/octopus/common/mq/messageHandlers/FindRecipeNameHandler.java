@@ -15,15 +15,12 @@ import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import com.alibaba.fastjson.JSONArray;
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -49,7 +46,7 @@ public class FindRecipeNameHandler implements MessageHandler {
 //            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前程序名");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            Map equipState = hostManager.getEquipInitState(deviceInfo.getDeviceId());
+            Map equipState = hostManager.getEquipInitState(deviceInfo.getDeviceCode());
             if (equipState == null) {
                 recipeName = deviceInfoExt.getRecipeName();
             } else {

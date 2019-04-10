@@ -93,12 +93,10 @@ public class DownloadPaneController implements Initializable {
 
         recipe = recipes.get(0);
 
-        DeviceService deviceService = new DeviceService(sqlSession);
         String deviceTypeId = recipe.getDeviceTypeId();
 
-        List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByClientId(GlobalConstants.getProperty("clientId"));
         List<DeviceInfo> deviceInfostmp = new ArrayList<>();
-        for (DeviceInfo deviceInfo : deviceInfos) {
+        for (DeviceInfo deviceInfo : GlobalConstants.stage.deviceInfos) {
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
             if (equipHost != null && AxisUtility.isEngineerMode(deviceInfo.getDeviceCode()) && equipHost.getEquipState().isCommOn()) {
                 deviceInfostmp.add(deviceInfo);

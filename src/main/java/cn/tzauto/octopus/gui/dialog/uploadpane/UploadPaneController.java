@@ -6,8 +6,6 @@
 package cn.tzauto.octopus.gui.dialog.uploadpane;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
-import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
@@ -26,7 +24,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import org.apache.ibatis.session.SqlSession;
 
 import java.io.IOException;
 import java.net.URL;
@@ -107,8 +104,8 @@ public class UploadPaneController implements Initializable {
 
         Pane rcpMngPane = new Pane();
         try {
-            ResourceBundle resourceBundle = ResourceBundle.getBundle("eap",new languageUtil().getLocale());
-            rcpMngPane = FXMLLoader.load(getClass().getClassLoader().getResource("UploadPane.fxml"),resourceBundle);
+            ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
+            rcpMngPane = FXMLLoader.load(getClass().getClassLoader().getResource("UploadPane.fxml"), resourceBundle);
 
         } catch (IOException ex) {
 
@@ -152,34 +149,23 @@ public class UploadPaneController implements Initializable {
         System.out.println(deviceCodeTmp);
         List<String> eppd = new ArrayList<>();
 
-
-//        //获取机台控制的所有设备编号
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        deviceInfos = deviceService.getDeviceInfoByClientId(GlobalConstants.getProperty("clientId"));
-
-        for (DeviceInfo deviceInfo : deviceInfos) {
+        for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
             if (deviceInfo.getDeviceCode().equals(deviceCodeTmp)) {
                 this.deviceType = deviceInfo.getDeviceType();
-                deviceId = deviceInfo.getDeviceId();
+                deviceId = deviceInfo.getDeviceCode();
+                Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
+                if (resultMap == null) {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！");
+                    return;
+                }
+                eppd = (ArrayList) resultMap.get("eppd");
+                for (int i = 0; i < eppd.size(); i++) {
+                    recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
+                }
+                dataTable.setItems(recipeNames);
                 break;
             }
         }
-
-        Map resultMap = hostManager.getRecipeListFromDevice(deviceId);
-        if (resultMap == null) {
-//            JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
-            CommonUiUtil.alert(Alert.AlertType.WARNING,"未正确收到回复，请检查设备通信状态！");
-            return;
-        }
-        eppd = (ArrayList) resultMap.get("eppd");
-
-        for (int i = 0; i < eppd.size(); i++) {
-            recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
-        }
-
-        dataTable.setItems(recipeNames);
-
     }
 
     private void btnOKClick(Stage stage) {
@@ -193,12 +179,12 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING,"请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
             return;
         }
 
         if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING,"批量上传一次不得多于20条，请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！");
             return;
         }
 
@@ -219,7 +205,7 @@ public class UploadPaneController implements Initializable {
                 }
 
                 if (deviceCode.equals("")) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING,"请输入正确的用户名和密码！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
                     GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                     return;
                 }
@@ -230,7 +216,7 @@ public class UploadPaneController implements Initializable {
 
 //        GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, rns);
 
-        CommonUiUtil.alert(Alert.AlertType.WARNING,"上传结束，请到Recipe管理界面进行查看！");
+        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
 
         stage.close();
 

@@ -400,7 +400,7 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceId();
+        String deviceId = deviceInfo.getDeviceCode();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
         if (!"0".equals(checkResult)) {
@@ -461,7 +461,7 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceId();
+        String deviceId = deviceInfo.getDeviceCode();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
         if (!"0".equals(checkResult)) {
@@ -525,7 +525,7 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceId();
+        String deviceId = deviceInfo.getDeviceCode();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
         if (!"0".equals(checkResult)) {
@@ -606,7 +606,7 @@ public class RecipeService extends BaseService {
         }
         //附件信息       
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
@@ -704,7 +704,7 @@ public class RecipeService extends BaseService {
         //附件信息  
 
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
@@ -765,7 +765,7 @@ public class RecipeService extends BaseService {
         recipeOperationLogs.add(recipeOperationLog);
         //附件信息         
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         if (!GlobalConstants.isLocalMode) {
             //添加至MQ
             Map mqMap = new HashMap();
@@ -1444,7 +1444,7 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceId();
+        String deviceId = deviceInfo.getDeviceCode();
         String checkResult = hostManager.checkBeforeDownload(deviceId, "");
         if (!"0".equals(checkResult)) {
             return checkResult;

@@ -9,26 +9,20 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import com.alibaba.fastjson.JSONArray;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import javax.jms.Queue;
+import java.util.*;
 
 /**
  *
@@ -52,7 +46,7 @@ public class UpLoadHandler implements MessageHandler {
             String recipeName = mapMessage.getString("recipeName");
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求上传Recipe:[" + recipeName + "]");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            String deviceId = deviceInfo.getDeviceId();
+            String deviceId = deviceInfo.getDeviceCode();
             Recipe recipe = new Recipe();
             List<RecipePara> recipeParaList = new ArrayList<>();
             Map recipeMap = hostManager.getRecipeParaFromDevice(deviceId, recipeName);

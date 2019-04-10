@@ -69,7 +69,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String deviceType;//设备类型
     protected String manufacturer;//生产厂商
     protected String deviceCode;//设备代码;
-    protected String ProcessProgramID;
     protected int recipeType = 1;
     protected String Mdln = "";
     protected String SoftRev = "";
@@ -1039,13 +1038,19 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
+
     public Map sendS2F41outPPselect(String recipeName) {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, CPN_PPID, recipeName);
+            Map cpmap = new HashMap();
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put(RCMD_PPSELECT, FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1076,7 +1081,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("prevCmd", rcmd);
 
         try {
-            msgdata = activeWrapper.sendS2F41out(rcmd, null, null);
+            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null);
             logger.info("The equip " + deviceCode + " request to " + rcmd);
             byte hcack = (byte) msgdata.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1437,7 +1442,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         DataMsgMap data = null;
 
         try {
-            data = activeWrapper.sendS7F1out(targetRecipeName, length, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
             byte ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
             resultMap.put("ppgnt", ppgnt);

@@ -12,16 +12,16 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
-import java.util.List;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import java.util.List;
 
 /**
  * 
@@ -52,7 +52,6 @@ public class CheckRecipePapaHandler implements MessageHandler {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-        int deviceId = Integer.parseInt(deviceInfo.getDeviceId());
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
         if (equipHost.getEquipState().isCommOn()) {
             

@@ -11,13 +11,13 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.MapMessage;
-import javax.jms.Message;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.MapMessage;
+import javax.jms.Message;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -39,7 +39,7 @@ public class EdcUploadRequestHandler implements MessageHandler {
 //            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求从设备获取数据...");
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            Map resultMap = GlobalConstants.stage.hostManager.getEDCData(deviceInfo.getDeviceId(), dataIdMap);
+            Map resultMap = GlobalConstants.stage.hostManager.getEDCData(deviceInfo.getDeviceCode(), dataIdMap);
             Map mqMap = new HashMap();
             String resultMapString = "";
             if (resultMap != null) {

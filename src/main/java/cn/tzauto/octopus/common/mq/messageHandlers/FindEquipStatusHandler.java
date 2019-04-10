@@ -11,15 +11,12 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import com.alibaba.fastjson.JSONArray;
-import java.util.HashMap;
-import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
+import javax.jms.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -42,7 +39,7 @@ public class FindEquipStatusHandler implements MessageHandler {
             deviceCode = mapMessage.getString("deviceCode");
 //            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的运行状态");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            equipStatus = hostManager.getEquipStatus(deviceInfo.getDeviceId());
+            equipStatus = hostManager.getEquipStatus(deviceInfo.getDeviceCode());
             logger.info("设备:" + deviceCode + "当前运行状态为:" + equipStatus);
         } catch (JMSException ex) {
             logger.error("Exception:", ex);

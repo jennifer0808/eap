@@ -37,9 +37,8 @@ public class GetRecipeListFromDeviceWebservice implements BaseWebservice {
             String deviceCode = String.valueOf(map.get("deviceCode"));
             UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            String deviceId = deviceInfo.getDeviceId();
             List equipRecipeList = new ArrayList();
-            Map equipRecipeListState = hostManager.getRecipeListFromDevice(deviceId);
+            Map equipRecipeListState = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
             if (equipRecipeListState != null) {
                 equipRecipeList = (List) equipRecipeListState.get("eppd");
             }
