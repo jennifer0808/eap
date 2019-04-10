@@ -3,6 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.yamada.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -36,6 +38,10 @@ public class YAMADAHost extends EquipHost {
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 605;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         CPN_PPID = "PP-ID";
 
     }
@@ -65,7 +71,7 @@ public class YAMADAHost extends EquipHost {
                     processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11EquipStatus(msg);
-                }  else {
+                } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -98,7 +104,7 @@ public class YAMADAHost extends EquipHost {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            }  else if (tagName.equalsIgnoreCase("s5f1in")) {
+            } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -115,20 +121,20 @@ public class YAMADAHost extends EquipHost {
 
     public List sendS1F3PressCheckout() {
         DataMsgMap data = null;
-        List list=new ArrayList();
-        list.add(5101L);
-        list.add(5201L);
-        list.add(5301L);
-        list.add(5401L);
+        List list = new ArrayList();
+        list.add(5101l);
+        list.add(5201l);
+        list.add(5301l);
+        list.add(5401l);
         try {
-            data = activeWrapper.sendS1F3out(list,svFormat);
+            data = activeWrapper.sendS1F3out(list, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList listtmp = (ArrayList)  data.get("SV");
+        ArrayList listtmp = (ArrayList) data.get("SV");
         return listtmp;
     }
 

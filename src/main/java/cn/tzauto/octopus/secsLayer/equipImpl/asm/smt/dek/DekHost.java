@@ -27,6 +27,10 @@ public class DekHost extends EquipHost {
 
     public DekHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         //todo 根据日志找到对应CEID
         StripMapUpCeid = 0L;
         EquipStateChangeCeid= 0L;
@@ -472,12 +476,16 @@ public class DekHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        Map resultMap =  super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".dbrcp");
+        resultMap.put("ppid",targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -492,7 +500,7 @@ public class DekHost extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析
@@ -512,7 +520,9 @@ public class DekHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        return super.sendS7F17out(recipeName + ".dbrcp");
+        Map resultMap = super.sendS7F17out(recipeName + ".dbrcp");
+        resultMap.put("ppid",recipeName);
+        return resultMap;
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 

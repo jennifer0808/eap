@@ -2,7 +2,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -32,6 +32,10 @@ public class AsmAD832PHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 4L;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -151,91 +155,6 @@ public class AsmAD832PHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S1FXin Code">
-//    @SuppressWarnings("unchecked")
-//    public void processS1F1in(DataMsgMap data) {
-//        try {
-//            DataMsgMap s1f2out = new DataMsgMap("s1f2zeroout", activeWrapper.getDeviceId());
-////            s1f2out.put("Mdln", Mdln);
-////            s1f2out.put("SoftRev", SoftRev);
-//            s1f2out.setTimeStamp(new Date());
-//            s1f2out.setTransactionId(data.getTransactionId());
-//            activeWrapper.respondMessage(s1f2out);
-//            logger.info("s1f2out sended.");
-//            if (this.getCommState() != this.COMMUNICATING) {
-//                this.setCommState(this.COMMUNICATING);
-//            }
-//            if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-//                this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-//            }
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
-//    @SuppressWarnings("unchecked")
-//    public void processS1F2in(DataMsgMap s1f2in) {
-//        if (s1f2in == null) {
-//            return;
-//        }
-//        Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-//        SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
-//        long transactionId = s1f2in.getTransactionId();
-//        logger.info("processS1F2in Mdln = " + Mdln);
-//        logger.info("processS1F2in SoftRev = " + SoftRev);
-//        logger.info("processS1F2in transactionId = " + transactionId);
-//        logger.info("processS1F2in" + new Date());
-//        if (this.getCommState() != this.COMMUNICATING) {
-//            this.setCommState(this.COMMUNICATING);
-//        }
-//        if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-//            this.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-//        }
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    @Override
-//    public void processS1F13in(DataMsgMap data) {
-//        try {
-//            Mdln = (String) ((SecsItem) data.get("Mdln")).getData();
-//            SoftRev = (String) ((SecsItem) data.get("SoftRev")).getData();
-//            DataMsgMap s1f14out = new DataMsgMap("s1f14outZero", activeWrapper.getDeviceId());
-//            byte[] ack = new byte[1];
-//            ack[0] = 0;
-//            s1f14out.put("AckCode", ack);
-//            s1f14out.setTimeStamp(new Date());
-//            s1f14out.setTransactionId(data.getTransactionId());
-//            activeWrapper.respondMessage(s1f14out);
-//            logger.info("s1f14out sended.");
-//            if (this.getCommState() != this.COMMUNICATING) {
-//                this.setCommState(this.COMMUNICATING);
-//            }
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    public void processS1F14in(DataMsgMap s1f14in) {
-//        if (s1f14in == null) {
-//            return;
-//        }
-//        logger.info("-----Received s1f14in----.");
-//        if (this.getCommState() != this.COMMUNICATING) {
-//            this.setCommState(this.COMMUNICATING);
-//        }
-//    }
-    @SuppressWarnings("unchecked")
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s1f13out.put("Mdln", Mdln);
-//        s1f13out.put("SoftRev", SoftRev);
-        try {
-            activeWrapper.sendAwaitMessage(s1f13out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
@@ -250,8 +169,6 @@ public class AsmAD832PHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //TODO ceid 可配置在数据库显示具体描述
-        //TODO z这里为什么用的rptid判定
 
         if (ceid == 4) {
             processS6F11EquipStatusChange(data);
@@ -271,7 +188,7 @@ public class AsmAD832PHost extends EquipHost {
             //TODO rpt id  : 1 4 175
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            }else {
+            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
@@ -402,16 +319,13 @@ public class AsmAD832PHost extends EquipHost {
     }
 
     protected void processS6F11ControlStateChange(DataMsgMap data) {
-        //回复s6f11消息
         long ceid = 0l;
         long reportID = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        if (ceid == 1 && reportID == 1) {
         Map panelMap = new HashMap();
         if (ceid == 4) {
             controlState = FengCeConstant.CONTROL_OFFLINE;
@@ -427,7 +341,6 @@ public class AsmAD832PHost extends EquipHost {
         }
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
-//        }
     }
 
     private void processS6F11PPExecNameChange(DataMsgMap data) {
@@ -444,23 +357,6 @@ public class AsmAD832PHost extends EquipHost {
         changeEquipPanel(panelMap);
     }
 
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120 && reportID == 120) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
@@ -482,7 +378,6 @@ public class AsmAD832PHost extends EquipHost {
             //Recipe解析   
             recipeParaList = getRecipeParasByECSV();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -508,10 +403,6 @@ public class AsmAD832PHost extends EquipHost {
     }
 
 
-    /*
-     * (non-Javadoc) It only copies field member values except Mli.
-     * @see java.lang.Object#clone()
-     */
     @Override
     public Object clone() {
         AsmAD832PHost newEquip = new AsmAD832PHost(deviceId,

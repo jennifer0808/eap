@@ -50,7 +50,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
 
-import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -280,35 +279,34 @@ public class EapClient extends Application implements JobListener, PropertyChang
     }
 
     public void startHostSwing() {
-
-        SwingWorker worker = new SwingWorker<Void, Void>() {
-
-            @Override
-            public Void doInBackground() {
-                for (int i = 0; i < equipBeans.size(); i++) {
-                    String protocol = equipBeans.get(i).getProtocolTypeProperty();
-                    if (!"ISECS".equals(protocol)) {
-                        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
-                        startComByEqp(equipBeans.get(i));
+        for (int i = 0; i < equipBeans.size(); i++) {
+            String protocol = equipBeans.get(i).getProtocolTypeProperty();
+            if (!"ISECS".equals(protocol)) {
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+                int finalI = i;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        startComByEqp(equipBeans.get(finalI));
                     }
-                }
-                return null;
+                }).start();
+
             }
-        };
-        worker.execute();
+        }
     }
 
-    public void startHost() {
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < equipBeans.size(); i++) {
-                    MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
-                    startComByEqp(equipBeans.get(i));
+    public void startHost() {
+        for (int i = 0; i < equipBeans.size(); i++) {
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+            int finalI = i;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    startComByEqp(equipBeans.get(finalI));
                 }
-            }
-        }).start();
+            }).start();
+        }
 
     }
 

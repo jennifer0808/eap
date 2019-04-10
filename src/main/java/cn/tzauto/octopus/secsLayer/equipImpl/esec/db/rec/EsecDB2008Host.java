@@ -1,11 +1,9 @@
-/**
- *
- *
- */
+
 package cn.tzauto.octopus.secsLayer.equipImpl.esec.db.rec;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
@@ -17,27 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-/**
- * @author 贺从愿
- * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-3-25
- * @(#)EquipHost.java
- * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
- * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
- * use and distribution are prohibited. Modification History: Modification Date
- * Author Reason class Description
- */
 public class EsecDB2008Host extends EquipHost {
 
-    private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(EsecDB2008Host.class.getName());
-    public String Installation_Date;
-    public String Lot_Id;
-    public String Left_Epoxy_Id;
-    public String Lead_Frame_Type_Id;
+
 
     public EsecDB2008Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         CPN_PPID = "PPNAME";
     }
 
@@ -87,8 +75,8 @@ public class EsecDB2008Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S6F11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
                     processS6F11EquipStatusChange(msg);
                 } else {
@@ -129,8 +117,7 @@ public class EsecDB2008Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data, (byte) 0);
-                processS6F11in(data);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);

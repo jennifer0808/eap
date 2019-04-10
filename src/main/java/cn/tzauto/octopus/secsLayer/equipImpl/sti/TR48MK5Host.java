@@ -17,12 +17,16 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.sti.TR48MK5RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.io.IOException;
 import java.util.*;
 
 @SuppressWarnings("serial")
@@ -35,6 +39,9 @@ public class TR48MK5Host extends EquipHost {
 
     public TR48MK5Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PPSELECT";
     }
 
 
@@ -79,24 +86,27 @@ public class TR48MK5Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = (long) msg.get("CEID");
-                        if (ceid == 11) {
-                            processS6F11EquipStatusChange(msg);
-                        }else if(ceid ==1){
-                            //刷新当前机台状态
-                            logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
-                            findDeviceRecipe();
-                            logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
-                        }
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
+                    this.processS6F11in(msg);
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
+        }
+    }
+    @Override
+     public void processS6F11in(DataMsgMap msg) {
+        try {
+            long   ceid = (long) msg.get("CEID");
+            if (ceid == 11) {
+                this.processS6F11EquipStatusChange(msg);
+            }else if(ceid ==1){
+                //刷新当前机台状态
+                logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
+                findDeviceRecipe();
+                logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
     }
 
@@ -115,9 +125,8 @@ public class TR48MK5Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                long ceid = 0l;
-                processS6F11in(data);
-                ceid =(long) data.get("CEID");
+                replyS6F12WithACK(data,(byte)0);
+                long ceid =(long) data.get("CEID");
                 if (ceid == 11 || ceid == 1) {
                     this.inputMsgQueue.put(data);
                 }
@@ -139,24 +148,26 @@ public class TR48MK5Host extends EquipHost {
         }
     }
 
+
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            findDeviceRecipe();
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (ceid == 73) {
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-        }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
+//        if (ceid == 73) {
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//        }
+//        Map map = new HashMap();
+//        map.put("EquipStatus", equipStatus);
+//        map.put("PPExecName", ppExecName);
+//        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -262,6 +273,7 @@ public class TR48MK5Host extends EquipHost {
         logger.info(lotId);
         //sendS2f41CmdLotStart(lotId, "XXX", "XXX", "XXX");
         sendS2f41CmdLotStart(lotId, "", "", "");
+
         UiLogUtil.appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
@@ -323,7 +335,7 @@ public class TR48MK5Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
 
     public Map sendS2f41CmdPPSelect(String PPID) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("PPID", PPID);
         byte[] hcack = new byte[1];
@@ -344,10 +356,10 @@ public class TR48MK5Host extends EquipHost {
         }
         return resultMap;
     }
-
+    //TODO
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41lotConfig", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("DATA1", DATA1);
         s2f41out.put("DATA2", DATA2);
@@ -381,9 +393,9 @@ public class TR48MK5Host extends EquipHost {
         }
         return resultMap;
     }
-
+    //TODO
     public Map sendS2f41CmdLotStart(String DATA1, String DATA2, String DATA3, String DATA4) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41lotStart", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("DATA1", DATA1);
         s2f41out.put("DATA2", DATA2);
