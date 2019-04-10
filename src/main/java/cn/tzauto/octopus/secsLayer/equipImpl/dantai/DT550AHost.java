@@ -9,7 +9,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.dantai;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -27,7 +26,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Wang Dafeng
@@ -55,6 +57,7 @@ public class DT550AHost extends EquipHost {
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         DT550AHost newEquip = new DT550AHost(deviceId,
                 this.iPAddress,
@@ -70,6 +73,7 @@ public class DT550AHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
@@ -77,9 +81,9 @@ public class DT550AHost extends EquipHost {
 
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    DT550AHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != DT550AHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
@@ -97,8 +101,8 @@ public class DT550AHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11incommon")) {
-                    long ceid = msg.getSingleNumber("CollEventID");
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    long ceid = (long) msg.get("CEID");
                     if (ceid == 900010) {
                         processPressStartButton(msg);
                     } else if (ceid == 900002) {
@@ -123,13 +127,14 @@ public class DT550AHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
@@ -153,14 +158,9 @@ public class DT550AHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11incommon")) {
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 900002 || ceid == 900006 || ceid == 900010) {
-                    processS6F11in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data,(byte)0);
                     this.inputMsgQueue.put(data);
-                } else {
-                    processS6F11in(data);
-                }
             } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
@@ -185,9 +185,9 @@ public class DT550AHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     protected void processEquipStatusChange(DataMsgMap data) {
         //TODO 开机check;
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long)data.get("CEID");
             //刷新当前机台状态
             findDeviceRecipe();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
@@ -307,9 +307,9 @@ public class DT550AHost extends EquipHost {
 
     protected void processPressStartButton(DataMsgMap data) {
         //TODO 开机check;
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long)data.get("CEID");
             //刷新当前机台状态
             findDeviceRecipe();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
@@ -419,12 +419,9 @@ public class DT550AHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
+            msgdata = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -433,7 +430,7 @@ public class DT550AHost extends EquipHost {
             return null;
         }
         //
-        String ppbody = (String) ((SecsItem) msgdata.get("Processprogram")).getData();
+        String ppbody = (String) msgdata.get("PPBODY");
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
