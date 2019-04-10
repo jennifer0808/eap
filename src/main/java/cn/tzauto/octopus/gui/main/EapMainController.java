@@ -80,6 +80,7 @@ public class EapMainController implements Initializable {
     private String time;
     private int ONE_SECOND = 1000;
     private String userNameStr;
+    public static int loginmark=0;
     //   private Boolean Flag = false ;
 
     @FXML
@@ -115,12 +116,19 @@ public class EapMainController implements Initializable {
         GlobalConstants.isUpload = false;
         GlobalConstants.isDownload = false;
         GlobalConstants.isSvQuery = false;
+        loginmark=0;
+        rcpMngClose();
     }
 
     @FXML
     private void login() throws IOException {
+
         GlobalConstants.userFlag = false;
-        loginInterface();
+        if(loginmark==0){
+            loginInterface();
+            loginmark=1;
+        }
+
     }
 
     public void loginInterface() throws IOException {
@@ -289,8 +297,13 @@ public class EapMainController implements Initializable {
         TBP_Main.getTabs().add(rcpMngtTab);
         TBP_Main.getSelectionModel().select(rcpMngtTab);
     }
+    @FXML
+    private void rcpMngClose() {
+//        TBP_Main.getTabs().add(TB_RcpMng);
+        TBP_Main = (TabPane) GlobalConstants.stage.root.lookup("#TBP_Main");
 
-
+        TBP_Main.getTabs().remove(rcpMngtTab);
+    }
     /**
      * Timer task to update the time display area
      */

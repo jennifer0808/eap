@@ -5,6 +5,7 @@
  */
 package cn.tzauto.octopus.gui.dialog.login;
 
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.main.EapMainController;
 import javafx.application.Platform;
@@ -17,6 +18,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -29,6 +31,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+import static cn.tzauto.octopus.gui.main.EapMainController.loginmark;
 
 
 /**
@@ -108,7 +111,7 @@ public class LoginController implements Initializable {
                 } else if (isSvQuery) {
                     isSvQuery = false;
                 }
-
+                loginmark=0;
             }
         });
 
