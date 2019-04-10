@@ -415,9 +415,10 @@ public class NY20RecipeUtil {
     }
 
     public static void main(String args[]) {
-        String filePath = "C:\\Users\\SunTao\\Desktop\\长电\\NY20\\AGD_LGA4X6.8_V0";
+//        String filePath = "C:\\Users\\SunTao\\Desktop\\长电\\NY20\\AGD_LGA4X6.8_V0";
+        String filePath = "C:\\Users\\leo\\Documents\\WeChat Files\\Spurs-Leo\\FileStorage\\File\\2019-04\\AAI-T-LGA-3X4.2-3000-5633_V0.txt";
         // transferRcpFromDB(filePath, filePath);
-        List<RecipePara> recipeParas = transferRcpFromDB2(filePath, "AGD_LGA4X6.8", "IsmecaNY20");
+        List<RecipePara> recipeParas = transferRcpFromDB2(filePath, "AAI-T-LGA-3X4.2-3000-5633_V0", "IsmecaNY20");
         for (RecipePara r : recipeParas) {
             System.out.println(r.getParaName() + ":" + r.getSetValue());
         }

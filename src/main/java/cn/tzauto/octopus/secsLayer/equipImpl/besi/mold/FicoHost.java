@@ -53,6 +53,7 @@ public class FicoHost extends EquipHost {
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         FicoHost newEquip = new FicoHost(deviceId,
                 this.iPAddress,
@@ -68,6 +69,7 @@ public class FicoHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
@@ -76,9 +78,9 @@ public class FicoHost extends EquipHost {
             try {
                 while (!this.isSdrReady()) {
 //                    logger.info("等待网络连接就绪");
-                    this.sleep(200);
+                    FicoHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != FicoHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
@@ -99,6 +101,8 @@ public class FicoHost extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     //判断是否触发Repeat Alarm
                     processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     try {
                         processS6F11EquipStatusChange(msg);
@@ -135,13 +139,14 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -149,7 +154,8 @@ public class FicoHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s2f34in")) {
@@ -181,13 +187,13 @@ public class FicoHost extends EquipHost {
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s1f3out.setTransactionId(transactionId);
         long[] press1SV = new long[1];
-        press1SV[0] = 3300l;
+        press1SV[0] = 3300L;
         s1f3out.put("Press1", press1SV);
         long[] press2SV = new long[1];
-        press2SV[0] = 3400l;
+        press2SV[0] = 3400L;
         s1f3out.put("Press2", press2SV);
         long[] press3SV = new long[1];
-        press3SV[0] = 3500l;
+        press3SV[0] = 3500L;
         s1f3out.put("Press3", press3SV);
         DataMsgMap data = null;
         try {
@@ -244,6 +250,7 @@ public class FicoHost extends EquipHost {
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S5FX Code">
+    @Override
     @SuppressWarnings("unchecked")
 
     public Map processS5F1in(DataMsgMap data) {
@@ -275,10 +282,34 @@ public class FicoHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
+            if (ceid == 1 || ceid == 2 || ceid == 3) {
+                processS6F11EquipStatus(data);
+            } else if (ceid == 10) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 62) {
+                findDeviceRecipe();
+                Map map = new HashMap();
+                map.put("PPExecName", ppExecName);
+                changeEquipPanel(map);
+            }
+            //todo sv get finish ceid
+//            else if(ceid==1){
+//                processS6F11SVGetFinish(data);
+//            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    protected void processS6F11EquipStatus(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
             if (ceid == 2) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 3) {
@@ -303,12 +334,13 @@ public class FicoHost extends EquipHost {
     }
 
     private void processS6F11SVGetFinish(DataMsgMap data) {
+        //todo REPORT数据如何获取？
         long ceid = 0L;
         long pressStateId = 0L;
         long cavityVacuumValue = 0L;
         long boardVacuumValue = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long)data.get("CEID");
             pressStateId = data.getSingleNumber("Data0");
             cavityVacuumValue = data.getSingleNumber("Data1");
             boardVacuumValue = data.getSingleNumber("Data2");
@@ -326,12 +358,12 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -461,79 +493,37 @@ public class FicoHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     public Map sendS7F1out(Recipe recipe) {
-
         String ppid = recipe.getRecipeName();
-//        String ppidtmp = ppid.replaceAll("/", "@");
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppidtmp + "/" + ppidtmp + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(recipePath) - 2;
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", ppid);
-        s7f1out.put("Length", length);
+        long length = TransferUtil.getPPLength(recipePath) - 2;
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
+            data = activeWrapper.sendS7F1out(ppid, length, lengthFormat);
             logger.debug("Request send recipeName= " + ppid + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+        byte ppgnt = (byte) data.get("PPGNT");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", ppid);
-        resultMap.put("ppgnt", ppgnt[0]);
-//        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        resultMap.put("ppgnt", ppgnt);
         return resultMap;
     }
 
-    /**
-     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
-     *
-     * @param targetRecipeName
-     * @return
-     */
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        String ppbody = (String) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/"));
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            this.sleep(1000);
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
-
-
+    @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        String ppbody = (String) ((SecsItem) data.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        String ppbody = (String)data.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 0, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -554,34 +544,17 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
+        Map resultMap = super.sendS7F19out();
+        if (resultMap == null || resultMap.get("eppd") == null) {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList recipeList = (ArrayList) resultMap.get("eppd");
+        if(recipeList.size()!=0){
+            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
             ArrayList rcpNameList = new ArrayList();
             if (listtmp != null && !listtmp.isEmpty()) {
                 for (Object obj : listtmp) {
@@ -599,6 +572,7 @@ public class FicoHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S10FX Code">
 
+    @Override
     protected void processS10F1in(DataMsgMap data) {
         String text = "";
         try {
@@ -649,6 +623,7 @@ public class FicoHost extends EquipHost {
      * @param type
      */
 
+    @Override
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -891,6 +866,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -927,6 +903,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public void sendTerminalMsg2EqpSingle(String msg) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -940,6 +917,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public Map holdDevice() {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -961,6 +939,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public Map releaseDevice() {
         Map map = this.sendS2f41Cmd("RESUME");
         this.setAlarmState(0);
@@ -968,6 +947,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public String getOutputData() {
         String outputSVID = "114";
         Map resultMap = sendS1F3SingleCheck(outputSVID);
@@ -1005,6 +985,7 @@ public class FicoHost extends EquipHost {
         FutureTask<Boolean> future = new FutureTask<>(
                 new Callable<Boolean>() {
 
+                    @Override
                     public Boolean call() throws InterruptedException {
                         Thread.sleep(5000);
                         cancelCheckFlag = false;
@@ -1024,6 +1005,7 @@ public class FicoHost extends EquipHost {
         FutureTask<Boolean> future = new FutureTask<>(
                 new Callable<Boolean>() {
 
+                    @Override
                     public Boolean call() throws InterruptedException {
                         Thread.sleep(3000);
                         if (!cancelCheckFlag) {
@@ -1042,46 +1024,46 @@ public class FicoHost extends EquipHost {
     private void initRptPara() {
         //重定义机台的equipstatuschange事件报告
         List list1 = new ArrayList();
-        list1.add(15l);
-        list1.add(97l);
-        sendS2F33Out(10l, 15l, list1);
-        sendS2F35out(10l, 10l, 10l);
+        list1.add(15L);
+        list1.add(97L);
+        sendS2F33Out(10L, 15L, list1);
+        sendS2F35out(10L, 10L, 10L);
 //        sendS2F37out(10l);
 
         //重定义ppchange事件
         List list = new ArrayList();
-        list.add(97l);
+        list.add(97L);
 
-        sendS2F33Out(4l, 60l, list);
+        sendS2F33Out(4L, 60L, list);
 //        sendS2F33Out(60l, 97l);
-        sendS2F35out(60l, 60l, 60l);
+        sendS2F35out(60L, 60L, 60L);
 //        sendS2F37out(60l);
 
         //重定义1551,1555,1559事件
         List list2 = new ArrayList();
-        list2.add(3300l);
-        list2.add(3371l);
-        list2.add(3370l);
+        list2.add(3300L);
+        list2.add(3371L);
+        list2.add(3370L);
         sendS2F33Out(1551L, 1551L, list2);
-//        sendS2f33outMulti(1551l, 3300l, 3371l, 3370l);
-        sendS2F35out(1551l, 1551l, 1551l);
+//        sendS2f33outMulti(1551L, 3300L, 3371L, 3370L);
+        sendS2F35out(1551L, 1551L, 1551L);
         List list3 = new ArrayList();
-        list3.add(3400l);
-        list3.add(3471l);
-        list3.add(3470l);
-        sendS2F33Out(1555l, 1555l, list3);
-//        sendS2f33outMulti(1555l, 3400l, 3471l, 3470l);
-        sendS2F35out(1555l, 1555l, 1555l);
+        list3.add(3400L);
+        list3.add(3471L);
+        list3.add(3470L);
+        sendS2F33Out(1555L, 1555L, list3);
+//        sendS2f33outMulti(1555L, 3400L, 3471L, 3470L);
+        sendS2F35out(1555L, 1555L, 1555L);
         List list4 = new ArrayList();
         list4.add(3500L);
         list4.add(3571L);
         list4.add(3570L);
-        sendS2F33Out(1559l, 1559l, list4);
-//        sendS2f33outMulti(1559l, 3500L, 3571L, 3570L);
-        sendS2F35out(1559l, 1559l, 1559l);
+        sendS2F33Out(1559L, 1559L, list4);
+//        sendS2f33outMulti(1559L, 3500L, 3571L, 3570L);
+        sendS2F35out(1559L, 1559L, 1559L);
 
 //        super.sendS2F37outCloseAll(activeWrapper);
-        long[] ceids = {70l, 2l, 3l, 60l, 62l, 1l, 22l, 18l, 11l, 10l, 20l, 17l, 1550l, 1551l, 1552l, 1553l, 1554l, 1555l, 1556l, 1557l, 1558l, 1559l, 1560l, 1561l};
+        long[] ceids = {70L, 2L, 3L, 60L, 62L, 1L, 22L, 18L, 11L, 10L, 20L, 17L, 1550L, 1551L, 1552L, 1553L, 1554L, 1555L, 1556L, 1557L, 1558L, 1559L, 1560L, 1561L};
         List ceidList = new ArrayList();
         for (int i = 0; i < ceids.length; i++) {
             ceidList.add(ceids[i]);
@@ -1114,6 +1096,7 @@ public class FicoHost extends EquipHost {
     }
 
 
+    @Override
     public void initRemoteCommand() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
