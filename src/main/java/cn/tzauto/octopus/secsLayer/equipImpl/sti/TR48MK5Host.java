@@ -126,7 +126,6 @@ public class TR48MK5Host extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data,(byte)0);
-                processS6F11in(data);
                 long ceid =(long) data.get("CEID");
                 if (ceid == 11 || ceid == 1) {
                     this.inputMsgQueue.put(data);
