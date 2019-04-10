@@ -39,7 +39,6 @@ public class TR48MK5Host extends EquipHost {
 
     public TR48MK5Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PPSELECT";
@@ -87,24 +86,27 @@ public class TR48MK5Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = (long) msg.get("CEID");
-                        if (ceid == 11) {
-                            processS6F11EquipStatusChange(msg);
-                        }else if(ceid ==1){
-                            //刷新当前机台状态
-                            logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
-                            findDeviceRecipe();
-                            logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
-                        }
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
+                    S6F11DP(msg);
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
+        }
+    }
+
+    private void S6F11DP(DataMsgMap msg) {
+        try {
+            long   ceid = (long) msg.get("CEID");
+            if (ceid == 11) {
+                processS6F11EquipStatusChange(msg);
+            }else if(ceid ==1){
+                //刷新当前机台状态
+                logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
+                findDeviceRecipe();
+                logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
     }
 
@@ -123,9 +125,9 @@ public class TR48MK5Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                long ceid = 0l;
+                replyS6F12WithACK(data,(byte)0);
                 processS6F11in(data);
-                ceid =(long) data.get("CEID");
+                long ceid =(long) data.get("CEID");
                 if (ceid == 11 || ceid == 1) {
                     this.inputMsgQueue.put(data);
                 }
@@ -146,6 +148,7 @@ public class TR48MK5Host extends EquipHost {
             logger.error("Exception:", e);
         }
     }
+
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
     @Override
@@ -234,10 +237,10 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-//        DataMsgMap data = null;
+        DataMsgMap data = null;
         DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(1, localRecipeFilePath).get(0);
+        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
         s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/"));
         s7f3out.put("Processprogram", secsItem);
@@ -245,17 +248,17 @@ public class TR48MK5Host extends EquipHost {
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-//        byte[] ackc7 = new byte[1];
-//        try {S6F11
-//            data = activeWrapper.sendS7F3out(targetRecipeName,ppbody,FormatCode.SECS_BINARY);
-//            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-//            resultMap.put("ACKC7", ackc7[0]);
-//            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//            resultMap.put("ACKC7", 9);
-//            resultMap.put("Description", e.getMessage());
-//        }
+        byte[] ackc7 = new byte[1];
+        try {
+            data = activeWrapper.sendS7F3out(targetRecipeName,ppbody,FormatCode.SECS_BINARY);
+            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            resultMap.put("ACKC7", ackc7[0]);
+            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
         //发送PP-Select指令
         sendS2f41CmdPPSelect(targetRecipeName);
         findDeviceRecipe();
@@ -354,10 +357,10 @@ public class TR48MK5Host extends EquipHost {
         }
         return resultMap;
     }
-
+    //TODO
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41lotConfig", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("DATA1", DATA1);
         s2f41out.put("DATA2", DATA2);
@@ -391,9 +394,9 @@ public class TR48MK5Host extends EquipHost {
         }
         return resultMap;
     }
-
+    //TODO
     public Map sendS2f41CmdLotStart(String DATA1, String DATA2, String DATA3, String DATA4) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41lotStart", activeWrapper.getDeviceId());
+        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
         s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s2f41out.put("DATA1", DATA1);
         s2f41out.put("DATA2", DATA2);
