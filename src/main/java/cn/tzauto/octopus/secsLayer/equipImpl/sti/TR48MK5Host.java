@@ -86,19 +86,19 @@ public class TR48MK5Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    S6F11DP(msg);
+                    this.processS6F11in(msg);
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
         }
     }
-
-    private void S6F11DP(DataMsgMap msg) {
+    @Override
+     public void processS6F11in(DataMsgMap msg) {
         try {
             long   ceid = (long) msg.get("CEID");
             if (ceid == 11) {
-                processS6F11EquipStatusChange(msg);
+                this.processS6F11EquipStatusChange(msg);
             }else if(ceid ==1){
                 //刷新当前机台状态
                 logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
