@@ -14,7 +14,6 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -265,33 +264,7 @@ public class EsecDB2100Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
         equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
         ppExecName = (String) listtmp.get(1);
         ppExecName = ppExecName.replaceAll(".dbrcp", "");

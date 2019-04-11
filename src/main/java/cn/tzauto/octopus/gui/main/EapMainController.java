@@ -11,11 +11,11 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
-import cn.tzauto.octopus.gui.dialog.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController;
+import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -228,7 +228,7 @@ public class EapMainController implements Initializable {
                         userName.setText(GlobalConstants.sysUser == null ? "" : GlobalConstants.sysUser.getLoginName());
                         GlobalConstants.userFlag = false;
                     }
-                    new SVQueryPaneController().init();
+                    new SVQueryPaneController().init("");
                     GlobalConstants.isSvQuery = false;
 
                     window.close();

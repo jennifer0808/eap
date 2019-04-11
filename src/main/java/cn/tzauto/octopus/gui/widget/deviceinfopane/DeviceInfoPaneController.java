@@ -13,6 +13,7 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.biz.sys.domain.SysOffice;
 import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import javafx.fxml.FXML;
@@ -36,8 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.statusMap;
-import static cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPaneController.tempDeviceDode;
 
 /**
  * FXML Controller class
@@ -69,7 +68,7 @@ public class DeviceInfoPaneController implements Initializable {
     /**
      * Initializes the controller class.
      */
-
+    private String deviceCode;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -81,22 +80,56 @@ public class DeviceInfoPaneController implements Initializable {
         equipStatus.setEditable(false);
         lotNo.setEditable(false);
         deviceType.setEditable(false);
-        // TODO
+
+    }
+
+
+    private void buttonOKClick(Stage stage) {
+        stage.close();
+    }
+
+    public void init(String deviceCode) {
+        this.deviceCode = deviceCode;
+        // TODO   
+        Stage stage = new Stage();
+        Pane root = new Pane();
+        try {
+            ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("DeviceInfoPane.fxml"), resourceBundle);
+        } catch (IOException ex) {
+
+        }
+        Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+        stage.getIcons().add(image);
+        stage.setTitle("设备详情");
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        initData(deviceCode, root);
+        stage.show();
+        stage.setResizable(false);
+        Button button = (Button) root.lookup("#button");
+        button.setOnAction((value) -> buttonOKClick(stage));
+
+    }
+
+    private void initData(String deviceCode, Pane root) {
         SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
-//        List<DeviceInfo> deviceInfoList = deviceService.getDeviceInfoByClientId(GlobalConstants.getProperty("clientId"));
-
-//        String deviceCode = deviceInfoList.get(0).getDeviceCode();
-        DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(tempDeviceDode);
+        DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         if (deviceInfo != null) {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
+            clientCode = (TextField) root.lookup("#clientCode");
             clientCode.setText(deviceInfo.getClientId());
+            deviceCodeField = (TextField) root.lookup("#deviceCodeField");
             deviceCodeField.setText(deviceInfo.getDeviceCode());
+            equipStatus = (TextField) root.lookup("#equipStatus");
             equipStatus.setText(deviceInfo.getDeviceStatus());
+            deviceType = (TextField) root.lookup("#deviceType");
             deviceType.setText(deviceInfo.getDeviceType());
             Map map = new HashMap();
             try {
-                map = (Map) statusMap.get(tempDeviceDode);
+//                map = (Map) statusMap.get(tempDeviceDode);
+                map = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
                 if (map == null || map.get("PPExecName") == null || map.isEmpty()) {
                     UiLogUtil.appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
                     JOptionPane.showMessageDialog(null, "获取设备当前状态信息失败，请检查设备状态.");
@@ -107,8 +140,10 @@ public class DeviceInfoPaneController implements Initializable {
                 } else {
 //                    UiLogUtil.appendLog2EventTab(deviceCode, "测试 SwingWorker......");
 //                    Thread.sleep(10000);
+                    recipeName = (TextField) root.lookup("#recipeName");
                     recipeName.setText(String.valueOf(map.get("PPExecName")));
                     recipeName.setTooltip(new Tooltip(String.valueOf(map.get("PPExecName"))));
+                    equipStatus = (TextField) root.lookup("#equipStatus");
                     equipStatus.setText(String.valueOf(map.get("EquipStatus")));
                 }
 
@@ -142,34 +177,6 @@ public class DeviceInfoPaneController implements Initializable {
                 sqlSession.close();
             }
         }
-
-    }
-
-
-    private void buttonOKClick(Stage stage) {
-        stage.close();
-    }
-
-    public void init() {
-        // TODO   
-        Stage stage = new Stage();
-        Pane root = new Pane();
-        try {
-            ResourceBundle resourceBundle = ResourceBundle.getBundle("eap",new languageUtil().getLocale());
-            root = FXMLLoader.load(getClass().getClassLoader().getResource("DeviceInfoPane.fxml"),resourceBundle);
-        } catch (IOException ex) {
-
-        }
-        Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
-        stage.getIcons().add(image);
-        stage.setTitle("设备详情");
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.show();
-
-        stage.setResizable(false);
-        Button button = (Button) root.lookup("#button");
-        button.setOnAction((value) -> buttonOKClick(stage));
 
     }
 }

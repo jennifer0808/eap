@@ -1,15 +1,14 @@
 package cn.tzauto.octopus.isecsLayer.equipImpl.sinyang;
 
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -19,7 +18,6 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.statusMap;
 
 /**
  * Created by wj_co on 2018/9/26.

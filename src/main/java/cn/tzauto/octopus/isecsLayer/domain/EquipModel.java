@@ -1,6 +1,7 @@
 package cn.tzauto.octopus.isecsLayer.domain;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.domain.UnitFormula;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -9,39 +10,25 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.BigDecimalArithmetic;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
+import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.ws.AxisUtility;
-import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-
-import java.io.File;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.statusMap;
+import java.io.File;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.*;
 
 public abstract class EquipModel extends Thread {
 
@@ -211,9 +198,8 @@ public abstract class EquipModel extends Thread {
             }
         }
         for (EquipNodeBean equipNodeBean : equipBeans) {
-            if (equipNodeBean.getDeviceIdProperty().equals(deviceCode)) {
+            if (equipNodeBean.getDeviceCode().equals(deviceCode)) {
 
-                statusMap.put(deviceCode, resultMap);
 
 //                EquipStatusPane equipStatusPane = EapClient.getThePane(deviceCode);
                 EquipStatusPane equipStatusPane = EapClient.equipStatusPanes.get(deviceCode);

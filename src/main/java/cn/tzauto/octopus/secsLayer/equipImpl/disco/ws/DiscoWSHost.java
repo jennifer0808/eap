@@ -711,9 +711,9 @@ public class DiscoWSHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data != null && data.get("RESULT") != null) {
-            ArrayList listtmp = (ArrayList) data.get("EC");
-            devid = String.valueOf(listtmp.get(0));
+        if (data != null && data.get("EC") != null) {
+
+            devid = String.valueOf(data.get("EC"));
         }
         return devid;
     }
@@ -838,25 +838,6 @@ public class DiscoWSHost extends EquipHost {
         }
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     private boolean startBladeCheck(List<RecipePara> recipeParas) {
         Map elementsMap = getThresholdCalculateElement(recipeParas);

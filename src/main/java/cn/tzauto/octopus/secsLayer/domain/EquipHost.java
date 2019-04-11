@@ -1660,9 +1660,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map stripIDformatMap = new HashMap();
         stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
         byte objack = 0;
-//        String stripMapData = WSUtility.binGet(stripId, deviceCode);
+        String stripMapData = WSUtility.binGet(stripId, deviceCode);
 //        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
-        String stripMapData = "<stripmaptest12312313";
+//        String stripMapData = "<stripmaptest12312313";
         if (stripMapData == null) {//stripId不存在
             out = new DataMsgMap("s14f2outNoExist", activeWrapper.getDeviceId());
             long[] u1 = new long[1];
@@ -2972,12 +2972,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F35clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f35clear", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-
         try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
+            activeWrapper.sendS2F35out(0, svFormat, 0, ceFormat, null, rptFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

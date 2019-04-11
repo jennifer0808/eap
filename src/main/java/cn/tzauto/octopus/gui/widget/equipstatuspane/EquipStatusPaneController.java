@@ -5,15 +5,13 @@
  */
 package cn.tzauto.octopus.gui.widget.equipstatuspane;
 
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.main.EapMainController;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
-import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -25,8 +23,6 @@ import javafx.scene.layout.Pane;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-
-import static cn.tzauto.octopus.gui.main.EapClient.equipBeans;
 
 /**
  * FXML Controller class
@@ -55,18 +51,17 @@ public class EquipStatusPaneController implements Initializable {
 
     }
 
-    public static String tempDeviceDode = null;
 
     @FXML
     private void mouseClick(MouseEvent event) throws IOException {
 //        if (equipNodeBean.getEquipStateProperty().isCommOn()) {
         if (event.getButton().equals(MouseButton.SECONDARY)) {
-            String L_DeviceCode = ((Label) P_EquipPane.lookup("#L_DeviceCode")).getText();
+            String deviceCodeTemp = ((Label) P_EquipPane.lookup("#L_DeviceCode")).getText();
 
-            tempDeviceDode = L_DeviceCode;
+           ;
 
-            for (EquipNodeBean enb : equipBeans) {
-                if (L_DeviceCode.equalsIgnoreCase(enb.getDeviceIdProperty())) {
+            for (EquipNodeBean enb : GlobalConstants.stage.equipBeans) {
+                if (deviceCodeTemp.equalsIgnoreCase(enb.getDeviceCode())) {
                     equipNodeBean = enb;
                     break;
                 }
@@ -76,7 +71,7 @@ public class EquipStatusPaneController implements Initializable {
                 contextMenu.hide();
                 MenuItem menuItem = new MenuItem("设备详情");
 
-                menuItem.setOnAction(actionEvent -> showDeviceInfo());
+                menuItem.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
 
                 MenuItem menuItem1 = new MenuItem("SV数据查询");
                 menuItem1.setOnAction(actionEvent -> showSVQuery());
@@ -109,8 +104,8 @@ public class EquipStatusPaneController implements Initializable {
     /**
      * 设备详情
      */
-    private void showDeviceInfo() {
-        new DeviceInfoPaneController().init();
+    private void showDeviceInfo(String deviceCode) {
+        new DeviceInfoPaneController().init(deviceCode);
 
     }
 
