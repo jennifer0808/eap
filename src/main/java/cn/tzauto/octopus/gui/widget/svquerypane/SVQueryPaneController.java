@@ -16,12 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import static cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPaneController.tempDeviceDode;
 
 /**
  * Created by wj_co on 2019/2/12.
  */
 public class SVQueryPaneController implements Initializable {
+    private String deviceCode;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -45,9 +45,9 @@ public class SVQueryPaneController implements Initializable {
         }
         Map resultMap = new HashMap();
         if (JRB_EC.isSelected()) {
-            resultMap = EapClient.hostManager.getECValueByECID(tempDeviceDode, svid);
+            resultMap = EapClient.hostManager.getECValueByECID(deviceCode, svid);
         } else {
-            resultMap = EapClient.hostManager.getSVValueBySVID(tempDeviceDode, svid);
+            resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
         }
         if (resultMap == null) {
             JOptionPane.showMessageDialog(null, "未查到相应值");
@@ -70,8 +70,9 @@ public class SVQueryPaneController implements Initializable {
 
     Pane root = new Pane();
 
-    public void init() {
+    public void init(String deviceCode) {
         // TODO String : deviceId, String : deviceCode
+        this.deviceCode = deviceCode;
         Stage stage = new Stage();
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
@@ -85,7 +86,7 @@ public class SVQueryPaneController implements Initializable {
 
 
         Label deviceCodeField = (Label) root.lookup("#deviceCodeField");
-        deviceCodeField.setText(tempDeviceDode);
+        deviceCodeField.setText(deviceCode);
 
         Scene scene = new Scene(root);
         stage.setScene(scene);

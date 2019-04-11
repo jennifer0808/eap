@@ -398,7 +398,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
      */
     public void startIsecsByEqp(EquipNodeBean equipNodeBean) {
         try {
-            EquipModel equipModel = equipModels.get(equipNodeBean.getDeviceIdProperty());
+            EquipModel equipModel = equipModels.get(equipNodeBean.getDeviceCode());
             if (equipModel.iSecsHost.iSecsConnection.getSocketClient() != null && !equipModel.isInterrupted()) {
                 equipModel.start();
             }

@@ -2972,12 +2972,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     @SuppressWarnings("unchecked")
     public void sendS2F35clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f35clear", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-
         try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
+            activeWrapper.sendS2F35out(0, svFormat, 0, ceFormat, null, rptFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
