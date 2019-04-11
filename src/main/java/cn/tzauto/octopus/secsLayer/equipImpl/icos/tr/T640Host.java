@@ -129,7 +129,8 @@ public class T640Host extends EquipHost {
                 processS1F1in(data);
                 setCommState(COMMUNICATING);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -227,9 +228,8 @@ public class T640Host extends EquipHost {
 
         Map cpValueFormatMap = new HashMap();
         cpNameFormatMap.put(batchName,FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION",FormatCode.SECS_ASCII);
         cpNameFormatMap.put("NEW",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("",FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("ACTION",FormatCode.SECS_ASCII);
         cpNameFormatMap.put("",FormatCode.SECS_ASCII);
         cpNameFormatMap.put("NO",FormatCode.SECS_ASCII);
 
@@ -290,10 +290,13 @@ public class T640Host extends EquipHost {
         long preStatus = 0L;
         long nowStatus = 0;
         long ceid = 0L;
+
         try {
+
             preStatus = data.getSingleNumber("PreStatus");
             nowStatus = data.getSingleNumber("EquipStatus");
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -418,7 +421,7 @@ public class T640Host extends EquipHost {
         long length1  = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("hanRcpPath")));
         long length2  = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("compRcpPath")));
         DataMsgMap data = null;
-        byte ppgnt = 0;
+        byte ppgnt = -1;
 
         try {
             data = activeWrapper.sendS7F1out(targetRecipeName,length0,svFormat);
@@ -477,9 +480,6 @@ public class T640Host extends EquipHost {
         byte[] ppbody0 = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         byte[] ppbody1 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("hanRcpPath"))).get(0);
         byte[] ppbody2 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("compRcpPath"))).get(0);
-        SecsItem secsItem0 = new SecsItem(ppbody0, FormatCode.SECS_BINARY);
-        SecsItem secsItem1 = new SecsItem(ppbody1, FormatCode.SECS_BINARY);
-        SecsItem secsItem2 = new SecsItem(ppbody2, FormatCode.SECS_BINARY);
         //下载han文件
         try {
             sleep(1000);
@@ -597,7 +597,7 @@ public class T640Host extends EquipHost {
     public Map sendS7F17out(String recipeName) {
         List ProcessprogramIDList = new ArrayList();
         ProcessprogramIDList.add(recipeName);
-        byte ackc7 = 0;
+        byte ackc7 = -1;
         try {
             DataMsgMap data = activeWrapper.sendS7F17out(ProcessprogramIDList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
@@ -635,7 +635,7 @@ public class T640Host extends EquipHost {
             e.printStackTrace();
         }
         Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
+        resultMap.put("msgType", "s7f18in");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7);

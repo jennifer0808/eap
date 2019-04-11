@@ -171,7 +171,6 @@ public class VSP88DNHTHost extends EquipHost {
             } else if (tagName.toLowerCase().contains("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
-                //  processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
