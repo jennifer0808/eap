@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.cctech;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -17,7 +16,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -146,18 +144,10 @@ public class C6800SECSHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equals("s6f11inStatusChange")) {
-                processS6F11in(data);
-//                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
-                //接收到超时，直接不能下载
-                this.canDownladMap = false;
-                //或者重新发送参数
-                initRptPara();
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
             } else {
@@ -391,78 +381,17 @@ public class C6800SECSHost extends EquipHost {
         return null;
     }
 
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
 
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
+
 
 
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (msgdata == null || msgdata.isEmpty()) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传请求被设备拒绝,请调整设备状态重试.");
-            return null;
-        }
-        //
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //Recipe解析
+
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
             recipeParaList = C6800Util.getRecipePara(recipePath, deviceType);

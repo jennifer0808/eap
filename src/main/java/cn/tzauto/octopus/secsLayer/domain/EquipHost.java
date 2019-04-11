@@ -1660,9 +1660,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map stripIDformatMap = new HashMap();
         stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
         byte objack = 0;
-//        String stripMapData = WSUtility.binGet(stripId, deviceCode);
+        String stripMapData = WSUtility.binGet(stripId, deviceCode);
 //        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
-        String stripMapData = "<stripmaptest12312313";
+//        String stripMapData = "<stripmaptest12312313";
         if (stripMapData == null) {//stripId不存在
             out = new DataMsgMap("s14f2outNoExist", activeWrapper.getDeviceId());
             long[] u1 = new long[1];
