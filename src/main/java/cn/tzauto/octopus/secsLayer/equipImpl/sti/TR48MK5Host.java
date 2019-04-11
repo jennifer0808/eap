@@ -126,10 +126,7 @@ public class TR48MK5Host extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data,(byte)0);
-                long ceid =(long) data.get("CEID");
-                if (ceid == 11 || ceid == 1) {
-                    this.inputMsgQueue.put(data);
-                }
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             }  else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -236,28 +233,7 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/"));
-        s7f3out.put("Processprogram", secsItem);
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName,ppbody,FormatCode.SECS_BINARY);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ACKC7", 9);
-            resultMap.put("Description", e.getMessage());
-        }
+
         //发送PP-Select指令
         sendS2f41CmdPPSelect(targetRecipeName);
         findDeviceRecipe();
@@ -277,7 +253,7 @@ public class TR48MK5Host extends EquipHost {
         UiLogUtil.appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
-        return resultMap;
+        return   sendS7F3out(localRecipeFilePath,targetRecipeName);
     }
 
     @Override
@@ -285,7 +261,6 @@ public class TR48MK5Host extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         List<RecipePara> recipeParaList = null;
-        RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
         String shortNameOK = "Y";
         String realRecipeName = "";
         byte[] ppbody = (byte[])getPPBODY(recipeName);
@@ -335,87 +310,131 @@ public class TR48MK5Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
 
     public Map sendS2f41CmdPPSelect(String PPID) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", PPID);
-        byte[] hcack = new byte[1];
+        Map s2f41outMap=new HashMap();
+        s2f41outMap.put("PPID",PPID);
+        Map s2f41outNameFromatMap=new HashMap();
+        s2f41outNameFromatMap.put("PPID",FormatCode.SECS_ASCII);
+        Map s2f41outVauleFromatMap=new HashMap();
+        s2f41outVauleFromatMap.put(PPID,FormatCode.SECS_ASCII);
+        byte hcack=-1 ;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out("PPSELECT",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + PPID);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + e.getMessage());
         }
         return resultMap;
     }
-    //TODO
+
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("DATA1", DATA1);
-        s2f41out.put("DATA2", DATA2);
-        s2f41out.put("DATA3", DATA3);
-        s2f41out.put("DATA4", DATA4);
-        s2f41out.put("DATA5", DATA5);
-        s2f41out.put("DATA6", DATA6);
-        s2f41out.put("DATA7", DATA7);
-        s2f41out.put("DATA8", DATA8);
-        s2f41out.put("DATA9", DATA9);
-        s2f41out.put("DATA10", DATA10);
-        s2f41out.put("DATA11", DATA11);
-        s2f41out.put("DATA12", DATA12);
-        s2f41out.put("DATA13", DATA13);
-        s2f41out.put("DATA14", DATA14);
-        byte[] hcack = new byte[1];
+        Map s2f41outMap=new HashMap();
+        s2f41outMap.put("DATA1",DATA1);
+        s2f41outMap.put("DATA2",DATA2);
+        s2f41outMap.put("DATA3",DATA3);
+        s2f41outMap.put("DATA4",DATA4);
+        s2f41outMap.put("DATA5",DATA5);
+        s2f41outMap.put("DATA6",DATA6);
+        s2f41outMap.put("DATA7",DATA7);
+        s2f41outMap.put("DATA8",DATA8);
+        s2f41outMap.put("DATA9",DATA9);
+        s2f41outMap.put("DATA10",DATA10);
+        s2f41outMap.put("DATA11",DATA11);
+        s2f41outMap.put("DATA12",DATA12);
+        s2f41outMap.put("DATA13",DATA13);
+        s2f41outMap.put("DATA14",DATA14);
+        Map s2f41outNameFromatMap=new HashMap();
+        s2f41outNameFromatMap.put("DATA1",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA2",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA3",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA4",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA5",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA6",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA7",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA8",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA9",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA10",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA11",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA12",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA13",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA14",FormatCode.SECS_ASCII);
+        Map s2f41outVauleFromatMap=new HashMap();
+        s2f41outVauleFromatMap.put(DATA1,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA5,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA6,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA7,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA8,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA9,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA10,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA11,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA12,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA13,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA14,FormatCode.SECS_ASCII);
+        byte hcack = -1;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTCONFIG",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to CHECK the LotConfig");
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd lotconfig at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + e.getMessage());
         }
         return resultMap;
     }
     //TODO
     public Map sendS2f41CmdLotStart(String DATA1, String DATA2, String DATA3, String DATA4) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("DATA1", DATA1);
-        s2f41out.put("DATA2", DATA2);
-        s2f41out.put("DATA3", DATA3);
-        s2f41out.put("DATA4", DATA4);
-        byte[] hcack = new byte[1];
+        Map s2f41outMap=new HashMap();
+        s2f41outMap.put("DATA1",DATA1);
+        s2f41outMap.put("DATA2",DATA2);
+        s2f41outMap.put("DATA3",DATA3);
+        s2f41outMap.put("DATA4",DATA4);
+
+        Map s2f41outNameFromatMap=new HashMap();
+        s2f41outNameFromatMap.put("DATA1",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA2",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA3",FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA4",FormatCode.SECS_ASCII);
+
+        Map s2f41outVauleFromatMap=new HashMap();
+        s2f41outVauleFromatMap.put(DATA1,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3,FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4,FormatCode.SECS_ASCII);
+
+        byte hcack =-1;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTSTART",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to Start the Lot");
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd lotstart at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + e.getMessage());
         }
         return resultMap;
     }
@@ -462,11 +481,11 @@ public class TR48MK5Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+        byte hcack = (byte)  data.get("HCACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
+        resultMap.put("HCACK", hcack);
         return resultMap;
     }
     // </editor-fold>
