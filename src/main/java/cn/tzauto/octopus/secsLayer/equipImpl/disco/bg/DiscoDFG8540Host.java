@@ -40,6 +40,7 @@ public class DiscoDFG8540Host extends EquipHost {
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         DiscoDFG8540Host newEquip = new DiscoDFG8540Host(deviceId,
                 this.iPAddress,
@@ -55,15 +56,16 @@ public class DiscoDFG8540Host extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    DiscoDFG8540Host.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != DiscoDFG8540Host.COMMUNICATING) {
                     this.sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -88,7 +90,7 @@ public class DiscoDFG8540Host extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
+                    long ceid = 0L;
                     try {
                         ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
@@ -119,20 +121,21 @@ public class DiscoDFG8540Host extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -308,7 +311,7 @@ public class DiscoDFG8540Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
@@ -386,7 +389,7 @@ public class DiscoDFG8540Host extends EquipHost {
     }
 
     private void processS6F11AlarmClear(DataMsgMap data) {
-        long alid = 0l;
+        long alid = 0L;
         try {
             alid = data.getSingleNumber("ALID");
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(SecsItem) data.get("EquipStatus")).getData().toString();
@@ -415,7 +418,7 @@ public class DiscoDFG8540Host extends EquipHost {
     }
 
     private void processS6F11PPselect(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
             if (ceid == 77) {
