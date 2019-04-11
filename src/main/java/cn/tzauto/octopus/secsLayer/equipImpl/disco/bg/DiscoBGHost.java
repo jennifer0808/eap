@@ -50,6 +50,7 @@ public class DiscoBGHost extends EquipHost {
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+    @Override
     public Object clone() {
         DiscoBGHost newEquip = new DiscoBGHost(deviceId,
                 this.iPAddress,
@@ -65,15 +66,16 @@ public class DiscoBGHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    DiscoBGHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != DiscoBGHost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -95,33 +97,14 @@ public class DiscoBGHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = msg.getSingleNumber("CollEventID");
-                        Map panelMap = new HashMap();
-                        if (ceid == 10103 || ceid == 10104) {
-                            if (ceid == 10103) {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
-                            } else {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
-                            }
-                            changeEquipPanel(msg);
-//                            processS6F11EquipStatus(msg);
-                        } else if (ceid == 211 || ceid == 221) {
-                            processS6F11PPselect(msg);
-                        } else {
-//                            processS6F11EquipStatus(msg);
-                        }
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11alarmClear")) {
-                    this.processS6F11AlarmClear(msg);
+                    processS6F11AlarmClear(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    this.processS6F11PPselect(msg);
+                    processS6F11PPselect(msg);
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
@@ -129,13 +112,14 @@ public class DiscoBGHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -170,8 +154,6 @@ public class DiscoBGHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     @SuppressWarnings("unchecked")
     private void sendS1F3CheckCassUse() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3CassUse", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
         List cassIdlist = new ArrayList();
         cassIdlist.add(1004L);
@@ -276,6 +258,7 @@ public class DiscoBGHost extends EquipHost {
             boolean selectOkFlag = false;
             for (int i = 0; i < eppd.size(); i++) {
                 if (eppd.get(i).toString().equals(recipeName)) {
+                    //todo 多个list发送待修改
                     DataMsgMap PPselectA = new DataMsgMap("s2f41outPPSelectA", activeWrapper.getDeviceId());
                     PPselectA.setTransactionId(activeWrapper.getNextAvailableTransactionId());
                     PPselectA.put("PPID", recipeName);
@@ -383,11 +366,39 @@ public class DiscoBGHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
 
     @Override
-    protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+    public void processS6F11in(DataMsgMap data){
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long)data.get("CEID");
+            Map panelMap = new HashMap();
+            if (ceid == 10103 || ceid == 10104) {
+                if (ceid == 10103) {
+                    //Online_Local
+                    panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);
+                } else {
+                    //Online_Remote}
+                    panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
+                }
+                changeEquipPanel(panelMap);
+            } else if ( ceid ==77|| ceid == 211 || ceid == 221 || ceid == 1000000401) {
+                processS6F11PPselect(data);
+            } else if(ceid==150){
+                processS6F11EquipStatusChange(data);
+            }else if(ceid== -1L){
+                //todo ceid ?
+                processS6F11AlarmClear(data);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    @Override
+    protected void processS6F11EquipStatusChange(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long)data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -460,10 +471,11 @@ public class DiscoBGHost extends EquipHost {
     }
 
     private void processS6F11AlarmClear(DataMsgMap data) {
-        long alid = 0l;
+        long alid = 0L;
         try {
+            //todo alid如何获取
             alid = data.getSingleNumber("ALID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(SecsItem) data.get("EquipStatus")).getData().toString();
+            findDeviceRecipe();
             if (!"".equals(equipStatus) && equipStatus != null) {
                 Map map = new HashMap();
                 map.put("EquipStatus", equipStatus);
@@ -489,12 +501,12 @@ public class DiscoBGHost extends EquipHost {
     }
 
     private void processS6F11PPselect(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            findDeviceRecipe();
+            ceid = (long)data.get("CEID");
             if (ceid == 77) {
                 //ppselect 事件
-                ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
                 portARcpName = "";
                 portARcpName = "";
             }
@@ -511,7 +523,6 @@ public class DiscoBGHost extends EquipHost {
 //                }
 //            }
             if (ceid == 211 || ceid == 221) {
-                this.findDeviceRecipe();
                 if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
                     sendS1F3CheckCassUse();
                     SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -543,7 +554,7 @@ public class DiscoBGHost extends EquipHost {
                 }
             }
             if (ceid == 1000000401) {
-                String DFMppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+                String DFMppExecName = ppExecName;
                 UiLogUtil.appendLog2SecsTab(deviceCode, "DFM部分使用的程序为： " + DFMppExecName + "\n");
             }
         } catch (Exception e) {
@@ -575,7 +586,7 @@ public class DiscoBGHost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
