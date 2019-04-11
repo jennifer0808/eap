@@ -28,7 +28,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author njtz
@@ -252,124 +255,80 @@ public class DiscoBGHost extends EquipHost {
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
         this.findDeviceRecipe();
+        Map resultMap = new HashMap();
         if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
             sendS1F3CheckCassUse();
+
+            resultMap.put("deviceCode", deviceCode);
             ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
             boolean selectOkFlag = false;
+            byte hcack = (byte) 0;
             for (int i = 0; i < eppd.size(); i++) {
                 if (eppd.get(i).toString().equals(recipeName)) {
-                    //todo 多个list发送待修改
-                    DataMsgMap PPselectA = new DataMsgMap("s2f41outPPSelectA", activeWrapper.getDeviceId());
-                    PPselectA.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-                    PPselectA.put("PPID", recipeName);
-                    PPselectA.put("LotId", lotId);
-                    DataMsgMap PPselectB = new DataMsgMap("s2f41outPPSelectB", activeWrapper.getDeviceId());
-                    PPselectB.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-                    PPselectB.put("PPID", recipeName);
-                    PPselectB.put("LotId", lotId);
                     try {
                         if ("setup".equalsIgnoreCase(equipStatus)) {
                             if (cassUseMap.get("A")) {
-                                DataMsgMap dataA = activeWrapper.sendAwaitMessage(PPselectA);
-                                byte[] hcacka = (byte[]) ((SecsItem) dataA.get("HCACK")).getData();
-                                if (hcacka != null && hcacka[0] == 0) {
-                                    portARcpName = recipeName;
-                                    selectOkFlag = true;
-                                }
-                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK"));
-                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK");
+                                Map cpmap = new HashMap();
+                                cpmap.put("PPID_A", recipeName);
+                                cpmap.put("LOTID_A", lotId);
+                                Map cpNameFromatMap = new HashMap();
+                                cpNameFromatMap.put("PPID_A", FormatCode.SECS_ASCII);
+                                cpNameFromatMap.put("LOTID_A", FormatCode.SECS_ASCII);
+                                Map cpValueFromatMap = new HashMap();
+                                cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+                                cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
+                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cpmap, cpNameFromatMap, cpValueFromatMap);
+
+                                hcack = (byte) data.get("HCACK");
+                                portARcpName = recipeName;
+                                selectOkFlag = true;
+                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK");
                             }
                             if (cassUseMap.get("B")) {
-                                DataMsgMap dataB = activeWrapper.sendAwaitMessage(PPselectB);
-                                byte[] hcackb = (byte[]) ((SecsItem) dataB.get("HCACK")).getData();
-                                if (hcackb != null && hcackb[0] == 0) {
-                                    portBRcpName = recipeName;
-                                    selectOkFlag = true;
-                                }
-                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK"));
-                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK");
+                                Map cpmap = new HashMap();
+                                cpmap.put("PPID_B", recipeName);
+                                cpmap.put("LOTID_B", lotId);
+                                Map cpNameFromatMap = new HashMap();
+                                cpNameFromatMap.put("PPID_B", FormatCode.SECS_ASCII);
+                                cpNameFromatMap.put("LOTID_B", FormatCode.SECS_ASCII);
+                                Map cpValueFromatMap = new HashMap();
+                                cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+                                cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
+                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cpmap, cpNameFromatMap, cpValueFromatMap);
+
+                                hcack = (byte) data.get("HCACK");
+                                portARcpName = recipeName;
+                                selectOkFlag = true;
+                                logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+                                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK");
                             }
                         }
                         logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
                     } catch (Exception e) {
+
                         logger.error("Exception:", e);
                     }
                 }
             }
             if (!selectOkFlag) {
                 UiLogUtil.appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功SET UP！\n");
+                hcack = (byte) 9;
+                description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 ";
             }
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", description);
         }
 
-        Map resultMap = new HashMap();
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", 0);
-        resultMap.put("Description", description);
         return resultMap;
     }
-
-    @SuppressWarnings("unchecked")
-    public Map sendS2F41outPPselectA(String recipeName) {
-        DataMsgMap PPselectA = new DataMsgMap("s2f41outPPSelectA", activeWrapper.getDeviceId());
-        PPselectA.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectA.put("PPID", recipeName);
-        PPselectA.put("LotId", lotId);
-        try {
-            if (cassUseMap.get("A")) {
-                if ("".equals(portARcpName) || !portARcpName.equals(recipeName)) {
-                    DataMsgMap dataA = activeWrapper.sendAwaitMessage(PPselectA);
-                    byte[] hcacka = (byte[]) ((SecsItem) dataA.get("HCACK")).getData();
-                    if (hcacka != null && hcacka[0] == 0) {
-                        portARcpName = recipeName;
-                    }
-                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port A =" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK"));
-                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcacka[0] + " means " + ACKDescription.description(hcacka[0], "HCACK");
-                }
-            }
-            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", description);
-        return resultMap;
-    }
-
-    @SuppressWarnings("unchecked")
-    public Map sendS2F41outPPselectB(String recipeName) {
-        DataMsgMap PPselectB = new DataMsgMap("s2f41outPPSelectB", activeWrapper.getDeviceId());
-        PPselectB.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectB.put("PPID", recipeName);
-        PPselectB.put("LotId", lotId);
-        try {
-            if (cassUseMap.get("B")) {
-                if ("".equals(portARcpName) || !portARcpName.equals(recipeName)) {
-                    DataMsgMap dataB = activeWrapper.sendAwaitMessage(PPselectB);
-                    byte[] hcackb = (byte[]) ((SecsItem) dataB.get("HCACK")).getData();
-                    if (hcackb != null && hcackb[0] == 0) {
-                        portBRcpName = recipeName;
-                    }
-                    logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK at Port B =" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK"));
-                    description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcackb[0] + " means " + ACKDescription.description(hcackb[0], "HCACK");
-                }
-            }
-            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + ppExecName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", description);
-        return resultMap;
-    }// </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
 
     @Override
-    public void processS6F11in(DataMsgMap data){
+    public void processS6F11in(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             Map panelMap = new HashMap();
             if (ceid == 10103 || ceid == 10104) {
                 if (ceid == 10103) {
@@ -380,11 +339,11 @@ public class DiscoBGHost extends EquipHost {
                     panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
                 }
                 changeEquipPanel(panelMap);
-            } else if ( ceid ==77|| ceid == 211 || ceid == 221 || ceid == 1000000401) {
+            } else if (ceid == 77 || ceid == 211 || ceid == 221 || ceid == 1000000401) {
                 processS6F11PPselect(data);
-            } else if(ceid==150){
+            } else if (ceid == 150) {
                 processS6F11EquipStatusChange(data);
-            }else if(ceid== -1L){
+            } else if (ceid == -1L) {
                 //todo ceid ?
                 processS6F11AlarmClear(data);
             }
@@ -397,7 +356,7 @@ public class DiscoBGHost extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -504,7 +463,7 @@ public class DiscoBGHost extends EquipHost {
         long ceid = 0L;
         try {
             findDeviceRecipe();
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             if (ceid == 77) {
                 //ppselect 事件
                 portARcpName = "";
@@ -538,13 +497,7 @@ public class DiscoBGHost extends EquipHost {
                         for (int i = 0; i < eppd.size(); i++) {
                             String rcpNameString = eppd.get(i).toString();
                             if (rcpNameString.equals(trackInRcpName)) {
-                                if (ceid == 211) {
-                                    this.sendS2F41outPPselectA(trackInRcpName);
-                                    selectOkFlag = true;
-                                } else {
-                                    this.sendS2F41outPPselectB(trackInRcpName);
-                                    selectOkFlag = true;
-                                }
+                                sendS2F41outPPselect(trackInRcpName);
                             }
                         }
                         if (!selectOkFlag) {
