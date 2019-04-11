@@ -79,19 +79,8 @@ public class OcrHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    try {
-                        processS6F11EquipStatus(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else {
                     //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                     //      + " which I do not want to process! ");
@@ -118,7 +107,9 @@ public class OcrHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+//                //回复s6f11消息
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -146,11 +137,24 @@ public class OcrHost extends EquipHost {
         }
     }
 
+    public void processS6F11in(DataMsgMap data) {
+        try {
+            long ceid = (long) data.get("CEID");
+            if (ceid == 1011) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 1001 || ceid == 1003) {
+                processS6F11EquipStatus(data);
+            } else if (ceid == 1200) {
+                findDeviceRecipe();
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
         try {
-            ceid = (long) data.get("CEID");
+            long ceid = (long) data.get("CEID");
             if (ceid == 1001) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
             } else if (ceid == 1003) {
@@ -158,124 +162,6 @@ public class OcrHost extends EquipHost {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
-        }
-    }
-
-    @Override
-    protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
-        try {
-            ceid = data.getSingleNumber("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            findDeviceRecipe();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
-
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        RecipeService recipeService = new RecipeService(sqlSession);
-
-        try {
-            //从数据库中获取当前设备模型信息
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            boolean dataReady = false;
-            // 更新设备模型
-            if (deviceInfoExt == null) {
-                logger.error("数据库中缺少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
-            } else {
-                deviceInfoExt.setDeviceStatus(equipStatus);
-                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                sqlSession.commit();
-                dataReady = true;
-            }
-
-            //保存到设备操作记录数据库
-            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
-            sqlSession.commit();
-
-            boolean checkResult = false;
-            //获取设备当前运行状态，如果是Run，执行开机检查逻辑
-            if (dataReady && equipStatus.equalsIgnoreCase("run")) {
-                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
-                    return;
-                }
-                //1、获取设备需要校验的信息类型,
-                String startCheckMod = deviceInfoExt.getStartCheckMod();
-                boolean hasGoldRecipe = true;
-                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
-                }
-                //查询trackin时的recipe和GoldRecipe
-                Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-
-                //查询客户端数据库是否存在GoldRecipe
-                if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                    hasGoldRecipe = false;
-                }
-
-                //首先从服务端获取机台是否处于锁机状态
-                //如果设备应该是锁机，那么首先发送锁机命令给机台
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    holdDeviceAndShowDetailInfo();
-                } else {
-                    //根据检查模式执行开机检查逻辑
-                    //1、A1-检查recipe名称是否一致
-                    //2、A-检查recipe名称和参数
-                    //3、B-检查SV
-                    //4、AB都检查
-
-                    if (startCheckMod != null && !"".equals(startCheckMod)) {
-                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
-                        if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
-                            //不允许开机
-                            holdDeviceAndShowDetailInfo();
-                            return;
-                        } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
-                        }
-                    }
-                    if (checkResult && "A".equals(startCheckMod)) {
-                        //首先判断下载的Recipe类型
-                        //1、如果下载的是Unique版本，那么执行完全比较
-                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                        if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
-                            this.startCheckRecipePara(downLoadRecipe, "abs");
-                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
-                            if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                                //不允许开机
-                                this.holdDeviceAndShowDetailInfo();
-                                return;
-                            } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
-                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
-                            }
-
-                        }
-                    } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            sqlSession.rollback();
-        } finally {
-            sqlSession.close();
         }
     }
 
@@ -322,20 +208,20 @@ public class OcrHost extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        byte[] ackc7 = new byte[1];
+        byte ackc7 = -1;
         List recipeNameList = new ArrayList();
         recipeNameList.add(recipeName);
         try {
             DataMsgMap data = activeWrapper.sendS7F17out(recipeNameList);
             logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+            ackc7 = (byte) data.get("AckCode");
+            if (ackc7 == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);

@@ -81,8 +81,8 @@ public class HellerMK1809IIIHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
-                    processS6F11EquipStatusChange(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -122,7 +122,8 @@ public class HellerMK1809IIIHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
@@ -142,43 +143,37 @@ public class HellerMK1809IIIHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
+    @Override
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
-        String ppName = String.valueOf(listtmp.get(1));
-        ppExecName = ppName.substring(ppName.lastIndexOf("\\") + 1, ppName.lastIndexOf("."));
+        if (listtmp != null) {
+            equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
+            String ppName = String.valueOf(listtmp.get(1));
+            ppExecName = ppName.substring(ppName.lastIndexOf("\\") + 1, ppName.lastIndexOf("."));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
     }
 
-    // </editor-fold> 
+    // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-
-
-    @Override
-    public Map sendS7F5out(String recipeName) {
-        Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
-        List<RecipePara> recipeParaList = null;
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, 1, recipePath);
-        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        //Recipe解析
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f6");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipe", recipe);
-        resultMap.put("recipeParaList", recipeParaList);
-        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
-        return resultMap;
+    public void processS6F11in(DataMsgMap data) {
+        try {
+            //// TODO: 2019/4/11 ceid 没找到，暂时注释掉
+            long ceid = (long) data.get("CEID");
+//            if (ceid == 1) {
+                processS6F11EquipStatusChange(data);
+//            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
     }
 
     // </editor-fold>
