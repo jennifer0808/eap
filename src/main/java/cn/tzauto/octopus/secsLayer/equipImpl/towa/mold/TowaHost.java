@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.towa.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
@@ -38,8 +39,8 @@ public class TowaHost extends EquipHost {
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid=50007;
-
+        EquipStateChangeCeid = 50007;
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -59,15 +60,16 @@ public class TowaHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    TowaHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != TowaHost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
@@ -87,6 +89,8 @@ public class TowaHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     this.processS5F1in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f112dcodereview")) {
@@ -115,6 +119,7 @@ public class TowaHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -122,7 +127,7 @@ public class TowaHost extends EquipHost {
         }
         try {
             secsMsgTimeoutTime = 0;
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
                 processS1F13in(data);
@@ -147,9 +152,10 @@ public class TowaHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
                 putDataIntoWaitMsgValueMap(data);
-            }  else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11EquipStatus(data);
-            }else {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
+            } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
@@ -160,46 +166,33 @@ public class TowaHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     public List sendS1F3PressCheckout() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] press1SV = new long[1];
-        long[] press2SV = new long[1];
-        long[] press3SV = new long[1];
-        long[] press4SV = new long[1];
+        List svidlist = new ArrayList<>();
         if ("TOWAYPM".equals(deviceType)) {
-            press1SV[0] = 501L;
-            press2SV[0] = 601L;
-            press3SV[0] = 701L;
-            press4SV[0] = 801L;
+            svidlist.add(501L);
+            svidlist.add(601L);
+            svidlist.add(701L);
+            svidlist.add(801L);
         } else if ("TOWAY1R".equals(deviceType)) {
-            press1SV[0] = 1211L;
-            press2SV[0] = 2211L;
-            press3SV[0] = 3211L;
-            press4SV[0] = 4211L;
+            svidlist.add(1211L);
+            svidlist.add(2211L);
+            svidlist.add(3211L);
+            svidlist.add(4211L);
         } else if ("TOWAYPS".equals(deviceType)) {
-            press1SV[0] = 100L;
-            press2SV[0] = 200L;
-            press3SV[0] = 300L;
-            press4SV[0] = 400L;
+            svidlist.add(100L);
+            svidlist.add(200L);
+            svidlist.add(300L);
+            svidlist.add(400L);
         }
-        s1f3out.put("Press1", press1SV);
-        s1f3out.put("Press2", press2SV);
-        s1f3out.put("Press3", press3SV);
-        s1f3out.put("Press4", press4SV);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            data = activeWrapper.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data == null || data.isEmpty()) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.isEmpty()) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<SecsItem> list = (ArrayList) data.get("SV");
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         return listtmp;
     }
@@ -208,11 +201,108 @@ public class TowaHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+            if (ceid == EquipStateChangeCeid) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 50013) {
+                findDeviceRecipe();
+                handleCleanRecipe(ppExecName);
+            }else if (ceid == -1L) {
+                //todo strip id review ?
+                processS6f11StripIDReview(data);
+            } else if (ceid == 50006 || ceid == 50005 || ceid == 50004 || ceid == 50003 ||
+                    ceid == 53 || ceid == 52 || ceid == 51 || ceid == 50) {
+                if (ceid == 50006 || ceid == 53) {
+                    super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                } else if (ceid == 50005 || ceid == 52) {
+                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                } else if (ceid == 50004 || ceid == 51) { //待验证
+                    super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                } else if (ceid == 50003 || ceid == 50) {
+                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                }
+                updateCommStateInExt();
+            }
+            if (ceid == 9) {
+                equipStatus = "Stopping";
+                Map map = new HashMap();
+                map.put("EquipStatus", equipStatus);
+                changeEquipPanel(map);
+                updateCommStateInExt();
+            }
+            if (ceid == 10 && holdFlag) {
+                holdDevice();
+                Map map = new HashMap();
+                map.put("EquipStatus", "PAUSE");
+                changeEquipPanel(map);
+                updateCommStateInExt();
+            }
+
+
+            if ("TOWAPMC".equalsIgnoreCase(deviceType) || "TOWAY1E".equalsIgnoreCase(deviceType)) {
+                if (ceid == 2080) {
+                    super.pressUseMap.clear();
+                }
+                if (ceid == 2020) {
+                    super.pressUseMap.put(1, true);
+                }
+                if (ceid == 2030) {
+                    super.pressUseMap.put(2, true);
+                }
+                if (ceid == 2040) {
+                    super.pressUseMap.put(3, true);
+                }
+                if (ceid == 2050) {
+                    super.pressUseMap.put(4, true);
+                }
+            }
+            if ("TOWAYPS".equalsIgnoreCase(deviceType)) {
+                if (ceid == 226L) {
+                    super.pressUseMap.clear();
+                }
+                if (ceid == 204L) {
+                    super.pressUseMap.put(1, true);
+                }
+                if (ceid == 206L) {
+                    super.pressUseMap.put(2, true);
+                }
+                if (ceid == 208L) {
+                    super.pressUseMap.put(3, true);
+                }
+                if (ceid == 210L) {
+                    super.pressUseMap.put(4, true);
+                }
+            }
+            if ("TOWAYPM".equalsIgnoreCase(deviceType)) {
+                if (ceid == 222) {
+                    super.pressUseMap.clear();
+                }
+                if (ceid == 228) {
+                    super.pressUseMap.put(1, true);
+                }
+                if (ceid == 230) {
+                    super.pressUseMap.put(2, true);
+                }
+                if (ceid == 232) {
+                    super.pressUseMap.put(3, true);
+                }
+                if (ceid == 234) {
+                    super.pressUseMap.put(4, true);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid =(long) data.get("CEID");
+            ceid = (long) data.get("CEID");
             if (ceid == 50006 || ceid == 53) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 50005 || ceid == 52) {
@@ -230,10 +320,6 @@ public class TowaHost extends EquipHost {
             }
             updateCommStateInExt();
 
-            if(ceid==EquipStateChangeCeid){
-                processS6F11EquipStatusChange(data);
-                return;
-            }
             if ("TOWAPMC".equalsIgnoreCase(deviceType) || "TOWAY1E".equalsIgnoreCase(deviceType)) {
                 if (ceid == 2080) {
                     super.pressUseMap.clear();
@@ -285,7 +371,6 @@ public class TowaHost extends EquipHost {
                     super.pressUseMap.put(4, true);
                 }
                 if (ceid == 10) {
-//                    sendS2f41Cmd("STOP");
                     Map map = new HashMap();
                     map.put("EquipStatus", "PAUSE");
                     changeEquipPanel(map);
@@ -299,7 +384,7 @@ public class TowaHost extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
@@ -439,6 +524,7 @@ public class TowaHost extends EquipHost {
     }
 
     protected void processS6f11StripIDReview(DataMsgMap data) {
+        //todo 取PressNo
         Long pressNoInt = 0L;
         String pressNo = "";
         try {
@@ -467,7 +553,7 @@ public class TowaHost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -567,20 +653,20 @@ public class TowaHost extends EquipHost {
         //重定义towa 机台的equipstatuschange事件报告 用于在设备状态改变时获取equipstatus和ppexecname
         if (!deviceType.equals("TOWAYPM")) {
             List list = new ArrayList();
-            list.add(902l);
-            list.add(906l);
-//            sendS2F33Out(50007l, 902l, 906l);
-            sendS2F33Out(50007l, 50007l, list);
-            sendS2F35out(50007l, 50007l, 50007l);
-            sendS2F37out(50007l);
+            list.add(902L);
+            list.add(906L);
+//            sendS2F33Out(50007L, 902L, 906L);
+            sendS2F33Out(50007L, 50007L, list);
+            sendS2F35out(50007L, 50007L, 50007L);
+            sendS2F37out(50007L);
         } else {
             List list = new ArrayList();
-            list.add(102l);
-            list.add(111l);
-//            sendS2F33Out(271l, 102l, 111l);
-            sendS2F33Out(271l, 271l, list);
-            sendS2F35out(271l, 271l, 271l);
-            sendS2F37out(271l);
+            list.add(102L);
+            list.add(111L);
+//            sendS2F33Out(271L, 102L, 111L);
+            sendS2F33Out(271L, 271L, list);
+            sendS2F35out(271L, 271L, 271L);
+            sendS2F37out(271L);
         }
 //        sendS2F37outAll(this.activeWrapper);
         //重定义towa 机台的pp-select事件报告 用于在设备状态改变时获取ppexecname
@@ -588,11 +674,11 @@ public class TowaHost extends EquipHost {
         if (deviceType.equals("TOWAY1R")) { //deviceType.equals("TOWAY1E") ||
             //重定义 ppselect完成事件报告
             List list = new ArrayList();
-            list.add(906l);
+            list.add(906L);
 
-            sendS2F33Out(50013l, 50013l, list);
-            sendS2F35out(50013l, 50013l, 50013l);
-            sendS2F37out(50013l);
+            sendS2F33Out(50013L, 50013L, list);
+            sendS2F35out(50013L, 50013L, 50013L);
+            sendS2F37out(50013L);
             //重定义 2DCode追溯事件报告
             sendS2f33outMulti(19005L, 1052L, 906L, 1053L, 1050L, 1051L);
             sendS2F35out(19005L, 19005L, 19005L);
@@ -612,20 +698,20 @@ public class TowaHost extends EquipHost {
         }
         if (deviceType.equals("TOWAPMC")) {
             List list = new ArrayList();
-            list.add(906l);
+            list.add(906L);
 
             //重定义 recipe change事件报告
-            sendS2F33Out(50010l, 50010l, list);
-            sendS2F35out(50010l, 50010l, 50010l);
-            sendS2F37out(50010l);
+            sendS2F33Out(50010L, 50010L, list);
+            sendS2F35out(50010L, 50010L, 50010L);
+            sendS2F37out(50010L);
         }
         if (deviceType.equals("TOWAY1E")) {
             //重定义 recipe change事件报告
             List list = new ArrayList();
-            list.add(906l);
-            sendS2F33Out(5001400l, 5001400l,list);
-            sendS2F35out(5001400l, 50014l, 5001400l);
-            sendS2F37out(50014l);
+            list.add(906L);
+            sendS2F33Out(5001400L, 5001400L, list);
+            sendS2F35out(5001400L, 50014L, 5001400L);
+            sendS2F37out(50014L);
         }
     }
 
