@@ -23,7 +23,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.besi.Sigma8800RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
@@ -327,41 +326,15 @@ public class SigmaPlusHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+        List listtmp = getNcessaryData();
+        if (listtmp != null) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
-        if (data == null || data.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
-            logger.error("获取设备:" + deviceCode + "状态信息失败.");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        ppExecName = ppExecName.replaceAll(".dbrcp", "");
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-
+        panelMap.put("PPExecName", ppExecName.replaceAll(".dbrcp", ""));
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
@@ -654,21 +627,7 @@ public class SigmaPlusHost extends EquipHost {
     }
 
     private Map s2f41stop() {
-        DataMsgMap s2f41stop = new DataMsgMap("s2f41stopout", activeWrapper.getDeviceId());
-        s2f41stop.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41stop);
-            ppgnt = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
+        return super.sendS2f41Cmd("STOP");
     }
 //    public void startCheckRecipePara(Recipe checkRecipe, String type) {
 //        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -746,83 +705,43 @@ public class SigmaPlusHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", "Production/" + targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        Map resultMap = super.sendS7F1out(localFilePath,"Production/" + targetRecipeName);
+        resultMap.put("ppid",targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", "Production/" + targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", "Production/" + targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        Map resultMap = super.sendS7F3out(localRecipeFilePath,"Production/" + targetRecipeName);
+        resultMap.put("ppid",targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        Map mapTemp = new HashMap();
-        mapTemp = sendS1F3Check();
-        Map resultMap = new HashMap();
+        Map mapTemp = sendS1F3Check();
         String rcpName = (String) mapTemp.get("PPExecName");
         logger.info("===================rcpName:" + rcpName);
         logger.info("===================recipeName:" + recipeName);
+        Map resultMap = new HashMap();
         if (!rcpName.contains(recipeName)) {
             UiLogUtil.appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
             UiLogUtil.appendLog2SeverTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
             resultMap.put("checkResult", "Y");
             return resultMap;
         }
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", "Production/" + recipeName);
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
+            data = activeWrapper.sendS7F5out("Production/" + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            byte[] ppbody = (byte[]) data.get("PPBODY");
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
 //            recipeParaList = getRecipeParasByECSV();
@@ -838,8 +757,7 @@ public class SigmaPlusHost extends EquipHost {
 //                listTemp [i] = Sigma8800RecipeUtil.transferFromDB(map[i]);
 //                recipeParaList.add(listTemp);
 //        }
-            Map map = new HashMap();
-            map = sendS2F15outParameter();
+            Map map = sendS2F15outParameter();
             recipeParaList = Sigma8800RecipeUtil.transferFromDB(map, deviceType);
             //设备发过来的参数部分为科学计数法，这里转为一般的
 //            recipeParaList = recipeParaBD2Str(recipeParaList);
@@ -855,28 +773,8 @@ public class SigmaPlusHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", "Production/" + recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + "Production/" + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + "Production/" + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + "Production/" + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        Map resultMap = super.sendS7F17out("Production/" + recipeName);
+        resultMap.put("recipeName",recipeName);
         return resultMap;
     }
 
@@ -914,33 +812,11 @@ public class SigmaPlusHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList list = (ArrayList) data.get("EPPD");
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = (ArrayList) data.get("EPPD");
+        Map resultMap = super.sendS7F19out();
+        ArrayList recipeList = (ArrayList) resultMap.get("eppd");
+        if(recipeList.size()!=0){
             ArrayList list1 = new ArrayList();
-            for (Object object : listtmp) {
+            for (Object object : recipeList) {
                 if (String.valueOf(object).contains("Production/")) {
                     list1.add(String.valueOf(object).replaceAll("Production/", "").replaceAll(".dbrcp", ""));
                 }
