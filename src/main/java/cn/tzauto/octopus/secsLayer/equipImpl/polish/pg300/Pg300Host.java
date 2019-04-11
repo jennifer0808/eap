@@ -139,14 +139,14 @@ public class Pg300Host extends EquipHost {
         DataMsgMap data = null;
         try {
             List svidlist = new ArrayList();
-            data = activeWrapper.sendS1F3out(svidlist,svFormat);
+            data = activeWrapper.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data == null || data.get("RESULT") == null) {
             return;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<SecsItem> list = (ArrayList) data.get("RESULT");
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         String port1Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         String port2Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(1)), deviceType);
@@ -179,7 +179,7 @@ public class Pg300Host extends EquipHost {
         Map resultMap = new HashMap();
         ArrayList<SecsItem> list = new ArrayList<>();
         if (dataHashtable != null) {
-            list = (ArrayList) ((SecsItem) dataHashtable.get("RESULT")).getData();
+            list = (ArrayList) dataHashtable.get("RESULT");
         }
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         resultMap.put("msgType", "s1f4");
@@ -194,55 +194,37 @@ public class Pg300Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        // TODO: 2019/4/10  Pg300的s2f41outPPselect中需要多个list，并且portIdL（料盒口）必传
-        DataMsgMap s2f41out = new DataMsgMap("s2f41out", activeWrapper.getDeviceId());
-        long[] portIdL = new long[1];
-        if ("1".equals(this.portId)) {
-            portIdL[0] = 1;
-        } else if ("2".equals(this.portId)) {
-            portIdL[0] = 2;
-        } else {
+        if (!"1".equals(this.portId) && !"2".equals(this.portId)) {
             return null;
         }
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        s2f41out.put("PORTID", portIdL);
-        byte[] hcack = new byte[1];
+        byte hcack = (byte) 0;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
+            Map cpmap = new HashMap();
+            cpmap.put("LOTID", "testlotid");
+            cpmap.put("PPID", recipeName);
+            cpmap.put("PORTID", this.portId);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put("LOTID", FormatCode.SECS_ASCII);
+            cpNameFromatMap.put("PPID", FormatCode.SECS_ASCII);
+            cpNameFromatMap.put("PORTID", FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put("testlotid", FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(this.portId, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
 
-            hcack = (byte[]) data.get("HCACK");
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-        }
-        return resultMap;
-    }
-
-    private Map sendS2F41Grant() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendS2F41out("GRANT", null, null,null);
-            logger.info("The equip " + deviceCode + " request to Grand");
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd GRANT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd GRANT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + e.getMessage());
         }
         return resultMap;
     }
@@ -250,7 +232,7 @@ public class Pg300Host extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    public void processS6F11in(DataMsgMap data){
+    public void processS6F11in(DataMsgMap data) {
         try {
             long ceid = (long) data.get("CEID");
             if (ceid == 39) {
@@ -259,10 +241,8 @@ public class Pg300Host extends EquipHost {
             } else if (ceid == 8 || ceid == 9 || ceid == 10 || ceid == 44 || ceid == 45 ||
                     ceid == 46 || ceid == 57 || ceid == 59 || ceid == 56 || ceid == 58) {
                 processS6F11EquipStatus(data);
-            } else {
-                Map map = new HashMap();
-                map.put("PPExecName", findDeviceRecipe().get("PPExecName"));
-                changeEquipPanel(map);
+            } else if (ceid == 37) {
+                findDeviceRecipe();
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -284,7 +264,7 @@ public class Pg300Host extends EquipHost {
             } else if (ceid == 45 || ceid == 46) {
                 checkPortStatusAndPPSelectToLocal();
             } else if (ceid == 57 || ceid == 59 || ceid == 56 || ceid == 58) {
-                sendS2F41Grant();
+                sendS2f41Cmd("GRANT");
             }
             super.sendS1F3Check();
         } catch (Exception e) {
