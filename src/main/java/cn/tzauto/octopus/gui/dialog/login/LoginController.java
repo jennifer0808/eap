@@ -14,31 +14,24 @@ import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
-
-import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
-
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
-
 import org.apache.ibatis.session.SqlSession;
-
 
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.loginStage;
 
 
 /**
@@ -141,16 +134,17 @@ public class LoginController implements Initializable {
                     loginStage.close();
                     return true;
                 }
-                if (GlobalConstants.isSvQuery) {
-                    if (GlobalConstants.userFlag) {
-                        userName.setText(GlobalConstants.sysUser == null ? "" : GlobalConstants.sysUser.getLoginName());
-                        GlobalConstants.userFlag = false;
-                    }
-                    new SVQueryPaneController().init("");
-                    GlobalConstants.isSvQuery = false;
-                    loginStage.close();
-                    return true;
-                }
+                //todo sv查询的用户验证
+//                if (GlobalConstants.isSvQuery) {
+//                    if (GlobalConstants.userFlag) {
+//                        userName.setText(GlobalConstants.sysUser == null ? "" : GlobalConstants.sysUser.getLoginName());
+//                        GlobalConstants.userFlag = false;
+//                    }
+//                    new SVQueryPaneController().init("");
+//                    GlobalConstants.isSvQuery = false;
+//                    loginStage.close();
+//                    return true;
+//                }
 
                 GlobalConstants.sysUser =userList.get(0);
                 GlobalConstants.loginValid = true;
