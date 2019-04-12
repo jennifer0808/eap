@@ -466,9 +466,6 @@ public class AsmAD838Host extends EquipHost {
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                }
                 if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
                     processS6F11ControlStateChange(data);
                 }
