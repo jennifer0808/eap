@@ -7,8 +7,8 @@ package cn.tzauto.octopus.gui.widget.equipstatuspane;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.main.EapClient;
-import cn.tzauto.octopus.gui.main.EapMainController;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
+import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -74,7 +74,7 @@ public class EquipStatusPaneController implements Initializable {
                 menuItem.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
 
                 MenuItem menuItem1 = new MenuItem("SV数据查询");
-                menuItem1.setOnAction(actionEvent -> showSVQuery());
+                menuItem1.setOnAction(actionEvent -> showSVQuery(deviceCodeTemp));
                 //                menuItem1.setOnAction(actionEvent -> {
                 //                    System.out.println("cn.tzinfo.htauto.octopus.gui.widget.equipstatu******************************menuItem2");
                 //                });
@@ -109,13 +109,15 @@ public class EquipStatusPaneController implements Initializable {
 
     }
 
-    public void showSVQuery() {
-        GlobalConstants.isSvQuery = true;
-        try {
-            new EapMainController().loginInterface();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void showSVQuery(String deviceCode) {
+        new SVQueryPaneController().init(deviceCode);
+
+//        GlobalConstants.isSvQuery = true;
+//        try {
+//            new EapMainController().loginInterface();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
     }
 }
