@@ -41,6 +41,8 @@ public class Opti750Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        // TODO: 2019/4/12  StripMapUpCeid unknown?
+//        StripMapUpCeid = ;
     }
 
 
@@ -87,10 +89,8 @@ public class Opti750Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 }
@@ -118,8 +118,10 @@ public class Opti750Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                // 因为父类的processS6F11inStripMapUpload方法中已经有回复方法，在这不进行回复
+                // replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.contains("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -161,79 +163,65 @@ public class Opti750Host extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
-    @SuppressWarnings("unchecked")
+
+    // TODO: 2019/4/12 sendS1F13 方法不确定
+//    @Override
+//    public void sendS1F13out() {
+//        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s1f13out.setTransactionId(transactionId);
+//        try {
+//            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
+//            if (data != null) {
+//                setCommState(1);
+//            }
+//        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
+//            logger.error("Exception:", e);
+//        } catch (StreamFunctionNotSupportException e) {
+//            e.printStackTrace();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        } catch (T6TimeOutException e) {
+//            e.printStackTrace();
+//        } catch (BrokenProtocolException e) {
+//            e.printStackTrace();
+//        }
+//    }
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
+
     @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
+    public void processS6F11in(DataMsgMap data) {
         try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
+            long ceid = (long) data.get("CEID");
+            if (data.get("CEID") != null) {
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            if (ceid == StripMapUpCeid) {
+                // TODO: 2019/4/12 StripMapUpCeid unknown?
+                processS6F11inStripMapUpload(data);
+//                s6f11inStripMapUpload
+            } else if (ceid == 300 || ceid == 301 || ceid == 302 || ceid == 303 ||
+                    ceid == 304 || ceid == 305 || ceid == 306 || ceid == 307) {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                processS6F11EquipStatus(data);
+            }
+            if (commState != 1) {
+                this.setCommState(1);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
 
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
-            logger.error("Exception:", e);
-        } catch (StreamFunctionNotSupportException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (T6TimeOutException e) {
-            e.printStackTrace();
-        } catch (BrokenProtocolException e) {
-            e.printStackTrace();
-        }
     }
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-        } catch (SecsDriverBaseException e) {
-            e.printStackTrace();
+            ceid = (long) data.get("CEID");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -326,80 +314,10 @@ public class Opti750Host extends EquipHost {
     }
 
     // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
-            logger.error("Exception:", e);
-        } catch (StreamFunctionNotSupportException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (T6TimeOutException e) {
-            e.printStackTrace();
-        } catch (BrokenProtocolException e) {
-            e.printStackTrace();
-        }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
-
-    @Override
-    public Map sendS7F5out(String recipeName) {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            String ppbody = (String) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            recipeParaList = new ArrayList<>();
-//                recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDBForPlus(recipePath, deviceType);
-
-        }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f6");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipe", recipe);
-        resultMap.put("recipeNameMapping", null);
-        resultMap.put("recipeParaList", recipeParaList);
-        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
-        return resultMap;
-    }
-// </editor-fold> 
-
-
-
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
         try {
-            long ceid = data.getSingleNumber("CollEventID");
+            long ceid = (long) data.get("CEID");
             if (ceid == 300) {
                 equipStatus = "INIT";
             } else if (ceid == 301) {
@@ -423,8 +341,8 @@ public class Opti750Host extends EquipHost {
                 equipStatusMap.put("EquipStatus", equipStatus);
                 changeEquipPanel(equipStatusMap);
             }
-        } catch (SecsDriverBaseException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
 
     }

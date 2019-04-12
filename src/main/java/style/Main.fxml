@@ -21,8 +21,8 @@
                     <children>
                         <GridPane style="-fx-background-color: #51A4E5;">
                             <children>
-                                <Button fx:id="JB_MainPage" mnemonicParsing="false" onAction="#mainPaneClick" onMouseExited="#homeExited" onMouseMoved="#homeMoved" onMousePressed="#homePressed" onMouseReleased="#homeReleased" prefHeight="40.0" prefWidth="146.0" text="主          页" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                <Button fx:id="JB_RcpMng" mnemonicParsing="false" onAction="#rcpMngClick" onMouseExited="#recipeExited" onMouseMoved="#recipeMoved" onMousePressed="#recipePressed" onMouseReleased="#recipeReleased" prefHeight="40.0" prefWidth="145.0" text="Recipe管理" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                <Button fx:id="JB_MainPage" mnemonicParsing="false" onAction="#mainPaneClick"  prefHeight="40.0" prefWidth="146.0" text="主          页" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                <Button fx:id="JB_RcpMng" mnemonicParsing="false" onAction="#rcpMngClick"  prefHeight="40.0" prefWidth="145.0" text="Recipe管理" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                 <GridPane GridPane.columnIndex="1" GridPane.rowIndex="1">
                                     <children>
                                         <Label text="%ClientId" textFill="WHITE" GridPane.columnIndex="1">
@@ -80,9 +80,9 @@
                             <children>
                                 <GridPane alignment="CENTER" style="-fx-background-color: #2F78C0;">
                                     <children>
-                                        <Button fx:id="JB_Login" mnemonicParsing="false" onAction="#login" onMouseExited="#loginExited" onMouseMoved="#loginMoved" onMousePressed="#loginPressed" onMouseReleased="#loginReleased" prefHeight="31.0" prefWidth="83.0" text="%login" textFill="WHITE" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                                        <Button fx:id="JB_SignOut" mnemonicParsing="false" onAction="#logout" onMouseExited="#signoutExited" onMouseMoved="#signoutMoved" onMousePressed="#signoutPressed" onMouseReleased="#signoutReleased" prefHeight="31.0" prefWidth="83.0" text="注销" textFill="WHITE" visible="false" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                                        <Button fx:id="localMode" mnemonicParsing="false" onAction="#localModeClick" onMouseExited="#localModeExited" onMouseMoved="#localModeMoved" onMousePressed="#localModePressed" onMouseReleased="#localModeReleased" text="Local Mode" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <Button fx:id="JB_Login" mnemonicParsing="false" onAction="#login"  prefHeight="31.0" prefWidth="83.0" text="%login" textFill="WHITE" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                                        <Button fx:id="JB_SignOut" mnemonicParsing="false" onAction="#logout"   prefHeight="31.0" prefWidth="83.0" text="注销" textFill="WHITE" visible="false" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                                        <Button fx:id="localMode" mnemonicParsing="false" onAction="#localModeClick"   text="Local Mode" textFill="WHITE" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                     </children>
                                     <columnConstraints>
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="6.0" prefWidth="51.0" />
