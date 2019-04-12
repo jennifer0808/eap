@@ -80,28 +80,13 @@ public class ParmiHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11StripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData1")) {
-                    upLoadSPCData(msg, 10);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData2")) {
-                    upLoadSPCData(msg, 5);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
+                    processS6F11in(msg);
                 } else {
                     //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                     //      + " which I do not want to process! ");
                 }
+
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
@@ -122,7 +107,8 @@ public class ParmiHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -136,9 +122,6 @@ public class ParmiHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11StripMapUpload")) {
-                processS6F11inStripMapUpload(data);
-                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 processS14F1in(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
@@ -148,6 +131,41 @@ public class ParmiHost extends EquipHost {
             } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
+
+    public void processS6F11in(DataMsgMap data) {
+        try {
+            long ceid = (long) data.get("CEID");
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData1")) {
+//                    upLoadSPCData(msg, 10);
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData2")) {
+//                    upLoadSPCData(msg, 5);
+//                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+//                    processS6F11EquipStatusChange(msg);
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+//                    processS6F11EquipStatusChange(msg);
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+//                    processS6F11EquipStatusChange(msg);
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+//                    findDeviceRecipe();
+//                }
+            //// TODO: 2019/4/11  s6f11SPCData1与s6f11SPCData2的ceid不确定
+            //// TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待确认
+//            if (ceid == 1) {
+//                upLoadSPCData(data, 10);
+//            } else if (ceid == 2) {
+//                upLoadSPCData(data, 5);
+//            } else
+            if (ceid == 5 || ceid == 12 || ceid == 1015) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 998) {
+                findDeviceRecipe();
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -229,151 +247,15 @@ public class ParmiHost extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        //获取当前设备状态
-        sendS1F3Check();
+    // </editor-fold>
 
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        RecipeService recipeService = new RecipeService(sqlSession);
-
-        try {
-            //从数据库中获取当前设备模型信息
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            boolean dataReady = false;
-            //判断当前执行程序是否是清模程序 Y代表清模程序
-            boolean isCleanRecipe = false;
-            List<Recipe> cleanRecipes = recipeService.searchRecipeByRcpType(ppExecName, "Y");
-            if (cleanRecipes != null && cleanRecipes.size() > 1) {
-                isCleanRecipe = true;
-            }
-            // 更新设备模型
-            if (deviceInfoExt == null) {
-                logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
-            } else {
-                deviceInfoExt.setDeviceStatus(equipStatus);
-                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                sqlSession.commit();
-                dataReady = true;
-            }
-
-            //保存到设备操作记录数据库
-            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
-            sqlSession.commit();
-
-            boolean checkResult = false;
-            //获取设备当前运行状态，如果是Run，执行开机检查逻辑
-            if (!isCleanRecipe && dataReady && equipStatus.equalsIgnoreCase("run")) {
-                //1、获取设备需要校验的信息类型,
-                String startCheckMod = deviceInfoExt.getStartCheckMod();
-                boolean hasGoldRecipe = true;
-                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
-                    return;
-                }
-                //查询trackin时的recipe和GoldRecipe
-                Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-
-                //查询客户端数据库是否存在GoldRecipe
-                if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                    hasGoldRecipe = false;
-                }
-
-                //首先从服务端获取机台是否处于锁机状态
-                //如果设备应该是锁机，那么首先发送锁机命令给机台
-                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    holdDeviceAndShowDetailInfo("Equipment has been set and locked by Server");
-                } else {
-                    //根据检查模式执行开机检查逻辑
-                    //1、A1-检查recipe名称是否一致
-                    //2、A-检查recipe名称和参数
-                    //3、B-检查SV
-                    //4、AB都检查
-                    if (startCheckMod != null && !"".equals(startCheckMod)) {
-                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
-                        if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
-                            //不允许开机
-                            holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
-                        } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
-                        }
-                    }
-                    if (checkResult && "A".equals(startCheckMod)) {
-                        //首先判断下载的Recipe类型
-                        //1、如果下载的是Unique版本，那么执行完全比较
-                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                        if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
-                            this.startCheckRecipePara(downLoadRecipe, "abs");
-                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
-                            if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                                //不允许开机
-                                this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
-                            } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
-                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
-                            }
-                        }
-                    } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            sqlSession.rollback();
-        } finally {
-            sqlSession.close();
-        }
-//        long ceid = 0l;
-//        try {
-//            ceid = data.getSingleNumber("CollEventID");
-//            Map panelMap = new HashMap();
-//            if (ceid == 1L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
-//            } else if (ceid == 2L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE); //Online_Local               
-//            } else if (ceid == 3L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE); //Online_Remote            
-//            }
-//            changeEquipPanel(panelMap);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        showCollectionsEventInfo(ceid);
-    }// </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析

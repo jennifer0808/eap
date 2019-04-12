@@ -4,24 +4,25 @@ import cn.tzauto.generalDriver.api.EqpEventDealer;
 import cn.tzauto.generalDriver.entity.msg.MessageHeader;
 import cn.tzauto.generalDriver.exceptions.InvalidHsmsDataLengthException;
 import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.gui.main.EapClient;
-import cn.tzauto.octopus.secsLayer.domain.EquipState;
-import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import cn.tzauto.octopus.gui.equipevent.CommFailureEvent;
 import cn.tzauto.octopus.gui.equipevent.CommStatusEvent;
 import cn.tzauto.octopus.gui.equipevent.ControlEvent;
 import cn.tzauto.octopus.gui.equipevent.ReceivedSeparateEvent;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
+import cn.tzauto.octopus.secsLayer.domain.EquipState;
+import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSON;
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import javax.swing.SwingWorker;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
 
 public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         implements EqpEventDealer {

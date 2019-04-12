@@ -6,9 +6,15 @@
 package cn.tzauto.octopus.gui.dialog.uploadpane;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,7 +30,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.ibatis.session.SqlSession;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -195,7 +203,6 @@ public class UploadPaneController implements Initializable {
             if (rn.getCheckBox().isSelected()) {
                 String recipeName = rn.getRecipeName().getValue();
                 rns.add(recipeName);
-                System.out.println(recipeName);
                 if (CMB_deviceCode.getSelectionModel().getSelectedItem() != null) {
                     String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
                     if ("--请选择--".equals(deviceCodeTmp) || deviceCodeTmp.equals(deviceCode)) {
@@ -210,11 +217,50 @@ public class UploadPaneController implements Initializable {
                     return;
                 }
 
-                GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
+                Map recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
+                if (recipeMap == null) {
+                    JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+                    return;
+                } else if (recipeMap.get("checkResult") != null) {
+                    JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+                    return;
+                }
+                //此处从map中获取
+                Recipe recipe = null;
+                if (recipeMap.get("recipe") != null) {
+                    recipe = (Recipe) recipeMap.get("recipe");
+                }
+                if ("N".equals(recipeMap.get("shortNameOK"))) {
+                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
+                    UiLogUtil.appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
+                    return;
+                }
+                //T640如果三个文件没有全部上传成功，即可认定为上传失败，不走上传流程，rcpAnalyseSucceed为N表示上传失败
+                if (recipeMap.get("rcpAnalyseSucceed") == null || "Y".equals(String.valueOf(recipeMap.get("rcpAnalyseSucceed")))) {
+                    List<RecipePara> recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
+                    RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
+                    //保存数据
+//                    if (recipeParaList != null && !recipeParaList.isEmpty()) {
+                    boolean re;
+                    SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
+                    RecipeService recipeService = new RecipeService(sqlSession);
+                    if (recipeNameMapping != null) {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
+                    } else {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                    }
+
+                    if (!re) {
+                        JOptionPane.showMessageDialog(null, "上传失败，ftp文件传送失败，请重新上传");
+                    } else {
+                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
+                    }
+                    sqlSession.commit();
+                } else {
+                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
+                }
             }
         }
-
-//        GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, rns);
 
         CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
 
