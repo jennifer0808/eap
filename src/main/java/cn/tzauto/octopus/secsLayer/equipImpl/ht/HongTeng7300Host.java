@@ -86,9 +86,11 @@ public class HongTeng7300Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
+                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) { // TODO: 2019/4/12  未写完
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) { // TODO: 2019/4/12 未写完
                     logger.info("====需要比对批次号，一致则发送Start指令====");
                     processS6F11LotCheck(msg);
                 } else {
@@ -119,7 +121,8 @@ public class HongTeng7300Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -156,6 +159,7 @@ public class HongTeng7300Host extends EquipHost {
         }
     }
 
+    
     public void processS6F11in(DataMsgMap data) {
         long ceid = -12345679;
         try {

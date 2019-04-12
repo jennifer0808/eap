@@ -92,7 +92,7 @@ public class VSP88DNHTHost extends EquipHost {
                     if (msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                         processS14F1in(msg);
                     } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                        processS6F11EquipStatus(msg);
+                        processS6F11in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) { //3
                         processS6F11inStripMapUpload(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {// 1
@@ -124,8 +124,8 @@ public class VSP88DNHTHost extends EquipHost {
         }
     }
 
-
-    protected void processS6F11EquipStatus(DataMsgMap data) {
+    @Override
+    public void processS6F11in(DataMsgMap data) {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
@@ -400,53 +400,12 @@ public class VSP88DNHTHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-
-        long length = TransferUtil.getPPLength(localFilePath);
-        if (length == 0) {
-            resultMap.put("ppgnt", 9);
-            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
-            return resultMap;
-        }
-
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F1out(targetRecipeName + ".rcp", length, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-            byte ppgnt = (byte) data.get("PPGNT");
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-            resultMap.put("ppgnt", ppgnt);
-            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ppgnt", 9);
-            resultMap.put("Description", e.getMessage());
-
-        }
-        return resultMap;
+        return super.sendS7F1out(localFilePath,targetRecipeName + ".rcp");
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName + ".rcp", ppbody, FormatCode.SECS_BINARY);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte ackc7 = (byte) data.get("ACKC7");
-
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
+        return super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".rcp");
     }
 
     @Override
@@ -478,30 +437,7 @@ public class VSP88DNHTHost extends EquipHost {
     @Override
     public Map sendS7F17out(String recipeName) {
         recipeName = recipeName + ".rcp";
-        byte ackc7 = 0;
-        try {
-            List recipeIDlist = new ArrayList();
-            recipeIDlist.add(recipeName);
-            DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-
-            ackc7 = (byte) data.get("ACKC7");
-
-            if (ackc7 == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
+        return super.sendS7F17out(recipeName);
     }
 // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
