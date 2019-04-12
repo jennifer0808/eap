@@ -40,8 +40,8 @@ public class MVPHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        // TODO: 2019/4/12 StripMapUpCeid unknown ?
-//        StripMapUpCeid = ?
+        // TODO: 2019/4/12 StripMapUpCeid need check
+        StripMapUpCeid = 3014;
     }
 
 
@@ -137,21 +137,25 @@ public class MVPHost extends EquipHost {
             long ceid = (long) data.get("CEID");
             if (ceid == 3002) {
                 //TODO 获取状态变化的事件报告
+                replyS6F12WithACK(data, (byte) 0);
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 3006 || ceid == 3007) {
+                replyS6F12WithACK(data, (byte) 0);
                 processS6F11EquipStatus(data);
             } else if (ceid == 3008 || ceid == 3009 || ceid == 3010 || ceid == 3011 || ceid == 3012 || ceid == 3013) {
                 //TODO 切换recipe后获取事件报告
+                replyS6F12WithACK(data, (byte) 0);
                 findDeviceRecipe();
 //                sendS1F3Check();
             } else if (ceid == StripMapUpCeid) {
-                // TODO: 2019/4/12  StripMapUpCeid unknown?
+                // TODO: 2019/4/12  StripMapUpCeid need check
                 logger.info("----Received from Equip Strip Map Upload event - S6F11");
                 Long result = (Long) data.get("RESULT");
                 // 判断机台检测结果，如果为0则上传，结果为1 || 2则不上传
                 if (result == 0 || result == -1L) {
                     processS6F11inStripMapUpload(data);
                 } else {
+                    replyS6F12WithACK(data, (byte) 0);
                     logger.info("检测结果为:" + result + ",不上传mapping!");
                 }
             }
@@ -230,7 +234,7 @@ public class MVPHost extends EquipHost {
         List list1 = new ArrayList();
         list1.add(1037L);
         list1.add(1023L);
-        sendS2F33Out(3014L,3014L,list1);
+        sendS2F33Out(3014L, 3014L, list1);
         sendS2F35out(3014L, 3014L, 3014L);
         sendS2F37out(3014L);
         logger.info("If the device software upgrades, you need to redefine the ceid=3043 event!！");
