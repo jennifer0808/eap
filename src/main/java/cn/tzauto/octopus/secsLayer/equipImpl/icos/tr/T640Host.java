@@ -96,9 +96,9 @@ public class T640Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
-                    processS6F11EquipStatus(msg);
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
+                   // processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else {
@@ -234,7 +234,7 @@ public class T640Host extends EquipHost {
         cpNameFormatMap.put("NO",FormatCode.SECS_ASCII);
 
 
-        byte hcack = 0;
+        byte hcack = -1;
         try {
             DataMsgMap data =  activeWrapper.sendS2F41out(rcmd,cpMap,cpNameFormatMap,cpValueFormatMap);
            // DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
@@ -254,7 +254,8 @@ public class T640Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6F11 Code">
 
 
-    protected void processS6F11EquipStatus(DataMsgMap data) {
+    @Override
+     public void processS6F11in(DataMsgMap data) {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
@@ -449,11 +450,8 @@ public class T640Host extends EquipHost {
             e.printStackTrace();
             return null;
         }
-
-
-
         Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2out");
+        resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         resultMap.put("ppgnt", ppgnt);
@@ -635,7 +633,7 @@ public class T640Host extends EquipHost {
             e.printStackTrace();
         }
         Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18in");
+        resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
         resultMap.put("ACKC7", ackc7);
