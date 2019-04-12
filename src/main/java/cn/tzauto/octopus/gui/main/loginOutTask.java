@@ -18,13 +18,6 @@ public class loginOutTask implements Job {
     public void execute(JobExecutionContext context)
             throws JobExecutionException {
         logger.debug("SessionControlTask任务执行....");
-
-        Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
-        Button JB_RcpMng = (Button) EapClient.root.lookup("#JB_RcpMng");
-        Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
-        Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
-        Button localMode = (Button) EapClient.root.lookup("#localMode");
-
         if (GlobalConstants.loginTime != null) {
             long past = GlobalConstants.loginTime.getTime();
             long now = new Date().getTime();
@@ -35,7 +28,7 @@ public class loginOutTask implements Job {
                     UiLogUtil.appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
                 }
                 try {
-                    new EapMainController().loginOut(JB_MainPage, JB_RcpMng, JB_Login, JB_SignOut, localMode);
+                    new EapMainController().loginOut();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -44,5 +37,4 @@ public class loginOutTask implements Job {
             }
         }
     }
-
 }
