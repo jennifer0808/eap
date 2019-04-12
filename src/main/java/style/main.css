@@ -2,17 +2,18 @@
  * Empty Stylesheet file.
  */
 
-#JB_Login,#JB_SignOut,#JB_MainPage,#JB_RcpMng,#localMode {
+.button {
     -fx-background-color: #0081CC;
-    /*-fx-background-image: url("../images/admin-icon.png");*/
+    -fx-background-radius: 5.0px;
 }
-/*.button:hover {*/
-    /*-fx-background-color: #FBC372;*/
-    /*!*-fx-background-image: url("../images/admin-icon.png");*!*/
-/*}*/
-/*#mainScrollPane{*/
-    /*-fx-border-style: dotted none;*/
-/*}*/
+
+.button:hover{
+    -fx-background-color: #FBC372;
+}
+
+.button:pressed{
+    -fx-background-color: #F9A125;
+}
 
 .tab-pane>*.tab-header-area>*.tab-header-background {
     -fx-background-color: -fx-outer-border, -fx-text-box-border, white;

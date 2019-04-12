@@ -5,33 +5,40 @@
  */
 package cn.tzauto.octopus.gui.dialog.login;
 
+import cn.tzauto.octopus.biz.sys.domain.SysUser;
+import cn.tzauto.octopus.biz.sys.service.SysService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
+import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
-import cn.tzauto.octopus.gui.main.EapMainController;
+
+import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
+
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
+
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
+
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
-import java.io.IOException;
+import org.apache.ibatis.session.SqlSession;
+
+
 import java.net.URL;
+import java.util.Date;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
-import static cn.tzauto.octopus.gui.main.EapMainController.loginmark;
 
 
 /**
@@ -40,14 +47,11 @@ import static cn.tzauto.octopus.gui.main.EapMainController.loginmark;
  * @author luosy
  */
 public class LoginController implements Initializable {
-
     @FXML
     private TextField userName;
     @FXML
     private PasswordField password;
-
     private boolean loginFlag = false;
-
     @FXML
     private Pane ent;
 
@@ -56,23 +60,14 @@ public class LoginController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
+        // 键盘响应事件
         ent.setOnKeyPressed(new EventHandler<KeyEvent>() {
-
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ENTER) {
-
-                    // do something
-                    Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
-                    Button JB_RcpMng = (Button) EapClient.root.lookup("#JB_RcpMng");
-                    Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
-                    Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
-                    Button localMode = (Button) EapClient.root.lookup("#localMode");
-//                    ((Node) (event.getSource())).getScene().getWindow().hide();
-//
-
-                    if (userName.getText() != null && !"".equalsIgnoreCase(userName.getText())) {
+                  String userNameStr = userName.getText();
+                    String passwordStr = password.getText();
+                    if (userNameStr != null && !"".equalsIgnoreCase(userNameStr)) {
                         if (userName.isFocused()) {
                             Platform.runLater(new Runnable() {
                                 @Override
@@ -83,64 +78,112 @@ public class LoginController implements Initializable {
                         }
                     }
 
-                    if (userName.getText() != null && !"".equalsIgnoreCase(userName.getText()) && password.getText() != null && !"".equalsIgnoreCase(password.getText())) {
+                    if (passwordStr != null && !"".equalsIgnoreCase(passwordStr)) {
                         if (password.isFocused()) {
-                            Boolean isSuc = new EapMainController().loginSuc(userName, password, new Stage(), JB_MainPage,
-                                    JB_RcpMng, JB_Login, JB_SignOut, localMode);
-
+                            //登录验证
+                            Boolean isSuc = loginSuc(userNameStr,passwordStr);
                             if (isSuc) {
                                 ((Node) (event.getSource())).getScene().getWindow().hide();
                             }
                         }
                     }
-
-//                    new EapMainController().loginSuc(userName, password, new Stage(), JB_MainPage,
-//                            JB_RcpMng, JB_Login, JB_SignOut, localMode);
                 }
             }
-
         });
+    }
 
-        loginStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent event) {
-                if (isUpload) {
-                    isUpload = false;
-                } else if (isDownload) {
-                    isDownload = false;
-                } else if (isSvQuery) {
-                    isSvQuery = false;
+    //登录验证
+    public Boolean loginSuc(String userNameStr, String passwordStr) {
+        Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
+        Button JB_RcpMng = (Button) EapClient.root.lookup("#JB_RcpMng");
+        Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
+        Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
+        Button localMode = (Button) EapClient.root.lookup("#localMode");
+        if (userNameStr.equals("") || userNameStr == null || passwordStr.equals("") || passwordStr == null) {
+            return false;
+        }
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        SysService sysService = new SysService(sqlSession);
+        List<SysUser> userList = sysService.searchSysUsersByLoginNamePassword(userNameStr,passwordStr);
+        sqlSession.close();
+        if(userList.size()>0 && userList!=null){
+                if (GlobalConstants.isUpload) {
+                    new UploadPaneController().init();
+                    GlobalConstants.isUpload = false;
+                    loginStage.close();
+                    return true;
                 }
-                loginmark=0;
-            }
-        });
+                if (GlobalConstants.isDownload) {
+                    TablePosition pos = (TablePosition) GlobalConstants.table.getSelectionModel().getSelectedCells().get(0);
 
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                userName.requestFocus();
-            }
-        });
+                    int row = pos.getRow();
+                    ObservableList columns = pos.getTableView().getColumns();
+
+                    TableColumn column = (TableColumn) columns.get(2);
+
+                    String deviceCode = column.getCellData(row).toString();
+
+                    column = (TableColumn) columns.get(3);
+
+                    String recipeName = column.getCellData(row).toString();
+
+                    column = (TableColumn) columns.get(4);
+
+                    String versionType = column.getCellData(row).toString();
+
+                    column = (TableColumn) columns.get(5);
+
+                    String recipeVersionNo = column.getCellData(row).toString();
+
+                    new DownloadPaneController().init(deviceCode, recipeName, versionType, recipeVersionNo);
+
+                    GlobalConstants.isDownload = false;
+                    loginStage.close();
+                    return true;
+                }
+                if (GlobalConstants.isSvQuery) {
+                    if (GlobalConstants.userFlag) {
+                        userName.setText(GlobalConstants.sysUser == null ? "" : GlobalConstants.sysUser.getLoginName());
+                        GlobalConstants.userFlag = false;
+                    }
+                    new SVQueryPaneController().init("");
+                    GlobalConstants.isSvQuery = false;
+                    loginStage.close();
+                    return true;
+                }
+
+                GlobalConstants.sysUser =userList.get(0);
+                GlobalConstants.loginValid = true;
+                GlobalConstants.loginTime = new Date();
+
+                JB_MainPage.setVisible(true);
+                JB_RcpMng.setVisible(true);
+                JB_Login.setVisible(false);
+                JB_SignOut.setVisible(true);
+                localMode.setVisible(true);
+                UiLogUtil.appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+                loginStage.close();
 
 
+        }else{
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+            return false;
+        }
+
+        return true;
     }
-
-    public void init() throws IOException {
-
-        Stage window = new Stage();
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"));
-        Scene scene = new Scene(root);
-        window.setScene(scene);
-        window.setResizable(false);
-        window.setTitle("用户登录");
-        window.show();
-        Button button = (Button) root.lookup("#loginButton");
-
-        userName = (TextField) root.lookup("#userName");
-        password = (PasswordField) root.lookup("#password");
-
-
+    //登录按钮鼠标点击事件
+    @FXML
+    private void loginAction() {
+        String userNameStr = userName.getText();
+        String passwordStr = password.getText();
+        if (passwordStr != null && !"".equalsIgnoreCase(passwordStr) &&userNameStr != null && !"".equalsIgnoreCase(userNameStr) ) {
+                //登录验证
+                Boolean isSuc = loginSuc(userNameStr,passwordStr);
+                if (isSuc) {
+                    loginStage.close();
+                }
+        }
     }
-
 
 }

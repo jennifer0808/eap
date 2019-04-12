@@ -101,6 +101,18 @@ public class SysService extends BaseService {
         return this.sysUserMapper.searchByMap(paraMap);
     }
 
+    /**
+     * 根据登录用户名密码查询SysUser
+     * @param loginName
+     * @return
+     */
+    public List<SysUser> searchSysUsersByLoginNamePassword(String loginName,String passWord) {
+        Map paraMap = new HashMap();
+        paraMap.put("loginName", loginName);
+        paraMap.put("passWord", passWord);
+        return this.sysUserMapper.searchUserByMap(paraMap);
+    }
+
     public int insertSysUserBatch(List<SysUser> sysUserList) {
         return this.sysUserMapper.insertSysUserBatch(sysUserList);
     }

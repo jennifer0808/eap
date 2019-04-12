@@ -130,7 +130,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 stage.setTitle("EAPClient");
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
-
+                stage.initStyle(StageStyle.DECORATED);
                 // String clientId = GlobalConstants.getProperty("clientId");
 //                stage.setFullScreen(true);
                 stage.setFullScreenExitHint("");
