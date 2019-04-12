@@ -1048,7 +1048,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             Map cpmap = new HashMap();
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(RCMD_PPSELECT, FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);

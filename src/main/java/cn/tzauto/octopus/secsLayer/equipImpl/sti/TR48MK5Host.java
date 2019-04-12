@@ -235,7 +235,7 @@ public class TR48MK5Host extends EquipHost {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
 
         //发送PP-Select指令
-        sendS2f41CmdPPSelect(targetRecipeName);
+        sendS2F41outPPselect(targetRecipeName);
         findDeviceRecipe();
         //发送LotConfig指令
         String lPartCounter = getCounterFromPPBody(localRecipeFilePath, targetRecipeName);
@@ -309,31 +309,6 @@ public class TR48MK5Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
 
-    public Map sendS2f41CmdPPSelect(String PPID) {
-        Map s2f41outMap=new HashMap();
-        s2f41outMap.put("PPID",PPID);
-        Map s2f41outNameFromatMap=new HashMap();
-        s2f41outNameFromatMap.put("PPID",FormatCode.SECS_ASCII);
-        Map s2f41outVauleFromatMap=new HashMap();
-        s2f41outVauleFromatMap.put(PPID,FormatCode.SECS_ASCII);
-        byte hcack=-1 ;
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        try {
-            DataMsgMap data = activeWrapper.sendS2F41out("PPSELECT",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
-            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + PPID);
-            hcack = (byte) data.get("HCACK");
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
-            resultMap.put("HCACK", hcack);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + e.getMessage());
-        }
-        return resultMap;
-    }
 
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {

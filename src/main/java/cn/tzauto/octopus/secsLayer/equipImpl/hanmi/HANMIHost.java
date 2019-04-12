@@ -87,25 +87,29 @@ public class HANMIHost extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = (long) msg.get("CEID");
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                    if (ceid == 400023) {
-                        //TODO 获取状态变化的事件报告
-                        processS6F11EquipStatusChange(msg);
-                    } else if (ceid == 400011 || ceid == 400012 || ceid == 400013) {
-                        processS6F11EquipStatus(msg);
-                    } else if (ceid == 400052) {
-                        //TODO 切换recipe后获取事件报告
-                        sendS1F3Check();
-                    }
+                    processS6F11in(msg);
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
+        }
+    }
+    @Override
+    public void processS6F11in(DataMsgMap msg) {
+        long ceid = 0l;
+        try {
+            ceid = (long) msg.get("CEID");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (ceid == 400023) {
+            //TODO 获取状态变化的事件报告
+            processS6F11EquipStatusChange(msg);
+        } else if (ceid == 400011 || ceid == 400012 || ceid == 400013) {
+            processS6F11EquipStatus(msg);
+        } else if (ceid == 400052) {
+            //TODO 切换recipe后获取事件报告
+            sendS1F3Check();
         }
     }
 
@@ -153,7 +157,7 @@ public class HANMIHost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             Map panelMap = new HashMap();
 
             if (ceid == 400011L) {
@@ -180,7 +184,7 @@ public class HANMIHost extends EquipHost {
         }
         //获取当前设备状态
         sendS1F3Check();
-
+        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -284,7 +288,7 @@ public class HANMIHost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
