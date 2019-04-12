@@ -579,7 +579,7 @@ public class RecipeService extends BaseService {
      * @param recipeParas
      * @param deviceCode
      */
-    public void saveUpLoadRcpInfo(Recipe recipe, List<RecipePara> recipeParas, String deviceCode) {
+    public boolean saveUpLoadRcpInfo(Recipe recipe, List<RecipePara> recipeParas, String deviceCode) {
 
 //        String rcpNewId = this.getNewId();
         String rcpNewId = UUID.randomUUID().toString();
@@ -611,8 +611,13 @@ public class RecipeService extends BaseService {
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
+            boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+            if (!existFlag) {
+                return false;
+            }
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }
+        return true;
     }
 
     private boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
@@ -736,7 +741,7 @@ public class RecipeService extends BaseService {
      * @param recipeParas
      * @param deviceCode
      */
-    public void saveUpLoadRcpInfo(Recipe recipe, List<RecipePara> recipeParas, String deviceCode, RecipeNameMapping recipeNameMapping) {
+    public boolean saveUpLoadRcpInfo(Recipe recipe, List<RecipePara> recipeParas, String deviceCode, RecipeNameMapping recipeNameMapping) {
 
         String rcpNewId = UUID.randomUUID().toString();
         recipe.setId(rcpNewId);
@@ -766,6 +771,7 @@ public class RecipeService extends BaseService {
         //附件信息         
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
         List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
+        boolean existFlag = false;
         if (!GlobalConstants.isLocalMode) {
             //添加至MQ
             Map mqMap = new HashMap();
@@ -783,13 +789,14 @@ public class RecipeService extends BaseService {
 
             // 上传ftp
             FtpUtil.uploadFile(recipeLocalPath, GlobalConstants.getProperty("ftpPath") + recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+            existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
 
             //日志
 //        UiLogUtil.appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
         UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
-
+        return existFlag;
     }
 
     /*

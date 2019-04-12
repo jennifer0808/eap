@@ -1,22 +1,16 @@
 package cn.tzauto.octopus.common.util.ftp;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.util.StringTokenizer;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.log4j.Logger;
 
+import java.io.*;
+import java.net.InetAddress;
+import java.util.StringTokenizer;
+
 /**
- *
  * @author gavin
  */
 public class FtpUtil {
@@ -155,7 +149,8 @@ public class FtpUtil {
             if (ftp.isConnected()) {
                 try {
                     ftp.logout();
-                    ftp.disconnect();;
+                    ftp.disconnect();
+                    ;
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
@@ -228,7 +223,8 @@ public class FtpUtil {
             if (ftp.isConnected()) {
                 try {
                     ftp.logout();
-                    ftp.disconnect();;
+                    ftp.disconnect();
+                    ;
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
@@ -358,7 +354,8 @@ public class FtpUtil {
         } finally {
             try {
                 ftp.logout();
-                ftp.disconnect();;
+                ftp.disconnect();
+                ;
             } catch (Exception e) {
                 logger.error("Exception:", e);
             }
@@ -370,7 +367,6 @@ public class FtpUtil {
      * 检查目录是否存在,不存在则创建
      *
      * @param dir
-     * @param ftpClient
      * @return
      */
     public static boolean isDirExist(String dir, FTPClient client) {
@@ -391,12 +387,8 @@ public class FtpUtil {
      *
      * @param client
      * @param path
-     * @throws FTPException
-     * @throws FTPIllegalReplyException
      * @throws IOException
      * @throws IllegalStateException
-     * @throws FTPException
-     * @throws FTPIllegalReplyException
      * @throws IOException
      * @throws IllegalStateException
      */
@@ -434,9 +426,9 @@ public class FtpUtil {
     /**
      * ftp服务器上复制文件
      *
-     * @param sourceDir 源目录
+     * @param sourceDir      源目录
      * @param sourceFileName 源文件名称
-     * @param targetDir 目标目录
+     * @param targetDir      目标目录
      * @param targetFileName 目标文件名称
      * @return 是否复制成功
      */
@@ -499,5 +491,49 @@ public class FtpUtil {
         String serverIp1 = "192.168.99.137";
         downloadFile(localFilePath1, remoteFilePath, serverIp1, serverPort, userName, password);
 
+    }
+
+    /**
+     * 检验文件是否存在
+     *
+     * @param dir
+     * @param fileName
+     * @param serverIp
+     * @param serverPort
+     * @param userName
+     * @param password
+     * @return
+     */
+    public static boolean checkFileExist(String dir, String fileName, String serverIp, String serverPort, String userName, String password) {
+        if (!connectFtp(serverIp, serverPort, userName, password)) {
+            logger.debug("FTP连接失败!");
+            return false;
+        }
+        try {
+            ftp.changeWorkingDirectory(new String(dir.getBytes("GBK"), "iso-8859-1"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream is = findInput(fileName);
+        if (is == null || ftp.getReplyCode() == FTPReply.FILE_UNAVAILABLE) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 获取ftp文件input流
+     *
+     * @param ftpName ftp服务器名称,后期使用
+     * @return 是否连接陈功
+     */
+    public static InputStream findInput(String ftpName) {
+
+        try {
+            return ftp.retrieveFileStream(new String(ftpName.getBytes("GBK"), "iso-8859-1"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
