@@ -183,7 +183,6 @@ public class HANMIHost extends EquipHost {
             logger.error("Exception:", e);
         }
         //获取当前设备状态
-        sendS1F3Check();
         findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
