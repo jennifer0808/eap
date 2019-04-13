@@ -189,14 +189,12 @@ public class VSP88DNHTHost extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public void sendS2f33stripout() {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            //TODO activeWrapper.sendS2F33out();
-            activeWrapper.sendAwaitMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+        ArrayList list = new ArrayList();
+        list.add("2310");
+        list.add("2320");
+        list.add("2331");
+        list.add("2330");
+        super.sendS2F33Out(1,1,list);
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
