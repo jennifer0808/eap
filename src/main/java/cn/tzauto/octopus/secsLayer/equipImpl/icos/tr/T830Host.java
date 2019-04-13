@@ -41,6 +41,7 @@ public class T830Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -381,14 +382,14 @@ public class T830Host extends EquipHost {
         DataMsgMap data = null;
         byte ppgnt = -1;
         try {
-            data = activeWrapper.sendS7F1out(targetRecipeName,length0,svFormat);
+            data = activeWrapper.sendS7F1out(targetRecipeName,length0,lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             e.printStackTrace();
         }
         try {
-            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("hanRcpName")),length1,svFormat);
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("hanRcpName")),length1,lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
@@ -396,7 +397,7 @@ public class T830Host extends EquipHost {
         }
 
         try {
-            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("compRcpName")),length2,svFormat);
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("compRcpName")),length2,lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
