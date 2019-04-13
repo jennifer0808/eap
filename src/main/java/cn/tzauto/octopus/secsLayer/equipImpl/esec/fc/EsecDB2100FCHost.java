@@ -39,6 +39,7 @@ public class EsecDB2100FCHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid = 3255;
         StripMapUpCeid = 15339;
         CPN_PPID = "PPNAME";

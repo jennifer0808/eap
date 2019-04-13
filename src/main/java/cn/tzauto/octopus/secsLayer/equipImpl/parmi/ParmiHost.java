@@ -155,8 +155,8 @@ public class ParmiHost extends EquipHost {
 //                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
 //                    findDeviceRecipe();
 //                }
-            //// TODO: 2019/4/11  s6f11SPCData1与s6f11SPCData2的ceid不确定
-            //// TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待确认
+            // TODO: 2019/4/11  未找到s6f11SPCData1与s6f11SPCData2的ceid
+            // TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待校验（ceid:5,12,1015）
 //            if (ceid == 1) {
 //                upLoadSPCData(data, 10);
 //            } else if (ceid == 2) {

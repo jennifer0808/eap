@@ -47,6 +47,8 @@ public class DR3000IIIHost extends EquipHost {
 //        StripMapUpCeid = 0;
         RCMD_PPSELECT = "PPSELECT";
 
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }

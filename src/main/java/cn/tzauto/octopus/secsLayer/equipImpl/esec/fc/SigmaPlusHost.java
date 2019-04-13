@@ -30,7 +30,10 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author luosy
@@ -53,8 +56,11 @@ public class SigmaPlusHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
         CPN_PPID = "PROGRAM";
+        EquipStateChangeCeid = 49L;
+        StripMapUpCeid = 403L;
     }
 
 
@@ -88,9 +94,9 @@ public class SigmaPlusHost extends EquipHost {
 
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    SigmaPlusHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != SigmaPlusHost.COMMUNICATING) {
                     sendS1F13out();
                 }
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -116,8 +122,8 @@ public class SigmaPlusHost extends EquipHost {
                     processS12F3in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s12f15in")) {
                     processS12F15in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
-                    //processS6F11EquipStatusChange(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11IN")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
@@ -135,13 +141,14 @@ public class SigmaPlusHost extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             long transactionId = data.getTransactionId();
@@ -161,9 +168,9 @@ public class SigmaPlusHost extends EquipHost {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
 //                processS6F11inStripMapUpload(data);
+
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11in")) {
-                processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -203,6 +210,7 @@ public class SigmaPlusHost extends EquipHost {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void sendS2F33clear() {
         DataMsgMap s2f37outAll = new DataMsgMap("s2f33clear", activeWrapper.getDeviceId());
@@ -215,6 +223,7 @@ public class SigmaPlusHost extends EquipHost {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void sendS2F35clear() {
         DataMsgMap s2f37outAll = new DataMsgMap("s2f35clear", activeWrapper.getDeviceId());
@@ -232,26 +241,16 @@ public class SigmaPlusHost extends EquipHost {
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0;
         try {
-            System.out.println("接受到s6f11++++++++++++++++++++++++++++++++++++++++++++");
-            ceid = data.getSingleNumber("CollEventID");
-            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;
-            out.put("AckCode", ack);
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            this.setCommState(1);
-
-            if (data.get("CollEventID") != null) {
-
-                System.out.println("接受到ceid2++++++++++++++++++++++++++++++++++++++++++++" + ceid);
+            ceid = (long) data.get("CEID");
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                replyS6F12WithACK(data, (byte) 0);
                 if (ceid == 2L) {
                     System.out.println("接受到ceid2++++++++++++++++++++++++++++++++++++++++++++");
-//                    sendS2f41Cmd("START");
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
                             sendS2f41Cmd("START");
                         }
 
@@ -259,11 +258,10 @@ public class SigmaPlusHost extends EquipHost {
                     thread.start();
 
                     logger.info("Received event ceid = 2 need to send command START.");
+                } else if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
                 }
-                if (ceid == 49L) {
-                    // processS6F11EquipStatusChange(data);
-                }
-                logger.info("Received a s6f11in with CEID = " + ceid);
+                this.setCommState(1);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -348,7 +346,7 @@ public class SigmaPlusHost extends EquipHost {
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s2f33out.setTransactionId(transactionId);
         long[] dataid = new long[1];
-        dataid[0] = 1001l;
+        dataid[0] = 1001L;
         long[] reportid = new long[1];
         reportid[0] = rptid;
         long[] variableid = new long[1];
@@ -371,7 +369,7 @@ public class SigmaPlusHost extends EquipHost {
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s2f33out.setTransactionId(transactionId);
         long[] dataid = new long[1];
-        dataid[0] = 1001l;
+        dataid[0] = 1001L;
         long[] reportid = new long[1];
         reportid[0] = rptid;
 //        long[] variableid = new long[1];
@@ -487,14 +485,10 @@ public class SigmaPlusHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-//            ppExecName = ppExecName.replace(".dbrcp", "");
-//            preEquipStatus = equipStatus;
-//            findDeviceRecipe();
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -705,15 +699,15 @@ public class SigmaPlusHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath,"Production/" + targetRecipeName);
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F1out(localFilePath, "Production/" + targetRecipeName);
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F3out(localRecipeFilePath,"Production/" + targetRecipeName);
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F3out(localRecipeFilePath, "Production/" + targetRecipeName);
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
@@ -774,7 +768,7 @@ public class SigmaPlusHost extends EquipHost {
     @Override
     public Map sendS7F17out(String recipeName) {
         Map resultMap = super.sendS7F17out("Production/" + recipeName);
-        resultMap.put("recipeName",recipeName);
+        resultMap.put("recipeName", recipeName);
         return resultMap;
     }
 
@@ -814,7 +808,7 @@ public class SigmaPlusHost extends EquipHost {
     public Map sendS7F19out() {
         Map resultMap = super.sendS7F19out();
         ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if(recipeList.size()!=0){
+        if (recipeList.size() != 0) {
             ArrayList list1 = new ArrayList();
             for (Object object : recipeList) {
                 if (String.valueOf(object).contains("Production/")) {

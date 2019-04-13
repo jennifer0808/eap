@@ -145,6 +145,7 @@ public class HellerMK1809IIIHost extends EquipHost {
 
     @Override
     public Map sendS1F3Check() {
+        // TODO: 2019/4/13 没有SML文件，svFormat等格式未确认
         List listtmp = getNcessaryData();
         if (listtmp != null) {
             equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
