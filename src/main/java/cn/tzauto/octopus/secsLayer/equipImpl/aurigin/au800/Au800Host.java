@@ -44,8 +44,8 @@ public class Au800Host extends EquipHost {
     public Au800Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 5000;
+        //todo 33 35 : 2  37 : 4
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override

@@ -40,7 +40,7 @@ public class TowaHost extends EquipHost {
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 50007;
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 

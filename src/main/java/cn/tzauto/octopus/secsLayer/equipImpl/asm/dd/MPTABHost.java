@@ -48,7 +48,8 @@ public class MPTABHost extends EquipHost {
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
