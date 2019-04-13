@@ -164,29 +164,6 @@ public class Opti750Host extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="processS1FXin Code">
 
-    // TODO: 2019/4/12 sendS1F13 方法不确定
-//    @Override
-//    public void sendS1F13out() {
-//        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-//        long transactionId = activeWrapper.getNextAvailableTransactionId();
-//        s1f13out.setTransactionId(transactionId);
-//        try {
-//            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-//            if (data != null) {
-//                setCommState(1);
-//            }
-//        } catch (HsmsProtocolNotSelectedException | ItemIntegrityException | MessageDataException | T3TimeOutException | IOException e) {
-//            logger.error("Exception:", e);
-//        } catch (StreamFunctionNotSupportException e) {
-//            e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        } catch (T6TimeOutException e) {
-//            e.printStackTrace();
-//        } catch (BrokenProtocolException e) {
-//            e.printStackTrace();
-//        }
-//    }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 

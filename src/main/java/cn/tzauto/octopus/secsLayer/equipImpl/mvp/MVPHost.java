@@ -246,6 +246,16 @@ public class MVPHost extends EquipHost {
 //        sendS2F37outAll();
     }
 
+    public void sendS2F33Out(long dataid, long reportId, List svidList) {
+        // TODO: 2019/4/13  在s2f33out中svFormat和rptFormat为U2，s2f35中为U4
+        try {
+            short format = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+            activeWrapper.sendS2F33out(dataid, format, reportId, format, svidList, format);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
 
 //    @Override
 //    public Map sendS7F5out(String recipeName) {
