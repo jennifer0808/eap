@@ -43,7 +43,7 @@ public class DR3000IIIHost extends EquipHost {
 
     public DR3000IIIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 9;
+//        EquipStateChangeCeid = 9;
 //        StripMapUpCeid = 0;
         RCMD_PPSELECT = "PPSELECT";
 
@@ -114,7 +114,6 @@ public class DR3000IIIHost extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     try {
                         long ceid = (long) msg.get("CEID");
-                        processS6F11in(msg);
                         if (ceid == 22) {
                             super.findDeviceRecipe();
                         }
@@ -147,6 +146,7 @@ public class DR3000IIIHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f17in")) {
                 processS2F17in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
