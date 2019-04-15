@@ -27,12 +27,10 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -59,21 +57,11 @@ import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.awt.Color.red;
-
 /**
  * @author luosy
  */
 public class EapClient extends Application implements JobListener, PropertyChangeListener {
 
-    @FXML
-    private StackPane mainPane;
-    @FXML
-    private ScrollPane mainScrollPane;
-    @FXML
-    private Label label = new Label();
-    @FXML
-    private ImageView equipImg;
     private static final Logger logger = Logger.getLogger(EapClient.class.getName());
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
@@ -192,8 +180,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     }
                 });
 
+                GridPane.setHgrow(label, Priority.ALWAYS);
                 gridPane.addColumn(0, label);
-                gridPane.setHgrow(label, Priority.ALWAYS);
                 gridPane.addColumn(1, minButton);
                 gridPane.addColumn(2, amxButton);
 
@@ -204,7 +192,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 dragUtil.addDrawFunc(stage, vBox,root);
                 box.getChildren().addAll(gridPane,root);
 
-                 stage.setTitle("EAPClient");
+                stage.setTitle("EAPClient");
                 Scene scene = new Scene(vBox);
                 stage.setScene(scene);
                 stage.initStyle(StageStyle.TRANSPARENT);
@@ -224,29 +212,32 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
                 if (!GlobalConstants.loadPropertyFromDB()) {
                     logger.info("无法从本地数据库获取正确数据，无法运行，退出...");
+                    closeApp(window,stage);
                     return;
                 }
                 if (!GlobalConstants.initData()) {
                     logger.info("数据不正确，无法运行，退出...");
+                    closeApp(window,stage);
                     return;
                 }
                 //查询数据库元素，显示设备信息
-//                try {
+                try {
                 hostManager = new MultipleEquipHostManager();
 
                 if (hostManager.initialize()) {
                     logger.info("加载工控下配置设备成功...");
                 } else {
                     logger.error("加载工控下配置设备失败...");
+                    closeApp(window,stage);
                     return;
                 }
 
                 equipHosts = hostManager.getAllEquipHosts();
                 equipModels = hostManager.getAllEquipModels();
-//                } catch (Exception e) {
-//                    logger.error("Exception:", e);
-//                    System.exit(0);
-//                }
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                    System.exit(0);
+                }
 
                 //显示界面
                 //渲染设备信息界面
@@ -315,14 +306,17 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
-                window.close();
-                stage.close();
-                System.exit(0);
+                closeApp(window,stage);
             }
             window.close();
         });
 
-//        ap.getChildren().add(sp);
+    }
+
+    private void closeApp(Stage window,Stage stage){
+        window.close();
+        stage.close();
+        System.exit(0);
     }
 
     /**
@@ -458,13 +452,13 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
         EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
-        String deviceCode = equipNodeBean.getDeviceIdProperty();
+        String deviceCode = equipNodeBean.getDeviceCode();
 
         try {
-            hostManager.startHostThread(equipNodeBean.getDeviceCode());
-            hostManager.startSECS(equipNodeBean.getDeviceCode(), eqpEventDealer);
+            hostManager.startHostThread(deviceCode);
+            hostManager.startSECS(deviceCode, eqpEventDealer);
         } catch (Exception e1) {
-            logger.fatal(equipNodeBean.getDeviceCode() + " has not been initialized!", e1);
+            logger.fatal(deviceCode + " has not been initialized!", e1);
         }
 
     }
@@ -496,7 +490,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             String deviceCode = src.getDeviceCode();
             if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_PANEL_PROPERTY)) {
                 EquipPanel newPanel = (EquipPanel) newValue;
-                EquipStatusPane equipStatusPane = this.equipStatusPanes.get(deviceCode);
+                EquipStatusPane equipStatusPane = equipStatusPanes.get(deviceCode);
                 equipStatusPane.setRunStatus(newPanel.getRunState());
                 equipStatusPane.setLotId(newPanel.getWorkLot());
                 equipStatusPane.setAlarmState(newPanel.getAlarmState());
@@ -564,19 +558,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         }
     }
 
-
-    public TextArea getTX_EventLog() {
-        return (TextArea) root.lookup("#TX_EventLog");
-    }
-
-    public TextArea getTX_SecsLog() {
-        return (TextArea) root.lookup("#TX_SecsLog");
-    }
-
-    public TextArea getTX_ServerLog() {
-        return (TextArea) root.lookup("#TX_ServerLog");
-    }
-
     public static void addWatchDog(String deviceId, EquipmentEventDealer watchDog) {
         EapClient.watchDogs.put(deviceId, watchDog);
     }
@@ -591,7 +572,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public EquipStatusPane getThePane(String deviceCode) {
         EquipStatusPane thePane = null;
-        ObservableList<Node> nodes = ((StackPane) this.root.lookup("#mainScrollPane")).getChildrenUnmodifiable();
+        ObservableList<Node> nodes = ((StackPane) root.lookup("#mainScrollPane")).getChildrenUnmodifiable();
         for (Node node : nodes) {
             if (node instanceof Pane) {
 //                if (node.lookup("#L_DeviceCode") != null) {
