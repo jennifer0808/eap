@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * @author njtz
  */
-@SuppressWarnings("serial")
+
 public class Disco7160Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
@@ -39,7 +39,9 @@ public class Disco7160Host extends EquipHost {
     public Disco7160Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT_S";
+        CPN_PPID = "DEV_NO";
     }
 
     public Object clone() {

@@ -359,6 +359,7 @@ public class MultipleEquipHostManager {
                 equipHosts.remove(deviceId);
                 equipHosts.put(deviceId, newEquip);
                 newEquip.start();
+                logger.info("调用了start方法" + deviceId);
                 equip = newEquip;
             } else {
                 equip.start();
@@ -1613,23 +1614,17 @@ public class MultipleEquipHostManager {
 
 
     public String deleteRcpFromDeviceAndShowLog(String deviceId, String recipeName) {
-        String deviceCode = "";
-        if (deviceId.matches("\\d+")) {
-            equipHost = equipHosts.get(deviceId);
-            deviceCode = equipHost.getDeviceCode();
-        } else {
-            equipModel = equipModels.get(deviceId);
-            deviceCode = equipModel.deviceCode;
-        }
+
+
         Map resultMap = deleteRecipeFromDevice(deviceId, recipeName);
         if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-            UiLogUtil.appendLog2EventTab(deviceCode, recipeName + "在设备上删除成功!");
+            UiLogUtil.appendLog2EventTab(deviceId, recipeName + "在设备上删除成功!");
             return "0";
         } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) {
-            UiLogUtil.appendLog2EventTab(deviceCode, recipeName + "在设备上不存在，无需删除!");
+            UiLogUtil.appendLog2EventTab(deviceId, recipeName + "在设备上不存在，无需删除!");
             return "0";
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+            UiLogUtil.appendLog2EventTab(deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
             return recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description"));
         }
     }

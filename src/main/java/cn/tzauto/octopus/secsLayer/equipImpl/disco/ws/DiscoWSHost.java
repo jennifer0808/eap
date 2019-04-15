@@ -49,6 +49,7 @@ public class DiscoWSHost extends EquipHost {
     public DiscoWSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT_S";
         CPN_PPID = "DEV_NO";
 
@@ -273,33 +274,6 @@ public class DiscoWSHost extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
-    /**
-     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载
-     *
-     * @param localFilePath
-     * @param targetRecipeName
-     * @return
-     */
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long length = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap data = null;
-        byte ppgnt = -1;
-        try {
-            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
-            ppgnt = (byte) data.get("PPGNT");
-            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
-        return resultMap;
-    }
 
     @Override
     public Map sendS7F5out(String recipeName) {

@@ -49,6 +49,9 @@ public class Disco6340Host extends EquipHost {
     public Disco6340Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT_S";
+        CPN_PPID = "DEV_NO";
     }
 
     public Object clone() {
@@ -820,7 +823,7 @@ public class Disco6340Host extends EquipHost {
     protected void processS6F11KerfCheck(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
             long offset1 = data.getSingleNumber("Z1");
             long offset2 = data.getSingleNumber("Z2");
 
@@ -847,6 +850,7 @@ public class Disco6340Host extends EquipHost {
             kerfCheck = true;
         }
     }
+
     public Map sendS2F41outPPselect(String recipeName) {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");

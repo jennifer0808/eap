@@ -1466,7 +1466,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        targetRecipeName= targetRecipeName.replace("@", "/");
+        targetRecipeName = targetRecipeName.replace("@", "/");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -1954,6 +1954,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
             } catch (Exception e) {
                 logger.error("Exception:", e);
+                return null;
             }
         }
         return resultMap;
@@ -1975,7 +1976,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 DataMsgMap data = activeWrapper.sendS2F13out(dataIdList, ecFormat);
 
                 if (data != null && data.get("EC") != null) {
-                    ecValueList = (ArrayList) ((SecsItem) data.get("EC")).getData();
+                    ecValueList = (ArrayList) data.get("EC");
                     for (int i = 0; i < ecValueList.size(); i++) {
                         resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
                     }
@@ -1987,6 +1988,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
             } catch (Exception e) {
                 logger.error("Exception:", e);
+                return null;
             }
         }
         return resultMap;
@@ -2934,7 +2936,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
         // 上传ftp
-        FtpUtil.uploadFile(localRcpPath, GlobalConstants.getProperty("ftpPath") + remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+        FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
         UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         return true;
     }
@@ -3009,7 +3011,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             ack[0] = 0;
             s12f6out.put("GRANT1", ack);
             s12f6out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f6out);
+            activeWrapper.sendS12F6out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3037,7 +3039,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             ack[0] = 0;
             s12f8out.put("MDACK", ack);
             s12f8out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f8out);
+            activeWrapper.sendS12F8out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3078,7 +3080,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             DataMsgMap s12f14out = new DataMsgMap("s12f14out", activeWrapper.getDeviceId());
 
             s12f14out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f14out);
+            activeWrapper.sendS12F14out("null", FormatCode.SECS_ASCII, (byte) 1, null, FormatCode.SECS_1BYTE_SIGNED_INTEGER, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3176,7 +3178,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         try {
             String MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = (byte[]) DataMsgMap.get("IDTYP");
+            byte IDTYP = (byte) DataMsgMap.get("IDTYP");
             int[] STRPxSTRPy = (int[]) DataMsgMap.get("STRP");
             Object BinListItem = DataMsgMap.get("BINLT");
             String binList = "";

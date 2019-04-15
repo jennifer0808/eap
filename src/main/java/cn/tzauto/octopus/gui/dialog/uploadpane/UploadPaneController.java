@@ -244,11 +244,17 @@ public class UploadPaneController implements Initializable {
                     boolean re;
                     SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
                     RecipeService recipeService = new RecipeService(sqlSession);
-                    if (recipeNameMapping != null) {
-                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
-                    } else {
-                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                    try {
+                        if (recipeNameMapping != null) {
+                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
+                        } else {
+                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                        }
+                    } catch (Exception wx) {
+                        re = false;
+                        stage.close();
                     }
+
 
                     if (!re) {
                         JOptionPane.showMessageDialog(null, "上传失败，ftp文件传送失败，请重新上传");

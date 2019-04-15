@@ -46,6 +46,9 @@ public class DiscoLSHost extends EquipHost {
     public DiscoLSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT_S";
+        CPN_PPID = "DEV_NO";
     }
 
     public Object clone() {

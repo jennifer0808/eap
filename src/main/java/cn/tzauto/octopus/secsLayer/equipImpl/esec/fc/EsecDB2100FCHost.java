@@ -16,14 +16,16 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 
@@ -39,6 +41,7 @@ public class EsecDB2100FCHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid = 3255;
         StripMapUpCeid = 15339;
         CPN_PPID = "PPNAME";
@@ -418,15 +421,15 @@ public class EsecDB2100FCHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".dbrcp");
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F1out(localFilePath, targetRecipeName + ".dbrcp");
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".dbrcp");
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".dbrcp");
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
@@ -464,11 +467,10 @@ public class EsecDB2100FCHost extends EquipHost {
     public Map sendS7F19out() {
         Map resultMap = super.sendS7F19out();
         ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if(recipeList.size()!=0){
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
+        if (recipeList.size() != 0) {
             ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString().replace(".dbrcp", ""));
+            for (int i = 0; i < recipeList.size(); i++) {
+                list1.add(recipeList.get(i).toString().replace(".dbrcp", ""));
             }
             resultMap.put("eppd", list1);
         }
@@ -511,7 +513,7 @@ public class EsecDB2100FCHost extends EquipHost {
     @Override
     public Map sendS7F17out(String recipeName) {
         Map resultMap = super.sendS7F17out(recipeName + ".dbrcp");
-        resultMap.put("recipeName",recipeName);
+        resultMap.put("recipeName", recipeName);
         return resultMap;
     }
 
