@@ -36,8 +36,7 @@ public class ASM80THost extends EquipHost {
     public ASM80THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
 
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
     }
 

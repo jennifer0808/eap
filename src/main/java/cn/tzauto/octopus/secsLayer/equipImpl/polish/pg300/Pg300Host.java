@@ -368,13 +368,17 @@ public class Pg300Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public void sendS2F33init() {
-        //// TODO: 2019/4/10  sml 文件中的结构为多个list
+        // TODO: 2019/4/10  sml 文件中的结构为多个list,且参数值固定
         DataMsgMap s2f37outAll = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
+
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s2f37outAll.setTransactionId(transactionId);
 
         try {
+//            List list = new ArrayList();
+//            list.add()
             activeWrapper.sendAwaitMessage(s2f37outAll);
+//            sendS2F33Out()
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

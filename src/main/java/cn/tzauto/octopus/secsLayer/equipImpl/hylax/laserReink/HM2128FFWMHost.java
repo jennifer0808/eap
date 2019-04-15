@@ -11,8 +11,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hylax.laserReink;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -27,9 +25,8 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.LaserRelinkUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -49,8 +46,6 @@ public class HM2128FFWMHost extends EquipHost {
     public HM2128FFWMHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
 
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -70,15 +65,16 @@ public class HM2128FFWMHost extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    HM2128FFWMHost.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != HM2128FFWMHost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
 //                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -112,16 +108,9 @@ public class HM2128FFWMHost extends EquipHost {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == 1009) {
-                            processS6F11EquipStart(msg);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
+                    processS6F11in(msg);
+
                 } else {
                     logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -146,14 +135,9 @@ public class HM2128FFWMHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.contains("s6f11in")) {
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                processS6F11in(data);
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -181,37 +165,15 @@ public class HM2128FFWMHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
+    @Override
     @SuppressWarnings("unchecked")
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            data = activeWrapper.sendAwaitMessage(s1f3out);
-            logger.info("received Message=S1F3===================>" + JSONArray.toJSON(data));
-        } catch (Exception e) {
-            e.printStackTrace();
+        List listtmp = getNcessaryData();
+        if (listtmp != null) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = listtmp.get(0).toString();
-        ppExecName = (String) listtmp.get(1);
-        if (ppExecName.contains(".rcp")) {
-            ppExecName = ppExecName.substring(0, ppExecName.lastIndexOf("."));
-        }
-        controlState = listtmp.get(2).toString();
         if (controlState.equalsIgnoreCase("OnlineLocal")) {
             controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
         } else if (controlState.equalsIgnoreCase("OnlineRemote")) {
@@ -224,30 +186,33 @@ public class HM2128FFWMHost extends EquipHost {
         panelMap.put("PPExecName", ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
-        data = null;
         return panelMap;
     }
     // </editor-fold> 
 
     @Override
-    protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        byte[] ack = new byte[1];
-        ack[0] = 0;
-        out.put("AckCode", ack);
-        long ceid = 0l;
+    public void processS6F11in(DataMsgMap data){
+        long ceid = 0L;
         try {
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ((SecsItem) data.get("EquipStatus")).getData().toString();
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-            if (ppExecName.contains(".rcp")) {
-                ppExecName = ppExecName.substring(0, ppExecName.lastIndexOf("."));
+            ceid = (long)data.get("CEID");
+            if (ceid == 1009) {
+                processS6F11EquipStart(data);
+            }else if(ceid == EquipStateChangeCeid){
+                //todo ceid unknown ?
+                processS6F11EquipStatusChange(data);
             }
-            controlState = ((SecsItem) data.get("ControlState")).getData().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    @Override
+    protected void processS6F11EquipStatusChange(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long)data.get("CEID");
+            findDeviceRecipe();
+            ppExecName.replace(".rcp","");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -448,17 +413,10 @@ public class HM2128FFWMHost extends EquipHost {
     }
 
     private void processS6F11EquipStart(DataMsgMap data) {
-        //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        byte[] ack = new byte[1];
-        ack[0] = 0;
-        out.put("AckCode", ack);
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            ceid = data.getSingleNumber("CollEventID");
-//            equipStatus = ACKDescription.descriptionStatus(data.getSingleNumber("EquipStatus"), deviceType);
+            ceid = (long)data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -640,31 +598,16 @@ public class HM2128FFWMHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F5out(String recipeName) {
-        String ppid = recipeName;
-        if (!recipeName.contains(".rcp")) {
-            recipeName = recipeName.concat(".rcp");
-        }
-        if (ppid.contains(".rcp")) {
-            ppid = ppid.substring(0, ppid.lastIndexOf("."));
-        }
-        Recipe recipe = setRecipe(ppid);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-//        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + deviceCode + "/" + ppid.replace("/", "@").replace(".", "#") + "/" + ppid.replace("/", "@").replace(".", "#") + "_V" + recipe.getVersionNo() + ".txt";
-        recipePath = GlobalConstants.localRecipePath + recipeService.organizeRecipePath(recipe) + "/" + ppid.replace("/", "@") + "_V" + recipe.getVersionNo() + ".txt";
-        sqlSession.close();
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = getRecipePathByConfig(recipe);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
+            msgdata = activeWrapper.sendS7F5out(recipeName.concat(".rcp"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        byte[] ppbody = (byte[])  msgdata.get("PPBODY");
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
@@ -687,7 +630,7 @@ public class HM2128FFWMHost extends EquipHost {
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + ppid + " from equip " + deviceCode);
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
     // </editor-fold>

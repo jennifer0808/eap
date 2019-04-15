@@ -43,6 +43,7 @@ public class HANMIHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat= FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -183,7 +184,6 @@ public class HANMIHost extends EquipHost {
             logger.error("Exception:", e);
         }
         //获取当前设备状态
-        sendS1F3Check();
         findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

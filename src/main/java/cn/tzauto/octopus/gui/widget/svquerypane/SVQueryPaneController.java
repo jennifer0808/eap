@@ -1,10 +1,15 @@
 package cn.tzauto.octopus.gui.widget.svquerypane;
 
+import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -22,6 +27,9 @@ import java.util.ResourceBundle;
  */
 public class SVQueryPaneController implements Initializable {
     private String deviceCode;
+
+    @FXML
+    private TextField deviceCodeField;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -79,13 +87,14 @@ public class SVQueryPaneController implements Initializable {
         stage.setTitle("SV数据查询");
 
         try {
-            root = FXMLLoader.load(getClass().getClassLoader().getResource("SVQueryPane.fxml"));
+            ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("SVQueryPane.fxml"),resourceBundle);
         } catch (IOException ex) {
 
         }
 
 
-        Label deviceCodeField = (Label) root.lookup("#deviceCodeField");
+        deviceCodeField = (TextField) root.lookup("#deviceCodeField");
         deviceCodeField.setText(deviceCode);
 
         Scene scene = new Scene(root);

@@ -24,6 +24,7 @@ public interface SysUserMapper {
     int deleteByPrimaryKey(SysUser record);
 
     List<SysUser> searchByMap(Map paraMap);
+    List<SysUser> searchUserByMap(Map paraMap);
 
     int updateSysUser(SysUser record);
 

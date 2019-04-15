@@ -86,9 +86,11 @@ public class HongTeng7300Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
+                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) { // TODO: 2019/4/12  未写完
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) { // TODO: 2019/4/12 未写完
                     logger.info("====需要比对批次号，一致则发送Start指令====");
                     processS6F11LotCheck(msg);
                 } else {
@@ -119,7 +121,8 @@ public class HongTeng7300Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -156,6 +159,7 @@ public class HongTeng7300Host extends EquipHost {
         }
     }
 
+    
     public void processS6F11in(DataMsgMap data) {
         long ceid = -12345679;
         try {
@@ -281,29 +285,8 @@ public class HongTeng7300Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        String ppbody = (String) TransferUtil.getPPBody(0, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
-        s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/"));
-        s7f3out.put("Processprogram", secsItem);
-//        s7f3out.put("Processprogram", localRecipeFilePath);
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_ASCII);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ACKC7", 9);
-            resultMap.put("Description", e.getMessage());
-        }
+        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName.replace("@", "/"));
+        resultMap.put("ppid",targetRecipeName);
         return resultMap;
     }
 
@@ -343,36 +326,38 @@ public class HongTeng7300Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public Map sendS7F17out(String recipeName) {
 
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
+        ArrayList list = new ArrayList();
+        list.add(recipeName);
+        byte ackc7 = -1;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(list);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+
+            ackc7 = (byte) data.get("ACKC7");
             sleep(1000);
-            if (ackc7[0] == 0 || ackc7[0] == 6) {
+            if (ackc7 == 0 || ackc7 == 6) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "component"));
+
+        ArrayList recipeList = new ArrayList();
+        recipeList.add(recipeName.replace("recipe", "component"));
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(recipeList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "handler"));
+
+        ArrayList handlerList = new ArrayList();
+        handlerList.add(recipeName.replace("recipe", "handler"));
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(handlerList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
@@ -382,8 +367,8 @@ public class HongTeng7300Host extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
