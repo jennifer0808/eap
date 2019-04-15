@@ -9,6 +9,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hontech;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -23,20 +24,24 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
  */
-public class HT9046HWHost extends EquipHost {
+public class HT9045HWTESTHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HT9046HWHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HT9045HWTESTHost.class.getName());
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
@@ -47,7 +52,8 @@ public class HT9046HWHost extends EquipHost {
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 
-    public HT9046HWHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+
+    public HT9045HWTESTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -56,7 +62,7 @@ public class HT9046HWHost extends EquipHost {
 
     @Override
     public Object clone() {
-        HT9046HWHost newEquip = new HT9046HWHost(deviceId,
+        HT9045HWTESTHost newEquip = new HT9045HWTESTHost(deviceId,
                 this.iPAddress,
                 this.tCPPort, this.connectMode,
                 this.deviceType, this.deviceCode);
@@ -98,8 +104,8 @@ public class HT9046HWHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
-                    long ceid = (long) msg.get("CEID");
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
+                    long ceid = msg.getSingleNumber("CollEventID");
                     if (ceid == 1) {
 //                        processPressStartButton(msg);
                     } else if (ceid == 27) {
@@ -136,7 +142,7 @@ public class HT9046HWHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
@@ -159,9 +165,9 @@ public class HT9046HWHost extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11in")) {
-                long ceid = (long) data.get("CEID");
+                long ceid = data.getSingleNumber("CollEventID");
                 if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49) {
-                    replyS6F12WithACK(data, (byte) 0);
+                    processS6F11in(data);
                     this.inputMsgQueue.put(data);
                     //processEquipStatusChange(data);
                 } else {
@@ -208,30 +214,6 @@ public class HT9046HWHost extends EquipHost {
         sendS5F3out(true);
     }
 
-
-    /**
-     * 打开或者关闭所有报警信息报告
-     *
-     * @param enable true->open ；false-->close
-     */
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     protected void processEquipStatusChange2(DataMsgMap data) {
@@ -423,7 +405,7 @@ public class HT9046HWHost extends EquipHost {
 //                holdDevice();
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
                     UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
-                    recipeParasDiffText.append("\r\nRecipe Error!");
+                    recipeParasDiffText.append("\r\nRecipe Error!MES Download Recipe:[" + deviceInfoExt.getRecipeName() + "]");
                     checkNameFlag = false;
                 } else {
                     UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
@@ -510,7 +492,7 @@ public class HT9046HWHost extends EquipHost {
                     this.setAlarmState(0);
                 } else {
                     this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
-                    this.setAlarmState(2);
+//                    this.setAlarmState(2);
                 }
             }
         } catch (Exception e) {
@@ -583,6 +565,68 @@ public class HT9046HWHost extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
+    /**
+     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
+     *
+     * @param localFilePath
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        long[] length = new long[1];
+        length[0] = TransferUtil.getPPLength(localFilePath);
+        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        s7f1out.put("ProcessprogramID", targetRecipeName);
+        s7f1out.put("Length", length);
+        DataMsgMap data = null;
+        byte[] ppgnt = new byte[1];
+        try {
+            data = activeWrapper.sendAwaitMessage(s7f1out);
+            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f2");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ppgnt", ppgnt[0]);
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        return resultMap;
+    }
+
+    /**
+     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
+     *
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
+        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        String ppbody = (String) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
+        s7f3out.put("ProcessprogramID", targetRecipeName);
+        s7f3out.put("Processprogram", secsItem);
+        try {
+            data = activeWrapper.sendAwaitMessage(s7f3out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ACKC7", ackc7[0]);
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        return resultMap;
+    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
@@ -590,14 +634,12 @@ public class HT9046HWHost extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         String ppbody = (String) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 0, recipePath);
-        //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
             recipeParaList = HT9045HWUtil.getRecipePara(recipePath, deviceType);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -609,7 +651,8 @@ public class HT9046HWHost extends EquipHost {
     }
 
 
-    // </editor-fold>
+
+    // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
 
 
@@ -630,13 +673,13 @@ public class HT9046HWHost extends EquipHost {
                 resultMap.put("prevCmd", "STOP");
                 resultMap.put("HCACK", 0);
                 resultMap.put("Description", "设备已被锁,将无法开机");
-                this.setAlarmState(2);
+//                this.setAlarmState(2);
             } else {
                 //RUN状态，发送停机指令
                 //            super.sendS2f41Cmd("STOP");
                 resultMap = this.sendS2f41Cmd("PAUSE");
                 if ((byte) resultMap.get("HCACK") == 0 || (byte) resultMap.get("HCACK") == 4) {
-                    this.setAlarmState(2);
+//                    this.setAlarmState(2);
                 }
             }
             return resultMap;
@@ -690,5 +733,6 @@ public class HT9046HWHost extends EquipHost {
         //调用父类的方法，生成公用命令，如果不支持，可以删掉，如果不公用，直接覆盖
         initCommonRemoteCommand();
     }
+
 
 }
