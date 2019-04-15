@@ -16,6 +16,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -381,8 +382,56 @@ public class C6800SECSHost extends EquipHost {
         return null;
     }
 
+    @Override
+    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f2");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        long length = -1;
+        length = TransferUtil.getPPLength(localFilePath);
+        if (length == 0) {
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
+            return resultMap;
+        }
+        DataMsgMap data = null;
+        byte ppgnt = -1;
+        try {
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
+            ppgnt = (byte) data.get("PPGNT");
+            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+            resultMap.put("ppgnt", ppgnt);
+            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", e.getMessage());
+        }
+        return resultMap;
+    }
 
-
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        byte ackc7 = -1;
+        try {
+            data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_BINARY);
+            ackc7 = (byte) data.get("AckCode");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
+        return resultMap;
+    }
 
 
     @Override
