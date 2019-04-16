@@ -197,7 +197,7 @@ public class MVPHost extends EquipHost {
 //            }
 //            return map;
 //        } else {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+//           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
 //            return null;
 //        }
 //    }

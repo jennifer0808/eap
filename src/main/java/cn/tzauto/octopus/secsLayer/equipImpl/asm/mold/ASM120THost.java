@@ -288,7 +288,7 @@ public class ASM120THost extends EquipHost {
         }
         updateCommStateInExt();
 
-        UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告CEID：" + ceid);
+       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID：" + ceid);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID");
@@ -297,7 +297,7 @@ public class ASM120THost extends EquipHost {
             for (int j = 0; j < recipeTemplates.size(); j++) {
                 long ceidtmp = Long.parseLong(recipeTemplates.get(j).getDeviceVariableId());
                 if (ceid == ceidtmp) {
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
                     break;
                 }
             }
@@ -335,7 +335,7 @@ public class ASM120THost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -359,7 +359,7 @@ public class ASM120THost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -382,11 +382,11 @@ public class ASM120THost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         }
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
@@ -394,22 +394,22 @@ public class ASM120THost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
                             } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -490,7 +490,7 @@ public class ASM120THost extends EquipHost {
 //            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
 //        }
         if (data == null || data.get("EPPD") == null) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
@@ -570,9 +570,9 @@ public class ASM120THost extends EquipHost {
         mqMap.put("unit", "");
         mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
         GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-        UiLogUtil.appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
         logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
-//        UiLogUtil.appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
+//       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
     //获取当前使用的Press
@@ -590,7 +590,7 @@ public class ASM120THost extends EquipHost {
         if (pressStatusAll.length() > 0) {
             pressStatusAll = pressStatusAll.substring(0, pressStatusAll.length() - 1);
         }
-        UiLogUtil.appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
     //hold机台
@@ -607,7 +607,7 @@ public class ASM120THost extends EquipHost {
             }
             return map;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

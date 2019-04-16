@@ -252,7 +252,7 @@ public class Pg300Host extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         try {
             long ceid = (long) data.get("CEID");
-//            UiLogUtil.appendLog2SecsTab(deviceCode, "收到CEID: " + ceid);
+//           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到CEID: " + ceid);
             if (ceid == 9) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 10) {
@@ -316,21 +316,21 @@ public class Pg300Host extends EquipHost {
                     Map resultMap = sendS2F41outPPselect(recipeName);
                     if (resultMap != null && !resultMap.isEmpty()) {
                         if ("0".equals(String.valueOf(resultMap.get("HCACK"))) || "4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "PPSelect成功，PPID=" + recipeName);
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "PPSelect成功，PPID=" + recipeName);
                             //选完程序切local状态
                             localDeviceAndShowDetailInfo();
                         } else {
                             Map eqptStateMap = super.findEqptStatus();//失败上报机台状态
-                            UiLogUtil.appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + "；原因：" + String.valueOf(resultMap.get("Description")) + "，机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + "；原因：" + String.valueOf(resultMap.get("Description")) + "，机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                         }
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + ", 设备消息回复错误，请联系CIM人员处理");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + ", 设备消息回复错误，请联系CIM人员处理");
                     }
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + ", 设备Recipe列表中没有该Recipe，请重新下载");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "选中Recipe失败，PPID=" + recipeName + ", 设备Recipe列表中没有该Recipe，请重新下载");
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "无法获取设备Recipe列表，请检查设备通信");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "无法获取设备Recipe列表，请检查设备通信");
             }
         }
     }
@@ -413,7 +413,7 @@ public class Pg300Host extends EquipHost {
     public Map holdDevice() {
         sendS1F3Check();
         if (!this.controlState.equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "当前设备不在Remote状态，无法进行锁机");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备不在Remote状态，无法进行锁机");
             return null;
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -448,15 +448,15 @@ public class Pg300Host extends EquipHost {
         resultMap = localDevice();
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备已经被切至Local");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已经被切至Local");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备已处于Local状态");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已处于Local状态");
                 return true;
             } else {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "设备切Local失败，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备切Local失败，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                 return false;
             }
         } else {

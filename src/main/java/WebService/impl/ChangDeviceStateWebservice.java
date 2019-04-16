@@ -36,7 +36,7 @@ public class ChangDeviceStateWebservice implements BaseWebservice {
             deviceCode = String.valueOf(map.get("deviceCode"));
             state =String.valueOf(map.get("state"));
             type = String.valueOf(map.get("type"));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端由于：" + type + "，请求改变设备状态为 " + state);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端由于：" + type + "，请求改变设备状态为 " + state);
             logger.info("服务端由于：" + type + "，请求改变设备" + deviceCode + "状态为 " + state);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -85,22 +85,22 @@ public class ChangDeviceStateWebservice implements BaseWebservice {
                         if (result) {
                             webMap.put("eventStatus", "Y");
                             webMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作成功");
-                            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
+                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
                         } else {
                             webMap.put("eventStatus", "N");
                             webMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作失败");
-                            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败");
+                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败");
                         }
                     } else {
                         webMap.put("eventStatus", "Y");
                         webMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作成功");
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
                     }
                 }
             } else {
                 webMap.put("eventStatus", "N");
                 webMap.put("eventDesc", "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
-                UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
             }
            return JSONObject.toJSON(webMap).toString();
         } catch (Exception e) {
@@ -108,7 +108,7 @@ public class ChangDeviceStateWebservice implements BaseWebservice {
             sqlSession.rollback();
             webMap.put("eventStatus", "N");
             webMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作失败");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 出现异常消息 " + e.getMessage());
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 出现异常消息 " + e.getMessage());
             return JSONObject.toJSON(webMap).toString();
         } finally {
             sqlSession.close();

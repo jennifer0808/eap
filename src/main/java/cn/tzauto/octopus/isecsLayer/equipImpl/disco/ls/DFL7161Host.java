@@ -270,7 +270,7 @@ public class DFL7161Host extends EquipModel {
                     logger.error("锁机时异常:" + e.getMessage());
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -353,7 +353,7 @@ public class DFL7161Host extends EquipModel {
                     }
                 }
                 if (!ocrUploadOk) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
@@ -784,30 +784,30 @@ public class DFL7161Host extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + remoteRcpPath + "DEV.LST_V" + recipe.getVersionNo(), remoteRcpPath, "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:DEV.LST_V" + recipe.getVersionNo() + " 工控路径:" + GlobalConstants.localRecipePath + remoteRcpPath);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:DEV.LST_V" + recipe.getVersionNo() + " 工控路径:" + GlobalConstants.localRecipePath + remoteRcpPath);
             return false;
         }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + remoteRcpPath + "DEVID.LST_V" + recipe.getVersionNo(), remoteRcpPath, "DEVID.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:DEVID.LST_V" + recipe.getVersionNo() + " 工控路径:" + GlobalConstants.localRecipePath + remoteRcpPath);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:DEVID.LST_V" + recipe.getVersionNo() + " 工控路径:" + GlobalConstants.localRecipePath + remoteRcpPath);
             return false;
         }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".ALU", remoteRcpPath, recipeName + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".ALU 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".ALU 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".CLN", remoteRcpPath, recipeName + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".CLN 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".CLN 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".DFD", remoteRcpPath, recipeName + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".DFD 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".DFD 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".COT", remoteRcpPath, recipeName + ".COT_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".COT 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + equipRecipeName + ".COT 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }

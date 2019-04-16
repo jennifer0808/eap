@@ -30,7 +30,7 @@ public class BackUpRecipeWebservice implements BaseWebservice {
     private String deviceCode = "";
     List<Recipe> recipeList;
     public String handle(String message){
-        UiLogUtil.appendLog2SeverTab("ALL", "收到消息，服务端请求备份recipe");
+       UiLogUtil.getInstance().appendLog2SeverTab("ALL", "收到消息，服务端请求备份recipe");
         HashMap map = (HashMap) JsonMapper.fromJsonString(message.replace("\n",""),HashMap.class);
         Map webMap = new HashMap();
         String eventId = "";
@@ -40,7 +40,7 @@ public class BackUpRecipeWebservice implements BaseWebservice {
         recipeParaList = (List<RecipePara>) JsonMapper.String2List(JSON.toJSONString(map.get("recipeParaList")), RecipePara.class);
         attachs = (List<Attach>) JsonMapper.String2List(JSON.toJSONString(map.get("attachsList")), Attach.class);
 
-            UiLogUtil.appendLog2SeverTab("ALL", "收到MQ消息，服务端请求备份recipe");
+           UiLogUtil.getInstance().appendLog2SeverTab("ALL", "收到MQ消息，服务端请求备份recipe");
         SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);

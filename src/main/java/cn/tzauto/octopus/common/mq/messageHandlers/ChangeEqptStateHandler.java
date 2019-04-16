@@ -40,7 +40,7 @@ public class ChangeEqptStateHandler implements MessageHandler {
             deviceCode = mapMessage.getString("deviceCode");
             state = mapMessage.getString("state");
             type = mapMessage.getString("type");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端由于：" + type + "，请求改变设备状态为 " + state);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端由于：" + type + "，请求改变设备状态为 " + state);
             logger.info("服务端由于：" + type + "，请求改变设备" + deviceCode + "状态为 " + state);
         } catch (JMSException ex) {
             logger.error("JMSException:", ex);
@@ -91,22 +91,22 @@ public class ChangeEqptStateHandler implements MessageHandler {
                         if (result) {
                             mqMap.put("eventStatus", "Y");
                             mqMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作成功");
-                            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
+                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
                         } else {
                             mqMap.put("eventStatus", "N");
                             mqMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作失败");
-                            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败");
+                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败");
                         }
                     } else {
                         mqMap.put("eventStatus", "Y");
                         mqMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作成功");
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作成功");
                     }
                 }
             } else {
                 mqMap.put("eventStatus", "N");
                 mqMap.put("eventDesc", "获取设备当前信息失败!无法执行控制命令!请重试！");
-                UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
             }
             sendMsg2Server(message, mqMap);
         } catch (Exception e) {
@@ -114,7 +114,7 @@ public class ChangeEqptStateHandler implements MessageHandler {
             sqlSession.rollback();
             mqMap.put("eventStatus", "N");
             mqMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作失败");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 出现异常消息 " + e.getMessage());
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 出现异常消息 " + e.getMessage());
             sendMsg2Server(message, mqMap);
         } finally {
             sqlSession.close();
@@ -129,7 +129,7 @@ public class ChangeEqptStateHandler implements MessageHandler {
                 topicName = ((Queue) destination).getQueueName();
             }
             GlobalConstants.C2SEqptRemoteCommand.sendMessage(topicName, mqMap);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送改变机台状态的操作结果:" + mqMap.get("eventStatus"));
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送改变机台状态的操作结果:" + mqMap.get("eventStatus"));
         } catch (JMSException ex) {
             logger.error("JMSException:", ex);
         }

@@ -218,7 +218,7 @@ public class AsmAD8312FCHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -238,7 +238,7 @@ public class AsmAD8312FCHost extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo();
                 } else {
                     //1、获取设备需要校验的信息类型,
@@ -246,7 +246,7 @@ public class AsmAD8312FCHost extends EquipHost {
                     boolean hasGoldRecipe = true;
                     if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                         holdDeviceAndShowDetailInfo();
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                         return;
                     }
                     //查询trackin时的recipe和GoldRecipe
@@ -266,17 +266,17 @@ public class AsmAD8312FCHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                             releaseDevice();
                         }
                         logger.info("设备[" + deviceCode + "]的开机检查模式为:" + startCheckMod);
                         if (startCheckMod.contains("B")) {
                             startSVcheckPass = false;
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
                             startSVcheck();
                         }
                         if (startCheckMod.contains("A")) {
@@ -284,25 +284,25 @@ public class AsmAD8312FCHost extends EquipHost {
                             //1、如果下载的是Unique版本，那么执行完全比较
                             String downloadRcpVersionType = downLoadRecipe.getVersionType();
                             if (false) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                                 //这里要把设备上recipe的后缀加上，否则获取不到
                                 downLoadRecipe.setRecipeName(downLoadRecipe.getRecipeName() + ".rcp");
                                 this.startCheckRecipePara(downLoadRecipe, "abs");
                             } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                                 if (!hasGoldRecipe) {
-                                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                     //不允许开机
                                     this.holdDeviceAndShowDetailInfo();
                                 } else {
-                                    UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                     //这里要把设备上recipe的后缀加上，否则获取不到
                                     downLoadGoldRecipe.get(0).setRecipeName(downLoadGoldRecipe.get(0).getRecipeName() + ".rcp");
                                     this.startCheckRecipePara(downLoadGoldRecipe.get(0), startCheckMod);
                                 }
                             }
                         } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                         }
                     }
                 }
@@ -333,17 +333,17 @@ public class AsmAD8312FCHost extends EquipHost {
             if (controlStateTmp == 0) {
                 controlState = FengCeConstant.CONTROL_OFFLINE;
                 panelMap.put("ControlState", controlState);
-                UiLogUtil.appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
             }
             if (controlStateTmp == 1) {
                 controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
                 panelMap.put("ControlState", controlState);
-                UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
             }
             if (controlStateTmp == 2) {
                 controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
                 panelMap.put("ControlState", controlState);
-                UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
             }
             changeEquipPanel(panelMap);
         }
@@ -366,7 +366,7 @@ public class AsmAD8312FCHost extends EquipHost {
             logger.error("Exception:", e);
         }
         if (ceid == 120) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
         }
     }
 
@@ -546,12 +546,12 @@ public class AsmAD8312FCHost extends EquipHost {
         List<RecipePara> equipRecipeParas = (List<RecipePara>) this.sendS7F5out(checkRecipe.getRecipeName()).get("recipeParaList");
         if (equipRecipeParas == null || equipRecipeParas.isEmpty()) {
             if (type.equalsIgnoreCase("AB") && startSVcheckPass) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机SVcheck已通过,RecipePara check获取recipePara失败,但默认通过.");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机SVcheck已通过,RecipePara check获取recipePara失败,但默认通过.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 sqlSession.close();
                 return;
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "从设备获取Recipe数据失败,请确认设备上是否存在Recipe[" + checkRecipe.getRecipeName() + "]");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "从设备获取Recipe数据失败,请确认设备上是否存在Recipe[" + checkRecipe.getRecipeName() + "]");
             sqlSession.close();
             return;
         }
@@ -569,7 +569,7 @@ public class AsmAD8312FCHost extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Recipe参数检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Recipe参数检查未通过!");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
 //                SwingUtil.setWindowCenter(realTimePara);
@@ -577,12 +577,12 @@ public class AsmAD8312FCHost extends EquipHost {
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue() + "],默认值为[" + recipePara.getDefValue() + "]"
                             + "其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]";
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Recipe参数检查通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Recipe参数检查通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Recipe参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }

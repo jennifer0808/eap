@@ -45,7 +45,7 @@ public class CheckRecipePapaHandler implements MessageHandler {
             recipe = (Recipe) JsonMapper.fromJsonString(mapMessage.getString("recipe"), Recipe.class);
             recipeParas = (List<RecipePara>) JsonMapper.String2List(mapMessage.getString("recipePara"), RecipePara.class);
             attachs = (List<Attach>) JsonMapper.String2List(mapMessage.getString("arAttach"), Attach.class);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求检查recipe[" + recipe.getRecipeName() + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求检查recipe[" + recipe.getRecipeName() + "]");
         } catch (JMSException e) {
             e.printStackTrace();
         }

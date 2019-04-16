@@ -36,12 +36,12 @@ public class EqptCheckBeforeDownloadHandler implements MessageHandler {
         String flag = "N";
         try {
             deviceCode = mapMessage.getString("deviceCode");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前通信状态");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前通信状态");
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             Map resultMap = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
             if (resultMap != null && !resultMap.isEmpty()) {
                 flag = "Y";
-                UiLogUtil.appendLog2SeverTab(deviceCode, "设备通信正常，可以正常改机");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备通信正常，可以正常改机");
             }
             mqMap.put("flag", flag);
             if ("Y".equals(flag)) {
@@ -67,7 +67,7 @@ public class EqptCheckBeforeDownloadHandler implements MessageHandler {
                 topicName = ((Queue) destination).getQueueName();
             }
             GlobalConstants.C2SRcpDownLoadQueue.sendMessage(topicName, mqMap);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备当前通信状态:" + mqMap.get("flag"));
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备当前通信状态:" + mqMap.get("flag"));
         } catch (JMSException ex) {
             logger.error("JMSException", ex);
         }

@@ -330,7 +330,7 @@ public class EsecDB2100Host extends EquipHost {
             }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -368,7 +368,7 @@ public class EsecDB2100Host extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -391,17 +391,17 @@ public class EsecDB2100Host extends EquipHost {
                 if (!svValue.get("252968976").equals("41")) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
-                    UiLogUtil.appendLog2EventTab(deviceCode, "2D已被关闭！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
                 }
                 if (AxisUtility.isEngineerMode(deviceCode)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                     sqlSession.close();
                     return;
                 }
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo("Equipment has been held,you can see the detail log from Host");
                 } else {
                     //1、获取设备需要校验的信息类型,
@@ -409,7 +409,7 @@ public class EsecDB2100Host extends EquipHost {
                     boolean hasGoldRecipe = true;
                     if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                         holdDeviceAndShowDetailInfo();
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                     }
                     //查询trackin时的recipe和GoldRecipe
                     Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -428,11 +428,11 @@ public class EsecDB2100Host extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo(" There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.");
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                             this.setAlarmState(0);
                         }
                     }
@@ -440,17 +440,17 @@ public class EsecDB2100Host extends EquipHost {
                         //首先判断下载的Recipe类型
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         //如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                         if (!hasGoldRecipe) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                             //不允许开机
                             this.holdDeviceAndShowDetailInfo("The recipePara error,equipment has been locked!");
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                             this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -480,19 +480,19 @@ public class EsecDB2100Host extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
 //                SwingUtil.setWindowCenter(realTimePara);
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }
@@ -540,7 +540,7 @@ public class EsecDB2100Host extends EquipHost {
     public void sendS2F15outLearnDevice() {
         DataMsgMap out = new DataMsgMap("s2f15out", activeWrapper.getDeviceId());
         out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        UiLogUtil.appendLog2EventTab(deviceCode, "检测到设备Learn Device，设备进行锁机，请报修MES并进行数据BuyOff！");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Learn Device，设备进行锁机，请报修MES并进行数据BuyOff！");
         try {
             activeWrapper.sendAwaitMessage(out);
         } catch (Exception e) {
@@ -802,8 +802,8 @@ public class EsecDB2100Host extends EquipHost {
             //kong
             //String NullBinCodeValue = (String)((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
             //byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
-            UiLogUtil.appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
             DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
             //TODO 调用webservices回传waferMapping信息
             byte[] ack = new byte[]{0};
@@ -830,7 +830,7 @@ public class EsecDB2100Host extends EquipHost {
             byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
             int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
             String binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
-            UiLogUtil.appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
             //上传WaferMapping,
             String _uploadWaferMappingRow = uploadWaferMappingRow;
             String _uploadWaferMappingCol = uploadWaferMappingCol;
@@ -843,7 +843,7 @@ public class EsecDB2100Host extends EquipHost {
             }
             //上传旋转后的行列数及mapping
             AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
             DataMsgMap s12f10out = new DataMsgMap("s12f10out", activeWrapper.getDeviceId());
             byte[] ack = new byte[]{0};
             s12f10out.put("MDACK", ack);

@@ -39,13 +39,13 @@ public class MultiDownloadHandler implements MessageHandler {
             MapMessage mapMessage = (MapMessage) message;
             deviceCode = mapMessage.getString("deviceCode");
             recipes = (List<Recipe>) JsonMapper.fromJsonString(mapMessage.getString("arrecipeList"), Recipe.class);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求批量下载recipe到设备");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求批量下载recipe到设备");
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             new RecipeService(sqlSession).multiDownLoadRcp2DeviceByTypeAutomatic(deviceInfo, recipes);
             sqlSession.close();
-            UiLogUtil.appendLog2SeverTab(deviceCode, "批量下载recipe到设备结束");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "批量下载recipe到设备结束");
         } catch (JMSException e) {
             logger.error("Exception:", e);
         }

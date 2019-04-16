@@ -25,7 +25,7 @@ public class loginOutTask implements Job {
                 if (GlobalConstants.sysUser != null) {
                     String userName = GlobalConstants.sysUser.getLoginName();
                     GlobalConstants.sysUser = null;
-                    UiLogUtil.appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
+                   UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
                 }
                 try {
                     new EapMainController().loginOut();

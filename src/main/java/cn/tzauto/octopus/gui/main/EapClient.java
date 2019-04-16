@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.socket.EquipStatusListen;
@@ -134,7 +135,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 minButton.setFont(Font.font(14));
                 amxButton.setFont(Font.font(14));
                 VBox box = new VBox();
-                VBox vBox=new VBox();
+                VBox vBox = new VBox();
                 minButton.setStyle("-fx-base: rgb(243,243,243);"
                         + "-fx-max-height: infinity;-fx-text-fill: #000000 ; -fx-border-image-insets: 0;-fx-background-color: white;");
                 amxButton.setStyle("-fx-base: rgb(243,243,243); "
@@ -176,7 +177,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     @Override
                     public void handle(ActionEvent event) {
                         stage.setMaximized(!stage.isMaximized());
-                        root.setPrefHeight(vBox.getHeight()-gridPane.getHeight());
+                        root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
                     }
                 });
 
@@ -185,12 +186,12 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 gridPane.addColumn(1, minButton);
                 gridPane.addColumn(2, amxButton);
 
-                vBox.getChildren().addAll(box,root);
+                vBox.getChildren().addAll(box, root);
                 // 拖动监听器
-                dragUtil.addDragListener(stage,gridPane);
+                dragUtil.addDragListener(stage, gridPane);
                 // 添加窗体拉伸效果
-                dragUtil.addDrawFunc(stage, vBox,root);
-                box.getChildren().addAll(gridPane,root);
+                dragUtil.addDrawFunc(stage, vBox, root);
+                box.getChildren().addAll(gridPane, root);
 
                 stage.setTitle("EAPClient");
                 Scene scene = new Scene(vBox);
@@ -212,28 +213,28 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
                 if (!GlobalConstants.loadPropertyFromDB()) {
                     logger.info("无法从本地数据库获取正确数据，无法运行，退出...");
-                    closeApp(window,stage);
+                    closeApp(window, stage);
                     return;
                 }
                 if (!GlobalConstants.initData()) {
                     logger.info("数据不正确，无法运行，退出...");
-                    closeApp(window,stage);
+                    closeApp(window, stage);
                     return;
                 }
                 //查询数据库元素，显示设备信息
                 try {
-                hostManager = new MultipleEquipHostManager();
+                    hostManager = new MultipleEquipHostManager();
 
-                if (hostManager.initialize()) {
-                    logger.info("加载工控下配置设备成功...");
-                } else {
-                    logger.error("加载工控下配置设备失败...");
-                    closeApp(window,stage);
-                    return;
-                }
+                    if (hostManager.initialize()) {
+                        logger.info("加载工控下配置设备成功...");
+                    } else {
+                        logger.error("加载工控下配置设备失败...");
+                        closeApp(window, stage);
+                        return;
+                    }
 
-                equipHosts = hostManager.getAllEquipHosts();
-                equipModels = hostManager.getAllEquipModels();
+                    equipHosts = hostManager.getAllEquipHosts();
+                    equipModels = hostManager.getAllEquipModels();
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                     System.exit(0);
@@ -306,14 +307,14 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
-                closeApp(window,stage);
+                closeApp(window, stage);
             }
             window.close();
         });
 
     }
 
-    private void closeApp(Stage window,Stage stage){
+    private void closeApp(Stage window, Stage stage) {
         window.close();
         stage.close();
         System.exit(0);
@@ -348,6 +349,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
             value.addPropertyChangeListener(this);
         }
+        UiLogUtil.getInstance().addPropertyChangeListener(this);
     }
 
     public void startHostSwing() {
@@ -553,6 +555,24 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     equipHost.changeEquipPanel(map);
                     //监听到通信失败事件，重新启动线程通信
                     startComByEqp(src);
+                }
+            }
+        } else if (source instanceof UiLogUtil) {
+            UiLogUtil src = (UiLogUtil) source;
+            if (property.equalsIgnoreCase(UiLogUtil.EVENT_LOG_PROPERTY)) {
+                TextArea temp = (TextArea) EapClient.root.lookup("#eventLog");
+                if (temp != null) {
+                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
+                }
+            } else if (property.equalsIgnoreCase(UiLogUtil.SERVER_LOG_PROPERTY)) {
+                TextArea temp = (TextArea) EapClient.root.lookup("#severLog");
+                if (temp != null) {
+                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
+                }
+            } else if (property.equalsIgnoreCase(UiLogUtil.SECS_LOG_PROPERTY)) {
+                TextArea temp = (TextArea) EapClient.root.lookup("#secsLog");
+                if (temp != null) {
+                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
                 }
             }
         }

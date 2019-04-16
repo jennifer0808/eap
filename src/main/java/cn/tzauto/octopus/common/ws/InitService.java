@@ -154,7 +154,7 @@ public class InitService {
             e.printStackTrace();
             sqlSession.rollback();
             logger.info("处理数据异常,请联系相关人员进行解决！");
-            UiLogUtil.appendLog2SeverTab(null, "处理数据异常,请联系相关人员进行解决！");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "处理数据异常,请联系相关人员进行解决！");
         } finally {
             sqlSession.close();
         }

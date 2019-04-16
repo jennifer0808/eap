@@ -46,7 +46,7 @@ public class LogSaveTask implements Job{
         mqMap.put("msgName", "TransferMdDeviceOplog");
         mqMap.put("mdDeviceOplog", JsonMapper.toJsonString(deviceOplogs));
         GlobalConstants.C2SLogQueue.sendMessage(mqMap);
-        UiLogUtil.appendLog2SeverTab(null, "定时向服务端发送设备操作历史记录");
+       UiLogUtil.getInstance().appendLog2SeverTab(null, "定时向服务端发送设备操作历史记录");
     }
     
 }
