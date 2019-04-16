@@ -325,10 +325,8 @@ public class VSP88DNHTHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             ArrayList reportList = (ArrayList) data.get("REPORT");
-            List list = (List) reportList.get(0);
-            List idList = (List) list.get(1);
+            List idList = (List) reportList.get(1);
             stripId = (String) idList.get(1);
-            //TODO  stripId = ((SecsItem) data.get("stripid")).getData().toString();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -361,9 +359,9 @@ public class VSP88DNHTHost extends EquipHost {
         } catch (Exception ex) {
             logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
         }
-//        changeEqptControlStateAndShowDetailInfo("REMOTE");
         sendS2f41Cmd("REMOTE");
         if (result.equalsIgnoreCase("Y")) {
+       //todo 测试 if(true){
             holdFlag = false;
             this.sends2f41stripReply(true);
         } else {
