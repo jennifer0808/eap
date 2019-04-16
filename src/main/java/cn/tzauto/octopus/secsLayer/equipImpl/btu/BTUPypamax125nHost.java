@@ -83,29 +83,32 @@ public class BTUPypamax125nHost extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
-                    try {
-                        ceid = (long) msg.get("CEID");
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                    if (ceid == 10060 || ceid == 10070 || ceid == 10080 || ceid == 10090 || ceid == 10100) {
-                        //TODO 获取状态变化的事件报告
-                        processS6F11EquipStatusChange(msg);
-                    } else if (ceid == 1010 || ceid == 1020 || ceid == 1030) {
-                        processS6F11EquipStatus(msg);
-                    } else if (ceid == 1040) {
-                        //TODO 切换recipe后获取事件报告
-                        sendS1F3Check();
-                    }
+                    processS6F11in(msg);
+
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
         }
     }
-
-
+    @Override
+    public  void processS6F11in(DataMsgMap msg){
+        long ceid = 0l;
+        try {
+            ceid = (long) msg.get("CEID");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (ceid == 10060 || ceid == 10070 || ceid == 10080 || ceid == 10090 || ceid == 10100) {
+            //TODO 获取状态变化的事件报告
+            processS6F11EquipStatusChange(msg);
+        } else if (ceid == 1010 || ceid == 1020 || ceid == 1030) {
+            processS6F11EquipStatus(msg);
+        } else if (ceid == 1040) {
+            //TODO 切换recipe后获取事件报告
+            sendS1F3Check();
+        }
+    }
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -148,7 +151,7 @@ public class BTUPypamax125nHost extends EquipHost {
 
 
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
             Map panelMap = new HashMap();
