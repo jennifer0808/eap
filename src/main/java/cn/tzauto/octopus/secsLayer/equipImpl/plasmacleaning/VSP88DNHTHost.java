@@ -137,8 +137,6 @@ public class VSP88DNHTHost extends EquipHost {
                 sendS2f41Cmd("REMOTE");
             } else if (ceid == 1103L || ceid == 1104L) {
                 processS6F11stripIdRead(data);
-            } else {
-                processS6F11inStripMapUpload(data);
             }
 
         } catch (Exception e) {

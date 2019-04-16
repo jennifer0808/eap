@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -47,6 +46,7 @@ public class EsecDB2008Host extends EquipHost {
     }
 
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
@@ -54,9 +54,9 @@ public class EsecDB2008Host extends EquipHost {
 
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    EsecDB2008Host.sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != EsecDB2008Host.COMMUNICATING) {
                     sendS1F13out();
                 }
 
@@ -91,16 +91,16 @@ public class EsecDB2008Host extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             long transactionId = data.getTransactionId();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);

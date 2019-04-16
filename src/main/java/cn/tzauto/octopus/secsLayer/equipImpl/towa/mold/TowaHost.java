@@ -5,7 +5,6 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.generalDriver.exceptions.SecsDriverBaseException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -211,8 +210,7 @@ public class TowaHost extends EquipHost {
             } else if (ceid == 50013) {
                 findDeviceRecipe();
                 handleCleanRecipe(ppExecName);
-            }else if (ceid == -1L) {
-                //todo strip id review ?
+            } else if (ceid == 19006L) {
                 processS6f11StripIDReview(data);
             } else if (ceid == 50006 || ceid == 50005 || ceid == 50004 || ceid == 50003 ||
                     ceid == 53 || ceid == 52 || ceid == 51 || ceid == 50) {
@@ -524,19 +522,31 @@ public class TowaHost extends EquipHost {
     }
 
     protected void processS6f11StripIDReview(DataMsgMap data) {
-        //todo 取PressNo
-        Long pressNoInt = 0L;
+        long pressNoInt = 0L;
         String pressNo = "";
+        long rptId = 0L;
+        String recipeName = "";
+        String formingNo = "";
+        String leftStripID = "";
+        String rightStripID = "";
+
         try {
-            pressNoInt = data.getSingleNumber("PressNo");
-            pressNo = pressNoInt.toString();
-        } catch (SecsDriverBaseException e) {
-            e.printStackTrace();
+            List report = (List) data.get("REPORT");
+            rptId = (long) report.get(0);
+            if (rptId == 19006) {
+                List dataList = (List) report.get(1);
+                pressNoInt = (long) dataList.get(0);
+                pressNo = String.valueOf(pressNoInt);
+
+                recipeName = String.valueOf(dataList.get(1));
+                formingNo = String.valueOf(dataList.get(2));
+                leftStripID = String.valueOf(dataList.get(3));
+                rightStripID = String.valueOf(dataList.get(4));
+            }
         }
-        String recipeName = ((SecsItem) data.get("RecipeName")).getData().toString();
-        String formingNo = ((SecsItem) data.get("FormingNo")).getData().toString();
-        String leftStripID = ((SecsItem) data.get("LeftStripID")).getData().toString();
-        String rightStripID = ((SecsItem) data.get("RightStripID")).getData().toString();
+        catch (Exception e){
+            logger.error("Exception : " + e);
+        }
         try {
             logger.info("pressNo=" + pressNo + "; recipeName=" + recipeName + "; formingNo=" + formingNo + "; leftStripID=" + leftStripID + "; rightStripID=" + rightStripID);
             Map resultMap = AxisUtility.get2DCode(deviceCode, pressNo, recipeName, formingNo, leftStripID, rightStripID);
