@@ -48,9 +48,9 @@ public class FicoHost extends EquipHost {
     public FicoHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -296,11 +296,9 @@ public class FicoHost extends EquipHost {
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
                 changeEquipPanel(map);
+            } else if (ceid == 1555) {
+                processS6F11SVGetFinish(data);
             }
-            //todo sv get finish ceid
-//            else if(ceid==1){
-//                processS6F11SVGetFinish(data);
-//            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -334,16 +332,21 @@ public class FicoHost extends EquipHost {
     }
 
     private void processS6F11SVGetFinish(DataMsgMap data) {
-        //todo REPORT数据如何获取？
         long ceid = 0L;
         long pressStateId = 0L;
         long cavityVacuumValue = 0L;
         long boardVacuumValue = 0L;
+        long rptid = 0L;
         try {
-            ceid = (long)data.get("CEID");
-            pressStateId = data.getSingleNumber("Data0");
-            cavityVacuumValue = data.getSingleNumber("Data1");
-            boardVacuumValue = data.getSingleNumber("Data2");
+            ceid = (long) data.get("CEID");
+            List report = (List) data.get("REPORT");
+            rptid = (long) report.get(0);
+            if (rptid == 1555) {
+                List dataList = (List) report.get(1);
+                pressStateId = (long) dataList.get(0);
+                cavityVacuumValue = (long) dataList.get(1);
+                boardVacuumValue = (long) dataList.get(2);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -522,7 +525,7 @@ public class FicoHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        String ppbody = (String)data.get("PPBODY");
+        String ppbody = (String) data.get("PPBODY");
         TransferUtil.setPPBody(ppbody, 0, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
@@ -553,7 +556,7 @@ public class FicoHost extends EquipHost {
             return null;
         }
         ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if(recipeList.size()!=0){
+        if (recipeList.size() != 0) {
             ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
             ArrayList rcpNameList = new ArrayList();
             if (listtmp != null && !listtmp.isEmpty()) {

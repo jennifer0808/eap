@@ -41,6 +41,7 @@ public class TR48MK5Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat= FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PPSELECT";
     }
 

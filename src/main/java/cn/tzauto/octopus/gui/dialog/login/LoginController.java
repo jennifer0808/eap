@@ -14,6 +14,7 @@ import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
+import cn.tzauto.octopus.gui.widget.rcpmngpane.SimpleRecipeProperty;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -32,7 +33,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.loginStage;
-
+import static cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController.*;
 
 /**
  * FXML Controller class
@@ -107,28 +108,40 @@ public class LoginController implements Initializable {
                     return true;
                 }
                 if (GlobalConstants.isDownload) {
-                    TablePosition pos = (TablePosition) GlobalConstants.table.getSelectionModel().getSelectedCells().get(0);
+                    for (int i = 0; i < list.size(); i++) {
+                        SimpleRecipeProperty srp = list.get(i);
+                        if (srp.getDelCheckBox().isSelected()) {
+                            String deviceCode = srp.getDeviceCode().getValue();
+                            String recipeName = srp.getRecipeName().getValue();
+                            String versionType = srp.getVersionType().getValue();
+                            String recipeVersionNo = srp.getVersionNo().getValue();
+                            new DownloadPaneController().init(deviceCode, recipeName, versionType, recipeVersionNo);
+                        }
+                    }
 
-                    int row = pos.getRow();
-                    ObservableList columns = pos.getTableView().getColumns();
 
-                    TableColumn column = (TableColumn) columns.get(2);
 
-                    String deviceCode = column.getCellData(row).toString();
+//                    TablePosition pos = (TablePosition) GlobalConstants.table.getSelectionModel().getSelectedCells().get(0);
+//
+//                    int row = pos.getRow();
+//                    ObservableList columns = pos.getTableView().getColumns();
+//
+//                    TableColumn column = (TableColumn) columns.get(2);
+//
+//                    String deviceCode = column.getCellData(row).toString();
+//
+//                    column = (TableColumn) columns.get(3);
+//
+//                    String recipeName = column.getCellData(row).toString();
+//
+//                    column = (TableColumn) columns.get(4);
+//
+//                    String versionType = column.getCellData(row).toString();
+//
+//                    column = (TableColumn) columns.get(5);
+//
+//                    String recipeVersionNo = column.getCellData(row).toString();
 
-                    column = (TableColumn) columns.get(3);
-
-                    String recipeName = column.getCellData(row).toString();
-
-                    column = (TableColumn) columns.get(4);
-
-                    String versionType = column.getCellData(row).toString();
-
-                    column = (TableColumn) columns.get(5);
-
-                    String recipeVersionNo = column.getCellData(row).toString();
-
-                    new DownloadPaneController().init(deviceCode, recipeName, versionType, recipeVersionNo);
 
                     GlobalConstants.isDownload = false;
                     loginStage.close();

@@ -293,14 +293,35 @@ public class RcpMngPaneController implements Initializable {
 
     @FXML
     private void btnDownloadClick() throws IOException {
-        GlobalConstants.table = dataTable;
-        ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
-        if (selectedCells.size() == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+        int flag = 0;
+
+        for (int i = 0; i < list.size(); i++) {
+            SimpleRecipeProperty srp = list.get(i);
+            if (srp.getDelCheckBox().isSelected()) {
+                flag++;
+            }
+        }
+
+        if (flag == 0) {
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
+            return;
+        }else if(flag==1){
+            GlobalConstants.isDownload = true;
+            new EapMainController().loginInterface();
+        }else{
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "只能选中一条Recipe信息！");
             return;
         }
-        GlobalConstants.isDownload = true;
-        new EapMainController().loginInterface();
+
+
+
+//        GlobalConstants.table = dataTable;
+//        ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
+//        if (selectedCells.size() == 0) {
+//            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+//            return;
+//        }
+
 
 
     }
@@ -373,95 +394,89 @@ public class RcpMngPaneController implements Initializable {
 
     @FXML
     private void btnViewClick() throws IOException {
-        ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
+        int flag = 0;
 
-        if (selectedCells.size() == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
-            return;
+        for (int i = 0; i < list.size(); i++) {
+            SimpleRecipeProperty srp = list.get(i);
+            if (srp.getDelCheckBox().isSelected()) {
+                flag++;
+            }
         }
 
-        TablePosition pos = (TablePosition) dataTable.getSelectionModel().getSelectedCells().get(0);
-
-        int row = pos.getRow();
-        ObservableList columns = pos.getTableView().getColumns();
-
-        TableColumn column = (TableColumn) columns.get(2);
-
-        String deviceCode = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(3);
-
-        String recipeName = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(4);
-
-        String versionType = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(5);
-
-        String recipeVersionNo = column.getCellData(row).toString();
-
-        new ParaViewPaneController().init(deviceCode, recipeName, versionType, recipeVersionNo);
-
+        if (flag == 0) {
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
+            return;
+        }else if(flag==1){
+            for (int i = 0; i < list.size(); i++) {
+                SimpleRecipeProperty srp = list.get(i);
+                if (srp.getDelCheckBox().isSelected()) {
+                    String deviceCode = srp.getDeviceCode().getValue();
+                    String recipeName = srp.getRecipeName().getValue();
+                    String versionType = srp.getVersionType().getValue();
+                    String recipeVersionNo = srp.getVersionNo().getValue();
+                    new ParaViewPaneController().init(deviceCode, recipeName, versionType, recipeVersionNo);
+                }
+            }
+        }else{
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "只能选中一条Recipe信息！");
+            return;
+        }
     }
 
 
     @FXML
     private void JB_RcpClear(ActionEvent event) {
+        int flag = 0;
 
-        ObservableList<TablePosition> selectedCells = dataTable.getSelectionModel().getSelectedCells();
+        for (int i = 0; i < list.size(); i++) {
+            SimpleRecipeProperty srp = list.get(i);
+            if (srp.getDelCheckBox().isSelected()) {
+                flag++;
+            }
+        }
 
-        if (selectedCells.size() == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息!");
+        if (flag == 0) {
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
             return;
         }
 
-        TablePosition pos = (TablePosition) dataTable.getSelectionModel().getSelectedCells().get(0);
+        for (int i = 0; i < list.size(); i++) {
+            SimpleRecipeProperty srp = list.get(i);
+            if (srp.getDelCheckBox().isSelected()) {
+                String deviceCode = srp.getDeviceCode().getValue();
+                String recipeName = srp.getRecipeName().getValue();
+                String versionType = srp.getVersionType().getValue();
+                String versionNo = srp.getVersionNo().getValue();
+                SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+                RecipeService recipeService = new RecipeService(sqlSession);
 
-        int row = pos.getRow();
-        ObservableList columns = pos.getTableView().getColumns();
+                java.util.List<Recipe> recipes = recipeService.searchRecipeByPara(recipeName, deviceCode, versionType, versionNo);
+                Recipe recipe = recipes.get(0);
+//                    Attach attach = recipeService.searchAttachByRcpRowId(recipe.getId());
+                try {
+                    if (recipe.getRecipeType() == null || "".equals(recipe.getRecipeType()) || "N".equals(recipe.getRecipeType())) {
+                        recipe.setRecipeType("Y");
+                    } else {
+                        recipe.setRecipeType("N");
+                    }
+                    recipeService.modifyRecipe(recipe);
+                    sqlSession.commit();
+//                reFreshRcpMng();
 
-        TableColumn column = (TableColumn) columns.get(2);
+                } catch (Exception e) {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "保留成功！");
+                    sqlSession.rollback();
+                    logger.error("Exception:", e);
+                } finally {
+                    sqlSession.close();
+                }
 
-        String deviceCode = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(3);
-
-        String recipeName = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(4);
-
-        String versionType = column.getCellData(row).toString();
-
-        column = (TableColumn) columns.get(5);
-
-        String recipeVersionNo = column.getCellData(row).toString();
-
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-
-        try {
-            List<Recipe> recipes = recipeService.searchRecipeByPara(recipeName, deviceCode, versionType, recipeVersionNo);
-            Recipe recipe = recipes.get(0);
-            if (recipe.getRecipeType() == null || "".equals(recipe.getRecipeType()) || "N".equals(recipe.getRecipeType())) {
-                recipe.setRecipeType("Y");
-            } else {
-                recipe.setRecipeType("N");
             }
-            recipeService.modifyRecipe(recipe);
-            sqlSession.commit();
-            CommonUiUtil.alert(Alert.AlertType.INFORMATION, "当前Recipe " + recipe.getRecipeName() + "设置成功！");
-//            reFreshRcpMng();
-            dataTable.getItems().clear();
-            showData();
-        } catch (Exception e) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "当前Recipe设置失败！");
-            sqlSession.rollback();
-            logger.error("Exception:", e);
-        } finally {
-            sqlSession.close();
         }
-
+        dataTable.getItems().clear();
+        showData();
+        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "保留成功！");
+//
     }
 
 }
