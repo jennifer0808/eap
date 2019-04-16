@@ -125,11 +125,11 @@ public class NXTIIIHost extends EquipModel {
                         }
                     }
                     if (!ocrUploadOk) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                         resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                     }
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "未找到Recipe文件，确认是否成功导出");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未找到Recipe文件，确认是否成功导出");
                 }
             } catch (Exception e) {
                 logger.error("Get equip status error:" + e.getMessage());
@@ -427,7 +427,7 @@ public class NXTIIIHost extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeNameMap.get(recipeName) + ".JOB", remoteRcpPath, recipeNameMap.get(recipeName) + ".JOB_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }

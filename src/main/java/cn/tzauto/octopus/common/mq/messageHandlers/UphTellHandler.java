@@ -32,7 +32,7 @@ public class UphTellHandler implements MessageHandler {
     @Override
     public void handle(Message message) throws IOException, HsmsProtocolNotSelectedException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, ItemIntegrityException, StreamFunctionNotSupportException, MessageDataException, InterruptedException {
         MapMessage mapMessage = (MapMessage) message;
-        UiLogUtil.appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
+       UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

@@ -525,28 +525,42 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceCode();
+        String deviceId = deviceInfo.getDeviceId();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
+        /*
+            这里checkBeforeDownload有四种情况：
+            1.“无法获取设备实时状态,请重试并检查设备通讯状态!下载失败！”
+            2.“设备正在运行，不可调整Recipe！下载失败！”
+            3.“1”：recipe与预下载recipe相同
+            4.“0”：check通过可以正常下载recipe
+         */
         if (!"0".equals(checkResult)) {
+            //check当前recipe，连接状态等失败
+            if ("1".equals(checkResult)) {
+                //机台已是当前程序，删除其他recipe
+                if (type.contains("DeleteAll")) {
+                    String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
+                    //如果删除失败，流程继续
+                }
+            }
             return checkResult;
         }
         if (type.contains("Delete")) {
-            hostManager.deleteRecipeFromDevice(deviceId, recipeName);
-            //
-            if (deviceInfo.getDeviceType().contains("ASMAD9212")) {
-                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-            }
+            String delResult = hostManager.deleteRcpFromDeviceAndShowLog(deviceId, recipeName);
             //如果删除失败，流程继续
         }
-        if (deviceInfo.getDeviceType().contains("DGP8761") && type.contains("DeleteAll")) {
-            hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-        }
-        if (type.contains("Download") && !checkResult.equals("下载取消")) {
+        if (type.contains("Download")) {
             //下载指定Recipe到机台上
             String recipeFilePath = organizeRecipeDownloadFullFilePath(recipe);
-            String downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
-            if (!downLoadResult.equals("0")) {
+            String downLoadResult = null;
+            if (deviceInfo.getDeviceType().equalsIgnoreCase("NITTODR3000III")) {
+                downLoadResult = hostManager.downLoadRcp2DeviceCompleteForTP(recipeFilePath, deviceInfo, recipe);
+            } else {
+                downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
+            }
+            if (!"0".equals(downLoadResult)) {
+                //将返回Alreay have的修改成Alreay-have，以免改机被通过，保持两端一致
                 result = result + " " + downLoadResult;
                 return result;//如果下载失败，直接return
             }
@@ -554,20 +568,23 @@ public class RecipeService extends BaseService {
         if (type.contains("Select")) {
             //选中Recipe
             String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
+            if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")
+                    || deviceInfo.getDeviceType().contains("AD83") || deviceInfo.getDeviceType().contains("ESEC")
+                    || deviceInfo.getDeviceType().contains("Twin832")) {
+                ppselectResult = "0";
+            }
             if (!"0".equals(ppselectResult)) {
-                result = result + " " + ppselectResult;
-                if (!deviceInfo.getDeviceType().contains("DGP8761") && type.contains("DeleteAll")) {
+                result = "2";
+                if (type.contains("DeleteAll")) {
                     String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
                     //如果删除失败，流程继续
                 }
                 return result;
             }
         }
-        if (!deviceInfo.getDeviceType().contains("DGP8761")) {
-            if (type.contains("DeleteAll")) {
-                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-                //如果删除失败，流程继续
-            }
+        if (type.contains("DeleteAll")) {
+            String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
+            //如果删除失败，流程继续
         }
         return result;
     }
@@ -690,8 +707,8 @@ public class RecipeService extends BaseService {
         //DB800从ftp上传recipe
         if (recipe.getDeviceTypeCode().contains("DB810")) {
             recipeLocalPath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
         }
         RecipeOperationLog recipeOperationLog = setRcpOperationLog(recipe, "upload");
         this.saveRecipeOperationLog(recipeOperationLog);
@@ -729,8 +746,8 @@ public class RecipeService extends BaseService {
             FtpUtil.uploadFile(recipeLocalPath, GlobalConstants.getProperty("ftpPath") + recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
         }
         //日志
-//       UiLogUtil.appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
-        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
+//      UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
 
     }
 
@@ -788,14 +805,14 @@ public class RecipeService extends BaseService {
             GlobalConstants.sysLogger.debug(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
 
             // 上传ftp
-            FtpUtil.uploadFile(recipeLocalPath, GlobalConstants.getProperty("ftpPath") + recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+            FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
 
             //日志
-//        UiLogUtil.appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
+//       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
-        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
         return existFlag;
     }
 
@@ -1461,7 +1478,7 @@ public class RecipeService extends BaseService {
                 String recipeFilePath = organizeRecipeDownloadFullFilePath(recipe);
                 String downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
                 if (downLoadResult.equals("0")) {
-                    UiLogUtil.appendLog2EventTab(deviceId, "下载Reciep[" + recipe.getRecipeName() + "]成功");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceId, "下载Reciep[" + recipe.getRecipeName() + "]成功");
                 }
             }
         }

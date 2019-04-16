@@ -168,7 +168,7 @@ public class LoginController implements Initializable {
                 JB_Login.setVisible(false);
                 JB_SignOut.setVisible(true);
                 localMode.setVisible(true);
-                UiLogUtil.appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+               UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
                 loginStage.close();
 
 

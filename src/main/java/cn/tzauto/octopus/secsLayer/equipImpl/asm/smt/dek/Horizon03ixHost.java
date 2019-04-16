@@ -194,7 +194,7 @@ public class Horizon03ixHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                 sqlSession.close();
                 return;
             }
@@ -202,7 +202,7 @@ public class Horizon03ixHost extends EquipHost {
             //1.查看服务端设备是否被锁
             if (equipStatus.equalsIgnoreCase("RUN")) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备已被锁");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
                     //此时所正式锁机
                     holdDeviceAndShowDetailInfo("Host hold the equipment,you can see the detail log from Host");
                 }
@@ -218,20 +218,20 @@ public class Horizon03ixHost extends EquipHost {
                 Recipe currentLocalRecipe = null;//下载切换更新到本地数据库的recipe
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 } else {
                     currentLocalRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     checkRecipeResult = checkRecipeName(deviceInfoExt.getRecipeName());
                     if (!checkRecipeResult) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                         //不允许开机
                         holdDeviceAndShowDetailInfo();
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                         if (goldRecipe == null) {
                             //TODO  这里需要讨论做试产时的情况
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
                         }
                     }
                 }
@@ -241,33 +241,33 @@ public class Horizon03ixHost extends EquipHost {
                     //1、如果下载的是Unique版本，那么执行完全比较
                     String downloadRcpVersionType = currentLocalRecipe.getVersionType();
                     if ("Unique".equals(downloadRcpVersionType)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                         this.startCheckRecipePara(currentLocalRecipe, "abs");
                     } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                         if (goldRecipe == null) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                             //不允许开机
                             this.holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                             this.startCheckRecipePara(goldRecipe);
                         }
 
                     }
                 } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                 }
 
 //                boolean startPass = false;
 //                if (goldRecipe == null) {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
 //                    //不允许开机
 //                    this.holdDevice();
 //                } else {
 //                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
 //                    if (checkRecipe == null) {
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
 //                        this.startCheckRecipePara(goldRecipe, "abs");
 //                    } else {
 //                        this.startCheckRecipePara(checkRecipe, "abs");
@@ -336,7 +336,7 @@ public class Horizon03ixHost extends EquipHost {
 //            }
 //            if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                holdDeviceAndShowDetailInfo();
-//                UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
 //            }
 //
 //            if (deviceOplogList == null || deviceOplogList.isEmpty()) {
@@ -372,15 +372,15 @@ public class Horizon03ixHost extends EquipHost {
 //                if (startCheckMod != null && !"".equals(startCheckMod)) {
 //                    checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
 //                    if (!checkResult) {
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
 //                        //不允许开机
 //                        holdDeviceAndShowDetailInfo();
 //                    } else {
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
 //                        goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
 //                        if (goldRecipe == null) {
 //                            //TODO  这里需要讨论做试产时的情况
-//                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
 //                        }
 //                    }
 //                }
@@ -389,33 +389,33 @@ public class Horizon03ixHost extends EquipHost {
 //                    //1、如果下载的是Unique版本，那么执行完全比较
 //                    String downloadRcpVersionType = checkRecipe.getVersionType();
 //                    if ("Unique".equals(downloadRcpVersionType)) {
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
 //                        this.startCheckRecipePara(checkRecipe, "abs");
 //                    } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
 //                        if (goldRecipe == null) {
-//                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
 //                            //不允许开机
 //                            this.holdDeviceAndShowDetailInfo();
 //                        } else {
-//                            UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
 //                            this.startCheckRecipePara(goldRecipe);
 //                        }
 //
 //                    }
 //                } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
 //                }
 //
 ////                boolean startPass = false;
 ////                if (goldRecipe == null) {
-////                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+////                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
 ////                    //不允许开机
 ////                    this.holdDevice();
 ////                } else {
 ////                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
 ////                    if (checkRecipe == null) {
-////                        UiLogUtil.appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
+////                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
 ////                        this.startCheckRecipePara(goldRecipe, "abs");
 ////                    } else {
 ////                        this.startCheckRecipePara(checkRecipe, "abs");
@@ -479,7 +479,7 @@ public class Horizon03ixHost extends EquipHost {
 //        Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
 //        if (goldRecipe == null) {
 //            //TODO  这里需要讨论做试产时的情况
-//            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
+//           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
 //        }
 //        try {
 //            if (deviceInfoExt == null) {
@@ -512,13 +512,13 @@ public class Horizon03ixHost extends EquipHost {
 //            if (equipStatus.equalsIgnoreCase("Ready")) {
 //                boolean startPass = false;
 //                if (goldRecipe == null) {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
 //                    //不允许开机
 //                    this.holdDevice();
 //                } else {
 //                    Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
 //                    if (checkRecipe == null) {
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过");
 //                        this.startCheckRecipePara(goldRecipe);
 //                    } else {
 //                        this.startCheckRecipePara(checkRecipe);
@@ -595,7 +595,7 @@ public class Horizon03ixHost extends EquipHost {
             if (goldRecipe == null) {
 //                GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
 //                DialogUtil.AutoNewLine(GlobalConstants.eapView.getJTX_EventLog());
-                UiLogUtil.appendLog2EventTab(deviceCode, "");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "");
                 //不允许开机
                 this.holdDevice();
             } else {
@@ -603,7 +603,7 @@ public class Horizon03ixHost extends EquipHost {
                 if (checkRecipe == null) {
 //                    GlobalConstants.eapView.getJTX_EventLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 模型表中没有记录Recipe:" + ppExecName + " 需要TrackIn，服务端审核通过！\n");
 
-                    UiLogUtil.appendLog2EventTab(deviceCode, "");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "");
                     this.startCheckRecipePara(goldRecipe);
                 } else {
                     this.startCheckRecipePara(checkRecipe);
@@ -622,34 +622,34 @@ public class Horizon03ixHost extends EquipHost {
         ceid = (long) msg.get("CEID");
         if (ceid == 90001 || ceid == 90002 || ceid == 90003 || ceid == 90004 || ceid == 90005 || ceid == 90006 || ceid == 90007) {
             if (ceid == 90001) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备重置中...");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备重置中...");
             } else if (ceid == 90002) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备设置中...");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备设置中...");
             } else if (ceid == 90003) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备进入Ready状态.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入Ready状态.");
             } else if (ceid == 90004) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备维修中...");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备维修中...");
             } else if (ceid == 90005) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备暂停...");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备暂停...");
             } else if (ceid == 90006) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备开机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备开机！");
             } else if (ceid == 90007) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备进入Down状态.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入Down状态.");
             }
             processS6F11EquipStatusChange(msg);
         } else if (ceid == 31450 || ceid == 31451 || ceid == 31452 || ceid == 31265 || ceid == 31456 || ceid == 31267) {
             if (ceid == 31265) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Process program loaded.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Process program loaded.");
             } else if (ceid == 31267) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Process program change.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Process program change.");
             } else if (ceid == 31450) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Control State – Change to LOCAL.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Control State – Change to LOCAL.");
             } else if (ceid == 31451) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Control State – Change to OFF-LINE.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Control State – Change to OFF-LINE.");
             } else if (ceid == 31452) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Control State – Change to REMOTE.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Control State – Change to REMOTE.");
             } else if (ceid == 31456) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Operator command issued.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Operator command issued.");
             }
             //刷新状态
             findDeviceRecipe();
@@ -670,7 +670,7 @@ public class Horizon03ixHost extends EquipHost {
             e.printStackTrace();
         }
         if (msgData == null || msgData.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备参数信息失败，请检查设备状态！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备参数信息失败，请检查设备状态！");
             logger.error("获取设备:" + deviceCode + "参数信息失败.");
             return null;
         }
@@ -728,7 +728,7 @@ public class Horizon03ixHost extends EquipHost {
             }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "");
 
             return null;
         }
@@ -793,7 +793,7 @@ public class Horizon03ixHost extends EquipHost {
         try {
             DataMsgMap s14f2in = activeWrapper.sendAwaitMessage(s14f1out);
             if (s14f2in == null || s14f2in.isEmpty()) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备状态信息失败，请检查设备通讯状态！");
                 logger.error("获取设备：" + deviceCode + "状态信息失败.");
                 return null;
             }

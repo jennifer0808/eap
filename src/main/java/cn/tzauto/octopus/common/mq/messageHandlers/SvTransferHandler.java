@@ -37,7 +37,7 @@ public class SvTransferHandler implements MessageHandler {
         MapMessage mapMessage = (MapMessage) message;
         try {
             deviceCode = mapMessage.getString("deviceCode");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获得该设备SVList");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求获得该设备SVList");
         } catch (JMSException e) {
             logger.error("JMSException:", e);
         }
@@ -60,7 +60,7 @@ public class SvTransferHandler implements MessageHandler {
                 if (recipeTemplatesAll == null || recipeTemplatesAll.isEmpty()) {
                     mqMap.put("svList", svValueString);
                     mqMap.put("eventDesc", "没有获取到设备sv参数信息");
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "没有获取到设备sv参数信息");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "没有获取到设备sv参数信息");
                 } else {
                     List svIdListAll = getSvIdList(recipeTemplatesAll);
                     Map resultMap = GlobalConstants.stage.hostManager.getDeviceRcpParaCheck(deviceId, svIdListAll);
@@ -74,26 +74,26 @@ public class SvTransferHandler implements MessageHandler {
                         mqMap.put("svList", svValueString);
                         mqMap.put("eventDesc", "成功获取到设备sv参数信息");
                         svSize = svValueMap.size();
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "获取到设备sv参数信息成功");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取到设备sv参数信息成功");
                     } else {
                         mqMap.put("svList", svValueString);
                         mqMap.put("eventDesc", "获取到设备sv参数信息失败");
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "获取到设备sv参数信息失败");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取到设备sv参数信息失败");
                     }
                 }
             } else {
                 mqMap.put("svList", svValueString);
                 mqMap.put("eventDesc", "没有获取到设备sv参数信息");
-                UiLogUtil.appendLog2SeverTab(deviceCode, "设备未正常连接，没有获取到设备sv参数信息");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备未正常连接，没有获取到设备sv参数信息");
             }
             sendMsg2Server(message, mqMap);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "成功发送设备sv参数信息到服务端，svSize为" + svSize);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送设备sv参数信息到服务端，svSize为" + svSize);
         } catch (Exception e) {
             logger.error("Exception:", e);
             mqMap.put("svList", svValueString);
             mqMap.put("eventDesc", "没有获取到设备sv参数信息");
             sendMsg2Server(message, mqMap);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "成功发送设备sv参数信息到服务端，但中途出现异常，svSize为" + svSize);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送设备sv参数信息到服务端，但中途出现异常，svSize为" + svSize);
         } finally {
             logger.info("设备sv参数信息:" + svValueString);
             sqlSession.close();

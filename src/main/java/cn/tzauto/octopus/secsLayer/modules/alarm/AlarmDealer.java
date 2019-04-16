@@ -19,7 +19,7 @@ public class AlarmDealer {
         String ALCD = (String) data.get("ALCD");
         String ALTX = (String) data.get("ALTX");
 //        logger.info("Recived s5f1 ID:" + ALID + "  with the ALCD=" + ALCD + " means " + ACKDescription.description((byte) ALCD, "ALCD") + ", and the ALTX is: " + ALTX);
-//        UiLogUtil.appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
+//       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("ALID", ALID);
         resultMap.put("ALCD", ALCD);

@@ -199,7 +199,7 @@ public class DR3000IIIHost extends EquipHost {
         Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
         if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
             holdDeviceAndShowDetailInfo();
-            UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
         }
         if (goldRecipe == null) {
             //TODO  这里需要讨论做试产时的情况
@@ -247,12 +247,12 @@ public class DR3000IIIHost extends EquipHost {
             if (startCheckMod != null && !"".equals(startCheckMod)) {
                 checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                 if (!checkResult) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                     //不允许开机
                     holdDeviceAndShowDetailInfo();
                 } else {
                     this.setAlarmState(0);
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                 }
             }
             if (checkResult && "A".equals(startCheckMod)) {
@@ -260,22 +260,22 @@ public class DR3000IIIHost extends EquipHost {
                 //1、如果下载的是Unique版本，那么执行完全比较
                 String downloadRcpVersionType = checkRecipe.getVersionType();
                 if ("Unique".equals(downloadRcpVersionType)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                     this.startCheckRecipePara(checkRecipe, "abs");
                 } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                     if (goldRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                         //不允许开机
                         this.holdDeviceAndShowDetailInfo();
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                         this.startCheckRecipePara(goldRecipe);
                     }
 
                 }
             } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
             }
 
         } catch (Exception e) {

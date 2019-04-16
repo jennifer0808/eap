@@ -67,7 +67,7 @@ public class MonitorECTask implements Job {
 
                 List<RecipeTemplate> recipeTemplatesAll = recipeService.searchRecipeTemplateByDeviceVariableType(deviceCode, "RealtimeECCheck");
                 if (recipeTemplatesAll == null || recipeTemplatesAll.isEmpty()) {
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "该设备没有实时EC参数受到管控！");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备没有实时EC参数受到管控！");
                     continue;
                 }
                 List svIdListAll = getEcIdList(recipeTemplatesAll);//获取机台所有参数对应的svIdList                 
@@ -82,10 +82,10 @@ public class MonitorECTask implements Job {
                     paraMap.put("msgName", "TransferArDeviceRealtimePara");
                     paraMap.put("deviceRealtimePara", JsonMapper.toJsonString(deviceRealtimeParas));
                     GlobalConstants.C2SEqptLogQueue.sendMessage(paraMap);
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的EC参数实时信息到服务端");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的EC参数实时信息到服务端");
                     //保存实时参数信息
 //                    monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "获取到该设备的EC参数实时信息！");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取到该设备的EC参数实时信息！");
                     Map mqMap = new HashMap();
                     mqMap.put("msgName", "eqpt.MonitorCheckWI");
                     mqMap.put("deviceCode", deviceCode);
@@ -101,7 +101,7 @@ public class MonitorECTask implements Job {
                     mqMap.put("eventDesc", "获取设备:" + deviceCode + " 的管控信息失败。");
                     GlobalConstants.C2SLogQueue.sendMessage(mqMap);
                     logger.debug("获取设备:" + deviceCode + " 的管控信息失败。");
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "获取该设备的EC参数实时信息，获取失败！");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取该设备的EC参数实时信息，获取失败！");
                 }
                 sqlSession.commit();
             }
@@ -154,7 +154,7 @@ public class MonitorECTask implements Job {
                         if ((Double.parseDouble(realTimeValue) <= Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) >= Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                            UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                         }
@@ -174,7 +174,7 @@ public class MonitorECTask implements Job {
                             if (Double.parseDouble(realTimeValue) != Double.parseDouble(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                                UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                             }
@@ -182,7 +182,7 @@ public class MonitorECTask implements Job {
                             if (!realTimeValue.equals(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                                UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                             }
@@ -195,7 +195,7 @@ public class MonitorECTask implements Job {
                         if ((Double.parseDouble(realTimeValue) < Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) > Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                            UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                         }
@@ -223,7 +223,7 @@ public class MonitorECTask implements Job {
             }
         }
         if (holdFlag) {
-            UiLogUtil.appendLog2EventTab(equipHost.getDeviceCode(), "实时参数检查不通过，设备将被锁");
+           UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "实时参数检查不通过，设备将被锁");
             equipHost.holdDeviceAndShowDetailInfo();
         }
         sqlSession.close();

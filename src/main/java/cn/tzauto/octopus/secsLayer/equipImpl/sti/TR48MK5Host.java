@@ -4,11 +4,9 @@ package cn.tzauto.octopus.secsLayer.equipImpl.sti;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
@@ -26,8 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.io.IOException;
-import java.util.*;
 
 @SuppressWarnings("serial")
 public class TR48MK5Host extends EquipHost {
@@ -174,7 +170,7 @@ public class TR48MK5Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -186,35 +182,35 @@ public class TR48MK5Host extends EquipHost {
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
             if ("Engineer".equals(busniessMod) && equipStatus.equalsIgnoreCase("run")) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
             {
                 if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                         return;
                     }
                     if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     //检查程序是否存在 GOLD
                     Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                     if (goldRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                         this.holdDevice();
                         return;
                     }
                     if (checkRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
                         this.holdDevice();
                     } else {
                         this.startCheckRecipePara(checkRecipe);
@@ -251,7 +247,7 @@ public class TR48MK5Host extends EquipHost {
         //sendS2f41CmdLotStart(lotId, "XXX", "XXX", "XXX");
         sendS2f41CmdLotStart(lotId, "", "", "");
 
-        UiLogUtil.appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
         return   sendS7F3out(localRecipeFilePath,targetRecipeName);
@@ -434,7 +430,7 @@ public class TR48MK5Host extends EquipHost {
             }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

@@ -43,7 +43,7 @@ public class FindRecipeNameHandler implements MessageHandler {
         DeviceInfo deviceInfo = null;
         try {
             deviceCode = mapMessage.getString("deviceCode");
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前程序名");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前程序名");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             Map equipState = hostManager.getEquipInitState(deviceInfo.getDeviceCode());
@@ -62,7 +62,7 @@ public class FindRecipeNameHandler implements MessageHandler {
                     deviceInfoExt.setBusinessMod("Engineer");
                     deviceService.modifyDeviceInfoExt(deviceInfoExt);
                     sqlSession.commit();
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "工程批，设备进入工程模式！");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工程批，设备进入工程模式！");
                 }
             }
         } catch (JMSException ex) {
@@ -87,7 +87,7 @@ public class FindRecipeNameHandler implements MessageHandler {
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SCheckRcpNameQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端[" + topicName + "]回复校验程序名消息" + JSONArray.toJSONString(mqMap));
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备的当前程序" + recipeName);
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前程序" + recipeName);
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
         } finally {

@@ -305,7 +305,7 @@ public class T640Host extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
         if (AxisUtility.isEngineerMode(deviceCode)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             sqlSession.close();
             return;
         }
@@ -314,7 +314,7 @@ public class T640Host extends EquipHost {
         try {
             if (equipStatus.equalsIgnoreCase("run") && needCheck) {
 //            if (!startCheckOver) {
-//                UiLogUtil.appendLog2SeverTab(deviceCode, "设备开机检查未完成,请将设备状态调整至Ready完成检查！");
+//               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备开机检查未完成,请将设备状态调整至Ready完成检查！");
 //                sendTerminalMsg2EqpSingle("The check is not complete, please adjust the equipment status to Ready to complete the check");
 //                pauseDevice();
 //            }
@@ -322,7 +322,7 @@ public class T640Host extends EquipHost {
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
 
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     pauseDevice();
                     needCheck = false;
                 }
@@ -339,12 +339,12 @@ public class T640Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (equipStatus.equalsIgnoreCase("READY") && needCheck) {
                 if (AxisUtility.isEngineerMode(deviceCode)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                     sqlSession.close();
                     return;
                 }
 //else if (this.checkLockFlagFromServerByWS(deviceCode)) {
-//                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+//                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
 //                    pauseDevice();
 //                }
 
@@ -356,12 +356,12 @@ public class T640Host extends EquipHost {
                 super.changeEquipPanel(map);
                 if (equipStatus.equalsIgnoreCase("READY") && needCheck) {
                     if (AxisUtility.isEngineerMode(deviceCode)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                         //sqlSession.close();
                         return;
                     } else {
 //                        if (this.checkLockFlagFromServerByWS(deviceCode)) {
-//                            UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+//                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
 //                            holdDevice();
 //                        }
                         //检查领料程序与设备在用程序是否一致
@@ -374,7 +374,7 @@ public class T640Host extends EquipHost {
                             //1、如果下载的是Unique版本，那么执行完全比较
                             String downloadRcpVersionType = downLoadRecipe.getVersionType();
                             if (false) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                                 startCheckRecipePara(downLoadRecipe, "abs");
                             } else {
                                 //2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
@@ -489,10 +489,10 @@ public class T640Host extends EquipHost {
         byte ackc7han = (byte) data.get("ACKC7");
 
         if (ackc7han == 0) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
         } else {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
             logger.error("Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
         }
         //下载comp文件
@@ -504,10 +504,10 @@ public class T640Host extends EquipHost {
         }
         byte ackc7comp =   (byte) data.get("ACKC7");
         if (ackc7comp == 0) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
         } else {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
             logger.error("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
         }
         //下载recipe文件
@@ -519,10 +519,10 @@ public class T640Host extends EquipHost {
         }
         byte ackc7 =   (byte) data.get("ACKC7");
         if (ackc7 == 0) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载成功.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载成功.");
             logger.debug("Recipe:" + targetRecipeName + "下载成功.");
         } else {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载失败.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载失败.");
             logger.error("Recipe:" + targetRecipeName + "下载失败.");
         }
         Map resultMap = new HashMap();
@@ -559,11 +559,11 @@ public class T640Host extends EquipHost {
             }
             String rcpAnalyseSucceed = "Y";
             if (!rcpContent.contains("handler")) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的handler文件，请检测文件是否存在或文件名是否正确");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的handler文件，请检测文件是否存在或文件名是否正确");
                 rcpAnalyseSucceed = "N";
             }
             if (!rcpContent.contains("component")) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的component文件，请检测文件是否存在或文件名是否正确");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的component文件，请检测文件是否存在或文件名是否正确");
                 rcpAnalyseSucceed = "N";
             }
             //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
@@ -585,7 +585,7 @@ public class T640Host extends EquipHost {
             resultMap.put("Description", " Receive the recipe " + recipeName + " from equip " + deviceCode);
             return resultMap;
         } else {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "请在设备IDLE时上传Recipe.");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请在设备IDLE时上传Recipe.");
             return null;
         }
     }
@@ -715,7 +715,7 @@ public class T640Host extends EquipHost {
 //            }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -741,7 +741,7 @@ public class T640Host extends EquipHost {
 //            }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -794,7 +794,7 @@ public class T640Host extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(recipeName, deviceType, "GOLD", null);
         if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
             //不允许开机
             this.holdDeviceAndShowDetailInfo();
         } else {
@@ -810,10 +810,10 @@ public class T640Host extends EquipHost {
             checkResult = true;
         }
         if (!checkResult) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
             holdDeviceAndShowDetailInfo();
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
         }
         return checkResult;
     }
@@ -894,7 +894,7 @@ public class T640Host extends EquipHost {
 //            }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -906,18 +906,18 @@ public class T640Host extends EquipHost {
         resultMap = holdDevice1();
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "当前设备已经被锁机");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
                 return true;
             } else {
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                 return false;
             }
         } else {
@@ -931,7 +931,7 @@ public class T640Host extends EquipHost {
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
         // 上传ftp
         FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         List<String> rcpContent = TrRecipeUtil.readRCP(localRcpPath);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         for (String item : rcpContent) {
@@ -939,7 +939,7 @@ public class T640Host extends EquipHost {
                 String relLocalPath = GlobalConstants.localRecipePath + new RecipeService(sqlSession).organizeUploadRecipePath(recipe) + item + "_V" + recipe.getVersionNo() + ".txt";
                 String relRemotePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
                 FtpUtil.uploadFile(relLocalPath, relRemotePath, item + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-                UiLogUtil.appendLog2EventTab(deviceCode, "关联文件存储位置：" + relLocalPath);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "关联文件存储位置：" + relLocalPath);
             }
         }
         sqlSession.close();

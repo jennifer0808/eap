@@ -436,7 +436,7 @@ public abstract class EquipModel extends Thread {
         if ("1".equals(GlobalConstants.getProperty("START_CHECK_LOCKFLAG"))) {
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
                 checkRecultDesc = "检测到设备被Server要求锁机,设备将被锁!";
-                UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
                 pass = false;
             }
         }
@@ -447,13 +447,13 @@ public abstract class EquipModel extends Thread {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (deviceInfoExt == null) {
             logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
             checkRecultDesc = "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！";
             pass = false;
         } else {
             String trackInRcpName = deviceInfoExt.getRecipeName();
             if (!ppExecName.equals(trackInRcpName)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
                 pass = false;
                 checkRecultDesc = "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + trackInRcpName + " 已选程序:" + ppExecName;
                 checkRecultDescEng = "The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + trackInRcpName + ">,equipment will be locked.";
@@ -462,7 +462,7 @@ public abstract class EquipModel extends Thread {
         if ("1".equals(GlobalConstants.getProperty("START_CHECK_RECIPE_VERSION"))) {
             Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
             if (execRecipe == null) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
                 checkRecultDesc = "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理!";
                 checkRecultDescEng = " There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.";
                 pass = false;
@@ -486,11 +486,11 @@ public abstract class EquipModel extends Thread {
                     String eventDescEng = "";
                     if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                         this.stopEquip();
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查未通过!");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
                         for (RecipePara recipePara : recipeParasdiff) {
                             eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
                             String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
-                            UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                             checkRecultDesc = checkRecultDesc + eventDesc;
                             eventDescEng = eventDescEng + eventDescEngtmp;
                         }
@@ -498,7 +498,7 @@ public abstract class EquipModel extends Thread {
                         sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
                         pass = false;
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查通过！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
                         eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                         logger.info("设备：" + deviceCode + " 开机Check成功");
                         pass = true;
@@ -516,7 +516,7 @@ public abstract class EquipModel extends Thread {
             if (!"".equalsIgnoreCase(checkRecultDescEng)) {
                 sendMessage2Eqp(checkRecultDescEng);
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
         }
         mqMap.put("eventDesc", checkRecultDesc);
         GlobalConstants.C2SLogQueue.sendMessage(mqMap);
@@ -531,7 +531,7 @@ public abstract class EquipModel extends Thread {
             if ("Y".equals(lockFlagStr)) {
                 lockFlag = true;
                 String lockReason = String.valueOf(checkServerLockResult.get("remarks"));
-                UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被Server设置为锁机,锁机原因为: " + lockReason);
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server设置为锁机,锁机原因为: " + lockReason);
                 sendMessage2Eqp("The equipment holded by server,hold reason:" + lockReason);
                 //holdDeviceAndShowDetailInfo("Equipment locked because of " + lockReason);
                 SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -775,9 +775,9 @@ public abstract class EquipModel extends Thread {
             }
             String resultString = deleteRecipe(recipeName);
             if ("0".equals(resultString)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Recipe:[" + recipeName + "]删除成功.");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + recipeName + "]删除成功.");
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Recipe:[" + recipeName + "]" + resultString);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + recipeName + "]" + resultString);
             }
         }
     }

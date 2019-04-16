@@ -30,7 +30,7 @@ public class BasicWebserviceProcess implements BaseWebservice {
             msgName = msgName + "";
 //            GlobalConstants.stage.getJTX_ServerLog().append("[" + GlobalConstants.dateFormat.format(new Date()) + "] 接收到mq消息\n");
 //            DialogUtil.AutoNewLine( GlobalConstants.stage.getJTX_ServerLog());
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "接收到mq============================");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "接收到mq============================");
             mqLogger.info("接收到webservice==================================,deviceCode：" + deviceCode + "，msgName:" + msgName + "，deviceTypeId:" + deviceTypeId);
             if (isInvoke(deviceCode, deviceTypeId)) {
                 logger.info("接收到webservice==================================" + deviceCode + "==deviceTypeId:" + deviceTypeId);

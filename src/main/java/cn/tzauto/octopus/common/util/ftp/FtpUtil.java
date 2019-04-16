@@ -14,7 +14,6 @@ import java.util.StringTokenizer;
  * @author gavin
  */
 public class FtpUtil {
-
     private static FTPClient ftp;
     private static final Logger logger = Logger.getLogger(FtpUtil.class);
 
@@ -44,6 +43,55 @@ public class FtpUtil {
             return false;
         }
     }
+//
+//    /**
+//     * 上传文件到FTP服务器
+//     *
+//     * @param localFilePath
+//     * @param remoteFilePath
+//     * @param serverIp
+//     * @param serverPort
+//     * @param userName
+//     * @param password
+//     * @return
+//     */
+//    public static boolean uploadFile(String localFilePath, String remoteFilePath, String fileName, String serverIp, String serverPort, String userName, String password) {
+//        if (!connectFtp(serverIp, serverPort, userName, password)) {
+//            logger.debug("FTP连接失败!");
+//            return false;
+//        }
+//        File file = new File(localFilePath);
+//        if (!file.exists() && !file.isFile()) {
+//            logger.debug("本地文件不存在！");
+//            return false;
+//        }
+//        logger.debug("FTP连接成功!");
+//        boolean uploadflag = false;
+//        try {
+//            FileInputStream input = new FileInputStream(file);
+//            boolean mkdirFlag = mkDirs(remoteFilePath, ftp);
+//            ftp.enterLocalPassiveMode();//切换FTP工作方式为passive，此行代码很重要。
+//            ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
+////            ftp.makeDirectory(remoteFilePath);
+//            ftp.changeWorkingDirectory(remoteFilePath);
+//            uploadflag = ftp.storeFile(remoteFilePath + fileName, input);
+//            int replycode = ftp.getReplyCode();
+//            logger.debug("保存文件如Ftp-Reply:" + replycode);
+//            input.close();
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        } finally {
+//            if (ftp.isConnected()) {
+//                try {
+//                    ftp.logout();
+//                    ftp.disconnect();
+//                } catch (Exception e) {
+//                    logger.error("Exception:", e);
+//                }
+//            }
+//        }
+//        return uploadflag;
+//    }
 
     /**
      * 上传文件到FTP服务器
@@ -58,7 +106,7 @@ public class FtpUtil {
      */
     public static boolean uploadFile(String localFilePath, String remoteFilePath, String fileName, String serverIp, String serverPort, String userName, String password) {
         if (GlobalConstants.isLocalMode) {
-//            return true;
+            return true;
         }
         if (!connectFtp(serverIp, serverPort, userName, password)) {
             logger.debug("FTP连接失败!");
@@ -84,20 +132,20 @@ public class FtpUtil {
             ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
 //            ftp.makeDirectory(remoteFilePath);
             ftp.changeWorkingDirectory(remoteFilePath);
-
-            uploadflag = ftp.storeFile(remoteFilePath + fileName, input);
+            String storeFile = new String((remoteFilePath + fileName).getBytes("GBK"), "iso-8859-1");
+            uploadflag = ftp.storeFile(storeFile, input);
             int replycode = ftp.getReplyCode();
             logger.debug("保存文件Ftp-Reply:" + replycode);
             input.close();
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.debug("上传recipe文件出错", e);
         } finally {
             if (ftp.isConnected()) {
                 try {
                     ftp.logout();
                     ftp.disconnect();
                 } catch (Exception e) {
-                    logger.error(e.getMessage());
+                    logger.debug("关闭FTP出错!", e);
                 }
             }
         }
@@ -106,8 +154,8 @@ public class FtpUtil {
 
     public static String connectServerAndDownloadFile(String localFilePath, String remoteFilePath, String serverIp, String serverPort, String userName, String password) {
         if (!connectFtp(serverIp, serverPort, userName, password)) {
-            logger.debug("FTP服务器" + serverIp + "无法连接，请检查网络连接状况!");
-            return "FTP服务器" + serverIp + "无法连接，请检查网络连接状况!";
+            logger.debug("FTP服务器(172.17.173.9)无法连接，请检查网络连接状况!");
+            return "FTP服务器(172.17.173.9)无法连接，请检查网络连接状况!";
         }
 
         //获取本地目录和远程目录
@@ -145,6 +193,7 @@ public class FtpUtil {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
+            return "从FTP服务器上下载的文件出现异常！";
         } finally {
             if (ftp.isConnected()) {
                 try {
@@ -156,6 +205,7 @@ public class FtpUtil {
                 }
             }
         }
+        logger.debug("从FTP服务器上下载的文件[" + remoteFileName + "]成功！");
         return "0";
     }
 
@@ -195,15 +245,9 @@ public class FtpUtil {
                 file.createNewFile();
                 logger.debug("mkdir===========================================");
             }//判断本地目录是否存在，不存在则创建
-            ftp.changeWorkingDirectory(remoteDirectory);
+            ftp.changeWorkingDirectory(new String(remoteDirectory.getBytes("GBK"), "iso-8859-1"));
             FTPFile[] ftpfiles = null;
-            String LOCAL_CHARSET = "GBK";
-            if (FTPReply.isPositiveCompletion(ftp.sendCommand(
-                    "OPTS UTF8", "ON"))) {// 开启服务器对UTF-8的支持，如果服务器支持就用UTF-8编码，否则就使用本地编码（GBK）.
-                LOCAL_CHARSET = "UTF-8";
-            }
-            ftp.setControlEncoding(LOCAL_CHARSET);
-//            ftp.setControlEncoding("LOCAL_CHARSET");
+            ftp.setControlEncoding("GBK");
             ftpfiles = ftp.listFiles();
             boolean checkflag = false;
             for (int i = 0; i < ftpfiles.length; i++) {
@@ -295,7 +339,7 @@ public class FtpUtil {
 //                    }
                     OutputStream outputStream = null;
                     outputStream = new FileOutputStream(localPath);
-                    flag = ftp.retrieveFile(ftpFile.getName(), outputStream);
+                    flag = ftp.retrieveFile(new String(ftpFile.getName().getBytes("GBK"), "iso-8859-1"), outputStream);
                     outputStream.flush();
                     outputStream.close();
                     flag = true;
@@ -364,7 +408,7 @@ public class FtpUtil {
     }
 
     /**
-     * 检查目录是否存在,不存在则创建
+     * 检查目录是否存在
      *
      * @param dir
      * @return
@@ -372,11 +416,8 @@ public class FtpUtil {
     public static boolean isDirExist(String dir, FTPClient client) {
         boolean mkResult = false;
         try {
-            mkResult = client.makeDirectory(dir);
-            logger.error("创建目录>>" + dir + ">>" + mkResult);
+            mkResult = client.makeDirectory(new String(dir.getBytes("GBK"), "iso-8859-1"));
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("创建目录失败>>" + dir + e.getMessage());
             return false;
         }
         return mkResult;
@@ -385,10 +426,8 @@ public class FtpUtil {
     /**
      * 创建层级目录
      *
-     * @param client
      * @param path
-     * @throws IOException
-     * @throws IllegalStateException
+     * @param client
      * @throws IOException
      * @throws IllegalStateException
      */
@@ -396,7 +435,6 @@ public class FtpUtil {
         if (null == path) {
             return false;
         }
-        path = path.substring(0, path.lastIndexOf("/"));
         try {
             client.changeWorkingDirectory("/");// 切换到根目录
             StringTokenizer dirs = new StringTokenizer(path, "/");
@@ -404,16 +442,14 @@ public class FtpUtil {
             boolean flag = false;
             while (dirs.hasMoreElements()) {
                 temp = dirs.nextElement().toString();
-                logger.info("开始校验是否存在>>" + temp);
                 if (!isDirExist(temp, client)) {//判断是否存在目录，不存在则创建
                     flag = true;
                 }
-                logger.info("切换到>>" + temp);
                 client.changeWorkingDirectory(temp);
 
             }
             if (flag) {
-                logger.debug(">>>>>create directory:[" + path + "]成功");
+                logger.debug(">>>>>create directory:[" + path + "]");
             }
             client.changeWorkingDirectory("/");
             return true;
@@ -421,76 +457,6 @@ public class FtpUtil {
             logger.error("Exception:", e);
             return false;
         }
-    }
-
-    /**
-     * ftp服务器上复制文件
-     *
-     * @param sourceDir      源目录
-     * @param sourceFileName 源文件名称
-     * @param targetDir      目标目录
-     * @param targetFileName 目标文件名称
-     * @return 是否复制成功
-     */
-    public static boolean copyFile(String sourceDir, String sourceFileName, String targetDir, String targetFileName) {
-        boolean flag = false;
-        if (!connectFtp("")) {
-            return false;
-        }
-        try {
-            mkDirs(targetDir, ftp);
-            ftp.changeWorkingDirectory(sourceDir);
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ByteArrayInputStream in = null;
-            ftp.retrieveFile(sourceFileName, os);
-            in = new ByteArrayInputStream(os.toByteArray());
-            ftp.changeWorkingDirectory(targetDir);
-            ftp.storeFile(targetFileName, in);
-            in.close();
-            flag = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            close();
-        }
-        return flag;
-
-    }
-
-    /**
-     * 连接FTP服务器
-     *
-     * @param ftpName ftp服务器名称,后期使用
-     * @return 是否连接陈功
-     */
-    public static boolean connectFtp(String ftpName) {
-        return connectFtp(GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-    }
-
-    public static void close() {
-        if (ftp.isConnected()) {
-            try {
-                ftp.logout();
-                ftp.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    public static void main(String[] args) {
-        String localFilePath = "D://RECIPE/12-210-145-6K-NP-8SR-12.txt";
-        String remoteFilePath = "/RECIPE/Z2/BGWS/DISCODGP8761/Unique/BG-008/12-210-145-6K-NP-8SR/12-210-145-6K-NP-8SR.txt";
-        String serverIp = "192.168.98.12";
-        String serverPort = "21";
-        String userName = "rms";
-        String password = "rms123!";
-        downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
-        String localFilePath1 = "D://RECIPE/12-210-145-6K-NP-8SR-137.txt";
-        String serverIp1 = "192.168.99.137";
-        downloadFile(localFilePath1, remoteFilePath, serverIp1, serverPort, userName, password);
-
     }
 
     /**
@@ -535,5 +501,19 @@ public class FtpUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        String localFilePath = "F://RECIPE/A9/122/122/121.txt";
+        String remoteFilePath = "/RECIPE/A9/122/122/121.txt";
+        String serverIp = "172.17.173.9";
+        String serverPort = "21";
+        String userName = "rms";
+        String password = "xccdkj@123";
+        downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
+
     }
 }

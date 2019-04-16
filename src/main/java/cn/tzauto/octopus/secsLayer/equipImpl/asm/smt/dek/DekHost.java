@@ -32,7 +32,7 @@ public class DekHost extends EquipHost {
         lengthFormat= FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         //todo 根据日志找到对应CEID
         StripMapUpCeid = 0L;
-        EquipStateChangeCeid= 0L;
+        EquipStateChangeCeid= 90006L;
     }
 
     @Override
