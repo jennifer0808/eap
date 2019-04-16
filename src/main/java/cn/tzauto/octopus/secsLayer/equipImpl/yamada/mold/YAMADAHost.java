@@ -32,11 +32,11 @@ public class YAMADAHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(YAMADAHost.class.getName());
-    private long ppselectfinishCeid = 601;
+    private long ppselectfinishCeid = 601L;
 
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 605;
+        EquipStateChangeCeid = 605L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -153,7 +153,6 @@ public class YAMADAHost extends EquipHost {
 //                UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
-//                runMode = data.getSingleNumber("RunMode");
                 if (runMode == 0 || runMode == 2) {
 //                    sendS2f41Cmd("UNLOCK");
 //                    UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
@@ -164,10 +163,8 @@ public class YAMADAHost extends EquipHost {
             } else if (ceid == ppselectfinishCeid) { //601L
                 List list = (List)data.get("REPORT");
 
-                List listCollection = (List) list.get(0);
-                List listName = (List) listCollection.get(1);
-
-                ppExecName= (String) listName.get(0);
+                List listCollection = (List) list.get(1);
+                ppExecName= (String) listCollection.get(0);
 
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
@@ -231,6 +228,7 @@ public class YAMADAHost extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (!isCleanRecipe && dataReady && equipStatus.equalsIgnoreCase("run")) {
+              //  if(true){
                 //开机通过OpMode获取Press使用情况
                 getUsingPress();
                 //开机check Press使用情况
@@ -350,7 +348,7 @@ public class YAMADAHost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-
+        System.out.println(recipePath);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
