@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
-
 <?import java.net.URL?>
-<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="390.0" prefWidth="850.0" style="-fx-background-color: white;"  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController">
+
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="390.0" prefWidth="600.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController">
     <stylesheets>
         <URL value="@rcpmngpane.css" />
     </stylesheets>
@@ -25,8 +26,8 @@
                 <GridPane>
                     <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="5.0" minWidth="5.0" prefWidth="5.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="97.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="748.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="68.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="527.0" />
                     </columnConstraints>
                     <rowConstraints>
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -59,16 +60,16 @@
                         <ComboBox fx:id="CMB_rcpType" prefHeight="23.0" prefWidth="102.0" promptText="--请选择--" GridPane.columnIndex="6" />
                     </children>
                 </GridPane>
-                <FlowPane fx:id="functionPane" alignment="CENTER_RIGHT" hgap="10.0" prefHeight="29.0" prefWidth="850.0" vgap="10.0" GridPane.rowIndex="2">
+                <FlowPane fx:id="functionPane" alignment="CENTER_RIGHT" hgap="10.0" prefHeight="29.0" prefWidth="800.0" vgap="10.0" GridPane.rowIndex="2">
                     <children>
                         <Button fx:id="BTN_save" mnemonicParsing="false" onAction="#JB_RcpClear" text="%reserve" textFill="WHITE" />
-                        <Button fx:id="BTN_query" mnemonicParsing="false" onAction="#btnQueryClick"  text="%query" textFill="WHITE" />
+                        <Button fx:id="BTN_query" mnemonicParsing="false" onAction="#btnQueryClick" text="%query" textFill="WHITE" />
                         <!--<Button fx:id="BTN_save" mnemonicParsing="false" onMouseExited="#saveExited" onMouseMoved="#saveMoved" onMousePressed="#savePressed" onMouseReleased="#saveReleased" text="保留/不保留" GridPane.columnIndex="2" />-->
-                        <Button fx:id="BTN_view" mnemonicParsing="false" onAction="#btnViewClick"  text="%browse" textFill="WHITE" />
-                        <Button fx:id="BTN_upload" mnemonicParsing="false" onAction="#btnUploadClick"  text="%uploadRecipe" textFill="WHITE" />
+                        <Button fx:id="BTN_view" mnemonicParsing="false" onAction="#btnViewClick" text="%browse" textFill="WHITE" />
+                        <Button fx:id="BTN_upload" mnemonicParsing="false" onAction="#btnUploadClick" text="%uploadRecipe" textFill="WHITE" />
                         <Button fx:id="BTN_download" mnemonicParsing="false" onAction="#btnDownloadClick" text="%downloadRecipe" textFill="WHITE" />
                         <!--<Button fx:id="BTN_view" mnemonicParsing="false" onMouseExited="#viewExited" onMouseMoved="#viewMoved" onMousePressed="#viewPressed" onMouseReleased="#viewReleased" text="浏览" GridPane.columnIndex="4" />-->
-                        <Button fx:id="BTN_delete" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#btnDelClick"  text="%delete" textFill="WHITE" />
+                        <Button fx:id="BTN_delete" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#btnDelClick" text="%delete" textFill="WHITE" />
                     </children>
                 </FlowPane>
 
@@ -81,17 +82,17 @@
                         <RowConstraints maxHeight="180.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                     <children>
-                        <TableView fx:id="dataTable" prefHeight="450.0" prefWidth="819.0" GridPane.columnIndex="1">
+                        <TableView fx:id="dataTable" prefHeight="450.0" prefWidth="800.0" GridPane.columnIndex="1">
                             <columns>
-                                <TableColumn fx:id="delCol" maxWidth="52.0" minWidth="52.0" prefWidth="52.0" />
-                                <TableColumn fx:id="numberCol" prefWidth="63.0" text="%number" />
-                                <TableColumn fx:id="deviceCodeCol" prefWidth="56.0" text="%deviceCode" />
-                                <TableColumn fx:id="recipeNameCol" prefWidth="111.0" text="%recipeName" />
-                                <TableColumn fx:id="recipeVersionTypeCol" text="%recipeType" />
-                                <TableColumn fx:id="recipeVersionNoCol" prefWidth="69.0" text="%VersionNo" />
-                                <TableColumn fx:id="uploadByCol" prefWidth="82.0" text="%uploadBy" />
-                                <TableColumn fx:id="createDateCol" minWidth="0.0" prefWidth="153.0" text="%createDate" />
-                                <TableColumn fx:id="saveCol" prefWidth="248.0" text="%save" />
+                                <TableColumn fx:id="delCol" maxWidth="52.0" minWidth="42.0" prefWidth="42.0" />
+                                <TableColumn fx:id="numberCol" prefWidth="61.0" text="%number" />
+                                <TableColumn fx:id="deviceCodeCol" prefWidth="68.0" text="%deviceCode" />
+                                <TableColumn fx:id="recipeNameCol" prefWidth="89.0" text="%recipeName" />
+                                <TableColumn fx:id="recipeVersionTypeCol" prefWidth="82.0" text="%recipeType" />
+                                <TableColumn fx:id="recipeVersionNoCol" prefWidth="72.0" text="%VersionNo" />
+                                <TableColumn fx:id="uploadByCol" text="%uploadBy" />
+                                <TableColumn fx:id="createDateCol" minWidth="0.0" prefWidth="74.0" text="%createDate" />
+                                <TableColumn fx:id="saveCol" prefWidth="23.0" text="%save" />
                             </columns>
                         </TableView>
                     </children>
