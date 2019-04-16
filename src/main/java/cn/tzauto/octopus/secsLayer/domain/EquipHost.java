@@ -721,7 +721,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         try {
             DataMsgMap msgdata = activeWrapper.sendS1F15out();
-            long onlack = msgdata.getSingleNumber("OFLACK");
+            long onlack = (long) msgdata.get("OFLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_OFFLINE);
             }
@@ -735,7 +735,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         try {
             DataMsgMap data = activeWrapper.sendS1F17out();
-            long onlack = data.getSingleNumber("ONLACK");
+            byte onlack = (byte) data.get("ONLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
@@ -3234,7 +3234,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             MaterialID = MaterialID.trim();
             byte IDTYP = ((byte) DataMsgMap.get("IDTYP"));
             byte MapDataFormatType = (byte) DataMsgMap.get("MAPFT");
-            downFlatNotchLocation = DataMsgMap.getSingleNumber("FNLOC");
+            downFlatNotchLocation = (long) DataMsgMap.get("FNLOC");
             byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
             byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
 //            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
