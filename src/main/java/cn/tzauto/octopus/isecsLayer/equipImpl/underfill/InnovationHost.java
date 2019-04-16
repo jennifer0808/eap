@@ -89,7 +89,7 @@ public class InnovationHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -117,7 +117,7 @@ public class InnovationHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -224,7 +224,7 @@ public class InnovationHost extends EquipModel {
                                 recipeParaList.add(recipePara);
                             }
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,需保持在主页面.");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,需保持在主页面.");
                             return null;
                         }
                         resultMap.put("recipe", recipe);
@@ -237,7 +237,7 @@ public class InnovationHost extends EquipModel {
                     }
                 }
                 if (!ocrUploadOk) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
@@ -377,7 +377,7 @@ public class InnovationHost extends EquipModel {
                         }
                     }
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "请返回主页面后下载程序!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "请返回主页面后下载程序!");
                 }
                 return "选中失败";
             } catch (Exception e) {
@@ -632,7 +632,7 @@ public class InnovationHost extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".Prg", remoteRcpPath, recipeName + ".Prg_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }
@@ -676,7 +676,7 @@ public class InnovationHost extends EquipModel {
         String checkRecultDescEng = "";
         if (this.checkLockFlagFromServerByWS(deviceCode)) {
             checkRecultDesc = "检测到设备被Server要求锁机,设备将被锁!";
-            UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
             pass = false;
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -685,13 +685,13 @@ public class InnovationHost extends EquipModel {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (deviceInfoExt == null) {
             logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
             checkRecultDesc = "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！";
             pass = false;
         } else {
             String trackInRcpName = deviceInfoExt.getRecipeName();
             if (!ppExecName.equals(trackInRcpName)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
                 pass = false;
                 checkRecultDesc = "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + trackInRcpName + " 已选程序:" + ppExecName;
                 checkRecultDescEng = "The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + trackInRcpName + ">,equipment will be locked.";
@@ -699,7 +699,7 @@ public class InnovationHost extends EquipModel {
         }
         Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
         if (execRecipe == null) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
             checkRecultDesc = "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理!";
             checkRecultDescEng = " There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.";
             pass = false;
@@ -720,11 +720,11 @@ public class InnovationHost extends EquipModel {
                 String eventDescEng = "";
                 if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                     this.stopEquip();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查未通过!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
                     for (RecipePara recipePara : recipeParasdiff) {
                         eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
                         String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
-                        UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                         checkRecultDesc = checkRecultDesc + eventDesc;
                         eventDescEng = eventDescEng + eventDescEngtmp;
                     }
@@ -733,7 +733,7 @@ public class InnovationHost extends EquipModel {
                     pass = false;
                 } else {
                     startEquip();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查通过！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
                     eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                     logger.info("设备：" + deviceCode + " 开机Check成功");
                     pass = true;
@@ -749,7 +749,7 @@ public class InnovationHost extends EquipModel {
             if (!"".equalsIgnoreCase(checkRecultDescEng)) {
                 sendMessage2Eqp(checkRecultDescEng);
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
         }
         mqMap.put("eventDesc", checkRecultDesc);
         GlobalConstants.C2SLogQueue.sendMessage(mqMap);

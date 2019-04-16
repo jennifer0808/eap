@@ -36,7 +36,7 @@ public class SpecificDataTransferHandler implements MessageHandler {
             deviceCode = mapMessage.getString("deviceCode");
             dataIdMap = (HashMap<String, String>) JsonMapper.fromJsonString(mapMessage.getString("dataIdList"), HashMap.class);
             logger.info("服务端请求获取设备[" + deviceCode + "]的指定数据，数据ID:" + JsonMapper.toJsonString(dataIdMap));
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求从设备获取数据...");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求从设备获取数据...");
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             Map resultMap = GlobalConstants.stage.hostManager.getSpecificData(deviceInfo.getDeviceCode(), dataIdMap);
@@ -61,7 +61,7 @@ public class SpecificDataTransferHandler implements MessageHandler {
             }
             GlobalConstants.C2SSpecificDataQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端发送获取到的数据:[" + resultMapString + "]");
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送获取到的数据");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的数据");
         } catch (JMSException ex) {
             logger.error("Execption occur:" + ex);
         } finally {

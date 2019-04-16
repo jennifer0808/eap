@@ -32,11 +32,11 @@ public class YAMADAHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(YAMADAHost.class.getName());
-    private long ppselectfinishCeid = 601;
+    private long ppselectfinishCeid = 601L;
 
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 605;
+        EquipStateChangeCeid = 605L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -150,13 +150,12 @@ public class YAMADAHost extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
             } else if (ceid == 102) {
 //                sendS2f41Cmd("UNLOCK");
-//                UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
+//               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
-//                runMode = data.getSingleNumber("RunMode");
                 if (runMode == 0 || runMode == 2) {
 //                    sendS2f41Cmd("UNLOCK");
-//                    UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
+//                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
                 }
             } else if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
@@ -164,10 +163,8 @@ public class YAMADAHost extends EquipHost {
             } else if (ceid == ppselectfinishCeid) { //601L
                 List list = (List)data.get("REPORT");
 
-                List listCollection = (List) list.get(0);
-                List listName = (List) listCollection.get(1);
-
-                ppExecName= (String) listName.get(0);
+                List listCollection = (List) list.get(1);
+                ppExecName= (String) listCollection.get(0);
 
                 Map map = new HashMap();
                 map.put("PPExecName", ppExecName);
@@ -215,7 +212,7 @@ public class YAMADAHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中缺少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -231,6 +228,7 @@ public class YAMADAHost extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (!isCleanRecipe && dataReady && equipStatus.equalsIgnoreCase("run")) {
+              //  if(true){
                 //开机通过OpMode获取Press使用情况
                 getUsingPress();
                 //开机check Press使用情况
@@ -240,7 +238,7 @@ public class YAMADAHost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -263,11 +261,11 @@ public class YAMADAHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与设备不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与设备不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与设备一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与设备一致，核对通过！");
                         }
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
@@ -275,22 +273,22 @@ public class YAMADAHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数范围Check(Gold)");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数范围Check(Gold)");
                             if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo();
                             } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -319,10 +317,10 @@ public class YAMADAHost extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     String eventDescEN = "(" + dateStr + ") Start Check Para Error! RecipePara[" + recipePara.getParaName() + "], realValue: " + recipePara.getSetValue() + ", defaultValue: " + recipePara.getDefValue() + ", out of spec[" + recipePara.getMinValue() + "-" + recipePara.getMaxValue() + "], machine locked.";
                     this.sendTerminalMsg2EqpSingle(eventDescEN);
@@ -330,7 +328,7 @@ public class YAMADAHost extends EquipHost {
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }
@@ -350,7 +348,7 @@ public class YAMADAHost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-
+        System.out.println(recipePath);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
@@ -405,7 +403,7 @@ public class YAMADAHost extends EquipHost {
         if (pressStatusAll.length() > 0) {
             pressStatusAll = pressStatusAll.substring(0, pressStatusAll.length() - 1);
         }
-        UiLogUtil.appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
     private void initRptPara() {

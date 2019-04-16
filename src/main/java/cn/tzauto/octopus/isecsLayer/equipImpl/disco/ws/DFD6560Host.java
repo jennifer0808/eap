@@ -159,7 +159,7 @@ public class DFD6560Host extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -214,7 +214,7 @@ public class DFD6560Host extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -299,7 +299,7 @@ public class DFD6560Host extends EquipModel {
                     }
                 }
                 if (!ocrUploadOk) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
@@ -840,7 +840,7 @@ public class DFD6560Host extends EquipModel {
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".ALU", remoteRcpPath, recipeName + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".CLN", remoteRcpPath, recipeName + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".DFD", remoteRcpPath, recipeName + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }
@@ -883,19 +883,19 @@ public class DFD6560Host extends EquipModel {
             if (equipMap != null && !equipMap.isEmpty()) {
                 String equipZ1 = String.valueOf(equipMap.get("dppzz1"));
                 String equipZ2 = String.valueOf(equipMap.get("dppzz2"));
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:刀片组编号[" + bladeGroup + "]");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:刀片组信息Z1[" + serverZ1 + "]Z2[" + serverZ2 + "]");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组编号[" + bladeGroup + "]");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组信息Z1[" + serverZ1 + "]Z2[" + serverZ2 + "]");
                 if (serverZ1.equals(equipZ1)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对一致,检查通过");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对一致,检查通过");
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对不一致,检查不通过");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对不一致,检查不通过");
                     sendMessage2Eqp("Blade Check Error:/r/n [Z1] Need:[" + serverZ1 + "] Actual:[" + equipZ1 + "]");
                     return false;
                 }
                 if (serverZ2.equals(equipZ2)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对一致,检查通过");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对一致,检查通过");
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对不一致,检查不通过");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对不一致,检查不通过");
                     sendMessage2Eqp("Blade Check Error:/r/n [Z2] Need:[" + serverZ2 + "] Actual:[" + equipZ2 + "]");
                     return false;
                 }

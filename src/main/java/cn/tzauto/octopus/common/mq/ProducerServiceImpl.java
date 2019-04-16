@@ -168,7 +168,7 @@ public class ProducerServiceImpl implements ExceptionListener {
      */
     private void produceMsg(Destination destination, Map<String, String> map, String way) throws Exception {
 
-//        UiLogUtil.appendLog2SeverTab(null, "进入produceMsg");
+//       UiLogUtil.getInstance().appendLog2SeverTab(null, "进入produceMsg");
         Connection connection = null;
         Session session = null;
         try {
@@ -185,9 +185,9 @@ public class ProducerServiceImpl implements ExceptionListener {
             //解析消息
             Message message = getMessage(session, map);
             //发送消息
-//            UiLogUtil.appendLog2SeverTab(null, "开始发送消息");
+//           UiLogUtil.getInstance().appendLog2SeverTab(null, "开始发送消息");
             producer.send(message);
-//            UiLogUtil.appendLog2SeverTab(null, "消息发送完毕");
+//           UiLogUtil.getInstance().appendLog2SeverTab(null, "消息发送完毕");
         } finally {
             //生产者生产消息后关闭会话和连接
             closeSession(session);

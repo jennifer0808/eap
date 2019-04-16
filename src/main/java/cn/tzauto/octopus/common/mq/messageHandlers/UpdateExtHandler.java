@@ -48,7 +48,7 @@ public class UpdateExtHandler implements MessageHandler {
             int updateCount = 0;
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置，DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
             } else {
                 deviceInfoExt.setLockSwitch(lockSwitch);
                 updateCount = deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -66,7 +66,7 @@ public class UpdateExtHandler implements MessageHandler {
             }
             GlobalConstants.C2SSpecificDataQueue.sendMessage(topicName, mqMap);//C2SCheckRcpNameQueue
             logger.info("向服务端[" + topicName + "]回复锁机开关更改结果:" + JSONArray.toJSONString(mqMap));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "Server修改锁机开关为：[" + lockSwitch + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "Server修改锁机开关为：[" + lockSwitch + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();

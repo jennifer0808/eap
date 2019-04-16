@@ -32,7 +32,7 @@ public class UpdateRecipeTemplateHandler implements MessageHandler {
             deviceTypeId = mapMessage.getString("deviceTypeId");
             recipeTemplates = (List<RecipeTemplate>) JsonMapper.String2List(mapMessage.getString("recipeTemplate"), RecipeTemplate.class);
             logger.info("设备" + deviceCode + "请求更新RecipeTemplate表");
-            UiLogUtil.appendLog2SeverTab(null, "接收到服务端更新RecipeTemplate配置请求");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "接收到服务端更新RecipeTemplate配置请求");
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -60,11 +60,11 @@ public class UpdateRecipeTemplateHandler implements MessageHandler {
                 recipeService.saveRcpTemplateBatch(recipeTemplatesTmp);
             }
             sqlSession.commit();
-            UiLogUtil.appendLog2SeverTab(null, "RecipeTemplate配置更新成功");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "RecipeTemplate配置更新成功");
         } catch (Exception e) {
             e.printStackTrace();
             sqlSession.rollback();
-            UiLogUtil.appendLog2SeverTab(null, "RecipeTemplate配置更新失败");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "RecipeTemplate配置更新失败");
         } finally {
             sqlSession.close();
         }

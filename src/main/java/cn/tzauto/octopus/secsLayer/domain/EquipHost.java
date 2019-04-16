@@ -445,7 +445,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             String checkRecultDesc = "";
             String eventDescEng = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
 //                SwingUtil.setWindowCenter(realTimePara);
@@ -453,7 +453,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue() + "],默认值为[" + recipePara.getDefValue() + "]"
                             + "其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]";
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                     checkRecultDesc = checkRecultDesc + eventDesc;
                     String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
                     eventDescEng = eventDescEng + eventDescEngtmp;
@@ -462,7 +462,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
                 checkRecultDesc = eventDesc;
@@ -638,7 +638,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return null;
         }
         if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(this.getControlState())) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "设备处于Offline状态...");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备处于Offline状态...");
             return null;
         }
         Map resultMap = sendS1F3Check();
@@ -721,7 +721,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         try {
             DataMsgMap msgdata = activeWrapper.sendS1F15out();
-            long onlack = msgdata.getSingleNumber("OFLACK");
+            long onlack = (long) msgdata.get("OFLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_OFFLINE);
             }
@@ -735,7 +735,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         try {
             DataMsgMap data = activeWrapper.sendS1F17out();
-            long onlack = data.getSingleNumber("ONLACK");
+            byte onlack = (byte) data.get("ONLACK");
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
@@ -1204,16 +1204,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
 //            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
             String stripMapData = (String) ((ArrayList) reportData.get(1)).get(0);
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
-            UiLogUtil.appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
 
             byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
 //            byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
             if (ack == '0') {//上传成功
-                UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             } else {//上传失败
-                UiLogUtil.appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
                 activeWrapper.sendS6F12out((byte) 1, data.getTransactionId());
             }
             logger.info(" ----- s6f12 sended - Strip Upload Completed-----.");
@@ -1261,7 +1261,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             if (data.get("TEXT") != null) {
                 text = data.get("TEXT").toString();
                 logger.info("Received a s10f1in with text = " + text);
-                UiLogUtil.appendLog2SecsTab(deviceCode, "收到设备发送的消息:[" + text + "]");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到设备发送的消息:[" + text + "]");
             }
 
             activeWrapper.sendS10F2out((byte) 0, data.getTransactionId());
@@ -1310,7 +1310,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -1330,7 +1330,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                    holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
                     return;
                 }
                 //查询trackin时的recipe和GoldRecipe
@@ -1345,7 +1345,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo();
                 } else {
                     //根据检查模式执行开机检查逻辑
@@ -1357,11 +1357,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]，与改机后程序一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]，与改机后程序一致，核对通过！");
                         }
                     }
                     if (checkResult) {
@@ -1370,25 +1370,25 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             //1、如果下载的是Unique版本，那么执行完全比较
                             String downloadRcpVersionType = downLoadRecipe.getVersionType();
                             if ("Unique".equals(downloadRcpVersionType)) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                                 this.startCheckRecipePara(downLoadRecipe, "abs");
                             } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                                UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                                 if (!hasGoldRecipe) {
-                                    UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                     //不允许开机
                                     this.holdDeviceAndShowDetailInfo();
                                 } else {
-                                    UiLogUtil.appendLog2EventTab(deviceCode, "[" + ppExecName + "]开始WI参数Check");
+                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "[" + ppExecName + "]开始WI参数Check");
                                     this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                                 }
                             }
                         } else if ("B".equals(startCheckMod)) {
                             startSVcheckPass = false;
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
                             startSVcheck();
                         } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                         }
                     }
                 }
@@ -1466,7 +1466,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        targetRecipeName= targetRecipeName.replace("@", "/");
+        targetRecipeName = targetRecipeName.replace("@", "/");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -1646,7 +1646,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if (data.get("OBJID") != null) {
             stripId = (String) (data.get("OBJID"));
         }
-        UiLogUtil.appendLog2SecsTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
+       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
         DataMsgMap out = null;
         //通过Web Service获得xml字符串
         Map<Object, Map> objMap = new HashMap<>();
@@ -1663,7 +1663,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             long[] u1 = new long[1];
             u1[0] = 0;
             out.put("OBJACK", u1);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
 
         } else {//stripId存在
             String downLoadResult = stripMapData.substring(0, 1);
@@ -1673,7 +1673,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 //                out.put("MapData", stripMapData);
                 stripMap.put("MapData", stripMapData);
                 objMap.put(stripId, stripMap);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
             } else {
                 objack = 1;
                 //是分号
@@ -1686,7 +1686,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 stripMap.put("MapData", stripMapData);
                 objMap.put(stripId, stripMap);
                 errorMap.put(errorCode, stripMapData);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
             }
 
         }
@@ -1697,7 +1697,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
             activeWrapper.sendS14F2out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
                     objack, errorMap, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
-            UiLogUtil.appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1786,7 +1786,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             i++;
         }
         if (i >= 5) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "从设备获取数据失败，请检查设备通讯状态！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "从设备获取数据失败，请检查设备通讯状态！");
             logger.error("从设备获取数据失败，设备编号：" + deviceCode);
             return null;
         }
@@ -1819,7 +1819,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public boolean checkPressFlagFromServerByWS(String deviceCode) {
         boolean pass = false;
         String preseUseState = getPressUseState();
-        UiLogUtil.appendLog2EventTab(deviceCode, "Press使用状态为[" + preseUseState + "]");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Press使用状态为[" + preseUseState + "]");
         String curLockFlag = AxisUtility.getPressCheckFlag(deviceCode, preseUseState);
         if (curLockFlag != null && "Y".equals(curLockFlag)) {
             pass = true;
@@ -1869,26 +1869,26 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public boolean checkPressUseState(DeviceService deviceService, SqlSession sqlSession) {
         boolean pass = false;
-        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行设备Press使用情况检查");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行设备Press使用情况检查");
         if (!this.checkPressFlagFromServerByWS(deviceCode)) {
             String pressState = getPressUseState();
-            UiLogUtil.appendLog2EventTab(deviceCode, "检测到设备Press[" + pressState + "]使用错误，设备将被锁!");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Press[" + pressState + "]使用错误，设备将被锁!");
             this.holdDeviceByServer("PRESS_ERROR_LOCK");
             String dateStr = GlobalConstants.dateFormat.format(new Date());
             this.sendTerminalMsg2EqpSingle("[" + dateStr + "] PressUse Error, machine locked.");
         } else {
             List<DeviceInfoLock> deviceInfoLocks = deviceService.searchDeviceInfoLockByMap(deviceCode, "PRESS_ERROR_LOCK", "Y");
             if (deviceInfoLocks != null && !deviceInfoLocks.isEmpty()) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "检测到设备Press使用正常，设备将解锁!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Press使用正常，设备将解锁!");
                 deviceService.updateDeviceInfoLock(deviceCode, "PRESS_ERROR_LOCK", "N");
                 sqlSession.commit();
                 this.releaseDeviceByServer("PRESS_ERROR_LOCK");
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "检测到设备Press使用正常");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Press使用正常");
             }
             pass = true;
         }
-        UiLogUtil.appendLog2EventTab(deviceCode, "设备Press使用情况检查执行结束");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备Press使用情况检查执行结束");
         return pass;
     }
 
@@ -1950,10 +1950,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
                 if (data == null || data.isEmpty()) {
                     logger.error("Query SV List error[" + JsonMapper.toJsonString(data) + "]");
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "Query SV List error！");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Query SV List error！");
                 }
             } catch (Exception e) {
                 logger.error("Exception:", e);
+                return null;
             }
         }
         return resultMap;
@@ -1975,7 +1976,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 DataMsgMap data = activeWrapper.sendS2F13out(dataIdList, ecFormat);
 
                 if (data != null && data.get("EC") != null) {
-                    ecValueList = (ArrayList) ((SecsItem) data.get("EC")).getData();
+                    ecValueList = (ArrayList) data.get("EC");
                     for (int i = 0; i < ecValueList.size(); i++) {
                         resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
                     }
@@ -1983,10 +1984,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
                 if (data == null || data.isEmpty()) {
                     logger.error("Query EC value List error[" + JsonMapper.toJsonString(data) + "]");
-                    UiLogUtil.appendLog2SecsTab(deviceCode, "Query EC value List error！");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Query EC value List error！");
                 }
             } catch (Exception e) {
                 logger.error("Exception:", e);
+                return null;
             }
         }
         return resultMap;
@@ -2060,7 +2062,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 this.sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
                 logger.info("发送设备" + deviceCode + "实时状态至服务端");
             }
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
         } else {
             String formerDeviceStatus = deviceOplogList.get(0).getCurrDeviceStatus();
             if (!formerDeviceStatus.equals(equipStatus)) {
@@ -2071,7 +2073,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     this.sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
                     logger.info("发送设备" + deviceCode + "实时状态至服务端");
                 }
-//                UiLogUtil.appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
+//               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
             }
         }
     }
@@ -2105,7 +2107,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
             return map;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -2131,15 +2133,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "当前设备已经被锁机");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
                 return true;
             } else {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                 return false;
             }
         } else {
@@ -2159,20 +2161,20 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
                 holdDesc = "当前设备已经被锁机";
-                UiLogUtil.appendLog2EventTab(deviceCode, holdDesc);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, holdDesc);
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
                 hold = true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
                 holdDesc = "设备将稍后执行锁机";
-                UiLogUtil.appendLog2EventTab(deviceCode, holdDesc);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, holdDesc);
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
                 hold = true;
             } else {
                 Map eqptStateMap = this.findEqptStatus();
                 holdDesc = "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState"));
-                UiLogUtil.appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                 hold = false;
             }
         } else {
@@ -2205,15 +2207,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "当前设备已经被解锁");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被解锁");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行解锁");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行解锁");
                 return true;
             } else {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "解锁失败，当前机台状态无法进行解锁，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "解锁失败，当前机台状态无法进行解锁，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
                 return false;
             }
         } else {
@@ -2236,15 +2238,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "当前设备已经被解锁");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被解锁");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行解锁");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行解锁");
                 return true;
             } else {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "解锁失败，当前机台状态无法进行解锁，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "解锁失败，当前机台状态无法进行解锁，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
                 return false;
             }
         } else {
@@ -2257,14 +2259,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap = startDevice();
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备开机作业！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备开机作业！");
                 return "Y";
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行开机任务！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行开机任务！");
                 return "Y";
             } else {
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "开机作业失败，当前机台状态无法进行开机，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "开机作业失败，当前机台状态无法进行开机，机台状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
                 String failReason = String.valueOf(resultMap.get("CheckResult"));
                 logger.debug("Equip start failed ,the reason of fail start:" + failReason);
                 return failReason;
@@ -2280,16 +2282,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
                 controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备控制状态切换被HOST命令切换到 " + controlState + "！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态切换被HOST命令切换到 " + controlState + "！");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
                 controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备将稍后执行控制状态切换任务！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行控制状态切换任务！");
                 return true;
             } else {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
                 Map eqptStateMap = this.findEqptStatus();
-                UiLogUtil.appendLog2SecsTab(deviceCode, "设备控制状态切换失败，当前状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换失败，当前状态为：" + eqptStateMap.get("EquipStatus") + "/" + eqptStateMap.get("ControlState"));
                 return false;
             }
         } else {
@@ -2400,7 +2402,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if ("Y".equals(lockFlagStr)) {
             lockFlag = true;
             String lockReason = String.valueOf(checkServerLockResult.get("remarks"));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机, 锁机原因为: " + lockReason);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机, 锁机原因为: " + lockReason);
             holdDeviceAndShowDetailInfo("Equipment locked because of " + lockReason);
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
@@ -2518,7 +2520,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID", String.valueOf(ceid));
         sqlSession.close();
         if (recipeTemplates != null && recipeTemplates.size() > 0) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "CEID[" + ceid + "],事件描述：" + recipeTemplates.get(0).getParaDesc());
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "CEID[" + ceid + "],事件描述：" + recipeTemplates.get(0).getParaDesc());
         }
     }
 
@@ -2557,12 +2559,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 } else {
                     recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
                 }
-                UiLogUtil.appendLog2EventTab(deviceCode, "上传成功！共 " + eppd.size() + " 第 " + i + " 已完成");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传成功！共 " + eppd.size() + " 第 " + i + " 已完成");
                 sqlSession.commit();
             } catch (Exception e) {
                 sqlSession.rollback();
                 logger.error("Exception:", e);
-                UiLogUtil.appendLog2EventTab(deviceCode, "上传失败！请重试！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败！请重试！");
             } finally {
                 sqlSession.close();
             }
@@ -2749,7 +2751,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         MonitorService monitorService = new MonitorService(sqlSession);
         List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
         if (recipeTemplates == null || recipeTemplates.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "该设备未设置参数实时监控,开机前实时值检查取消...");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备未设置参数实时监控,开机前实时值检查取消...");
             return;
         }
         List svIdList = new ArrayList();
@@ -2808,7 +2810,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                         if ((Double.parseDouble(realTimeValue) < Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) > Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                            UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                             eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
@@ -2834,7 +2836,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             if (Double.parseDouble(realTimeValue) != Double.parseDouble(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                                UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                                 eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
@@ -2847,7 +2849,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             if (!realTimeValue.equals(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                                UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                                 eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
@@ -2866,7 +2868,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                         if ((Double.parseDouble(realTimeValue) <= Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) >= Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                            UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                             eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
@@ -2884,7 +2886,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                         if ((Double.parseDouble(realTimeValue) < Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) > Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                            UiLogUtil.appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                             eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
@@ -2916,13 +2918,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         if (holdFlag) {
             eventDesc = "开机前实时参数检查不通过，设备将被锁." + eventDesc;
-            UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
             this.holdDeviceAndShowDetailInfo("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:" + eventDescEng);
             startSVcheckPass = false;
         } else {
             releaseDevice();
             eventDesc = "设备：" + deviceCode + " 开机前实时参数检查通过.";
-            UiLogUtil.appendLog2EventTab(deviceCode, "开机前实时参数检查通过.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机前实时参数检查通过.");
             startSVcheckPass = true;
             holdFlag = false;
         }
@@ -2934,8 +2936,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
         // 上传ftp
-        FtpUtil.uploadFile(localRcpPath, GlobalConstants.getProperty("ftpPath") + remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
+        FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         return true;
     }
 
@@ -3009,7 +3011,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             ack[0] = 0;
             s12f6out.put("GRANT1", ack);
             s12f6out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f6out);
+            activeWrapper.sendS12F6out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3037,7 +3039,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             ack[0] = 0;
             s12f8out.put("MDACK", ack);
             s12f8out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f8out);
+            activeWrapper.sendS12F8out((byte) 0, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3078,7 +3080,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             DataMsgMap s12f14out = new DataMsgMap("s12f14out", activeWrapper.getDeviceId());
 
             s12f14out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f14out);
+            activeWrapper.sendS12F14out("null", FormatCode.SECS_ASCII, (byte) 1, null, FormatCode.SECS_1BYTE_SIGNED_INTEGER, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3155,8 +3157,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             //kong
             //String NullBinCodeValue = (String)((SecsItem) dataMsgMap.get("NullBinCodeValue")).getData();
             //byte[] ProcessAxis = ((byte[]) ((SecsItem) dataMsgMap.get("ProcessAxis")).getData());
-            UiLogUtil.appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
             DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
             //TODO 调用webservices回传waferMapping信息
             activeWrapper.sendS12F2out((byte) 0, dataMsgMap.getTransactionId());
@@ -3176,7 +3178,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         try {
             String MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
-            byte[] IDTYP = (byte[]) DataMsgMap.get("IDTYP");
+            byte IDTYP = (byte) DataMsgMap.get("IDTYP");
             int[] STRPxSTRPy = (int[]) DataMsgMap.get("STRP");
             Object BinListItem = DataMsgMap.get("BINLT");
             String binList = "";
@@ -3193,7 +3195,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 binList = (String) DataMsgMap.get("BINLT");
             }
             logger.info("waferid:" + MaterialID + "binlist:" + binList);
-            UiLogUtil.appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
             //上传WaferMapping,
             String _uploadWaferMappingRow = uploadWaferMappingRow;
             String _uploadWaferMappingCol = uploadWaferMappingCol;
@@ -3207,7 +3209,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
             //上传旋转后的行列数及mapping
             AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
             DataMsgMap s12f10out = new DataMsgMap("s12f10out", activeWrapper.getDeviceId());
             byte[] ack = new byte[]{0};
             s12f10out.put("MDACK", ack);
@@ -3234,18 +3236,18 @@ public abstract class EquipHost extends Thread implements MsgListener {
             MaterialID = MaterialID.trim();
             byte IDTYP = ((byte) DataMsgMap.get("IDTYP"));
             byte MapDataFormatType = (byte) DataMsgMap.get("MAPFT");
-            downFlatNotchLocation = DataMsgMap.getSingleNumber("FNLOC");
+            downFlatNotchLocation = (long) DataMsgMap.get("FNLOC");
             byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
             byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
 //            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
 //            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
             Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
             Object NullBinCodeValue = DataMsgMap.get("NULBC");
-            UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
             Map<String, String> mappingInfo = AxisUtility.downloadWaferMap(deviceCode, MaterialID);
             if ("N".equals(mappingInfo.get("flag"))) {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "WaferId：[" + MaterialID + "]下载失败," + mappingInfo.get("msg"));
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "WaferId：[" + MaterialID + "]下载失败," + mappingInfo.get("msg"));
                 s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
                 activeWrapper.respondMessage(s12f4out);
@@ -3263,7 +3265,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 StringBuilder newbinList = new StringBuilder("");
                 char[][] binArray = WaferTransferUtil.toDoubleArray(binList, mapRow, mapCol);
                 Map<String, Integer> map = WaferTransferUtil.blankCheck(binList.charAt(0), binList, mapRow, mapCol);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "UP:" + map.get("UP") + "DOWN:" + map.get("DOWN")
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UP:" + map.get("UP") + "DOWN:" + map.get("DOWN")
                         + "LEFT:" + map.get("LEFT") + "RIGHT:" + map.get("RIGHT"));
 
                 int mapRowEsecNoNull = map.get("DOWN") - map.get("UP") + 1;
@@ -3311,7 +3313,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             s12f4out.put("BinCodeEquivalents", BinCodeEquivalents);
             s12f4out.put("NullBinCodeValue", NullBinCodeValue);
             s12f4out.put("MessageLength", new long[]{mapRow * mapCol});
-            UiLogUtil.appendLog2SeverTab(deviceCode, "从服务端成功获取WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务端成功获取WaferMapping设置信息！WaferId：[" + MaterialID + "]");
 
             //针对DB800 mapping展示软件
             if (this.deviceType.contains("DB-800")) {
@@ -3327,7 +3329,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
                         , mapRow, mapCol, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, mapRow * mapCol, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
-                UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
             }
@@ -3337,7 +3339,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
                 activeWrapper.respondMessage(s12f4out);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "获取服务端WaferMappingInfo出现异常！");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取服务端WaferMappingInfo出现异常！");
             } catch (Exception ex) {
                 logger.error("Exception:", e);
             }
@@ -3360,8 +3362,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             MaterialID = (String) DataMsgMap.get("MID");
             MaterialID = MaterialID.trim();
             byte IDTYP = (byte) DataMsgMap.get("IDTYP");
-            UiLogUtil.appendLog2SecsTab(deviceCode, "机台请求WaferMapping！WaferId：[" + MaterialID + "]");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping！WaferId：[" + MaterialID + "]");
 
             s12f16out = new DataMsgMap("s12f16out", activeWrapper.getDeviceId());
             s12f16out.put("MaterialID", MaterialID);
@@ -3375,10 +3377,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
             strps[1] = 0;
             activeWrapper.sendS12F16out(MaterialID, FormatCode.SECS_ASCII, IDTYP, strps, FormatCode.SECS_2BYTE_SIGNED_INTEGER,
                     waferMappingbins, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
-            UiLogUtil.appendLog2SecsTab(deviceCode, "发送WaferMapping至机台！WaferId：[" + MaterialID + "]");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping至机台！WaferId：[" + MaterialID + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "获取服务端WaferMapping出现异常！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取服务端WaferMapping出现异常！");
             s12f16out = new DataMsgMap("s12f16outZero", activeWrapper.getDeviceId());
             s12f16out.setTransactionId(DataMsgMap.getTransactionId());
             try {
@@ -3461,7 +3463,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 checkParaFlag = false;
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
@@ -3469,13 +3471,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 checkParaFlag = true;
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }

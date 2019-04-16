@@ -30,7 +30,7 @@ public class UpdateUserInfoWebservice implements BaseWebservice {
             sysUser = (SysUser) JsonMapper.fromJsonString(JSONObject.toJSON(map.get("user")).toString(), SysUser.class);
 
             logger.info("接收到服务端发送的sysUser" + sysUser);
-            UiLogUtil.appendLog2SeverTab(null, "设备" + deviceCode +"接收到服务端更新SysUser配置请求");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "设备" + deviceCode +"接收到服务端更新SysUser配置请求");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -46,12 +46,12 @@ public class UpdateUserInfoWebservice implements BaseWebservice {
                 sysService.insert(sysUser);
             }
             sqlSession.commit();
-            UiLogUtil.appendLog2SeverTab(null, "SysUser配置更新成功");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "SysUser配置更新成功");
             webMap.put("eventDesc", "SysUser配置更新成功");
         } catch (Exception e) {
             e.printStackTrace();
             sqlSession.rollback();
-            UiLogUtil.appendLog2SeverTab(null, "SysUser配置更新失败");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "SysUser配置更新失败");
             webMap.put("eventDesc", "SysUser配置更新失败");
         } finally {
             sqlSession.close();

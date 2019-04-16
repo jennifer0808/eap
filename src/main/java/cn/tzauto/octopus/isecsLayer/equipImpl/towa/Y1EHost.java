@@ -111,7 +111,7 @@ public class Y1EHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -138,7 +138,7 @@ public class Y1EHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -216,7 +216,7 @@ public class Y1EHost extends EquipModel {
                         }
                     }
                     if (!ocrUploadOk) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                         resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                     }
                 }
@@ -257,7 +257,7 @@ public class Y1EHost extends EquipModel {
     public String downloadRecipe(Recipe recipe) {
         List<String> curresult = iSecsHost.executeCommand("curscreen");
         if (!curresult.get(0).equalsIgnoreCase("moldSetting")) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
             return "请将设备调整到主页面再进行操作.";
         }
         cleanRecipe("");
@@ -339,7 +339,7 @@ public class Y1EHost extends EquipModel {
     public String deleteRecipe(String recipeName) {
         List<String> curresult = iSecsHost.executeCommand("curscreen");
         if (!curresult.get(0).equalsIgnoreCase("moldSetting")) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
             return "请将设备调整到主页面再进行操作.";
         }
         deleteAllRcpFromDevice(recipeName);
@@ -373,7 +373,7 @@ public class Y1EHost extends EquipModel {
         }
         List<String> result1 = iSecsHost.executeCommand("curscreen");
         if (!result1.get(0).equalsIgnoreCase("moldSetting")) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
             return "请将设备调整到主页面再进行操作.";
         }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
@@ -442,7 +442,7 @@ public class Y1EHost extends EquipModel {
             try {
                 List<String> curscreens = iSecsHost.executeCommand("curscreen");
                 if (!curscreens.contains("autorun")) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备未在AutoRun界面取消本次开机检查...");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备未在AutoRun界面取消本次开机检查...");
                     return new HashMap();
                 }
                 iSecsHost.executeCommand("playback gotomenu.txt");
@@ -507,7 +507,7 @@ public class Y1EHost extends EquipModel {
     public Map getEquipRecipeList() {
         List<String> result1 = iSecsHost.executeCommand("curscreen");
         if (!result1.get(0).equalsIgnoreCase("moldSetting")) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "请将设备调整到塑封设置页面再进行操作.");
         }
 
         cleanRecipe("");
@@ -654,7 +654,7 @@ public class Y1EHost extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".rsp", remoteRcpPath, recipeName + ".rsp_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }

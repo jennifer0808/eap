@@ -90,7 +90,7 @@ public class EapMainController implements Initializable {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
         Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"), resourceBundle);
         userName = (TextField) root.lookup("#userName");
-        UiLogUtil.appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
+       UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
         JB_MainPage.setVisible(false);
         JB_RcpMng.setVisible(false);
         JB_Login.setVisible(true);

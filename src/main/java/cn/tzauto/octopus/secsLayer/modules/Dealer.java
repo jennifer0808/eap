@@ -56,7 +56,7 @@ public class Dealer {
                 sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
                 logger.info("发送设备" + deviceInfoExt.getDeviceRowid() + "实时状态至服务端");
             }
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
         } else {
             String formerDeviceStatus = deviceInfoExt.getDeviceStatus();
             if (!formerDeviceStatus.equals(equipStatus)) {
@@ -67,7 +67,7 @@ public class Dealer {
                     sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
                     logger.info("发送设备" + deviceInfoExt.getDeviceRowid() + "实时状态至服务端");
                 }
-//                UiLogUtil.appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
+//               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
             }
         }
     }

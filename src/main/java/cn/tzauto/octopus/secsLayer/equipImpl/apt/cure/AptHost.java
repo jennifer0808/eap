@@ -208,7 +208,7 @@ public class AptHost extends EquipHost {
                     mqMap.put("lotID", lotId);
                     mqMap.put("eqpCode", deviceCode);
                     GlobalConstants.C2SSpecificDataQueue.sendMessage(mqMap);
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "发送设备CSV文件至服务端");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备CSV文件至服务端");
                 }
             } catch (Exception e) {
             }
@@ -259,7 +259,7 @@ public class AptHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -275,7 +275,7 @@ public class AptHost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -289,7 +289,7 @@ public class AptHost extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo();
                 } else {
                     //根据检查模式执行开机检查逻辑
@@ -301,11 +301,11 @@ public class AptHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         }
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
@@ -313,22 +313,22 @@ public class AptHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo();
                             } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -444,7 +444,7 @@ public class AptHost extends EquipHost {
     public Map startDevice() {
         String checkResult = beforeStartCheck();
         if (!checkResult.equals("0")) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, checkResult);
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, checkResult);
             Map map = new HashMap();
             map.put("HCACK", 2);
             map.put("CheckResult", checkResult);
@@ -460,7 +460,7 @@ public class AptHost extends EquipHost {
                         sleep(2000);
                         findDeviceRecipe();
                         if (equipStatus.equalsIgnoreCase("run")) {
-                            UiLogUtil.appendLog2SecsTab(deviceCode, "自动开机成功！");
+                           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "自动开机成功！");
                             resultMap.put("HCACK", 0);
                             break;
                         } else {
@@ -516,47 +516,47 @@ public class AptHost extends EquipHost {
     private String beforeStartCheck() {
         List checkValueList = sendf3beforeStartCheck();
         try {
-            UiLogUtil.appendLog2EventTab(deviceCode, "执行设备自动开机前的各项状态检查...");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "执行设备自动开机前的各项状态检查...");
             if (!equipStatus.equalsIgnoreCase(FengCeConstant.STATUS_IDLE)) {
                 return "开机前检查失败,设备状态异常,请将设备调整为Idle状态!";
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "设备运行状态为IDLE，检查通过！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备运行状态为IDLE，检查通过！");
             if (!controlState.equalsIgnoreCase(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "设备控制状态为[" + controlState + "]，检查不通过，尝试自动切换至Remote！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态为[" + controlState + "]，检查不通过，尝试自动切换至Remote！");
                 if (changeEqptControlStateAndShowDetailInfo("REMOTE")) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备控制状态自动切换至Remote，检查通过！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态自动切换至Remote，检查通过！");
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备控制状态自动切换Remote失败，请手动将设备调整为Remote状态!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态自动切换Remote失败，请手动将设备调整为Remote状态!");
                     return "开机前检查失败,设备控制状态异常,请将设备调整为Remote状态!";
                 }
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "设备控制状态为Remote，检查通过！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态为Remote，检查通过！");
             if (checkValueList != null && checkValueList.size() > 0) {
                 //doorState必须为0，close
                 long doorState = Long.parseLong(String.valueOf(checkValueList.get(0)));
                 if (doorState != 0) {
                     return "开机前检查失败,门状态异常,请确认门是否关闭!";
                 }
-                UiLogUtil.appendLog2EventTab(deviceCode, "门状态为关闭，检查通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "门状态为关闭，检查通过！");
                 //pressure 必须小于0.03
                 float pressure = Float.parseFloat(String.valueOf(checkValueList.get(1)));
                 if (pressure >= 0.03) {
                     return "开机前检查失败,Pressure参数异常,当前值[" + pressure + "]Kgf/cm2.";
                 }
-                UiLogUtil.appendLog2EventTab(deviceCode, "压力值为[" + pressure + "]Kgf/cm2，检查通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "压力值为[" + pressure + "]Kgf/cm2，检查通过！");
                 //ch2Temperature必须小于机台启动温度的设定值
                 float ch2Temperature = Float.parseFloat(String.valueOf(checkValueList.get(2)));
                 float canStartTemperature = getCanStartTemperature();
                 if (ch2Temperature > canStartTemperature) {
                     return "开机前检查失败,CH2 Temperature参数异常,大于可开机温度,当前值:[" + ch2Temperature + "],最高可开机温度:[" + canStartTemperature + "]";
                 }
-                UiLogUtil.appendLog2EventTab(deviceCode, "CH2 温度为:[" + ch2Temperature + "],最高可开机温度:[" + canStartTemperature + "]，检查通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "CH2 温度为:[" + ch2Temperature + "],最高可开机温度:[" + canStartTemperature + "]，检查通过！");
                 //runStep 必须为1
                 long runStep = Long.parseLong(String.valueOf(checkValueList.get(3)));
                 if (runStep != 1) {
                     return "开机前检查失败,RunStep参数异常,当前值" + runStep;
                 }
-                UiLogUtil.appendLog2EventTab(deviceCode, "RunStep状态为[1]，检查通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "RunStep状态为[1]，检查通过！");
             }
         } catch (Exception e) {
             logger.error("Exception occur, exception info:" + e.getMessage());

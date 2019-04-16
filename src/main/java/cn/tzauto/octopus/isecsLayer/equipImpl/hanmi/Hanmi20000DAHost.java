@@ -171,7 +171,7 @@ public class Hanmi20000DAHost extends EquipModel {
             }
         }
         if (!ppExecName.contains(handleRecipeName)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -233,7 +233,7 @@ public class Hanmi20000DAHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-                UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -248,7 +248,7 @@ public class Hanmi20000DAHost extends EquipModel {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         sqlSession.close();
         if (deviceInfoExt == null || !"Y".equals(deviceInfoExt.getLockSwitch())) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             stopResult = "未设置锁机！";
             return stopResult;
         }
@@ -432,7 +432,7 @@ public class Hanmi20000DAHost extends EquipModel {
         //创建配套的dbindx.inf文件
         createdbindexFile(recipeName);
         if (!ocrUploadOk) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
             resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
         }
 
@@ -1111,7 +1111,7 @@ public class Hanmi20000DAHost extends EquipModel {
                     } else if (result.get(0).contains("ready")) {
                         equipStatus = "Ready";
                     } else if ("param".equals(result.get(0))) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "设备处于参数设置页面,暂时无法刷新设备状态.页面改变后将会定时刷新");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备处于参数设置页面,暂时无法刷新设备状态.页面改变后将会定时刷新");
                     }
                 }
             } catch (Exception e) {
@@ -1200,14 +1200,14 @@ public class Hanmi20000DAHost extends EquipModel {
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".MARK.ldb", remoteRcpPath, recipeName + ".MARK.ldb_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".MARK.roi", remoteRcpPath, recipeName + ".MARK.roi_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/dbindex.inf", remoteRcpPath, "dbindex.inf_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
+           UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
             return false;
         }
         if (getPackageType(hanmiRecipeName).equals("Q") || getPackageType(hanmiRecipeName).equals("D") || getPackageType(hanmiRecipeName).equals("L")) {
             if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN", remoteRcpPath, recipeName + ".QFN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN.ldb", remoteRcpPath, recipeName + ".QFN.ldb_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN.roi", remoteRcpPath, recipeName + ".QFN.roi_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-                UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
+               UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
                 return false;
             }
         }
@@ -1215,12 +1215,12 @@ public class Hanmi20000DAHost extends EquipModel {
             if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".BGA", remoteRcpPath, recipeName + ".BGA_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".BGA.ldb", remoteRcpPath, recipeName + ".BGA.ldb_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".BGA.roi", remoteRcpPath, recipeName + ".BGA.roi_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-                UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
+               UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
                 return false;
             }
         }
 
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }
@@ -1455,7 +1455,7 @@ public class Hanmi20000DAHost extends EquipModel {
         getCurrentRecipeName();
         String pkgType = "";
         if (ppExecName.equals("--")) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
             return new HashMap();
         }
         if (deviceType.contains("Z2")) {

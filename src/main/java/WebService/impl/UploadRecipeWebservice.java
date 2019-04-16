@@ -36,7 +36,7 @@ public class UploadRecipeWebservice implements BaseWebservice {
         try {
          String    deviceCode = String.valueOf(map.get("deviceCode"));
             String   recipeName = String.valueOf(map.get("recipeName"));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求上传Recipe:[" + recipeName + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求上传Recipe:[" + recipeName + "]");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             Recipe recipe = new Recipe();
             List<RecipePara> recipeParaList = new ArrayList<>();
@@ -64,7 +64,7 @@ public class UploadRecipeWebservice implements BaseWebservice {
 
             logger.info("向服务端回复获取到的Recipe信息" + JSONArray.toJSONString(webMap));
             webMap.put("eventDesc", "向服务端发送获取到的Recipe信息");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (Exception ex) {
             logger.error("Exception:", ex);
             webMap.put("eventDesc", "向服务端发送获取到的Recipe信息失败");

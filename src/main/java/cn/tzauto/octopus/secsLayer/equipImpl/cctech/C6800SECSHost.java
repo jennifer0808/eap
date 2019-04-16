@@ -183,7 +183,7 @@ public class C6800SECSHost extends EquipHost {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
                 //锁机
                 holdDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceInfoExt.setConnectionStatus(controlState);
@@ -216,7 +216,7 @@ public class C6800SECSHost extends EquipHost {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
                 //锁机
                 holdDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceInfoExt.setConnectionStatus(controlState);
@@ -227,27 +227,27 @@ public class C6800SECSHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
 //            if (AxisUtility.isEngineerMode(deviceCode)) {
-//                UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
 //                return;
 //            }
             //获取设备状态为ready时检查领料记录
             if (true) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "设备已被锁");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
                     holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
                 }
                 //1、获取设备需要校验的信息类型,
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
                     holdDevice();
                 }
                 //先锁机
 //                holdDevice();
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
                     checkNameFlag = false;
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
                     checkNameFlag = true;
                 }
                 if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
@@ -264,17 +264,17 @@ public class C6800SECSHost extends EquipHost {
 //                    String downloadRcpVersionType = downLoadRecipe.getVersionType();
                     if (false) {
                         //Unique
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Unique Recipe:[" + ppExecName + "]参数绝对值Check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Unique Recipe:[" + ppExecName + "]参数绝对值Check");
 //                        this.startCheckRecipePara(downLoadRecipe, "abs");
                     } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
                         //查询客户端数据库是否存在GoldRecipe
                         if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
                             //不允许开机
                             checkParaFlag = false;
                         } else {
-//                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
                             Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0));
                             if (resultMap != null) {
                                 if (resultMap.get("CheckParaFlag") != null) {
@@ -315,7 +315,7 @@ public class C6800SECSHost extends EquipHost {
                 } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
                     //如果未设置参数比对模式，默认参数比对通过
                     checkParaFlag = true;
-                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check参数模式！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check参数模式！");
                 }
                 //总结是否需要锁机
 
@@ -371,7 +371,7 @@ public class C6800SECSHost extends EquipHost {
             }
             return resultMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -487,7 +487,7 @@ public class C6800SECSHost extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
 //                this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 checkParaFlag = false;
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
@@ -495,13 +495,13 @@ public class C6800SECSHost extends EquipHost {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 checkParaFlag = true;
                 this.releaseDevice();
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }
