@@ -4,6 +4,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.sti;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -146,7 +147,7 @@ public class TR48MK5Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code"> 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
             findDeviceRecipe();
@@ -230,13 +231,17 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-
         //发送PP-Select指令
         sendS2F41outPPselect(targetRecipeName);
         findDeviceRecipe();
         //发送LotConfig指令
-        String lPartCounter = getCounterFromPPBody(localRecipeFilePath, targetRecipeName);
-        sendS2F41CmdLotConfig("Tape", "Enable", "Enable", "Enable", "Enable", "Enable", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", lPartCounter, "500", "0");
+        String lPartCounter="";
+        try{
+             lPartCounter = getCounterFromPPBody(localRecipeFilePath, targetRecipeName);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+           sendS2F41CmdLotConfig("Tape", "Enable", "Enable", "Enable", "Enable", "Enable", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", lPartCounter, "500", "0");
         //发送LotStart指令
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -250,7 +255,7 @@ public class TR48MK5Host extends EquipHost {
        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
-        return   sendS7F3out(localRecipeFilePath,targetRecipeName);
+        return super.sendS7F3out(localRecipeFilePath,targetRecipeName);
     }
 
     @Override
@@ -263,8 +268,13 @@ public class TR48MK5Host extends EquipHost {
         byte[] ppbody = (byte[])getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        //Recipe解析      
-        recipeParaList = TR48MK5RecipeUtil.transferRcpFromDB(recipePath, recipeName, deviceType);
+        //Recipe解析
+        try {
+            recipeParaList = TR48MK5RecipeUtil.transferRcpFromDB(recipePath, recipeName, deviceType);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
         //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
