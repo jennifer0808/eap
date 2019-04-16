@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -20,7 +19,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -170,37 +168,34 @@ public class T640Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S1FX Code"> 
 
     public Map sendS1F15outByT640() {
-        DataMsgMap s1f15out = new DataMsgMap("s1f15out", activeWrapper.getDeviceId());
-        s1f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s1f15out);
+            msgdata = activeWrapper.sendS1F15out();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        byte[] ack = (byte[]) ((SecsItem) msgdata.get("OFLACK")).getData();
+
+        byte ack = (byte) msgdata.get("OFLACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s1f16");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ack", ack[0]);
+        resultMap.put("ack", ack);
         return resultMap;
     }
 
     public Map sendS1F17outByT640() {
-        DataMsgMap s1f17out = new DataMsgMap("s1f17out", activeWrapper.getDeviceId());
-        s1f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendAwaitMessage(s1f17out);
+            msgdata = activeWrapper.sendS1F17out();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ack = (byte[]) ((SecsItem) msgdata.get("AckCode")).getData();
+        byte ack = (byte) msgdata.get("ONLACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s1f18");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ack", ack[0]);
+        resultMap.put("ack", ack);
         return resultMap;
     }
 
@@ -645,32 +640,18 @@ public class T640Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList<SecsItem>) data.get("EPPD");
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+
+        Map resultMap = super.sendS7F19out();
+        ArrayList list = (ArrayList) resultMap.get("eppd");
+
             ArrayList t640RecipeList = new ArrayList();
-            for (Object recipeName : listtmp) {
+            for (Object recipeName : list) {
                 if (recipeName.toString().contains("recipe")) {
                     t640RecipeList.add(recipeName);
                 }
             }
             resultMap.put("eppd", t640RecipeList);
-        }
+
         return resultMap;
     }
 
