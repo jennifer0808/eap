@@ -8,7 +8,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="340.0" prefWidth="380.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.dialog.svquerypane.SVQueryPaneController">
+<AnchorPane id="AnchorPane" prefHeight="340.0" prefWidth="380.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController">
     <stylesheets>
         <URL value="@svquery.css" />
     </stylesheets>
@@ -28,15 +28,11 @@
             <Font name="Calibri Light" size="13.0" />
          </font>
       </Label>
-      <Label layoutX="116.0" layoutY="72.0" text="STP2000ED">
-         <font>
-            <Font name="Calibri Light" size="13.0" />
-         </font>
-      </Label>
-      <TextField layoutX="116.0" layoutY="130.0" prefHeight="23.0" prefWidth="109.0" />
-      <RadioButton layoutX="251.0" layoutY="134.0" mnemonicParsing="false" text="EC" />
-      <Button layoutX="314.0" layoutY="130.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" style="-fx-background-color: #0069CC;" text="%query" />
-      <TextField layoutX="116.0" layoutY="198.0" />
+      <TextField fx:id="deviceCodeField" layoutX="116.0" layoutY="72.0" prefHeight="23.0" prefWidth="109.0" />
+      <TextField fx:id="JTF_SVID" layoutX="116.0" layoutY="130.0" prefHeight="23.0" prefWidth="109.0" />
+      <RadioButton fx:id="JRB_EC" layoutX="251.0" layoutY="134.0" mnemonicParsing="false" text="EC" />
+      <Button fx:id="svQuery" layoutX="314.0" layoutY="130.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" style="-fx-background-color: #0069CC;" text="%query" />
+      <TextField fx:id="JTF_SVValue" layoutX="116.0" layoutY="198.0" />
       <Button fx:id="button" layoutX="169.0" layoutY="259.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="55.0" style="-fx-background-color: #0069CC;" text="%ok" />
    </children>
 </AnchorPane>

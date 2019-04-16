@@ -198,11 +198,11 @@ public class DownloadPaneController implements Initializable {
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
                         CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！");
 
-                        UiLogUtil.appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
                     } else {
                         CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
 
-                        UiLogUtil.appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                         mqMap.put("eventDesc", downloadResult);
                         recipeOperationLog.setOperationResult("N");
                         recipeOperationLog.setOperationResultDesc(downloadResult);

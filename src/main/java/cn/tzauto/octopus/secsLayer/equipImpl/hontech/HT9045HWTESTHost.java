@@ -5,15 +5,16 @@
  */
 package cn.tzauto.octopus.secsLayer.equipImpl.hontech;
 
+
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -28,32 +29,53 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import java.text.DecimalFormat;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
- * template中ParaShotName不要修改
  */
-public class HT9045HWHost extends EquipHost {
+public class HT9045HWTESTHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HT9045HWHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HT9045HWTESTHost.class.getName());
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    private String Mdln = "HT9045HWHost";
+    private String Mdln = "HT9045HWTESTHost";
     private String SoftRev = "-.-";
     private boolean canDownladMap = true;
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 
-    public HT9045HWHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+
+    public HT9045HWTESTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
+
+
+    @Override
+    public Object clone() {
+        HT9045HWTESTHost newEquip = new HT9045HWTESTHost(deviceId,
+                this.iPAddress,
+                this.tCPPort, this.connectMode,
+                this.deviceType, this.deviceCode);
+        newEquip.startUp = this.startUp;
+        newEquip.description = this.description;
+        newEquip.activeWrapper = this.activeWrapper;
+        //newEquip.equipState = this.equipState;
+        newEquip.inputMsgQueue = this.inputMsgQueue;
+        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
+        this.clear();
+        return newEquip;
+    }
+
 
     public void run() {
         threadUsed = true;
@@ -82,13 +104,13 @@ public class HT9045HWHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
-                    long ceid = (long) msg.get("CEID");
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11incommon")) {
+                    long ceid = msg.getSingleNumber("CollEventID");
                     if (ceid == 1) {
-                        processPressStartButton(msg);
+//                        processPressStartButton(msg);
                     } else if (ceid == 27) {
                         setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-                        processEquipStatusChange2(msg);
+                        processEquipStatusChange(msg);
                     } else if (ceid == 15) {
                         //刷新当前机台状态
                         logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
@@ -120,7 +142,7 @@ public class HT9045HWHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
@@ -143,15 +165,25 @@ public class HT9045HWHost extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11in")) {
-                long ceid = (long) data.get("CEID");
+                long ceid = data.getSingleNumber("CollEventID");
                 if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49) {
+                    processS6F11in(data);
                     this.inputMsgQueue.put(data);
+                    //processEquipStatusChange(data);
+                } else {
+                    processS6F11in(data);
                 }
-                replyS6F12WithACK(data, (byte) 0);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
                 this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
+                //接收到超时，直接不能下载
+                this.canDownladMap = false;
+                //或者重新发送参数
+                initRptPara();
+            } else if (tagName.equalsIgnoreCase("s10f1in")) {
+                processS10F1in(data);
             } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
@@ -164,9 +196,9 @@ public class HT9045HWHost extends EquipHost {
     public void initRptPara() {
         System.out.println("initRptPara+++++++++++++++++++");
 //        //定义rpt，1011=Machine State,1501=recipe
-//        sendS2f33out(27L, 1011L, 1501L);
+//        sendS2F33Out(27L, 1011L, 1501L);
 //        //关联10002->27
-//        sendS2f35out(1L, 27L, 10002L);
+//        sendS2F35out(1L, 27L, 10002L);
 //        //开启事件报告
 //        sendS2F37outAll();
 
@@ -182,26 +214,6 @@ public class HT9045HWHost extends EquipHost {
         sendS5F3out(true);
     }
 
-    /**
-     * Get SVList from equip
-     *
-     * @return
-     */
-
-    public Map sendS1F3Check() {
-        List listtmp = getNcessaryData();
-        if (listtmp != null) {
-            equipStatus = String.valueOf(listtmp.get(0));
-            ppExecName = String.valueOf(listtmp.get(1));
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        }
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     protected void processEquipStatusChange2(DataMsgMap data) {
@@ -346,19 +358,20 @@ public class HT9045HWHost extends EquipHost {
         }
     }
 
-    protected void processPressStartButton(DataMsgMap data) {
+    protected void processEquipStatusChange(DataMsgMap data) {
         //TODO 开机check;
         long ceid = 0l;
-        logger.info("[" + deviceCode + "]" + "设备start按钮被按下！");
+        sendS1F3Check();
+        logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
         StringBuilder recipeParasDiffText = new StringBuilder("StartCheck not pass, equipment locked!");
         try {
-            ceid = (long)data.get("CEID");
-            //从数据库中\获取当前设备模型信息
+            ceid = data.getSingleNumber("CollEventID");
+//            //从数据库中\获取当前设备模型信息
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            // 更新设备模型
+//            // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
                 //锁机
@@ -374,11 +387,11 @@ public class HT9045HWHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-                logger.info("[" + deviceCode + "]" + "工程模式，取消开机Check卡控！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                 return;
             }
             //获取设备状态为ready时检查领料记录
-            if (true) {
+            if (equipStatus.equalsIgnoreCase("Running")) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
                     holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
@@ -423,9 +436,7 @@ public class HT9045HWHost extends EquipHost {
                             checkParaFlag = false;
                         } else {
 //                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            String testMode = getEquipTestMode();
-                            logger.info("当前测试模式：" + testMode);
-                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0), testMode);
+                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0));
                             if (resultMap != null) {
                                 if (resultMap.get("CheckParaFlag") != null) {
                                     checkParaFlag = (boolean) resultMap.get("CheckParaFlag");
@@ -508,11 +519,8 @@ public class HT9045HWHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-//        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        logger.info("发送ecid给机台");
-        List<RecipePara> equipRecipeParas = transferECSVValue2RecipePara(recipeService.searchRecipeTemplateMonitor(deviceCode), new ArrayList<RecipeTemplate>());
-
-        List<RecipePara> recipeParasdiff = this.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
             mqMap.put("msgName", "eqpt.StartCheckWI");
@@ -554,134 +562,71 @@ public class HT9045HWHost extends EquipHost {
         }
     }
 
-    /**
-     * 参数检查
-     *
-     * @param recipeRowid
-     * @param deviceCode
-     * @param equipRecipeParas
-     * @return
-     */
-    public List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String testMode) {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        //获取Gold版本的参数(只有gold才有wi信息)
-        List<RecipePara> goldRecipeParas = recipeService.searchRecipeParaByRcpRowId(recipeRowid);
-        //确定管控参数
-        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateMonitor(deviceCode);
-        sqlSession.close();
-        for (RecipeTemplate recipeTemplate : recipeTemplates) {
-            for (RecipePara recipePara : goldRecipeParas) {
-                if (recipePara.getParaCode() != null && recipePara.getParaCode().equals(recipeTemplate.getParaCode())) {
-                    recipeTemplate.setMinValue(recipePara.getMinValue());
-                    recipeTemplate.setMaxValue(recipePara.getMaxValue());
-                    recipeTemplate.setSetValue(recipePara.getSetValue());
-                }
-            }
-        }
-
-        //找出设备当前recipe参数中超出wi范围的参数
-        List<RecipePara> wirecipeParaDiff = new ArrayList<>();
-        List<String> codeList = new ArrayList<>();
-        for (RecipePara equipRecipePara : equipRecipeParas) {
-            for (RecipeTemplate recipeTemplate : recipeTemplates) {
-                if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode()) && (recipeTemplate.getParaDesc() != null && testMode.equals(recipeTemplate.getParaDesc()) || "PR".equals(recipeTemplate.getParaDesc()))) {
-                    equipRecipePara.setRecipeRowId(recipeRowid);
-                    String currentRecipeValue = equipRecipePara.getSetValue();
-                    //将数值从ECID查到的数据中提取出来
-                    if (recipeTemplate.getParaShotName().contains("SiteMap")) {
-                        String[] currentRecipeValues = currentRecipeValue.split(",");
-                        int num = Integer.valueOf(recipeTemplate.getParaShotName().substring(1, recipeTemplate.getParaShotName().indexOf("]")).replace("SiteMap", ""));
-                        currentRecipeValue = currentRecipeValues[num];
-                    }
-                    String setValue = recipeTemplate.getSetValue();
-                    String minValue = recipeTemplate.getMinValue();
-                    String maxValue = recipeTemplate.getMaxValue();
-                    equipRecipePara.setParaShotName(recipeTemplate.getParaShotName());
-                    DecimalFormat decimalFormat = new DecimalFormat("##########.##########");
-                    String numConverted = "";
-                    if (!"".equals(setValue)) {
-                        if (setValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                            if (setValue.contains(".")) {
-                                numConverted = decimalFormat.format(Double.parseDouble(setValue));
-                                setValue = numConverted;
-                            } else {
-                                numConverted = decimalFormat.format(Integer.parseInt(setValue));
-                                setValue = numConverted;
-                            }
-                        }
-                    }
-                    String numConverted1 = "";
-                    if (!"".equals(currentRecipeValue)) {
-                        if (currentRecipeValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                            if (currentRecipeValue.contains(".")) {
-                                numConverted1 = decimalFormat.format(Double.parseDouble(currentRecipeValue));
-                                currentRecipeValue = numConverted1;
-                            } else {
-                                numConverted1 = decimalFormat.format(Integer.parseInt(currentRecipeValue));
-                                currentRecipeValue = numConverted1;
-                            }
-                        } else if ("false".equals(currentRecipeValue)) {
-                            currentRecipeValue = "0";
-                        } else if ("true".equals(currentRecipeValue)) {
-                            currentRecipeValue = "1";
-                        }
-                    }
-                    equipRecipePara.setDefValue(numConverted);//默认值，recipe参数设定值
-                    try {
-                        if (recipeTemplate.getParaShotName().contains("-") && codeList.contains(recipeTemplate.getParaShotName().substring(0, recipeTemplate.getParaShotName().lastIndexOf("-")))) {
-                            logger.info("此值不需要比对,开关默认关闭:" + recipeTemplate.getParaShotName());
-                            break;
-                        }
-                        if ((recipeTemplate.getParaShotName().contains("-EnableRT") || recipeTemplate.getParaShotName().contains("-Enable")) && "0".equals(setValue)) {
-                            codeList.add(recipeTemplate.getParaShotName().substring(0, recipeTemplate.getParaShotName().lastIndexOf("-")));
-                            logger.info("此值不需要比对,开关默认关闭:" + recipeTemplate.getParaShotName());
-//                            break;
-                        }
-                        logger.info("开始对比参数Name:" + recipeTemplate.getParaName() + ",RecipeValue：" + currentRecipeValue + ",goldRecipeValue:" + setValue + ",ECID:" + recipeTemplate.getDeviceVariableId() + "************************************");
-                        boolean paraIsNumber = false;
-                        Double.parseDouble(currentRecipeValue);
-                        paraIsNumber = true;
-                        if ("1".equals(recipeTemplate.getSpecType())) {
-                            if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                                continue;
-                            }
-                            if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
-                                equipRecipePara.setMinValue(minValue);
-                                equipRecipePara.setMaxValue(maxValue);
-                                wirecipeParaDiff.add(equipRecipePara);
-                            }
-                            //abs
-                        } else if ("2".equals(recipeTemplate.getSpecType())) {
-                            if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
-                                continue;
-                            }
-                            if (!currentRecipeValue.equals(setValue)) {
-                                equipRecipePara.setMinValue(setValue);
-                                equipRecipePara.setMaxValue(setValue);
-                                wirecipeParaDiff.add(equipRecipePara);
-                            }
-                        } else {
-                            if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                                continue;
-                            }
-                            if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
-                                equipRecipePara.setMinValue(minValue);
-                                equipRecipePara.setMaxValue(maxValue);
-                                wirecipeParaDiff.add(equipRecipePara);
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                }
-            }
-        }
-        return wirecipeParaDiff;
-    }
-
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+
+    /**
+     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
+     *
+     * @param localFilePath
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        long[] length = new long[1];
+        length[0] = TransferUtil.getPPLength(localFilePath);
+        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        s7f1out.put("ProcessprogramID", targetRecipeName);
+        s7f1out.put("Length", length);
+        DataMsgMap data = null;
+        byte[] ppgnt = new byte[1];
+        try {
+            data = activeWrapper.sendAwaitMessage(s7f1out);
+            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f2");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ppgnt", ppgnt[0]);
+        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        return resultMap;
+    }
+
+    /**
+     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
+     *
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
+        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        String ppbody = (String) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_ASCII);
+        s7f3out.put("ProcessprogramID", targetRecipeName);
+        s7f3out.put("Processprogram", secsItem);
+        try {
+            data = activeWrapper.sendAwaitMessage(s7f3out);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        resultMap.put("ACKC7", ackc7[0]);
+        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        return resultMap;
+    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
@@ -705,23 +650,10 @@ public class HT9045HWHost extends EquipHost {
         return resultMap;
     }
 
+
+
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-    @Override
-    public Object clone() {
-        HT9045HWHost newEquip = new HT9045HWHost(deviceId,
-                this.iPAddress,
-                this.tCPPort, this.connectMode,
-                this.deviceType, this.deviceCode);
-        newEquip.startUp = this.startUp;
-        newEquip.description = this.description;
-        newEquip.activeWrapper = this.activeWrapper;
-        //newEquip.equipState = this.equipState;
-        newEquip.inputMsgQueue = this.inputMsgQueue;
-        newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
-        this.clear();
-        return newEquip;
-    }
 
 
     //hold机台，先停再锁
@@ -756,75 +688,6 @@ public class HT9045HWHost extends EquipHost {
             return null;
         }
     }
-
-    public String getEquipTestMode() {
-        String testMode = "";
-        try {
-            List list = new ArrayList();
-            list.add("1517");
-            Map<String, String> map = getSpecificSVData(list);
-            if (map.get("1517") != null) {
-                switch (map.get("1517")) {
-                    case "0":
-                        testMode = "FT";
-                        logger.info("当前机台TESTMODE:Continuous Start");
-                        break;
-                    case "1":
-                        testMode = "FT";
-                        logger.info("当前机台TESTMODE:Initial Start");
-                        break;
-                    case "2":
-                        testMode = "RT";
-                        logger.info("当前机台TESTMODE:Re-Test Continuous");
-                        break;
-                    case "3":
-                        testMode = "RT";
-                        logger.info("当前机台TESTMODE:Re-Test Initial Start");
-                        break;
-                    case "4":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:Site Mapping Check");
-                        break;
-                    case "5":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:QA Mode");
-                        break;
-                    case "6":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:Continuous EQC");
-                        break;
-                    case "7":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:Initial EQC");
-                        break;
-                    case "8":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:rsmInitial_ART");
-                        break;
-                    case "9":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:rsmContinuStart_ART");
-                        break;
-                    case "10":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:rsmContinuRetest_ART");
-                        break;
-                    case "11":
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:Auto Retest");
-                        break;
-                    default:
-                        testMode = "NOR";
-                        logger.info("当前机台TESTMODE:UnKnown!");
-                }
-            }
-        } catch (Exception e) {
-            logger.error("", e);
-        } finally {
-            return testMode;
-        }
-    }
-
 
     //释放机台
     @Override

@@ -345,7 +345,7 @@ public class AptVST60AHost extends EquipModel {
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/00000.Recipe", remoteRcpPath, recipeName + ".Recipe"
                 + "_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
 //        this.deleteTempFile(recipeName);
         return true;
     }

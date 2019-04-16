@@ -37,7 +37,7 @@ public class FindEquipStatusHandler implements MessageHandler {
         DeviceInfo deviceInfo = null;
         try {
             deviceCode = mapMessage.getString("deviceCode");
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求核对设备的运行状态");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求核对设备的运行状态");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             equipStatus = hostManager.getEquipStatus(deviceInfo.getDeviceCode());
             logger.info("设备:" + deviceCode + "当前运行状态为:" + equipStatus);
@@ -57,7 +57,7 @@ public class FindEquipStatusHandler implements MessageHandler {
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SCheckRcpNameQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端[" + topicName + "]回复校验设备运行状态" + JSONArray.toJSONString(mqMap));
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备运行状态" + equipStatus);
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备运行状态" + equipStatus);
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
         } finally {

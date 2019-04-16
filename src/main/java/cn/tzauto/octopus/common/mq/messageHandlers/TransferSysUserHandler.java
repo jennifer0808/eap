@@ -26,7 +26,7 @@ public class TransferSysUserHandler implements MessageHandler {
             deviceCode = mapMessage.getString("deviceCode");
             sysUsers = (SysUser) JsonMapper.fromJsonString(mapMessage.getString("user"), SysUser.class);
             logger.info("接收到服务端发送的sysUser" + sysUsers);
-            UiLogUtil.appendLog2SeverTab(null, "设备" + deviceCode +"接收到服务端更新SysUser配置请求");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "设备" + deviceCode +"接收到服务端更新SysUser配置请求");
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -42,11 +42,11 @@ public class TransferSysUserHandler implements MessageHandler {
                 sysService.insert(sysUsers);
             }
             sqlSession.commit();
-            UiLogUtil.appendLog2SeverTab(null, "SysUser配置更新成功");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "SysUser配置更新成功");
         } catch (Exception e) {
             e.printStackTrace();
             sqlSession.rollback();
-            UiLogUtil.appendLog2SeverTab(null, "SysUser配置更新失败");
+           UiLogUtil.getInstance().appendLog2SeverTab(null, "SysUser配置更新失败");
         } finally {
             sqlSession.close();
         }

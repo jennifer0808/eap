@@ -38,7 +38,7 @@ public class UpGradeRecipeWebservice implements BaseWebservice {
             recipeParas = (List<RecipePara>) JsonMapper.String2List(JSON.toJSONString(map.get("recipeParaList")), RecipePara.class);
             attachs = (List<Attach>) JsonMapper.String2List(JSON.toJSONString(map.get("attachsList")), Attach.class);
 
-            UiLogUtil.appendLog2SeverTab(recipe.getDeviceCode(), "收到MQ消息，服务端请求将recipe " + recipe.getRecipeName() + " 版本升级为" + recipe.getVersionType() + ",版本号" + recipe.getVersionNo());
+           UiLogUtil.getInstance().appendLog2SeverTab(recipe.getDeviceCode(), "收到MQ消息，服务端请求将recipe " + recipe.getRecipeName() + " 版本升级为" + recipe.getVersionType() + ",版本号" + recipe.getVersionNo());
         } catch (Exception ex) {
             logger.error("JMSException:", ex);
         }
@@ -55,13 +55,13 @@ public class UpGradeRecipeWebservice implements BaseWebservice {
             }
             sqlSession.commit();
             webMap.put("eventDesc", "将recipe " + recipe.getRecipeName() + " 版本升级为" + recipe.getVersionType() + ",版本号" + recipe.getVersionNo() + " 升级成功");
-            UiLogUtil.appendLog2SeverTab(recipe.getDeviceCode(), "recipe升级成功");
+           UiLogUtil.getInstance().appendLog2SeverTab(recipe.getDeviceCode(), "recipe升级成功");
 
         } catch (Exception e) {
             sqlSession.rollback();
             logger.error("Exception:", e);
             webMap.put("eventDesc", "将recipe " + recipe.getRecipeName() + " 版本升级为" + recipe.getVersionType() + ",版本号" + recipe.getVersionNo() + " 升级失败");
-            UiLogUtil.appendLog2SeverTab(recipe.getDeviceCode(), "recipe升级失败");
+           UiLogUtil.getInstance().appendLog2SeverTab(recipe.getDeviceCode(), "recipe升级失败");
 
         } finally {
             sqlSession.close();

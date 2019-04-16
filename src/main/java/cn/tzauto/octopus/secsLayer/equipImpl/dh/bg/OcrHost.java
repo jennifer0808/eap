@@ -201,62 +201,18 @@ public class OcrHost extends EquipHost {
     }
 
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName + ".ini");
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        byte ackc7 = -1;
-        List recipeNameList = new ArrayList();
-        recipeNameList.add(recipeName);
-        try {
-            DataMsgMap data = activeWrapper.sendS7F17out(recipeNameList);
-            logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte) data.get("AckCode");
-            if (ackc7 == 0) {
-                logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
-            }
-            resultMap.put("ACKC7", ackc7);
-            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ACKC7", 9);
-            resultMap.put("Description", e.getMessage());
-        }
-        return resultMap;
+        return super.sendS7F17out(recipeName + ".ini");
     }
 
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+        Map resultMap = super.sendS7F19out();
+        ArrayList listTmp = (ArrayList) resultMap.get("eppd");
+        ArrayList eppdList = new ArrayList();
+        for (int i = 0; i < listTmp.size(); i++) {
+            eppdList.add(listTmp.get(i).toString().replace(".ini", ""));
         }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList list = (ArrayList) data.get("EPPD");
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = (ArrayList) data.get("EPPD");
-            ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString().replace(".ini", ""));
-            }
-            resultMap.put("eppd", list1);
-        }
+        resultMap.put("eppd", eppdList);
         return resultMap;
     }
 
@@ -286,7 +242,7 @@ public class OcrHost extends EquipHost {
             }
             return map;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

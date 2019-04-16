@@ -9,7 +9,6 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
@@ -37,6 +36,7 @@ public class ParmiHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        EquipStateChangeCeid=1015;
     }
 
 
@@ -155,8 +155,8 @@ public class ParmiHost extends EquipHost {
 //                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
 //                    findDeviceRecipe();
 //                }
-            //// TODO: 2019/4/11  s6f11SPCData1与s6f11SPCData2的ceid不确定
-            //// TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待确认
+            // TODO: 2019/4/11  未找到s6f11SPCData1与s6f11SPCData2的ceid
+            // TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待校验（ceid:5,12,1015）
 //            if (ceid == 1) {
 //                upLoadSPCData(data, 10);
 //            } else if (ceid == 2) {
@@ -202,13 +202,13 @@ public class ParmiHost extends EquipHost {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度：" + snt);
-            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度：" + snt);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
             logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
             Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
         if (count == 10) {
             try {
@@ -233,17 +233,17 @@ public class ParmiHost extends EquipHost {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            UiLogUtil.appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度1：" + snt);
-            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
-            UiLogUtil.appendLog2EventTab(deviceCode, "钢网厚度2：" + snt1);
-            UiLogUtil.appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues1);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度1：" + snt);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度2：" + snt1);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues1);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
             logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
             logger.info("snt1 =" + snt1 + "pSampleValues1 =" + pSampleValues1);
             Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
             Map resultMap1 = AxisUtility.getSPCdata(stripId, pSampleValues1, pUserName, pUserNo, snt1, deviceCode);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
     }
 
@@ -294,11 +294,11 @@ public class ParmiHost extends EquipHost {
 //        Map resultMap = sendS2F41outPPselect(recipeName);
 //        if (resultMap != null && !resultMap.isEmpty()) {
 //            if ("0".equals(String.valueOf(resultMap.get("HCACK"))) || "4".equals(String.valueOf(resultMap.get("HCACK")))) {
-//                UiLogUtil.appendLog2EventTab(equipHost.getDeviceCode(), "PPSelect成功，PPID=" + recipeName);
+//               UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "PPSelect成功，PPID=" + recipeName);
 //                return "0";
 //            } else {
 //                Map eqptStateMap = equipHost.findEqptStatus();//失败上报机台状态
-//                UiLogUtil.appendLog2EventTab(equipHost.getDeviceCode(), "选中Recipe失败，PPID=" + recipeName + "；原因：" + String.valueOf(resultMap.get("Description")) + "，机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+//               UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "选中Recipe失败，PPID=" + recipeName + "；原因：" + String.valueOf(resultMap.get("Description")) + "，机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
 //                return "选中Recipe失败，PPID=" + recipeName + "，原因：" + String.valueOf(resultMap.get("Description") + "，设备状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
 //                  return "选中失败";
 //            }
@@ -321,7 +321,7 @@ public class ParmiHost extends EquipHost {
             }
             return map;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

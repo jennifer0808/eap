@@ -56,7 +56,7 @@ public class UpdateVerNoHandler implements MessageHandler {
         }
         Recipe goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());
         if (goldRecipe == null) {
-            UiLogUtil.appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
             return;
         }
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
@@ -67,14 +67,14 @@ public class UpdateVerNoHandler implements MessageHandler {
         try {
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置，DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
             } else {
                 deviceInfoExt.setLotId(lotId);
 //                deviceInfoExt.setVerNo(goldRecipe.getVersionNo());
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
             }
             sqlSession.commit();
-            UiLogUtil.appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();

@@ -242,7 +242,7 @@ public class DiscoDFG8540Host extends EquipHost {
                 }
             }
             if (!selectOkFlag) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功SET UP！\n");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功SET UP！\n");
             }
         }
 
@@ -331,11 +331,11 @@ public class DiscoDFG8540Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
             if (execRecipe == null) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，将无法执行开机检查。请联系PE处理！\n");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，将无法执行开机检查。请联系PE处理！\n");
             }
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -351,29 +351,29 @@ public class DiscoDFG8540Host extends EquipHost {
             }
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else {
                 //开机check
                 if (equipStatus.equalsIgnoreCase("run")) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                     }
                     String trackInRcpName = deviceInfoExt.getRecipeName();
                     if (!"".equals(portARcpName) && !trackInRcpName.equals(portARcpName)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
                         this.holdDevice();
                     }
                     if (!"".equals(portBRcpName) && !trackInRcpName.equals(portBRcpName)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
                         this.holdDevice();
                     }
                     if (!ppExecName.equals(trackInRcpName)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
                         this.holdDevice();
                     }
                     if (execRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
                         //不允许开机
                         this.holdDevice();
                     }
@@ -438,7 +438,7 @@ public class DiscoDFG8540Host extends EquipHost {
                     sqlSession.close();
                     String trackInRcpName = deviceInfoExt.getRecipeName();
                     if (trackInRcpName == null || "".equals(trackInRcpName)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "领料信息不完整！\n");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料信息不完整！\n");
                     } else {
                         ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
                         boolean selectOkFlag = false;
@@ -455,7 +455,7 @@ public class DiscoDFG8540Host extends EquipHost {
                             }
                         }
                         if (!selectOkFlag) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功提交改机！\n");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功提交改机！\n");
                         }
                     }
                 }
@@ -512,7 +512,7 @@ public class DiscoDFG8540Host extends EquipHost {
             }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }

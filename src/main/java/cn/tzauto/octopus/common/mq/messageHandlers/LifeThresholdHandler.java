@@ -40,7 +40,7 @@ public class LifeThresholdHandler implements MessageHandler {
         DeviceInfo deviceInfo = null;
         try {
             deviceCode = mapMessage.getString("deviceCode").toString();
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备的当前刀片阀值");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求获取设备的当前刀片阀值");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);           
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
             if (equipHost.getEquipState().isCommOn()) {
@@ -48,7 +48,7 @@ public class LifeThresholdHandler implements MessageHandler {
                 if (equipBladeThresholdMap == null) {
                     z1LifeThreshold = "取值失败";
                     z2LifeThreshold = "取值失败";
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "获取刀片信息失败！");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取刀片信息失败！");
                 } else {
                     z1LifeThreshold = equipBladeThresholdMap.get("z1LifeThreshold").toString();
                     z2LifeThreshold = equipBladeThresholdMap.get("z2LifeThreshold").toString();
@@ -56,7 +56,7 @@ public class LifeThresholdHandler implements MessageHandler {
             } else {
                 z1LifeThreshold = "设备不在通讯状态，获取刀片信息失败！";
                 z2LifeThreshold = "设备不在通讯状态，获取刀片信息失败！";
-                UiLogUtil.appendLog2SeverTab(deviceCode, "设备不在通讯状态，获取刀片信息失败！");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备不在通讯状态，获取刀片信息失败！");
             }
         } catch (JMSException ex) {
             ex.printStackTrace();
@@ -74,7 +74,7 @@ public class LifeThresholdHandler implements MessageHandler {
             }
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SRcpQueue.sendMessage(topicName, mqMap);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备的当前刀片阀值：Z1=" + z1LifeThreshold + " Z2=" + z2LifeThreshold);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前刀片阀值：Z1=" + z1LifeThreshold + " Z2=" + z2LifeThreshold);
         } catch (JMSException ex) {
             ex.printStackTrace();
         } finally {

@@ -38,6 +38,7 @@ public class HongTeng7200Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        EquipStateChangeCeid=102;
     }
 
 
@@ -172,7 +173,7 @@ public class HongTeng7200Host extends EquipHost {
                 processS6F11LotCheck(data);
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             } else if (ceid == 202) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "批次已结批！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
@@ -221,7 +222,7 @@ public class HongTeng7200Host extends EquipHost {
         String workLot = "";
         try {
             lotId = ((SecsItem) data.get("LotId")).getData().toString();
-            UiLogUtil.appendLog2EventTab(deviceCode, "设备当前输入的批次号为" + lotId);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备当前输入的批次号为" + lotId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -234,7 +235,7 @@ public class HongTeng7200Host extends EquipHost {
 //        if (deviceInfoExt != null) {
 //            if (deviceInfoExt.getLotId() != null && !"".equals(deviceInfoExt.getLotId())) {
 //                workLot = deviceInfoExt.getLotId();
-//                UiLogUtil.appendLog2EventTab(deviceCode, "过账批次号为" + workLot);
+//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "过账批次号为" + workLot);
 //            }
 //        }
 //        List extLotList = lotIDRead(workLot);
@@ -249,10 +250,10 @@ public class HongTeng7200Host extends EquipHost {
 //            }
 //        }
         if (flag == true) {
-            UiLogUtil.appendLog2SeverTab(deviceCode, "批次号匹配一致，执行开机");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "批次号匹配一致，执行开机");
             sendS2f41Cmd("NEWLOT-OK");
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "检测到设备当前批次号与MES系统不匹配，不允许执行开机");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备当前批次号与MES系统不匹配，不允许执行开机");
             sendS2f41Cmd("NEWLOT-NG");
         }
     }
@@ -276,7 +277,7 @@ public class HongTeng7200Host extends EquipHost {
             //首先从服务端获取机台是否处于锁机状态
             //如果设备应该是锁机，那么首先发送锁机命令给机台
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                 pauseDevice();
             }
         }
@@ -292,10 +293,10 @@ public class HongTeng7200Host extends EquipHost {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (equipStatus.equalsIgnoreCase("READY")) {
             if ("Engineer".equals(deviceInfoExt.getBusinessMod())) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "工程模式，取消开机卡控！");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消开机卡控！");
             } else {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDevice();
                 }
                 //检查领料程序与设备在用程序是否一致
@@ -308,7 +309,7 @@ public class HongTeng7200Host extends EquipHost {
                     //1、如果下载的是Unique版本，那么执行完全比较
                     String downloadRcpVersionType = downLoadRecipe.getVersionType();
                     if ("Unique".equals(downloadRcpVersionType)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                         startCheckRecipePara(downLoadRecipe, "abs");
                     } else {
                         //2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
@@ -585,7 +586,7 @@ public class HongTeng7200Host extends EquipHost {
 //            }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -611,7 +612,7 @@ public class HongTeng7200Host extends EquipHost {
 //            }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }
@@ -664,7 +665,7 @@ public class HongTeng7200Host extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(recipeName, deviceType, "GOLD", null);
         if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
             //不允许开机
             this.holdDeviceAndShowDetailInfo();
         } else {
@@ -681,10 +682,10 @@ public class HongTeng7200Host extends EquipHost {
             checkResult = true;
         }
         if (!checkResult) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
             holdDeviceAndShowDetailInfo();
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
         }
         return checkResult;
     }

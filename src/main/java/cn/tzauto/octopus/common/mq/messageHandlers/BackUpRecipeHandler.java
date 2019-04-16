@@ -43,7 +43,7 @@ public class BackUpRecipeHandler implements MessageHandler {
             recipeList = (List<Recipe>) JsonMapper.String2List(mapMessage.getString("recipeList"), Recipe.class);
             recipeParaList = (List<RecipePara>) JsonMapper.String2List(mapMessage.getString("recipeParaList"), RecipePara.class);
             attachs = (List<Attach>) JsonMapper.String2List(mapMessage.getString("attachs"), Attach.class);
-            UiLogUtil.appendLog2SeverTab("ALL", "收到MQ消息，服务端请求备份recipe");
+           UiLogUtil.getInstance().appendLog2SeverTab("ALL", "收到MQ消息，服务端请求备份recipe");
         } catch (JMSException e) {
             logger.error("Exception:", e);
         }

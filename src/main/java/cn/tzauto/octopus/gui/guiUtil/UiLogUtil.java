@@ -5,23 +5,48 @@
 package cn.tzauto.octopus.gui.guiUtil;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-
-import java.util.Date;
-
-import cn.tzauto.octopus.gui.main.EapClient;
-import javafx.scene.control.*;
 import org.apache.log4j.Logger;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Date;
 
 /**
  * @author gavin
  */
 public class UiLogUtil {
 
+    private PropertyChangeSupport propertySupport;
+    private String eventmsgProperty;
+    private String servermsgProperty;
+    private String secsmsgProperty;
+
+    public final static String EVENT_LOG_PROPERTY = "EVENT_LOG_PROPERTY";
+    public final static String SECS_LOG_PROPERTY = "SECS_LOG_PROPERTY";
+    public final static String SERVER_LOG_PROPERTY = "SERVER_LOG_PROPERTY";
+
 
     //为UILog配置单独的日志文件
-    private static Logger logger = Logger.getLogger("UILog");
+    private Logger logger = Logger.getLogger("UILog");
 
-    private static String formateMsg(String deviceCode, String msg) {
+    private static volatile UiLogUtil singleton;
+
+    private UiLogUtil() {
+        propertySupport = new PropertyChangeSupport(this);
+    }
+
+    public static UiLogUtil getInstance() {
+        if (singleton == null) {
+            synchronized (UiLogUtil.class) {
+                if (singleton == null) {
+                    singleton = new UiLogUtil();
+                }
+            }
+        }
+        return singleton;
+    }
+
+    private String formateMsg(String deviceCode, String msg) {
         StringBuilder outMsg = new StringBuilder();
         outMsg.append("");
         String deviceInfoMsg = "";
@@ -33,30 +58,80 @@ public class UiLogUtil {
         return outMsg.toString();
     }
 
-    public static synchronized void appendLog2SeverTab(String deviceCode, String msg) {
-        TextArea secsLog = (TextArea) EapClient.root.lookup("#severLog");
+    public void appendLog2SeverTab(String deviceCode, String msg) {
+//        TextArea secsLog = (TextArea) EapClient.root.lookup("#severLog");
         String finalMsg = formateMsg(deviceCode, msg);
-        secsLog.appendText(finalMsg + "\n");
-//        DialogUtil.AutoNewLine1(secsLog);
+//        secsLog.appendText(finalMsg + "\n");
         logger.info("[ServerLog]" + finalMsg);
+        setServerMsgProperty(finalMsg);
     }
 
-    public static synchronized void appendLog2SecsTab(String deviceCode, String msg) {
-        TextArea secsLog = (TextArea) EapClient.root.lookup("#secsLog");
+    public void appendLog2SecsTab(String deviceCode, String msg) {
+//        TextArea secsLog = (TextArea) EapClient.root.lookup("#secsLog");
         String finalMsg = formateMsg(deviceCode, msg);
-        secsLog.appendText(finalMsg + "\n");
-//        DialogUtil.AutoNewLine1(secsLog);
+//        secsLog.appendText(finalMsg + "\n");
         logger.info("[SecsLog]" + finalMsg);
+        setSecsMsgProperty(finalMsg);
     }
 
-    public static synchronized void appendLog2EventTab(String deviceCode, String msg) {
-        TextArea eventLog = (TextArea) EapClient.root.lookup("#eventLog");
+    public void appendLog2EventTab(String deviceCode, String msg) {
+//        TextArea eventLog = (TextArea) EapClient.root.lookup("#eventLog");
         String finalMsg = formateMsg(deviceCode, msg);
-        eventLog.appendText(finalMsg + "\n");
-//        DialogUtil.AutoNewLine1(eventLog);
+//        eventLog.appendText(finalMsg + "\n");
         logger.info("[EventLog]" + finalMsg);
+        setEventMsgProperty(finalMsg);
     }
 
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertySupport.addPropertyChangeListener(listener);
+    }
 
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertySupport.removePropertyChangeListener(listener);
+    }
 
+    private void setEventMsgProperty(String value) {
+        String oldValue = eventmsgProperty;
+        eventmsgProperty = value;
+        logger.debug(EVENT_LOG_PROPERTY + "Property has been changed, old value = " + oldValue + " new value =" + value);
+        propertySupport.firePropertyChange(EVENT_LOG_PROPERTY, oldValue, eventmsgProperty);
+    }
+
+    private void setSecsMsgProperty(String value) {
+        String oldValue = secsmsgProperty;
+        secsmsgProperty = value;
+        logger.debug(SECS_LOG_PROPERTY + "Property has been changed, old value = " + oldValue + " new value =" + value);
+        propertySupport.firePropertyChange(SECS_LOG_PROPERTY, oldValue, secsmsgProperty);
+    }
+
+    private void setServerMsgProperty(String value) {
+        String oldValue = servermsgProperty;
+        servermsgProperty = value;
+        logger.debug(SERVER_LOG_PROPERTY + "Property has been changed, old value = " + oldValue + " new value =" + value);
+        propertySupport.firePropertyChange(SERVER_LOG_PROPERTY, oldValue, servermsgProperty);
+    }
+
+    public String getEventmsgProperty() {
+        return eventmsgProperty;
+    }
+
+    public void setEventmsgProperty(String eventmsgProperty) {
+        this.eventmsgProperty = eventmsgProperty;
+    }
+
+    public String getServermsgProperty() {
+        return servermsgProperty;
+    }
+
+    public void setServermsgProperty(String servermsgProperty) {
+        this.servermsgProperty = servermsgProperty;
+    }
+
+    public String getSecsmsgProperty() {
+        return secsmsgProperty;
+    }
+
+    public void setSecsmsgProperty(String secsmsgProperty) {
+        this.secsmsgProperty = secsmsgProperty;
+    }
 }

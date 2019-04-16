@@ -44,6 +44,7 @@ public class VSP88DNHTHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -92,7 +93,7 @@ public class VSP88DNHTHost extends EquipHost {
                     if (msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                         processS14F1in(msg);
                     } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                        processS6F11EquipStatus(msg);
+                        processS6F11in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) { //3
                         processS6F11inStripMapUpload(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {// 1
@@ -124,8 +125,8 @@ public class VSP88DNHTHost extends EquipHost {
         }
     }
 
-
-    protected void processS6F11EquipStatus(DataMsgMap data) {
+    @Override
+    public void processS6F11in(DataMsgMap data) {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
@@ -189,14 +190,12 @@ public class VSP88DNHTHost extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public void sendS2f33stripout() {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            //TODO activeWrapper.sendS2F33out();
-            activeWrapper.sendAwaitMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+        ArrayList list = new ArrayList();
+        list.add("2310");
+        list.add("2320");
+        list.add("2331");
+        list.add("2330");
+        super.sendS2F33Out(1,1,list);
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
@@ -229,7 +228,7 @@ public class VSP88DNHTHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -252,7 +251,7 @@ public class VSP88DNHTHost extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo();
                 } else {
                     //1、获取设备需要校验的信息类型,
@@ -260,7 +259,7 @@ public class VSP88DNHTHost extends EquipHost {
                     boolean hasGoldRecipe = true;
 //                    if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                        holdDeviceAndShowDetailInfo();
-//                        UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
 //                        return;
 //                    }
                     //查询trackin时的recipe和GoldRecipe
@@ -279,11 +278,11 @@ public class VSP88DNHTHost extends EquipHost {
 //                    if (startCheckMod != null && !"".equals(startCheckMod)) {
 //                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
 //                        if (!checkResult) {
-//                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
 //                            //不允许开机
 //                            holdDeviceAndShowDetailInfo();
 //                        } else {
-//                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
 //                            setAlarmState(0);
 //                        }
 //                    }
@@ -292,23 +291,23 @@ public class VSP88DNHTHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
 //                            this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                            UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo();
                                 return;
                             } else {
-                                UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
 //                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -347,7 +346,7 @@ public class VSP88DNHTHost extends EquipHost {
             funcType = "unload";
         }
         logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-        UiLogUtil.appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
 //        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
 
         msgMap.put("deviceCode", deviceCode);
@@ -359,7 +358,7 @@ public class VSP88DNHTHost extends EquipHost {
                 MapMessage mapMessage = (MapMessage) message;
                 result = mapMessage.getString("message");
             } else {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
             }
         } catch (Exception ex) {
             logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
@@ -374,10 +373,10 @@ public class VSP88DNHTHost extends EquipHost {
             this.sends2f41stripReply(false);
             sendS2f41Cmd("STOP");
             if ("".equals(result)) {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
             }
         }
-        UiLogUtil.appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
         sendS2f41Cmd("LOCAL");
 //        changeEqptControlStateAndShowDetailInfo("LOCAL");
     }
@@ -400,53 +399,12 @@ public class VSP88DNHTHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-
-        long length = TransferUtil.getPPLength(localFilePath);
-        if (length == 0) {
-            resultMap.put("ppgnt", 9);
-            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
-            return resultMap;
-        }
-
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F1out(targetRecipeName + ".rcp", length, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-            byte ppgnt = (byte) data.get("PPGNT");
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-            resultMap.put("ppgnt", ppgnt);
-            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ppgnt", 9);
-            resultMap.put("Description", e.getMessage());
-
-        }
-        return resultMap;
+        return super.sendS7F1out(localFilePath,targetRecipeName + ".rcp");
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName + ".rcp", ppbody, FormatCode.SECS_BINARY);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte ackc7 = (byte) data.get("ACKC7");
-
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
+        return super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".rcp");
     }
 
     @Override
@@ -478,30 +436,7 @@ public class VSP88DNHTHost extends EquipHost {
     @Override
     public Map sendS7F17out(String recipeName) {
         recipeName = recipeName + ".rcp";
-        byte ackc7 = 0;
-        try {
-            List recipeIDlist = new ArrayList();
-            recipeIDlist.add(recipeName);
-            DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-
-            ackc7 = (byte) data.get("ACKC7");
-
-            if (ackc7 == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
+        return super.sendS7F17out(recipeName);
     }
 // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
@@ -576,7 +511,7 @@ public class VSP88DNHTHost extends EquipHost {
             return map;
         } else {
             sendS2f41Cmd("LOCAL");
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

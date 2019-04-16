@@ -32,7 +32,7 @@ public class MessageProcess implements MessageHandler {
             deviceTypeId = mapMessage.getString("deviceTypeId") + "";
             deviceCode = mapMessage.getString("deviceCode") + "";
             msgName = mapMessage.getString("msgName") + "";
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "接收到mq============================");
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "接收到mq============================");
             mqLogger.info("接收到mq==================================,deviceCode：" + deviceCode + "，msgName:" + msgName + "，deviceTypeId:" + deviceTypeId);
             if (isInvoke(deviceCode, deviceTypeId)) {
                 logger.info("接收到mq==================================" + deviceCode + "==deviceTypeId:" + deviceTypeId);

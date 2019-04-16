@@ -11,8 +11,10 @@ import cn.tzauto.octopus.common.mq.SubscribeMessage;
 import cn.tzauto.octopus.common.mq.common.MQConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.common.util.tool.CommonUtil;
+import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.socket.EquipStatusListen;
@@ -24,23 +26,23 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCharacterCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
@@ -80,7 +82,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
     public ConcurrentHashMap<String, EquipModel> equipModels;
     public static ConcurrentHashMap<String, EquipStatusPane> equipStatusPanes = new ConcurrentHashMap<>();
 
-    public static Parent root;
+    public static GridPane root;
     public Tab mainTab;
 
     public static ServerSocket server;
@@ -104,7 +106,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         stage.setMinHeight(600);
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
-
         window.initStyle(StageStyle.UNDECORATED);
         window.setResizable(false);
         Label loadinglabel = new Label();
@@ -125,11 +126,86 @@ public class EapClient extends Application implements JobListener, PropertyChang
         Platform.runLater(() -> {
             try {
                 ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());//new Locale("zh", "TW");Locale.getDefault()
-                FXMLLoader fXMLLoader = new FXMLLoader();
                 root = FXMLLoader.load(getClass().getClassLoader().getResource("Main.fxml"), resourceBundle);
+                GridPane gridPane = new GridPane();
+                gridPane.setStyle("-fx-background-color: white;");
+                gridPane.setPrefHeight(32);
+                gridPane.setAlignment(Pos.CENTER_LEFT);
+                Label label = new Label("  EAPClient");
+                label.setFont(Font.font(14));
+                label.setTextFill(Paint.valueOf("BLACK"));
+                ImageView imageView = new ImageView("logoTaiZhi.png");
+                imageView.setFitHeight(24);
+                imageView.setFitWidth(24);
+                label.setGraphic(imageView);
+
+                Button minButton = new Button("—");
+                Button amxButton = new Button("口");
+                minButton.setFont(Font.font(14));
+                amxButton.setFont(Font.font(14));
+                VBox box = new VBox();
+                VBox vBox = new VBox();
+                minButton.setStyle("-fx-base: rgb(243,243,243);"
+                        + "-fx-max-height: infinity;-fx-text-fill: #000000 ; -fx-border-image-insets: 0;-fx-background-color: white;");
+                amxButton.setStyle("-fx-base: rgb(243,243,243); "
+                        + "-fx-max-height: infinity;-fx-text-fill: #000000 ; -fx-border-image-insets: 0;-fx-background-color: white");
+
+                minButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        minButton.setStyle("-fx-background-color: red");
+                    }
+                });
+                amxButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        amxButton.setStyle("-fx-background-color: red");
+                    }
+                });
+                minButton.setOnMouseExited(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        minButton.setStyle("-fx-background-color: white");
+                    }
+                });
+                amxButton.setOnMouseExited(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        amxButton.setStyle("-fx-background-color: white");
+                    }
+                });
+                minButton.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent event) {
+                        stage.setIconified(true);
+
+                    }
+                });
+                amxButton.setOnAction(new EventHandler<ActionEvent>() {
+
+                    @Override
+                    public void handle(ActionEvent event) {
+                        stage.setMaximized(!stage.isMaximized());
+                        root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
+                    }
+                });
+
+                gridPane.addColumn(0, label);
+                gridPane.setHgrow(label, Priority.ALWAYS);
+                gridPane.addColumn(1, minButton);
+                gridPane.addColumn(2, amxButton);
+
+                vBox.getChildren().addAll(box, root);
+                // 拖动监听器
+                dragUtil.addDragListener(stage, gridPane);
+                // 添加窗体拉伸效果
+                dragUtil.addDrawFunc(stage, vBox, root);
+                box.getChildren().addAll(gridPane, root);
+
                 stage.setTitle("EAPClient");
-                Scene scene = new Scene(root);
+                Scene scene = new Scene(vBox);
                 stage.setScene(scene);
+                stage.initStyle(StageStyle.TRANSPARENT);
 
                 // String clientId = GlobalConstants.getProperty("clientId");
 //                stage.setFullScreen(true);
@@ -276,6 +352,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
             value.addPropertyChangeListener(this);
         }
+        UiLogUtil.getInstance().addPropertyChangeListener(this);
     }
 
     public void startHostSwing() {
@@ -481,6 +558,26 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     equipHost.changeEquipPanel(map);
                     //监听到通信失败事件，重新启动线程通信
                     startComByEqp(src);
+                }
+            }
+        } else if (source instanceof UiLogUtil) {
+            UiLogUtil src = (UiLogUtil) source;
+            if (property.equalsIgnoreCase(UiLogUtil.EVENT_LOG_PROPERTY)) {
+                TextArea temp = (TextArea) EapClient.root.lookup("#eventLog");
+                if (temp != null) {
+                    temp.appendText(newValue.toString() + "\n");
+                }
+
+            } else if (property.equalsIgnoreCase(UiLogUtil.SERVER_LOG_PROPERTY)) {
+                TextArea temp = (TextArea) EapClient.root.lookup("#severLog");
+                if (temp != null) {
+                    temp.appendText(newValue.toString() + "\n");
+                }
+            } else if (property.equalsIgnoreCase(UiLogUtil.SECS_LOG_PROPERTY)) {
+
+                TextArea temp = (TextArea) EapClient.root.lookup("#secsLog");
+                if (temp != null) {
+                    temp.appendText(newValue.toString() + "\n");
                 }
             }
         }

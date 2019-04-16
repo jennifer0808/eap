@@ -35,10 +35,10 @@ public class TransferArRecipeHandler implements MessageHandler {
             recipes = (List<Recipe>) JsonMapper.String2List(mapMessage.getString("arRecipe"), Recipe.class);
             deviceCode = mapMessage.getString("deviceCode");
 //            recipeParas = (List<RecipePara>) JsonMapper.String2List(mapMessage.getString("arRecipePara"), RecipePara.class);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求同步该设备的Recipe信息，RecipeName为" + recipes.get(0).getRecipeName());
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "Recipes大小为:" + recipes.size() + "  RecipeParas大小为:" + recipeParas.size());
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求同步该设备的Recipe信息，RecipeName为" + recipes.get(0).getRecipeName());
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "Recipes大小为:" + recipes.size() + "  RecipeParas大小为:" + recipeParas.size());
 //            GlobalConstants.rcpParaNumber = GlobalConstants.rcpParaNumber + recipeParas.size();
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "RecipePara总数：" + GlobalConstants.rcpParaNumber);
+//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "RecipePara总数：" + GlobalConstants.rcpParaNumber);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

@@ -35,7 +35,7 @@ public class GetRecipeListFromDeviceWebservice implements BaseWebservice {
         Map webMap = new HashMap();
         try {
             String deviceCode = String.valueOf(map.get("deviceCode"));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             List equipRecipeList = new ArrayList();
             Map equipRecipeListState = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
@@ -46,7 +46,7 @@ public class GetRecipeListFromDeviceWebservice implements BaseWebservice {
             webMap.put("msgName", "FindEqptRecipeList");
             webMap.put("EqptRecipeList", JSONArray.toJSONString(equipRecipeList));
             webMap.put("eventDesc", "向服务端发送设备的当前Recipe列表" + equipRecipeList);
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备的当前Recipe列表:" + equipRecipeList);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前Recipe列表:" + equipRecipeList);
         } catch (Exception ex) {
             logger.error("Exception:", ex);
             webMap.put("eventDesc", "向服务端发送设备的当前Recipe列表失败");

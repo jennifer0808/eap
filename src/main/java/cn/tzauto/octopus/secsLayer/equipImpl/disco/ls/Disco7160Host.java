@@ -247,7 +247,7 @@ public class Disco7160Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -259,34 +259,34 @@ public class Disco7160Host extends EquipHost {
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
                 if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                        UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                         return;
                     }
                     if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     //检查程序是否存在 GOLD
                     Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                     if (goldRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                         this.holdDevice();
                         return;
                     }
                     if (checkRecipe == null) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
                         this.holdDevice();
                     } else {
                         this.startCheckRecipePara(checkRecipe);
@@ -376,7 +376,7 @@ public class Disco7160Host extends EquipHost {
         if (eqpRecipeName.contains("\\")) {
             String[] recipeNames = eqpRecipeName.split("\\\\");
             if (recipeNames.length < 2) {
-                UiLogUtil.appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
+               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
                 return null;
             }
             recipeName = recipeNames[1];
@@ -491,7 +491,7 @@ public class Disco7160Host extends EquipHost {
             }
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！\n");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
             return null;
         }
     }
@@ -518,7 +518,7 @@ public class Disco7160Host extends EquipHost {
             logger.info("开始start线程！！！！！！！！！！！！！！！");
             return cmdMap;
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "未设置锁机！\n");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
             return null;
         }
     }

@@ -158,7 +158,7 @@ public class AWD300TXHost extends EquipHost {
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
             }
             if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备将被锁定!");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备将被锁定!");
                 holdDeviceAndShowDetailInfo();
             }
 
@@ -195,15 +195,15 @@ public class AWD300TXHost extends EquipHost {
                 if (startCheckMod != null && !"".equals(startCheckMod)) {
                     checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                     if (!checkResult) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备将被锁定！请联系PE处理！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备将被锁定！请联系PE处理！");
                         //不允许开机
                         holdDeviceAndShowDetailInfo();
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                         if (goldRecipe == null) {
                             //TODO  这里需要讨论做试产时的情况
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
                         }
                         this.setAlarmState(0);
                     }
@@ -213,22 +213,22 @@ public class AWD300TXHost extends EquipHost {
                     //1、如果下载的是Unique版本，那么执行完全比较
                     String downloadRcpVersionType = checkRecipe.getVersionType();
                     if ("Unique".equals(downloadRcpVersionType)) {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                         this.startCheckRecipePara(checkRecipe, "abs");
                     } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                         if (goldRecipe == null) {
-                            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                             //不允许开机
                             this.holdDeviceAndShowDetailInfo();
                         } else {
-                            UiLogUtil.appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                             this.startCheckRecipePara(checkRecipe, "abs");
                         }
 
                     }
                 } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "没有设置开机check");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                 }
             }
         } catch (Exception e) {
@@ -251,7 +251,7 @@ public class AWD300TXHost extends EquipHost {
             e.printStackTrace();
         }
         if (msgData == null || msgData.isEmpty()) {
-            UiLogUtil.appendLog2SecsTab(deviceCode, "获取设备参数信息失败，可能原因是当前设备为RUN状态，请检查！");
+           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备参数信息失败，可能原因是当前设备为RUN状态，请检查！");
             logger.error("获取设备:" + deviceCode + "参数信息失败，可能原因是当前机台为RUN状态！");
             return null;
         }
@@ -382,7 +382,7 @@ public class AWD300TXHost extends EquipHost {
             mqMap.put("lotId", lotId);
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查未通过，设备将被锁定！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过，设备将被锁定！");
                 this.holdDeviceAndShowDetailInfo();
                 logger.debug("设备：" + deviceCode + " 开机Check失败");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
@@ -391,7 +391,7 @@ public class AWD300TXHost extends EquipHost {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + "，异常参数名称为：" + recipePara.getParaName() + "，其异常值为：" + recipePara.getSetValue() + "，其设定值为：" + recipePara.getMinValue();
-                    UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
@@ -399,7 +399,7 @@ public class AWD300TXHost extends EquipHost {
                 Map panelMap = new HashMap();
                 panelMap.put("AlarmState", 0);
                 changeEquipPanel(panelMap);
-                UiLogUtil.appendLog2EventTab(deviceCode, "开机Check通过！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.debug("设备：" + deviceCode + " 开机Check成功");
             }

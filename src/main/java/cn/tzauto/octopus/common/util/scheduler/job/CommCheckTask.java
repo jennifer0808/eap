@@ -122,7 +122,7 @@ public class CommCheckTask implements Job {
                         logger.info("检测到初始化未通信、====checkNotComm======" + currentHost.checkNotComm);
                         //如果网络连接正常，通信异常情况下，重新启动连接
                         if (currentHost.checkNotComm >= checkTimes) {
-                            UiLogUtil.appendLog2EventTab(currentHost.getDeviceCode(), " Not comm 次数超过" + checkTimes + "次");
+                           UiLogUtil.getInstance().appendLog2EventTab(currentHost.getDeviceCode(), " Not comm 次数超过" + checkTimes + "次");
                             setPanelCommFail( GlobalConstants.stage.equipHosts.get(deviceId));
                             currentHost.checkNotComm = 0;
                             checkNetAndDealer(deviceId, src);
@@ -216,7 +216,7 @@ public class CommCheckTask implements Job {
     private void doWhenNetRight(String deviceId, EquipNodeBean src) {
         if (! GlobalConstants.stage.equipHosts.get(deviceId).isIsRestarting()) {
             GlobalConstants.stage.equipHosts.get(deviceId).checkNotReady = 0;
-            UiLogUtil.appendLog2EventTab( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode(), "工控机与设备网络连接正常，开始重启SECS连接...");
+           UiLogUtil.getInstance().appendLog2EventTab( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode(), "工控机与设备网络连接正常，开始重启SECS连接...");
             //自动重连发送日志给服务端
             GlobalConstants.sendStartLog2Server( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode());
             resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
@@ -238,12 +238,12 @@ public class CommCheckTask implements Job {
         } else {
             deviceCode = deviceId;
         }
-        UiLogUtil.appendLog2EventTab(deviceCode, "工控机与设备网络连接异常，等待网络恢复后重启通讯连接");
+       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控机与设备网络连接异常，等待网络恢复后重启通讯连接");
         //锁批次
         if (!GlobalConstants.hadHoldLotFlagMap.containsKey(deviceId)) {
             String holdLotFlag = GlobalConstants.getProperty("NET_BREAK_HOLD_LOT");
             if (holdLotFlag != null && !"".equals(holdLotFlag) && "1".equals(holdLotFlag)) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "DeviceCode:" + deviceCode + "检测到网络中断，需要HoldLot");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "DeviceCode:" + deviceCode + "检测到网络中断，需要HoldLot");
                 logger.info("DeviceCode:" + deviceCode + "已配置HoldLot标志，开始HoldLot...");
                 holdLot(deviceId);
             }
@@ -425,10 +425,10 @@ public class CommCheckTask implements Job {
         }
         if (lotId != null && !"".equals(lotId)) {
             if (!GlobalConstants.holdLotMap.containsKey(lotId)) {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "开始HoldLot...Lot:" + lotId);
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "开始HoldLot...Lot:" + lotId);
                 holdResult = AxisUtility.holdLotByMES(userId, deviceCode, lotId, holdCode, reason);
                 GlobalConstants.holdLotMap.put(lotId, true);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "HoldLot结束...Lot:" + lotId + "，结果为:" + holdResult);
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "HoldLot结束...Lot:" + lotId + "，结果为:" + holdResult);
                 if ("OK".equalsIgnoreCase(holdResult)) {
                     //邮件通知
                     List<String> toList = new ArrayList();

@@ -157,7 +157,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void notificationOfSecsDriverReady(int deviceId) {
         logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
-        UiLogUtil.appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
+       UiLogUtil.getInstance().appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(true);
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setIsRestarting(false);

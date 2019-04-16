@@ -173,7 +173,7 @@ public class SYMLSSP2000EDHost extends EquipModel {
                 }
 
                 if (!resultList.isEmpty() && resultList.get(0).contains("error")) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     map.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
@@ -203,10 +203,10 @@ public class SYMLSSP2000EDHost extends EquipModel {
         String clientRecipeAbsolutePath = getClientFtpRecipeAbsolutePath(recipeName);
         //将本地路径：clientRecipeAbsolutePath+datFile，上传到远地服务端：/，取名为：recipeName + "_V" + recipe.getVersionNo() + ".txt"
         if (!FtpUtil.uploadFile(clientRecipeAbsolutePath + datFile, remoteRcpPath, recipeName + "_V" + recipe.getVersionNo() + ".txt", ftpip, ftpPort, ftpUser, ftpPwd)) {
-            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + datFile + "工控路径:" + clientRecipeAbsolutePath);
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + datFile + "工控路径:" + clientRecipeAbsolutePath);
             return false;
         }
-        UiLogUtil.appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         // this.deleteTempFile(recipeName);
         return true;
     }
@@ -293,17 +293,17 @@ public class SYMLSSP2000EDHost extends EquipModel {
                         //ftp 127.0.0.1 rms xccdkj@123 "D:\autotz\sinyang\Recipe\长电sym0288力控2017-12-05\UserDat" "/RECIPE/STMLSSP2000ED_0001QFN LL 5X5-6X6temp/" "get File1.dat
                         String cmdDown = "ftp " + localftpip + " " + ftpUser + " " + ftpPwd + " \"" + recipePath + "\" \"" + clientRelativeFtpPath + "\" \"" + "get " + datFile;
                         iSecsHost.executeCommand(cmdDown);
-                        UiLogUtil.appendLog2EventTab(deviceCode, "下载recipe[" + recipeName + "]成功。");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载recipe[" + recipeName + "]成功。");
                         downLoadResult = "0";
                     } catch (IOException e) {
                         e.printStackTrace();
-                        UiLogUtil.appendLog2EventTab(deviceCode, "写入新的recipe，原先存在删除失败！下载recipe[" + recipeName + "]失败。");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "写入新的recipe，原先存在删除失败！下载recipe[" + recipeName + "]失败。");
                         downLoadResult = "下载recipe[" + recipeName + "]失败。";
                     }
                 }
 
                 if (!resultList.isEmpty() && resultList.get(0).contains("error")) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     downLoadResult = "uploadResult上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.";
                 }
 

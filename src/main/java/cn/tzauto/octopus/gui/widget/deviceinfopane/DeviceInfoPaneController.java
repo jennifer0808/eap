@@ -33,7 +33,6 @@ import org.apache.log4j.Logger;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -126,19 +125,24 @@ public class DeviceInfoPaneController implements Initializable {
             equipStatus.setText(deviceInfo.getDeviceStatus());
             deviceType = (TextField) root.lookup("#deviceType");
             deviceType.setText(deviceInfo.getDeviceType());
-            Map map = new HashMap();
+
+            lotNo = (TextField)root.lookup("#lotNo");
+            recipeVersionNo = (TextField)root.lookup("#recipeVersionNo");
+            JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
+            officeName = (TextField)root.lookup("#officeName");
+//            Map map = new HashMap();
             try {
 //                map = (Map) statusMap.get(tempDeviceDode);
-                map = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
+                Map map = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
                 if (map == null || map.get("PPExecName") == null || map.isEmpty()) {
-                    UiLogUtil.appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
+                   UiLogUtil.getInstance().appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
                     JOptionPane.showMessageDialog(null, "获取设备当前状态信息失败，请检查设备状态.");
 //                    CommonUtil.alert("获取设备当前状态信息失败，请检查设备状态.");
                     recipeName.setText(deviceInfoExt.getRecipeName());
                     recipeName.setTooltip(new Tooltip(deviceInfoExt.getRecipeName()));
                     equipStatus.setText(deviceInfoExt.getDeviceStatus());
                 } else {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "测试 SwingWorker......");
+//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "测试 SwingWorker......");
 //                    Thread.sleep(10000);
                     recipeName = (TextField) root.lookup("#recipeName");
                     recipeName.setText(String.valueOf(map.get("PPExecName")));

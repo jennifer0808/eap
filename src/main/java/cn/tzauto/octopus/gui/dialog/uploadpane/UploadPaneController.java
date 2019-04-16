@@ -232,7 +232,7 @@ public class UploadPaneController implements Initializable {
                 }
                 if ("N".equals(recipeMap.get("shortNameOK"))) {
                     JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
-                    UiLogUtil.appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
                     return;
                 }
                 //T640如果三个文件没有全部上传成功，即可认定为上传失败，不走上传流程，rcpAnalyseSucceed为N表示上传失败
@@ -259,11 +259,11 @@ public class UploadPaneController implements Initializable {
                     if (!re) {
                         JOptionPane.showMessageDialog(null, "上传失败，ftp文件传送失败，请重新上传");
                     } else {
-                        UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
+                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
                     }
                     sqlSession.commit();
                 } else {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
                 }
             }
         }

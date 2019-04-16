@@ -39,7 +39,7 @@ public class FindEqptRecipeListHandler implements MessageHandler {
         DeviceInfo deviceInfo = null;
         try {
             String deviceCode = mapMessage.getString("deviceCode");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求获取设备上的Recipe列表...");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             String deviceId = deviceInfo.getDeviceCode();
             List equipRecipeList = new ArrayList();
@@ -59,7 +59,7 @@ public class FindEqptRecipeListHandler implements MessageHandler {
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端[" + topicName + "]回复设备的当前Recipe列表" + JSONArray.toJSONString(mqMap));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送设备的当前Recipe列表:" + equipRecipeList);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前Recipe列表:" + equipRecipeList);
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
         } finally {

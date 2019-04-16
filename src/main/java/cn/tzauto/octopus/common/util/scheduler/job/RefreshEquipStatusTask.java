@@ -60,15 +60,15 @@ public class RefreshEquipStatusTask implements Job {
                     if ("pause".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) {
                         if (equipModel.checkLockFlagFromServerByWS(equipModel.deviceCode)) {
                             String stopResult = equipModel.pauseEquip();
-                            UiLogUtil.appendLog2SeverTab(equipModel.deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+                           UiLogUtil.getInstance().appendLog2SeverTab(equipModel.deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
                         }
                     }
                     if (("Ready".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus))) {
                         logger.info("设备:" + equipModel.deviceCode + "开机作业.");
-                        UiLogUtil.appendLog2EventTab(equipModel.deviceCode, "设备进入运行状态...");
+                       UiLogUtil.getInstance().appendLog2EventTab(equipModel.deviceCode, "设备进入运行状态...");
                         if (!equipModel.startCheck()) {
                             String stopResult = equipModel.stopEquip();
-                            UiLogUtil.appendLog2EventTab(equipModel.deviceCode, "设备将被锁机...");
+                           UiLogUtil.getInstance().appendLog2EventTab(equipModel.deviceCode, "设备将被锁机...");
                             String holdDesc = "";
                             Map mqMap = new HashMap();
                             if ("0".equals(stopResult)) {
@@ -76,7 +76,7 @@ public class RefreshEquipStatusTask implements Job {
                                 Map map = new HashMap();
                                 map.put("EquipStatus", "Idle");
                                 equipModel.changeEquipPanel(map);
-                                UiLogUtil.appendLog2EventTab(equipModel.deviceCode, "锁机成功...");
+                               UiLogUtil.getInstance().appendLog2EventTab(equipModel.deviceCode, "锁机成功...");
                                 mqMap.put("holdResult", "锁机成功");
                             } else {
                                 mqMap.put("holdResult", "锁机失败");

@@ -55,7 +55,7 @@ public class DownLoadHandler implements MessageHandler {
                 recipeParaListGold = (List<RecipePara>) JsonMapper.String2List(mapMessage.getString("recipeParaGold"), RecipePara.class);
                 attachGolds = (List<Attach>) JsonMapper.String2List(mapMessage.getString("arAttachGold"), Attach.class);
             }
-            UiLogUtil.appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求下载recipe " + recipe.getRecipeName() + " 到设备");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求下载recipe " + recipe.getRecipeName() + " 到设备");
         } catch (JMSException e) {
             logger.error("Exception:", e);
         }
@@ -63,7 +63,7 @@ public class DownLoadHandler implements MessageHandler {
             //判断服务端发来的数据是否有GOLD版本
             if (!"GOLD".equalsIgnoreCase(recipe.getVersionType())) {
                 if (recipeGold == null || !"GOLD".equalsIgnoreCase(recipeGold.getVersionType())) {
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "服务端没有下载recipe " + recipe.getRecipeName() + " 的Gold版本到设备，请联系ME处理");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端没有下载recipe " + recipe.getRecipeName() + " 的Gold版本到设备，请联系ME处理");
                     return;
                 }
             }
@@ -165,13 +165,13 @@ public class DownLoadHandler implements MessageHandler {
                     mqMap.put("eventDesc", "下载成功!");
                     recipeOperationLog.setOperationResult("Y");
                     mqMap.put("downloadResult", "Y");
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "下载成功!");
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载成功!");
                 } else {
                     mqMap.put("eventDesc", "下载失败," + downLoadResultString);
                     mqMap.put("downloadResult", "N");
                     recipeOperationLog.setOperationResult("N");
                     recipeOperationLog.setOperationResultDesc(downLoadResultString);
-                    UiLogUtil.appendLog2SeverTab(deviceCode, "下载失败," + downLoadResultString);
+                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载失败," + downLoadResultString);
                 }
                 //保存下载结果至数据库并发送至服务端
                 recipeService.saveRecipeOperationLog(recipeOperationLog);
@@ -181,7 +181,7 @@ public class DownLoadHandler implements MessageHandler {
                 mqMap.put("eventDesc", "下载失败");
                 mqMap.put("downloadResult", "N");
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
-                UiLogUtil.appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
             }
             sqlSession.commit();
         } catch (ParseException e) {

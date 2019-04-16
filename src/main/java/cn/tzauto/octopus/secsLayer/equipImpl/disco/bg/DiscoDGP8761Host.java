@@ -319,7 +319,7 @@ public class DiscoDGP8761Host extends EquipHost {
         Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
         if (execRecipe == null) {
             //TODO  这里需要讨论做试产时的情况
-            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
         }
         if (deviceInfoExt == null) {
             deviceInfoExt = setDeviceInfoExt();
@@ -342,19 +342,19 @@ public class DiscoDGP8761Host extends EquipHost {
 //        }
         if (equipStatus.equalsIgnoreCase("run")) {
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                 this.holdDevice();
                 return;
             }
             if (!"".equals(portARcpName) && !"".equals(portBRcpName)) {
                 if (!ppExecName.equals(portARcpName) || !ppExecName.equals(portBRcpName)) {
-                    UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与Port口程序不一致，设备被锁定！请联系ME处理！");
+                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与Port口程序不一致，设备被锁定！请联系ME处理！");
                     this.holdDevice();
                     return;
                 }
             }
             if (execRecipe == null) {
-                UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                 //不允许开机
                 this.holdDevice();
                 return;
@@ -424,7 +424,7 @@ public class DiscoDGP8761Host extends EquipHost {
             }
             if (ceid == 1000000401) {
                 String DFMppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-                UiLogUtil.appendLog2EventTab(deviceCode, "DFM使用的程序为： " + DFMppExecName);
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "DFM使用的程序为： " + DFMppExecName);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -469,7 +469,7 @@ public class DiscoDGP8761Host extends EquipHost {
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
             return this.sendS2f41Cmd("PAUSE");
         } else {
-            UiLogUtil.appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }

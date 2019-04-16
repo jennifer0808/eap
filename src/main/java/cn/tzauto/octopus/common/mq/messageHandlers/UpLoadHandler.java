@@ -44,7 +44,7 @@ public class UpLoadHandler implements MessageHandler {
         try {
             String deviceCode = mapMessage.getString("deviceCode");
             String recipeName = mapMessage.getString("recipeName");
-            UiLogUtil.appendLog2SeverTab(deviceCode, "服务端请求上传Recipe:[" + recipeName + "]");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求上传Recipe:[" + recipeName + "]");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
             String deviceId = deviceInfo.getDeviceCode();
             Recipe recipe = new Recipe();
@@ -78,7 +78,7 @@ public class UpLoadHandler implements MessageHandler {
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端[" + topicName + "]回复获取到的Recipe信息" + JSONArray.toJSONString(mqMap));
-            UiLogUtil.appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
         } finally {
