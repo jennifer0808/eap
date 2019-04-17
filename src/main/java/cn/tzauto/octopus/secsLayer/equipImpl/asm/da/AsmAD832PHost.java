@@ -191,7 +191,7 @@ public class AsmAD832PHost extends EquipHost {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
-                } else if (ceid == 1) {
+                } else if (ceid == 4||ceid == 2||ceid == 3) {
                     processS6F11ControlStateChange(data);
                 } else if (ceid == 175) {
                     processS6F11PPExecNameChange(data);
