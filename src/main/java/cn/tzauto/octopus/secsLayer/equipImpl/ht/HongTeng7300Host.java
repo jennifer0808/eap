@@ -279,7 +279,6 @@ public class HongTeng7300Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        sendS7F17out(targetRecipeName.replace("@", "/"));
         Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName.replace("@", "/"));
         resultMap.put("ppid",targetRecipeName);
         return resultMap;
