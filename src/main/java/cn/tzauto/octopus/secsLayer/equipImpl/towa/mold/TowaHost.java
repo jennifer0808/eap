@@ -90,25 +90,6 @@ public class TowaHost extends EquipHost {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f112dcodereview")) {
-                    processS6f11StripIDReview(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    try {
-                        processS6F11EquipStatus(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
-                    handleCleanRecipe(ppExecName);
-                } else {
-                    //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
-                    //      + " which I do not want to process! ");
                 }
             } catch (InterruptedException e) {
                 logger.info(getName() + "从阻塞中退出...");
