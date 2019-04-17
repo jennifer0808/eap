@@ -31,7 +31,7 @@ public class AsmAD832PHost extends EquipHost {
     public AsmAD832PHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
-        EquipStateChangeCeid = 4L;
+        EquipStateChangeCeid = 8L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
