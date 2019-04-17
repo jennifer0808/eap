@@ -20,7 +20,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -310,7 +309,7 @@ public class T740Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         Map hanAndCompMap = getRelativeFileInfo(localFilePath, targetRecipeName);
-        if (hanAndCompMap == null) {
+        if (hanAndCompMap == null || hanAndCompMap.size() == 0) {
             return null;
         }
         long length0  = TransferUtil.getPPLength(localFilePath);
@@ -435,7 +434,7 @@ public class T740Host extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) {
-        if ("Idle".equalsIgnoreCase(equipStatus) || "UNKNOWN".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
+         if ("Idle".equalsIgnoreCase(equipStatus) || "UNKNOWN".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
             Recipe recipe = setRecipe(recipeName);
             recipePath = super.getRecipePathByConfig(recipe);
             byte[] ppbody = (byte[]) getPPBODY(recipeName);
@@ -540,29 +539,15 @@ public class T740Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        s7f19out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-//            data = activeWrapper.sendAwaitMessage(s7f19out);
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (data == null || data.isEmpty()) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        Map resultMap = super.sendS7F19out();
+        ArrayList list = (ArrayList) resultMap.get("eppd");
+
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+           //底层方法没有转换，一般可用 ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
             ArrayList t640RecipeList = new ArrayList();
-            for (Object recipeName : listtmp) {
+            for (Object recipeName : list) {
                 if (recipeName.toString().contains("recipe")) {
                     t640RecipeList.add(recipeName);
                 }

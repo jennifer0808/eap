@@ -21,7 +21,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -45,6 +44,7 @@ public class Au800Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 5000;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -91,7 +91,7 @@ public class Au800Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11IN")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     this.processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     this.processS6F11EquipStatusChange(msg);
@@ -189,13 +189,10 @@ public class Au800Host extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == 4047 || ceid == 5000 || ceid == 4050) {
                 processS6F11EquipStatusChange(data);
-            } else if (ceid == 4001 || ceid == 4002) {
+            } else if (ceid == 4001 || ceid == 4002|| ceid == 4000) {
                 processS6F11EquipStatus(data);
             } else if (ceid == 5128L) {
                 findDeviceRecipe();
-                Map map = new HashMap();
-                map.put("PPExecName", ppExecName.replace(".xml", ""));
-                changeEquipPanel(map);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -243,7 +240,7 @@ public class Au800Host extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -262,7 +259,7 @@ public class Au800Host extends EquipHost {
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
 
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -284,11 +281,11 @@ public class Au800Host extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo(" There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.");
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         }
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
@@ -296,21 +293,21 @@ public class Au800Host extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 holdDeviceAndShowDetailInfo();
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -324,15 +321,15 @@ public class Au800Host extends EquipHost {
 
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+ ".xml");
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F1out(localFilePath, targetRecipeName + ".xml");
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName+ ".xml");
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".xml");
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
@@ -342,13 +339,13 @@ public class Au800Host extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendS7F5out(recipeName+ ".xml");
+            data = activeWrapper.sendS7F5out(recipeName + ".xml");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         List recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[])  data.get("PPBODY");
+            byte[] ppbody = (byte[]) data.get("PPBODY");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             recipeParaList = Au800RecipeUtil.transferAu800Rcp(recipePath);
@@ -368,8 +365,8 @@ public class Au800Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        Map resultMap = super.sendS7F17out(recipeName+ ".xml");
-        resultMap.put("ppid",recipeName);
+        Map resultMap = super.sendS7F17out(recipeName + ".xml");
+        resultMap.put("ppid", recipeName);
         return resultMap;
     }
 
@@ -378,18 +375,15 @@ public class Au800Host extends EquipHost {
     public Map sendS7F19out() {
         Map resultMap = super.sendS7F19out();
         ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if(recipeList.size()!=0){
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
-            List<Object> recipeNames = new ArrayList<>();
-            for (Object obj : listtmp) {
-                String recipeName = String.valueOf(obj);
-                if (recipeName.contains(".xml")) {
-                    recipeName = recipeName.replace(".xml", "");
-                }
-                recipeNames.add(recipeName);
+        List<Object> recipeNames = new ArrayList<>();
+        for (Object obj : recipeList) {
+            String recipeName = String.valueOf(obj);
+            if (recipeName.contains(".xml")) {
+                recipeName = recipeName.replace(".xml", "");
             }
-            resultMap.put("eppd", recipeNames);
+            recipeNames.add(recipeName);
         }
+        resultMap.put("eppd", recipeNames);
         return resultMap;
     }
 
@@ -419,7 +413,7 @@ public class Au800Host extends EquipHost {
             }
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -466,7 +460,7 @@ public class Au800Host extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 logger.debug("设备：" + deviceCode + " 开机Check失败");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
@@ -474,12 +468,12 @@ public class Au800Host extends EquipHost {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + "，其异常设定值为： " + recipePara.getSetValue() + "，其最小设定值为：" + recipePara.getMinValue() + "，其最大设定值为：" + recipePara.getMaxValue();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 startDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.debug("设备：" + deviceCode + " 开机Check成功");
             }

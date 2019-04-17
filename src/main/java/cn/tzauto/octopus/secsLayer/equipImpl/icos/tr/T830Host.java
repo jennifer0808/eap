@@ -602,44 +602,17 @@ public class T830Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F19out() {
-        if ("Run".equalsIgnoreCase(equipStatus) || "Pause".equalsIgnoreCase(equipStatus)) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备正在运行，无法上传Recipe.");
-            return null;
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-//            data = handleOverTime(s7f19out);
-             data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList<SecsItem>) data.get("EPPD");
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            ArrayList t830RecipeList = new ArrayList();
-            for (Object recipeName : listtmp) {
+        Map resultMap = super.sendS7F19out();
+        ArrayList list = (ArrayList) resultMap.get("eppd");
+        ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList t830RecipeList = new ArrayList();
+        for (Object recipeName : listtmp) {
                 if (recipeName.toString().contains("recipe")) {
                     t830RecipeList.add(recipeName);
                 }
-            }
-            resultMap.put("eppd", t830RecipeList);
         }
+        resultMap.put("eppd", t830RecipeList);
+
         return resultMap;
     }
 

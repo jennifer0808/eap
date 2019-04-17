@@ -8,6 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.tsk.ws;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -55,12 +56,12 @@ public class AWD300TXHost extends EquipHost {
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
-                while (!this.isSdrReady()) {
+                while (!this.isSdrReady() || activeWrapper == null) {
                     AWD300TXHost.sleep(200);
                 }
                 if (this.getCommState() != AWD300TXHost.COMMUNICATING) {
+                    Thread.sleep(2000);
                     sendS1F13out();
-                    sendS1F1out();
                 }
 
                 if (rptDefineNum < 1) {
@@ -506,11 +507,13 @@ public class AWD300TXHost extends EquipHost {
 
     public void processS6F5in(DataMsgMap data) {
         try {
-            DataMsgMap out = new DataMsgMap("s6f6out", activeWrapper.getDeviceId());
+            DataMsgMap out = new DataMsgMap("S6F6OUT", activeWrapper.getDeviceId());
             byte[] ack = new byte[1];
             ack[0] = 0;
             out.put("AckCode", ack);
             out.setTransactionId(data.getTransactionId());
+            SecsItem secsItem = new SecsItem((byte) 0, FormatCode.SECS_BINARY);
+            out.put("S6F6OUT", secsItem);
             activeWrapper.respondMessage(out);
         } catch (Exception e) {
             e.printStackTrace();

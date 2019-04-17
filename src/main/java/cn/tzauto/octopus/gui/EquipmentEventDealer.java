@@ -8,7 +8,6 @@ import cn.tzauto.octopus.gui.equipevent.CommFailureEvent;
 import cn.tzauto.octopus.gui.equipevent.CommStatusEvent;
 import cn.tzauto.octopus.gui.equipevent.ControlEvent;
 import cn.tzauto.octopus.gui.equipevent.ReceivedSeparateEvent;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
@@ -157,12 +156,10 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void notificationOfSecsDriverReady(int deviceId) {
         logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
-       UiLogUtil.getInstance().appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(true);
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setIsRestarting(false);
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).restartCnt = 0;
-
     }
 
     @Override
@@ -283,9 +280,6 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void processDataSendException(Exception e, int i) {
 
     }
-
-
-
 
 
     @Override
