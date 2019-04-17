@@ -150,13 +150,13 @@ public class MVPHost extends EquipHost {
             } else if (ceid == StripMapUpCeid) {
                 // TODO: 2019/4/12  StripMapUpCeid need check
                 logger.info("----Received from Equip Strip Map Upload event - S6F11");
-                Long result = (Long) data.get("RESULT");
+                long[] result = (long[]) ((ArrayList) ((ArrayList) data.get("REPORT")).get(1)).get(1);
                 // 判断机台检测结果，如果为0则上传，结果为1 || 2则不上传
-                if (result == 0 || result == -1L) {
+                if (result[0] == 0 || result[0] == -1L) {
                     processS6F11inStripMapUpload(data);
                 } else {
                     replyS6F12WithACK(data, (byte) 0);
-                    logger.info("检测结果为:" + result + ",不上传mapping!");
+                    logger.info("检测结果为:" + result[0] + ",不上传mapping!");
                 }
             }
         } catch (Exception e) {
