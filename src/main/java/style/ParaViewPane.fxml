@@ -5,7 +5,12 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane fx:id="ParaViewPane" maxHeight="500.0" maxWidth="800.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" stylesheets="@style/ParaViewPane.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.paraviewpane.ParaViewPaneController">
+<?import java.net.URL?>
+<AnchorPane fx:id="ParaViewPane" maxHeight="500.0" maxWidth="800.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0"  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.widget.paraviewpane.ParaViewPaneController">
+    <stylesheets>
+        <URL value="@ParaViewPane.css" />
+    </stylesheets>
+
    <children>
       <Label layoutX="8.0" layoutY="20.0" text="RecipeName" />
       <TextField fx:id="JTF_RcpName" layoutX="99.0" layoutY="16.0" />
