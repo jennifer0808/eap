@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.ht;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -35,7 +34,7 @@ public class HongTeng7300Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        EquipStateChangeCeid=102;
+        EquipStateChangeCeid=102L;
     }
 
 
@@ -155,16 +154,16 @@ public class HongTeng7300Host extends EquipHost {
 
     
     public void processS6F11in(DataMsgMap data) {
-        long ceid = -12345679;
+        long ceid = 0L;
         try {
             if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
+                ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) {
+            } else if (ceid == EquipStateChangeCeid) {//102L
                 processS6F11EquipStatusChange(data);
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
             } else if (ceid == 201) {
@@ -189,7 +188,8 @@ public class HongTeng7300Host extends EquipHost {
     protected void processS6F11LotCheck(DataMsgMap data) {
         String lotId = "";
         try {
-            lotId = ((SecsItem) data.get("LotId")).getData().toString();
+            ArrayList list = (ArrayList) data.get("REPORT");
+            lotId = (String) ((ArrayList)list.get(1)).get(1);
            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备当前批次号为" + lotId);
         } catch (Exception e) {
             e.printStackTrace();
@@ -279,6 +279,7 @@ public class HongTeng7300Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        sendS7F17out(targetRecipeName.replace("@", "/"));
         Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName.replace("@", "/"));
         resultMap.put("ppid",targetRecipeName);
         return resultMap;
@@ -287,7 +288,6 @@ public class HongTeng7300Host extends EquipHost {
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
         String ppbody = (String) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 0, recipePath);
