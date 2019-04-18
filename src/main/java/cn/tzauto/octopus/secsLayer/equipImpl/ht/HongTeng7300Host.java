@@ -114,7 +114,6 @@ public class HongTeng7300Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -160,20 +159,20 @@ public class HongTeng7300Host extends EquipHost {
                 ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            //TODO 根据ceid分发处理事件
+            //TODO 根据ceid分发处理事件 StripMapUpCeid unkown!
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else if (ceid == EquipStateChangeCeid) {//102L
                 processS6F11EquipStatusChange(data);
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
             } else if (ceid == 201) {
                 processS6F11LotCheck(data);
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
             } else if (ceid == 202) {
                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
+            }else{
+                replyS6F12WithACK(data, (byte) 0);
             }
 
             if (commState != 1) {
@@ -207,11 +206,17 @@ public class HongTeng7300Host extends EquipHost {
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
+        long[] nowStatus = null;
         try {
             ceid = (long) data.get("CEID");
+            ArrayList  list = (ArrayList) data.get("REPORT");
+            nowStatus = (long[]) ((ArrayList)list.get(1)).get(1);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus[0]), deviceType);
+
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
         if (equipStatus.equalsIgnoreCase("run")) {
