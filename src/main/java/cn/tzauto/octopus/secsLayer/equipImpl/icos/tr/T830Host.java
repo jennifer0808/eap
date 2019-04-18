@@ -289,14 +289,12 @@ public class T830Host extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            }else if(ceid == 100 || ceid == 110 || ceid ==111 || ceid ==112){
+            }else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        updateCommStateInExt();
-        showCollectionsEventInfo(ceid);
     }
 
 
@@ -670,7 +668,11 @@ public class T830Host extends EquipHost {
 
     @Override
     public Map releaseDevice() {
-        return super.releaseDevice();
+        
+        Map map = new HashMap();
+        map.put("HCACK", "0");
+
+        return map;
     }
 
     // </editor-fold> 

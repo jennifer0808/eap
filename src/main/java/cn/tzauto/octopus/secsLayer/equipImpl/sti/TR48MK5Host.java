@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.sti;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -151,18 +150,9 @@ public class TR48MK5Host extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             findDeviceRecipe();
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        if (ceid == 73) {
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-//        }
-//        Map map = new HashMap();
-//        map.put("EquipStatus", equipStatus);
-//        map.put("PPExecName", ppExecName);
-//        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -231,6 +221,7 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName);
         //发送PP-Select指令
         sendS2F41outPPselect(targetRecipeName);
         findDeviceRecipe();
@@ -255,7 +246,7 @@ public class TR48MK5Host extends EquipHost {
        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -423,34 +414,12 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map holdDevice() {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-//            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
-            Map cmdMap = this.sendS2f41Cmd("STOP");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
-                Map panelMap = new HashMap();
-                panelMap.put("AlarmState", 2);
-                changeEquipPanel(panelMap);
-                holdSuccessFlag = true;
-            } else {
-                holdSuccessFlag = false;
-            }
-            return cmdMap;
-        } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
-            return null;
-        }
+       return super.holdDevice();
     }
 
     @Override
     public Map releaseDevice() {
-        this.setAlarmState(0);
-        //startCheckPass = true;
-        holdFlag = false;
-        return null;//this.sendS2f41Cmd("RESUME_H");
+       return super.releaseDevice();
     }
 
     @Override

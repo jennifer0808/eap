@@ -197,12 +197,9 @@ public class T740Host extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            }
-            if (ceid == 14032) {
+            }else if (ceid == 14032) {
                 needCheck = true;
-            }
-
-            if (ceid == 10002) {
+            }else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 10003) {
                 sendS2f41NotApprove();
