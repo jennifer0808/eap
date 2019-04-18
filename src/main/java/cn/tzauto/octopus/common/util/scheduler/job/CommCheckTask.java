@@ -6,12 +6,12 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 
 
 import cn.tzauto.generalDriver.exceptions.BrokenProtocolException;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -19,28 +19,19 @@ import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  *
@@ -272,7 +263,7 @@ public class CommCheckTask implements Job {
         setPanelCommFail(equipHost);
         logger.info("DeviceCode:" + equipHost.getDeviceCode() + ";即将开始重启通信线程");
         if (!equipHost.isIsRestarting()) {
-            hostsManager.getAllEquipHosts().get(equipHost.getDeviceId()).setIsRestarting(true);
+            hostsManager.getAllEquipHosts().get(equipHost.getDeviceCode()).setIsRestarting(true);
             equipHost.setIsRestarting(true);
             DeviceComm.restartHost(equipNodeBean);
             logger.info("DeviceCode:" + equipHost.getDeviceCode() + ";置空当前Host");

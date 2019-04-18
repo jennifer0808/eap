@@ -84,7 +84,7 @@ public class EquipStatusPaneController implements Initializable {
             } else {
                 contextMenu.hide();
                 MenuItem menuItem2 = new MenuItem("开启连接");
-                menuItem2.setOnAction(actionEvent -> new EapClient().startModel());
+                menuItem2.setOnAction(actionEvent -> new EapClient().startComByEqp(equipNodeBean));
                 contextMenu = new ContextMenu(menuItem2);
                 contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
             }

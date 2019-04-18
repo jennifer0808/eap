@@ -122,7 +122,7 @@ public class SigmaPlusHost extends EquipHost {
                     processS12F3in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s12f15in")) {
                     processS12F15in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11IN")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11IN")) {
                     processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
@@ -247,7 +247,6 @@ public class SigmaPlusHost extends EquipHost {
             } else {
                 replyS6F12WithACK(data, (byte) 0);
                 if (ceid == 2L) {
-                    System.out.println("接受到ceid2++++++++++++++++++++++++++++++++++++++++++++");
                     Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -256,7 +255,6 @@ public class SigmaPlusHost extends EquipHost {
 
                     });
                     thread.start();
-
                     logger.info("Received event ceid = 2 need to send command START.");
                 } else if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
@@ -305,8 +303,10 @@ public class SigmaPlusHost extends EquipHost {
             sendS2F35out(50L, 50L, 50L);
             sendS2F37out(50L);
             //Parameter provider Event
-//            sendS2F33outMutli(4905L, "4905");
-            sendS2F33out(4905L, 4905L);
+
+            List list3 = new ArrayList();
+            list3.add(4905L);
+            sendS2F33Out(1001L,4905L, list3);
             sendS2F35out(4905L, 4905L, 4905L);
             sendS2F37out(4905L);
             //
@@ -340,52 +340,7 @@ public class SigmaPlusHost extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
-    @SuppressWarnings("unchecked")
-    public String sendS2F33out(long rptid, long vid) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f33out.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001L;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-        long[] variableid = new long[1];
-        variableid[0] = vid;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", variableid);
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f33out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
 
-    public String sendS2F33outMutli(long rptid, String vid) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33outmutli", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f33out.setTransactionId(transactionId);
-        long[] dataid = new long[1];
-        dataid[0] = 1001L;
-        long[] reportid = new long[1];
-        reportid[0] = rptid;
-//        long[] variableid = new long[1];
-//        variableid[0] = vid;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID", "4905");
-        try {
-            DataMsgMap s2f34in = activeWrapper.sendAwaitMessage(s2f33out);
-            byte[] ack = (byte[]) ((SecsItem) s2f34in.get("AckCode")).getData();
-            return String.valueOf(ack[0]);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "";
-        }
-    }
 
     public Map sendS2F15outParameter() {
         DataMsgMap out = new DataMsgMap("s2f15out", activeWrapper.getDeviceId());

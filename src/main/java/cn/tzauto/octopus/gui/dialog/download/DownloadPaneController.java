@@ -155,7 +155,7 @@ public class DownloadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！");
             return;
         }
         if (flag > 1) {

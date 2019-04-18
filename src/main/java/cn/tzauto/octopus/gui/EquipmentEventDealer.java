@@ -12,7 +12,6 @@ import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import cn.tzauto.octopus.secsLayer.util.DeviceComm;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSON;
 import org.apache.log4j.Logger;
@@ -60,7 +59,8 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public Object doInBackground() {
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipNodeBean.getDeviceCode());
         try {
-            while (!this.isCancelled()) {
+//            while (!this.isCancelled()) {
+            while (true) {
                 ControlEvent ev = null;
                 ev = this.eventQueue.take();
                 //释放锁，处理页面显示逻辑，让其他获取状态变化的作业继续，
@@ -84,13 +84,13 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                     sync++;
                     publish(newState);
                     if (cev.isComm()) {
-                        hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceIdProperty());
+                        hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
                     logger.info("Equip State is changed. publish is called");
                 } else if (ev instanceof ReceivedSeparateEvent) {
                     logger.info("Received Separate event, SECS prototcols has been terminated.");
                     newState.setCommOn(false);
-                    newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
+//                    newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
                     sync++;
                     publish(newState);
                     //terminate the host server                 
@@ -98,7 +98,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                     logger.info("Ready to terminate host comm thread ...");
 //                    hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
 //                    hostsManager.terminateHostThread(this.equipNodeBean.getDeviceIdProperty());
-                    DeviceComm.restartHost(equipNodeBean);
+//                    DeviceComm.restartHost(equipNodeBean);
                     logger.info("terminate host comm thread done...");
                     continue;
 //                    break;
@@ -167,6 +167,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         logger.info("notificationOfHsmsReceivedSeparate Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
         eventQueue.add(new ReceivedSeparateEvent(deviceId));
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(false);
     }
 
 
@@ -254,6 +255,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         logger.debug("Communication Failure occured: "
                 + "DataReadIOException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(false);
     }
 
 

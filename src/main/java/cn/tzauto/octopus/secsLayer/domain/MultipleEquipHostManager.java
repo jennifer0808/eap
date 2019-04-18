@@ -1,6 +1,5 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
-import cn.tzauto.generalDriver.api.EqpEventDealer;
 import cn.tzauto.generalDriver.api.SecsDriverFactory;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.utils.DriverConfig;
@@ -19,6 +18,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.RecipeTransfer;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
@@ -374,7 +374,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EqpEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
+    public void startSECS(String deviceId, EquipmentEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
