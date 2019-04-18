@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.ht;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -13,6 +12,7 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.ht.HongTengRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -87,7 +87,9 @@ public class HongTeng7200Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
+                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11checklot")) {
                     processS6F11LotCheck(msg);
@@ -119,7 +121,8 @@ public class HongTeng7200Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -221,34 +224,14 @@ public class HongTeng7200Host extends EquipHost {
         String lotId = "";
         String workLot = "";
         try {
-            lotId = ((SecsItem) data.get("LotId")).getData().toString();
+            ArrayList list = (ArrayList) data.get("REPORT");
+            lotId = (String) ((ArrayList)list.get(1)).get(1);
+
            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备当前输入的批次号为" + lotId);
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        List newLotList = lotIDRead(lotId);
-
-//        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-//        DeviceService deviceService = new DeviceService(sqlSession);
-//        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-//        sqlSession.close();
-//        if (deviceInfoExt != null) {
-//            if (deviceInfoExt.getLotId() != null && !"".equals(deviceInfoExt.getLotId())) {
-//                workLot = deviceInfoExt.getLotId();
-//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "过账批次号为" + workLot);
-//            }
-//        }
-//        List extLotList = lotIDRead(workLot);
         Boolean flag = true;
-//        for (Object object : newLotList) {
-//            if (extLotList.contains(object)) {
-//                flag = true;
-//                continue;
-//            } else {
-//                flag = false;
-//                break;
-//            }
-//        }
         if (flag == true) {
            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "批次号匹配一致，执行开机");
             sendS2f41Cmd("NEWLOT-OK");
@@ -260,13 +243,13 @@ public class HongTeng7200Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long preStatus = 0l;
-        long nowStatus = 0;
+        long nowStatus = 0L;
         long ceid = 0L;
         try {
-            preStatus = data.getSingleNumber("PreStatus");
-            nowStatus = data.getSingleNumber("EquipStatus");
-            ceid = data.getSingleNumber("CollEventID");
+            ArrayList  list = (ArrayList) data.get("REPORT");
+            nowStatus = (long) ((ArrayList)list.get(1)).get(1);
+            ceid = (long) data.get("CEID");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -344,55 +327,17 @@ public class HongTeng7200Host extends EquipHost {
      */
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        logger.info("将本地程序传至共享盘");
-        logger.info(localRecipeFilePath);
-//        Boolean result = copyToFile(localRecipeFilePath, "D:\\7200Recipe\\ShareRecipe\\downloadRecipe\\" + deviceCode + "\\" + targetRecipeName + "\\" + targetRecipeName + ".txt");
-//        Boolean result = copyToFile(localRecipeFilePath, "D:\\7200-6010\\SHARERECIPE\\DOWNLOADRECIPE\\" + deviceCode + "\\" + targetRecipeName + "\\" + targetRecipeName + ".txt");
-        Boolean result = copyToFile(localRecipeFilePath, "D://7200-6010/SHARERECIPE/recipeShare/" + deviceCode + "/" + targetRecipeName + "/" + targetRecipeName + ".txt");
-        logger.info(result);
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        localRecipeFilePath = "D:\\7200-6010\\SHARERECIPE\\DOWNLOADRECIPE\\" + deviceCode + "\\" + targetRecipeName;// + targetRecipeName + ".txt";
-        localRecipeFilePath = "SHARERECIPE\\recipeShare\\" + deviceCode + "\\" + targetRecipeName;// targetRecipeName + ".txt";
-//        String ppbody = (String) TransferUtil.getPPBody(0, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(localRecipeFilePath, FormatCode.SECS_ASCII);
-        s7f3out.put("ProcessprogramID", targetRecipeName.replace("@", "/"));
-        s7f3out.put("Processprogram", secsItem);
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("ACKC7", 9);
-            resultMap.put("Description", e.getMessage());
-        }
+        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName.replace("@", "/"));
+        resultMap.put("ppid",targetRecipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        String ppbody = (String) ((SecsItem) msgdata.get("Processprogram")).getData();
-//        TransferUtil.setPPBody(ppbody, 0, recipePath);
+        String ppbody = (String) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 0, recipePath);
 //        logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
 //        Recipe解析
 //        if(ppbody.equalsIgnoreCase("OK")){}
@@ -508,36 +453,37 @@ public class HongTeng7200Host extends EquipHost {
 //    }
     @SuppressWarnings("unchecked")
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
+        ArrayList list = new ArrayList();
+        list.add(recipeName);
+        byte ackc7 = -1;
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(list);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            ackc7 = (byte) data.get("ACKC7");
             sleep(1000);
-            if (ackc7[0] == 0 || ackc7[0] == 6) {
+            if (ackc7 == 0 || ackc7 == 6) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "component"));
+
+        ArrayList recipeList = new ArrayList();
+        recipeList.add(recipeName.replace("recipe", "component"));
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(recipeList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "handler"));
+
+        ArrayList handlerList = new ArrayList();
+        handlerList.add(recipeName.replace("recipe", "handler"));
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(handlerList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
@@ -547,8 +493,8 @@ public class HongTeng7200Host extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 

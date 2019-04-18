@@ -14,7 +14,6 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -34,7 +33,7 @@ public class AsmTwin832Host extends EquipHost {
     public AsmTwin832Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
-        EquipStateChangeCeid = 4;
+        EquipStateChangeCeid = 8L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -182,41 +181,11 @@ public class AsmTwin832Host extends EquipHost {
 // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
 
     @Override
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = (long) data.get("CEID");
-            if (ceid == StripMapUpCeid) {
-                processS6F11inStripMapUpload(data);
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-
-    }
-
-    @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            preEquipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("PreEquipStatus")), deviceType);
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
             return;

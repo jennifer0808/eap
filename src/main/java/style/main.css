@@ -49,7 +49,7 @@
 .split-pane *.split-pane-divider {
     /*-fx-padding: 0 0 0 0; !* 0 3 0 3 *!*/
     -fx-background-color: white;
-    -fx-border-style: 0,0,5,0;
+    /*-fx-border-style: 0,0,5,0;*/
 
 }
 
