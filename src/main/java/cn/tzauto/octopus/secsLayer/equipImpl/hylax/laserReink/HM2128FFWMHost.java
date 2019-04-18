@@ -46,9 +46,10 @@ public class HM2128FFWMHost extends EquipHost {
 
     public HM2128FFWMHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 1009;
+//        EquipStateChangeCeid = 1009;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -111,7 +112,7 @@ public class HM2128FFWMHost extends EquipHost {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
 
                 } else {
