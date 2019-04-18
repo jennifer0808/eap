@@ -43,7 +43,7 @@ public class MessageProcess implements MessageHandler {
                     public void run() {
                         MessageHandler messageHandler;
                         try {
-                            messageHandler = (MessageHandler) Class.forName("cn.tzinfo.htauto.octopus.common.mq.messageHandlers." + mapMessage.getString("msgName").replaceAll("\"", "") + "Handler").newInstance();
+                            messageHandler = (MessageHandler) Class.forName("cn.tzauto.octopus.common.mq.messageHandlers." + mapMessage.getString("msgName").replaceAll("\"", "") + "Handler").newInstance();
                             messageHandler.handle(message);
                         } catch (JMSException ex) {
                             ex.printStackTrace();

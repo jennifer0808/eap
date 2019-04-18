@@ -77,7 +77,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
     public Tab mainTab;
 
     public static ServerSocket server;
-    public static HashMap<String, EquipmentEventDealer> watchDogs;
+    public static HashMap<String, EquipmentEventDealer> watchDogs = new HashMap<>();
 
     @Override
     public void start(Stage stage) {
@@ -391,7 +391,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //            public void run() {
         for (int i = 0; i < equipBeans.size(); i++) {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
-            startIsecsByEqp(equipBeans.get(i));
+            startComByEqp(equipBeans.get(i));
         }
 //            }
 //        }).start();
@@ -455,10 +455,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
     public void startComByEqp(EquipNodeBean equipNodeBean) {
         EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         String deviceCode = equipNodeBean.getDeviceCode();
-
         try {
             hostManager.startHostThread(deviceCode);
             hostManager.startSECS(deviceCode, eqpEventDealer);
+            removeWatchDog(deviceCode);
+            addWatchDog(deviceCode, eqpEventDealer);
         } catch (Exception e1) {
             logger.fatal(deviceCode + " has not been initialized!", e1);
         }
