@@ -483,6 +483,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
         String property = propertyChangeEvent.getPropertyName();
         Object source = propertyChangeEvent.getSource();

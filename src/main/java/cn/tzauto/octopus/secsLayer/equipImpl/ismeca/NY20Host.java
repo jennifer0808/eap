@@ -427,7 +427,8 @@ public class NY20Host extends EquipHost {
         byte ackc7 = -1;
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_BINARY);
-            ackc7 = (byte) data.get("AckCode");
+            ackc7 = (byte) data.get("ACKC7");
+
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
