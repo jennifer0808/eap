@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.fc;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -18,7 +17,6 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -90,9 +88,7 @@ public class AsmAD8312FCHost extends EquipHost {
                         processS6F11EquipStatusChange(msg);
                     } else if (msg.getMsgSfName().equals("s6f11ControlStateChange")) {
                         processS6F11ControlStateChange(msg);
-                    } else if (msg.getMsgSfName().equals("s6f11LoginUserChange")) {
-                        processS6F11LoginUserChange(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                    }else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
                     } else {
                         System.out.println("A message in queue with tag = " + msg.getMsgSfName()
@@ -166,31 +162,6 @@ public class AsmAD8312FCHost extends EquipHost {
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
-    }
-
-    @Override
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            if (data.get("CEID") != null) {
-                ceid = (long) data.get("CEID");
-                logger.info("Received a s6f11in with CEID = " + ceid);
-            }
-            if (ceid == StripMapUpCeid) {
-                processS6F11inStripMapUpload(data);
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                }
-                if (ceid == 120L) {
-                    processS6F11LoginUserChange(data);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
     }
 
     // </editor-fold>
@@ -349,52 +320,12 @@ public class AsmAD8312FCHost extends EquipHost {
         }
     }
 
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = (long) data.get("CEID");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
-            if (ceid == 9L) {
-                Map map = new HashMap();
-                map.put("PPExecName", loginUserName);
-                changeEquipPanel(map);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-    }
-
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".rcp");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
+        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+".rcp");
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
         return resultMap;
     }
 
@@ -432,75 +363,25 @@ public class AsmAD8312FCHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         if (!recipeName.contains(".rcp")) {
             recipeName = recipeName + ".rcp";
         }
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-//                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        Map resultMap = super.sendS7F17out(recipeName);
         return resultMap;
     }
 
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+        Map resultMap = super.sendS7F19out();
+        List eppd = (ArrayList) resultMap.get("eppd");
+        ArrayList recipeNames = new ArrayList();
+        for (int i = 0; i < eppd.size(); i++) {
+            recipeNames.add(eppd.get(i).toString().replace(".rcp", ""));
         }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString().replace(".rcp", ""));
-            }
-            resultMap.put("eppd", list1);
-        }
+        resultMap.put("eppd", recipeNames);
         return resultMap;
     }
-// </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="processS14FXin Code">
 
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="sendS1FXout Code">
-    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     //释放机台
     @Override

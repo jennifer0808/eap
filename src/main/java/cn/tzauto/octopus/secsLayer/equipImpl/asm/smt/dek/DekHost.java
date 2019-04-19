@@ -268,6 +268,8 @@ public class DekHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
     @SuppressWarnings("unchecked")
     public String sendS2F33out(long rptid, long vid) {
+
+
         //DataMsgMap s1f13out = new DataMsgMap("s1f13out",  activeWrapper.getDeviceId());
         DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();

@@ -4,24 +4,19 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.dd;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +43,6 @@ public class MPTABHost extends EquipHost {
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
@@ -99,7 +93,7 @@ public class MPTABHost extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
 //                    long ceid = 0;
 //                    ceid = msg.getSingleNumber("CollEventID");
@@ -171,7 +165,7 @@ public class MPTABHost extends EquipHost {
         panelMap.put("PPExecName", ppExecName);
         //由于TOWA的controlstate暂时无法获取，所以暂不处理
 //        if (!deviceType.contains("TOWA")) {
-        controlState = ACKDescription.describeControlState((byte) listtmp.get(2), deviceType);
+        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
 //        }
         changeEquipPanel(panelMap);
@@ -303,134 +297,7 @@ public class MPTABHost extends EquipHost {
         }
     }
 
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
-
-
-    @Override
-    public Map sendS7F5out(String recipeName) {
-        Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, 1, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-//            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-            //Recipe解析  没有参数解析 
-            recipeParaList = null;
-        }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f6");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipe", recipe);
-        resultMap.put("recipeNameMapping", null);
-        resultMap.put("recipeParaList", recipeParaList);
-        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
-        return resultMap;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        //TODO
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
-
-    @Override
-    public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f19out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString());
-            }
-            resultMap.put("eppd", list1);
-        }
-        return resultMap;
-    }
-// </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     //释放机台
-
     @Override
     public Map releaseDevice() {
         Map map = new HashMap();// this.sendS2f41Cmd("START");
