@@ -19,7 +19,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -28,7 +27,6 @@ import org.apache.log4j.MDC;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
 
 
 /**
@@ -45,7 +43,7 @@ public class ASMIdeal3GHost extends EquipHost {
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
     }
 
@@ -92,7 +90,7 @@ public class ASMIdeal3GHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
@@ -443,9 +441,6 @@ public class ASMIdeal3GHost extends EquipHost {
             }
             if (ceid == 13) {
                 findDeviceRecipe();
-                Map map = new HashMap();
-                map.put("PPExecName", ppExecName);
-                changeEquipPanel(map);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -470,7 +465,7 @@ public class ASMIdeal3GHost extends EquipHost {
             logger.error("Exception:", e);
         }
         updateCommStateInExt();
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID：" + ceid);
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID：" + ceid);
 
         //更新页面显示内容
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -481,7 +476,7 @@ public class ASMIdeal3GHost extends EquipHost {
             for (int j = 0; j < recipeTemplates.size(); j++) {
                 long ceidtmp = Long.parseLong(recipeTemplates.get(j).getDeviceVariableId());
                 if (ceid == ceidtmp) {
-                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "CEID:" + ceid + " 描述：" + recipeTemplates.get(j).getParaDesc());
                     break;
                 }
             }
@@ -497,10 +492,6 @@ public class ASMIdeal3GHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -519,7 +510,7 @@ public class ASMIdeal3GHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -545,7 +536,7 @@ public class ASMIdeal3GHost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -568,11 +559,11 @@ public class ASMIdeal3GHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo();
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         }
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
@@ -580,22 +571,22 @@ public class ASMIdeal3GHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo();
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -619,7 +610,7 @@ public class ASMIdeal3GHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ppbody = (byte[])msgdata.get("PPBODY");
+        byte[] ppbody = (byte[]) msgdata.get("PPBODY");
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
@@ -640,72 +631,8 @@ public class ASMIdeal3GHost extends EquipHost {
         return resultMap;
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-
-        try {
-//            data = activeWrapper.sendAwaitMessage(s7f19out);
-            data = handleOverTime(s7f19out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-//        if (data == null || data.get("EPPD") == null) {
-//            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-//        }
-        if (data == null || data.get("EPPD") == null) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            resultMap.put("eppd", listtmp);
-        }
-        return resultMap;
-    }
     // </editor-fold>
 
-    public DataMsgMap handleOverTime(DataMsgMap s7f19out) {
-        final DataMsgMap s7f19outF = s7f19out;
-        DataMsgMap result = null;
-//        ExecutorService exec = Executors.newFixedThreadPool(1);
-        ExecutorService exec = Executors.newSingleThreadExecutor();
-        Callable<DataMsgMap> call = new Callable<DataMsgMap>() {
-
-            public DataMsgMap call() throws Exception {
-                //开始执行耗时操作  
-                return activeWrapper.sendAwaitMessage(s7f19outF);
-            }
-        };
-
-        Future<DataMsgMap> future = exec.submit(call);
-        try {
-            result = future.get(2000, TimeUnit.MILLISECONDS); //任务处理超时时间设为 2 秒  
-            logger.info("任务执行成功");
-        } catch (TimeoutException e) {
-            future.cancel(true);//取消该Future里关联的Callable任务
-            logger.error("处理超时....", e);
-        } catch (Exception e) {
-            future.cancel(true);
-            logger.error("处理失败....", e);
-        } finally {
-            // 关闭线程池  
-            exec.shutdown();
-            return result;
-        }
-    }
 
     //获取当前使用的Press
     public void getUsingPress() {
@@ -722,7 +649,7 @@ public class ASMIdeal3GHost extends EquipHost {
         if (pressStatusAll.length() > 0) {
             pressStatusAll = pressStatusAll.substring(0, pressStatusAll.length() - 1);
         }
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
     @Override
@@ -747,7 +674,7 @@ public class ASMIdeal3GHost extends EquipHost {
         mqMap.put("unit", "");
         mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
         GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
         logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
 //       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
