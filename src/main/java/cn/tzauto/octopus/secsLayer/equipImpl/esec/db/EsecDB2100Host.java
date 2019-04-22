@@ -17,6 +17,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
@@ -610,7 +611,7 @@ public class EsecDB2100Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
         s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s7f5out.put("ProcessprogramID", recipeName + ".dbrcp");

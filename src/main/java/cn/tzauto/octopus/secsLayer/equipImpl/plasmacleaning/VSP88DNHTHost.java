@@ -13,6 +13,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
@@ -188,12 +189,12 @@ public class VSP88DNHTHost extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public void sendS2f33stripout() {
-        ArrayList list = new ArrayList();
-        list.add("2310");
-        list.add("2320");
-        list.add("2331");
-        list.add("2330");
-        super.sendS2F33Out(1,1,list);
+        ArrayList<Long> list = new ArrayList();
+        list.add(2310L);
+        list.add(2320L);
+        list.add(2331L);
+        list.add(2330L);
+        super.sendS2F33Out(1, 1, list);
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
@@ -226,7 +227,7 @@ public class VSP88DNHTHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -249,7 +250,7 @@ public class VSP88DNHTHost extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDeviceAndShowDetailInfo();
                 } else {
                     //1、获取设备需要校验的信息类型,
@@ -289,23 +290,23 @@ public class VSP88DNHTHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
 //                            this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo();
                                 return;
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
 //                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -342,7 +343,7 @@ public class VSP88DNHTHost extends EquipHost {
             funcType = "unload";
         }
         logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
 //        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
 
         msgMap.put("deviceCode", deviceCode);
@@ -354,14 +355,14 @@ public class VSP88DNHTHost extends EquipHost {
                 MapMessage mapMessage = (MapMessage) message;
                 result = mapMessage.getString("message");
             } else {
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
             }
         } catch (Exception ex) {
             logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
         }
         sendS2f41Cmd("REMOTE");
         if (result.equalsIgnoreCase("Y")) {
-       //todo 测试 if(true){
+            //todo 测试 if(true){
             holdFlag = false;
             this.sends2f41stripReply(true);
         } else {
@@ -369,10 +370,10 @@ public class VSP88DNHTHost extends EquipHost {
             this.sends2f41stripReply(false);
             sendS2f41Cmd("STOP");
             if ("".equals(result)) {
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
             }
         }
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
         sendS2f41Cmd("LOCAL");
 //        changeEqptControlStateAndShowDetailInfo("LOCAL");
     }
@@ -395,16 +396,16 @@ public class VSP88DNHTHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        return super.sendS7F1out(localFilePath,targetRecipeName + ".rcp");
+        return super.sendS7F1out(localFilePath, targetRecipeName + ".rcp");
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName + ".rcp");
+        return super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".rcp");
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
 
         recipeName = recipeName.replace(".rcp", "");
         Recipe recipe = setRecipe(recipeName);
@@ -507,7 +508,7 @@ public class VSP88DNHTHost extends EquipHost {
             return map;
         } else {
             sendS2f41Cmd("LOCAL");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }

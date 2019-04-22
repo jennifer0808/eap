@@ -22,6 +22,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -503,7 +504,7 @@ public class HT9045HWTESTHost extends EquipHost {
         }
     }
 
-    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe) {
+    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe) throws UploadRecipeErrorException {
         return startCheckRecipeParaReturnMap(checkRecipe, "");
     }
 
@@ -513,7 +514,7 @@ public class HT9045HWTESTHost extends EquipHost {
      * @param checkRecipe
      * @param type
      */
-    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe, String type) {
+    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe, String type) throws UploadRecipeErrorException {
         boolean checkParaFlag = false;
         Map resultMap = new HashMap();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -629,7 +630,7 @@ public class HT9045HWTESTHost extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         String ppbody = (String) getPPBODY(recipeName);

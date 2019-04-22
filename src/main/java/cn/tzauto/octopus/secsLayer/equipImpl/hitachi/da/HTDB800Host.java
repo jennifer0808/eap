@@ -23,6 +23,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -610,7 +611,7 @@ public class HTDB800Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         //获取本地FTP地址
         recipePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";

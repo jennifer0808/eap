@@ -17,6 +17,7 @@ import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -427,7 +428,7 @@ public class T740Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         if ("Idle".equalsIgnoreCase(equipStatus) || "UNKNOWN".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
             Recipe recipe = setRecipe(recipeName);
             recipePath = super.getRecipePathByConfig(recipe);

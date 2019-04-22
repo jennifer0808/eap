@@ -20,6 +20,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.besi.Sigma8800RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -667,7 +668,7 @@ public class SigmaPlusHost extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Map mapTemp = sendS1F3Check();
         String rcpName = (String) mapTemp.get("PPExecName");
         logger.info("===================rcpName:" + rcpName);

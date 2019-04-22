@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -387,7 +388,12 @@ public class Disco7160Host extends EquipHost {
         //这里先将recipe按照短号存储，读取ppbody后再按长号存储
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        byte[] ppbody = new byte[0];
+        try {
+            ppbody = (byte[]) getPPBODY(recipeName);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+        }
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipe.getRecipeName() + " has been saved at " + recipePath);
         //Recipe解析     

@@ -17,6 +17,7 @@ import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -216,15 +217,21 @@ public class UploadPaneController implements Initializable {
                     GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                     return;
                 }
-
-                Map recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
-                if (recipeMap == null) {
+                Map recipeMap = null;
+                try {
+                    recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
+                    if (recipeMap == null) {
+                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+                        return;
+                    } else if (recipeMap.get("checkResult") != null) {
+                        JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+                        return;
+                    }
+                } catch (UploadRecipeErrorException upe) {
                     JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
                     return;
-                } else if (recipeMap.get("checkResult") != null) {
-                    JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
-                    return;
                 }
+
                 //此处从map中获取
                 Recipe recipe = null;
                 if (recipeMap.get("recipe") != null) {
@@ -232,7 +239,7 @@ public class UploadPaneController implements Initializable {
                 }
                 if ("N".equals(recipeMap.get("shortNameOK"))) {
                     JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
                     return;
                 }
                 //T640如果三个文件没有全部上传成功，即可认定为上传失败，不走上传流程，rcpAnalyseSucceed为N表示上传失败
@@ -259,11 +266,11 @@ public class UploadPaneController implements Initializable {
                     if (!re) {
                         JOptionPane.showMessageDialog(null, "上传失败，ftp文件传送失败，请重新上传");
                     } else {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
                     }
                     sqlSession.commit();
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
                 }
             }
         }

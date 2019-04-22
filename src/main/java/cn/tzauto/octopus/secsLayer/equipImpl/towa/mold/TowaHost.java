@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.towa.mold;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -19,9 +18,9 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.towa.TowaRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -172,8 +171,7 @@ public class TowaHost extends EquipHost {
         if (data == null || data.isEmpty()) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) data.get("SV");
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         return listtmp;
     }
 
@@ -373,10 +371,6 @@ public class TowaHost extends EquipHost {
             logger.error("Exception:", e);
         }
         //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
         handleCleanRecipe(ppExecName);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -396,7 +390,7 @@ public class TowaHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -408,7 +402,7 @@ public class TowaHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             //发送设备UPH参数至服务端
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备由于状态变化即将发送UPH参数");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备由于状态变化即将发送UPH参数");
             sendUphData2Server();
 
             boolean checkResult = false;
@@ -426,7 +420,7 @@ public class TowaHost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                    holdDeviceAndShowDetailInfo();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
                     return;
                 }
                 //查询trackin时的recipe和GoldRecipe
@@ -459,12 +453,12 @@ public class TowaHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
                             holdFlag = true;
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                             holdFlag = false;
                         }
                     }
@@ -473,24 +467,24 @@ public class TowaHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck(Gold)");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck(Gold)");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
                                 holdFlag = true;
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                                 holdFlag = false;
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -524,8 +518,7 @@ public class TowaHost extends EquipHost {
                 leftStripID = String.valueOf(dataList.get(3));
                 rightStripID = String.valueOf(dataList.get(4));
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             logger.error("Exception : " + e);
         }
         try {
@@ -540,7 +533,7 @@ public class TowaHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
@@ -592,7 +585,7 @@ public class TowaHost extends EquipHost {
         if (pressStatusAll.length() > 0) {
             pressStatusAll = pressStatusAll.substring(0, pressStatusAll.length() - 1);
         }
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备正在使用的Press为[" + pressStatusAll + "]");
     }
 
 //    @Override
@@ -608,37 +601,6 @@ public class TowaHost extends EquipHost {
 //        return resultMap;
 //    }
 
-
-    private void sendS2f33outMulti(long reportId, long svid0, long svid1, long svid2, long svid3, long svid4) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33outmulti", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        long[] variableID0 = new long[1];
-        variableID0[0] = svid0;
-        long[] variableID1 = new long[1];
-        variableID1[0] = svid1;
-        long[] variableID2 = new long[1];
-        variableID2[0] = svid2;
-        long[] variableID3 = new long[1];
-        variableID3[0] = svid3;
-        long[] variableID4 = new long[1];
-        variableID4[0] = svid4;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
-        s2f33out.put("VariableID0", variableID0);
-        s2f33out.put("VariableID1", variableID1);
-        s2f33out.put("VariableID2", variableID2);
-        s2f33out.put("VariableID3", variableID3);
-        s2f33out.put("VariableID4", variableID4);
-        try {
-            activeWrapper.sendAwaitMessage(s2f33out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     private void initRptPara() {
         //重定义towa 机台的equipstatuschange事件报告 用于在设备状态改变时获取equipstatus和ppexecname
@@ -671,19 +633,47 @@ public class TowaHost extends EquipHost {
             sendS2F35out(50013L, 50013L, 50013L);
             sendS2F37out(50013L);
             //重定义 2DCode追溯事件报告
-            sendS2f33outMulti(19005L, 1052L, 906L, 1053L, 1050L, 1051L);
+//            sendS2f33outMulti(19005L, 1052L, 906L, 1053L, 1050L, 1051L);
+            List<Long> svidlist = new ArrayList<>();
+            svidlist.add(1052L);
+            svidlist.add(906L);
+            svidlist.add(1053L);
+            svidlist.add(1050L);
+            svidlist.add(1051L);
+            sendS2F33Out(19005L, 19005L, svidlist);
             sendS2F35out(19005L, 19005L, 19005L);
             sendS2F37out(19005L);
 
-            sendS2f33outMulti(19006L, 2052L, 906L, 2053L, 2050L, 2051L);
+//            sendS2f33outMulti(19006L, 2052L, 906L, 2053L, 2050L, 2051L);
+            List<Long> svidlist1 = new ArrayList<>();
+            svidlist1.add(2052L);
+            svidlist1.add(906L);
+            svidlist1.add(2053L);
+            svidlist1.add(2050L);
+            svidlist1.add(2051L);
+            sendS2F33Out(19006L, 19006L, svidlist);
             sendS2F35out(19006L, 19006L, 19006L);
             sendS2F37out(19006L);
 
-            sendS2f33outMulti(19007L, 3052L, 906L, 3053L, 3050L, 3051L);
+//            sendS2f33outMulti(19007L, 3052L, 906L, 3053L, 3050L, 3051L);
+            List<Long> svidlist2 = new ArrayList<>();
+            svidlist2.add(3052L);
+            svidlist2.add(906L);
+            svidlist2.add(3053L);
+            svidlist2.add(3050L);
+            svidlist2.add(3051L);
+            sendS2F33Out(19007L, 19007L, svidlist);
             sendS2F35out(19007L, 19007L, 19007L);
             sendS2F37out(19007L);
 
-            sendS2f33outMulti(19008L, 4052L, 906L, 4053L, 4050L, 4051L);
+//            sendS2f33outMulti(19008L, 4052L, 906L, 4053L, 4050L, 4051L);
+            List<Long> svidlist3 = new ArrayList<>();
+            svidlist3.add(4052L);
+            svidlist3.add(906L);
+            svidlist3.add(4053L);
+            svidlist3.add(4050L);
+            svidlist3.add(4051L);
+            sendS2F33Out(19008L, 19008L, svidlist);
             sendS2F35out(19008L, 19008L, 19008L);
             sendS2F37out(19008L);
         }
@@ -724,7 +714,7 @@ public class TowaHost extends EquipHost {
             holdFlag = true;
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             holdFlag = false;
             return null;
         }
@@ -745,7 +735,7 @@ public class TowaHost extends EquipHost {
             holdFlag = true;
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             holdFlag = false;
             return null;
         }
@@ -773,7 +763,7 @@ public class TowaHost extends EquipHost {
                 }
                 return map;
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 return null;
             }
         } catch (Exception e) {
@@ -894,7 +884,7 @@ public class TowaHost extends EquipHost {
 
         }
         GlobalConstants.C2SEqptLogQueue.sendMessage(svMap);
-       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送设备清模状态sv参数信息到服务端");
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送设备清模状态sv参数信息到服务端");
     }
 
     @Override
@@ -996,7 +986,14 @@ public class TowaHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+            return;
+
+        }
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
@@ -1008,10 +1005,10 @@ public class TowaHost extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     String eventDescEN = "(" + dateStr + ") Start Check Para Error! RecipePara[" + recipePara.getParaName() + "], realValue: " + recipePara.getSetValue() + ", defaultValue: " + recipePara.getDefValue() + ", out of spec[" + recipePara.getMinValue() + "-" + recipePara.getMaxValue() + "], machine locked.";
                     this.sendTerminalMsg2EqpSingle(eventDescEN);
@@ -1019,7 +1016,7 @@ public class TowaHost extends EquipHost {
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }

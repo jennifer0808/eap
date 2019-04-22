@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -435,7 +436,7 @@ public class C6800SECSHost extends EquipHost {
 
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
 
@@ -459,7 +460,7 @@ public class C6800SECSHost extends EquipHost {
         return resultMap;
     }
 
-    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe) {
+    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe) throws UploadRecipeErrorException {
         return startCheckRecipeParaReturnMap(checkRecipe, "");
     }
 
@@ -469,7 +470,7 @@ public class C6800SECSHost extends EquipHost {
      * @param checkRecipe
      * @param type
      */
-    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe, String type) {
+    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe, String type) throws UploadRecipeErrorException {
         boolean checkParaFlag = false;
         Map resultMap = new HashMap();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();

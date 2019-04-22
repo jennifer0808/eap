@@ -31,6 +31,7 @@ import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -429,7 +430,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         logger.info("START CHECK: ready to upload recipe:" + new Date());
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException upe) {
+            logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
+        }
         logger.info("START CHECK: transfer recipe over :" + new Date());
         logger.info("START CHECK: ready to check recipe para:" + new Date());
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
@@ -564,7 +570,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
-        if (listtmp != null) {
+        if (listtmp != null && !listtmp.isEmpty()) {
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
             ppExecName = String.valueOf(listtmp.get(1));
             controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
@@ -604,7 +610,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public Map sendS1F3SingleCheck(String svid) {
         List svidlist = new ArrayList();
-        svidlist.add(svid);
+        svidlist.add(Long.parseLong(svid));
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
@@ -1533,32 +1539,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    protected Object getPPBODY(String recipeName) {
+    protected Object getPPBODY(String recipeName) throws UploadRecipeErrorException {
         try {
             return activeWrapper.sendS7F5out(recipeName).get("PPBODY");
-        } catch (HsmsProtocolNotSelectedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (StreamFunctionNotSupportException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ItemIntegrityException e) {
-            e.printStackTrace();
-        } catch (MessageDataException e) {
-            e.printStackTrace();
-        } catch (BrokenProtocolException e) {
-            e.printStackTrace();
-        } catch (T3TimeOutException e) {
-            e.printStackTrace();
-        } catch (T6TimeOutException e) {
-            e.printStackTrace();
+            throw new UploadRecipeErrorException("Get recipe body from equip " + deviceCode + " failed.");
         }
-        return null;
     }
 
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = getRecipePathByConfig(recipe);
         List<RecipePara> recipeParaList = null;
@@ -1899,7 +1889,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param dataIdMap
      * @return
      */
-    public Map getSpecificData(Map<String, String> dataIdMap) {
+    public Map getSpecificData(Map<String, String> dataIdMap) throws UploadRecipeErrorException {
         Map resultMap = new HashMap();
         List svIdList = new ArrayList();
         List ecIdList = new ArrayList();
@@ -2000,7 +1990,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param dataIdList
      * @return
      */
-    public Map getSpecificRcpParaData(List dataIdList) {
+    public Map getSpecificRcpParaData(List dataIdList) throws UploadRecipeErrorException {
         Map resultMap = new HashMap();
         if (dataIdList == null || dataIdList.size() < 1) {
             return resultMap;
@@ -2541,7 +2531,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     /**
      * 提供一个自动上传的方法，可在设备类加载中调用，方便一次性上传全部recipe
      */
-    public void upLoadAllRcp() {
+    public void upLoadAllRcp() throws UploadRecipeErrorException {
         ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
         for (int i = 0; i < eppd.size(); i++) {
             String recipeName = eppd.get(i).toString();
@@ -3250,7 +3240,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "WaferId：[" + MaterialID + "]下载失败," + mappingInfo.get("msg"));
                 s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
-                activeWrapper.respondMessage(s12f4out);
+
+                activeWrapper.sendS12F4out(null, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                        , 0, 0, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 0 * 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                );
                 this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
                 return null;
             }
@@ -3436,7 +3429,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return recipeService.organizeUploadRecipePath(recipe);
     }
 
-    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe) {
+    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe) throws UploadRecipeErrorException {
         return startCheckRecipeParaReturnFlag(checkRecipe, "");
     }
 
@@ -3446,7 +3439,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param checkRecipe
      * @param type
      */
-    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe, String type) {
+    public boolean startCheckRecipeParaReturnFlag(Recipe checkRecipe, String type) throws UploadRecipeErrorException {
         boolean checkParaFlag = false;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
