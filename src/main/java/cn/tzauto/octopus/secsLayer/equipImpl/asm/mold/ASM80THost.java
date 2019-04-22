@@ -19,7 +19,6 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -283,10 +282,6 @@ public class ASM80THost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -443,10 +438,9 @@ public class ASM80THost extends EquipHost {
     public Map sendS7F19out() {
         Map resultMap = super.sendS7F19out();
         ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if(recipeList.size()!=0){
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(recipeList));
+        if(recipeList.size()>0){
             List<Object> recipeNames = new ArrayList<>();
-            for (Object obj : listtmp) {
+            for (Object obj : recipeList) {
                 String recipeName = String.valueOf(obj);
                 if (recipeName.contains(".prp")) {
                     recipeName = recipeName.replace(".prp", "");

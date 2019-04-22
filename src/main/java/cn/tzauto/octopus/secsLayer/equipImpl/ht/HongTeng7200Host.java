@@ -122,7 +122,6 @@ public class HongTeng7200Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -170,17 +169,17 @@ public class HongTeng7200Host extends EquipHost {
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) {
+            } else if (ceid == EquipStateChangeCeid) { //102L
                 processS6F11EquipStatusChange(data);
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
             } else if (ceid == 201) {
                 processS6F11LotCheck(data);
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
             } else if (ceid == 202) {
                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data, (byte) 0);
+            } else{
+                replyS6F12WithACK(data, (byte) 0);
             }
 
             if (commState != 1) {
@@ -244,25 +243,28 @@ public class HongTeng7200Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long nowStatus = 0L;
+        long[] nowStatus = null;
         long ceid = 0L;
         try {
-            ArrayList  list = (ArrayList) data.get("REPORT");
-            nowStatus = (long) ((ArrayList)list.get(1)).get(1);
             ceid = (long) data.get("CEID");
+            ArrayList  list = (ArrayList) data.get("REPORT");
+            nowStatus = (long[]) ((ArrayList)list.get(1)).get(1);
+
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus[0]), deviceType);
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
+        findDeviceRecipe();
         if (equipStatus.equalsIgnoreCase("run")) {
             //首先从服务端获取机台是否处于锁机状态
             //如果设备应该是锁机，那么首先发送锁机命令给机台
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                pauseDevice();
+                this.sendS2f41Cmd("PAUSE");
+                //pauseDevice();
             }
         }
 //        String preStatusStr = ACKDescription.descriptionStatus(preStatus, deviceType);
@@ -637,58 +639,10 @@ public class HongTeng7200Host extends EquipHost {
         return checkResult;
     }
 
-    //    @Override
-//    public List<Attach> getRecipeAttachInfo(Recipe recipe) {
-//        List<Attach> attachs = new ArrayList<>();
-//        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-//        RecipeService recipeService = new RecipeService(sqlSession);
-//        String attachPath = recipeService.organizeUploadRecipePath(recipe);
-//        String recipePath = GlobalConstants.localRecipePath + attachPath + recipe.getRecipeName().replace("/", "@") + "_V" + recipe.getVersionNo() + ".txt";
-//        Map attachPathMap = getRelativeFileInfo(recipePath, "");
-//        String attachName = recipe.getRecipeName().replaceAll("/", "@") + "_V" + recipe.getVersionNo();
-//        for (int i = 0; i < 3; i++) {
-//            if (i == 1) {
-//                attachName = String.valueOf(attachPathMap.get("compRcpName")).replaceAll("/", "@") + "_V" + recipe.getVersionNo();
-//            }
-//            if (i == 2) {
-//                attachName = String.valueOf(attachPathMap.get("hanRcpName")).replaceAll("/", "@") + "_V" + recipe.getVersionNo();
-//            }
-//            Attach attach = new Attach();
-//            attach.setId(UUID.randomUUID().toString());
-//            attach.setRecipeRowId(recipe.getId());
-//            attach.setAttachName(attachName);
-//            attach.setAttachPath(attachPath);
-//            sqlSession.close();
-//            attach.setAttachType("txt");
-//            attach.setSortNo(0);
-//            if (GlobalConstants.sysUser != null) {
-//                attach.setCreateBy(GlobalConstants.sysUser.getId());
-//                attach.setUpdateBy(GlobalConstants.sysUser.getId());
-//            } else {
-//                attach.setCreateBy("System");
-//                attach.setUpdateBy("System");
-//            }
-//            attachs.add(attach);
-//        }
-//        return attachs;
-//    }
     @SuppressWarnings("unchecked")
     @Override
     public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-//        s1f13out.put("Mdln", Mdln);
-//        s1f13out.put("SoftRev", SoftRev);
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            setCommState(0);
-            logger.error("Exception:", e);
-        }
+     super.sendS1F13out();
     }
 
 
@@ -706,26 +660,6 @@ public class HongTeng7200Host extends EquipHost {
 
     @Override
     public String testRUThere() {
-        try {
-            DataMsgMap s1f1out = new DataMsgMap("s1f1out", activeWrapper.getDeviceId());
-            long transactionId = activeWrapper.getNextAvailableTransactionId();
-            s1f1out.setTransactionId(transactionId);
-            DataMsgMap s1f2in = activeWrapper.sendAwaitMessage(s1f1out);
-            if (s1f2in != null) {
-                //如果回复取消会话，那么需要重新发送S1F13
-                if (s1f2in.getMsgSfName().contains("s1f0")) {
-                    logger.info("testRUThere成功,但是未正确回复消息,需要重新建立连接 ");
-                    return "0";
-                } else {
-                    logger.info("testRUThere成功、通信正常 ");
-                    return "0";
-                }
-            } else {
-                return "2";
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "2";
-        }
+        return super.testRUThere();
     }
 }

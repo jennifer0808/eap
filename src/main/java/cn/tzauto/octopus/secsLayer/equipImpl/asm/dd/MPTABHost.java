@@ -49,7 +49,6 @@ public class MPTABHost extends EquipHost {
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
@@ -100,7 +99,7 @@ public class MPTABHost extends EquipHost {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
 //                    long ceid = 0;
 //                    ceid = msg.getSingleNumber("CollEventID");
@@ -172,7 +171,7 @@ public class MPTABHost extends EquipHost {
         panelMap.put("PPExecName", ppExecName);
         //由于TOWA的controlstate暂时无法获取，所以暂不处理
 //        if (!deviceType.contains("TOWA")) {
-        controlState = ACKDescription.describeControlState((byte) listtmp.get(2), deviceType);
+        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
 //        }
         changeEquipPanel(panelMap);
@@ -430,8 +429,8 @@ public class MPTABHost extends EquipHost {
     }
 // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
-    //释放机台
 
+    //释放机台
     @Override
     public Map releaseDevice() {
         Map map = new HashMap();// this.sendS2f41Cmd("START");

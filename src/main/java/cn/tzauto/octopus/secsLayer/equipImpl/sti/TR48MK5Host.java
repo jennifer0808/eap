@@ -38,7 +38,7 @@ public class TR48MK5Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat= FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PPSELECT";
     }
 
@@ -70,8 +70,6 @@ public class TR48MK5Host extends EquipHost {
                 }
                 if (this.getCommState() != this.COMMUNICATING) {
                     this.sendS1F13out();
-                }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
@@ -91,13 +89,14 @@ public class TR48MK5Host extends EquipHost {
             }
         }
     }
+
     @Override
-     public void processS6F11in(DataMsgMap msg) {
+    public void processS6F11in(DataMsgMap msg) {
         try {
-            long   ceid = (long) msg.get("CEID");
+            long ceid = (long) msg.get("CEID");
             if (ceid == 11) {
                 this.processS6F11EquipStatusChange(msg);
-            }else if(ceid ==1){
+            } else if (ceid == 1) {
                 //刷新当前机台状态
                 logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
                 findDeviceRecipe();
@@ -123,11 +122,11 @@ public class TR48MK5Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data,(byte)0);
+                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            }  else if (tagName.equalsIgnoreCase("s1f14in")) {
+            } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -151,18 +150,9 @@ public class TR48MK5Host extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             findDeviceRecipe();
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        if (ceid == 73) {
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-//        }
-//        Map map = new HashMap();
-//        map.put("EquipStatus", equipStatus);
-//        map.put("PPExecName", ppExecName);
-//        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -171,7 +161,7 @@ public class TR48MK5Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -183,35 +173,35 @@ public class TR48MK5Host extends EquipHost {
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
             if ("Engineer".equals(busniessMod) && equipStatus.equalsIgnoreCase("run")) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
             {
                 if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                         return;
                     }
                     if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     //检查程序是否存在 GOLD
                     Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                     if (goldRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                         this.holdDevice();
                         return;
                     }
                     if (checkRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
                         this.holdDevice();
                     } else {
                         this.startCheckRecipePara(checkRecipe);
@@ -231,17 +221,18 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        Map resultMap = super.sendS7F3out(localRecipeFilePath, targetRecipeName);
         //发送PP-Select指令
         sendS2F41outPPselect(targetRecipeName);
         findDeviceRecipe();
         //发送LotConfig指令
-        String lPartCounter="";
-        try{
-             lPartCounter = getCounterFromPPBody(localRecipeFilePath, targetRecipeName);
-        }catch (Exception e){
+        String lPartCounter = "";
+        try {
+            lPartCounter = getCounterFromPPBody(localRecipeFilePath, targetRecipeName);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-           sendS2F41CmdLotConfig("Tape", "Enable", "Enable", "Enable", "Enable", "Enable", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", lPartCounter, "500", "0");
+        sendS2F41CmdLotConfig("Tape", "Enable", "Enable", "Enable", "Enable", "Enable", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", "Vision1.0", lPartCounter, "500", "0");
         //发送LotStart指令
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -252,10 +243,10 @@ public class TR48MK5Host extends EquipHost {
         //sendS2f41CmdLotStart(lotId, "XXX", "XXX", "XXX");
         sendS2f41CmdLotStart(lotId, "", "", "");
 
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "发送LotId：[" + lotId + "]至设备！");
         //发送Start指令
         sendS2f41Cmd("START");
-        return super.sendS7F3out(localRecipeFilePath,targetRecipeName);
+        return resultMap;
     }
 
     @Override
@@ -265,7 +256,7 @@ public class TR48MK5Host extends EquipHost {
         List<RecipePara> recipeParaList = null;
         String shortNameOK = "Y";
         String realRecipeName = "";
-        byte[] ppbody = (byte[])getPPBODY(recipeName);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
@@ -319,57 +310,57 @@ public class TR48MK5Host extends EquipHost {
 
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {
-        Map s2f41outMap=new HashMap();
-        s2f41outMap.put("DATA1",DATA1);
-        s2f41outMap.put("DATA2",DATA2);
-        s2f41outMap.put("DATA3",DATA3);
-        s2f41outMap.put("DATA4",DATA4);
-        s2f41outMap.put("DATA5",DATA5);
-        s2f41outMap.put("DATA6",DATA6);
-        s2f41outMap.put("DATA7",DATA7);
-        s2f41outMap.put("DATA8",DATA8);
-        s2f41outMap.put("DATA9",DATA9);
-        s2f41outMap.put("DATA10",DATA10);
-        s2f41outMap.put("DATA11",DATA11);
-        s2f41outMap.put("DATA12",DATA12);
-        s2f41outMap.put("DATA13",DATA13);
-        s2f41outMap.put("DATA14",DATA14);
-        Map s2f41outNameFromatMap=new HashMap();
-        s2f41outNameFromatMap.put("DATA1",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA2",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA3",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA4",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA5",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA6",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA7",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA8",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA9",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA10",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA11",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA12",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA13",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA14",FormatCode.SECS_ASCII);
-        Map s2f41outVauleFromatMap=new HashMap();
-        s2f41outVauleFromatMap.put(DATA1,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA2,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA3,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA4,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA5,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA6,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA7,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA8,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA9,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA10,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA11,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA12,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA13,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA14,FormatCode.SECS_ASCII);
+        Map s2f41outMap = new HashMap();
+        s2f41outMap.put("DATA1", DATA1);
+        s2f41outMap.put("DATA2", DATA2);
+        s2f41outMap.put("DATA3", DATA3);
+        s2f41outMap.put("DATA4", DATA4);
+        s2f41outMap.put("DATA5", DATA5);
+        s2f41outMap.put("DATA6", DATA6);
+        s2f41outMap.put("DATA7", DATA7);
+        s2f41outMap.put("DATA8", DATA8);
+        s2f41outMap.put("DATA9", DATA9);
+        s2f41outMap.put("DATA10", DATA10);
+        s2f41outMap.put("DATA11", DATA11);
+        s2f41outMap.put("DATA12", DATA12);
+        s2f41outMap.put("DATA13", DATA13);
+        s2f41outMap.put("DATA14", DATA14);
+        Map s2f41outNameFromatMap = new HashMap();
+        s2f41outNameFromatMap.put("DATA1", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA2", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA3", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA4", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA5", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA6", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA7", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA8", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA9", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA10", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA11", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA12", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA13", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA14", FormatCode.SECS_ASCII);
+        Map s2f41outVauleFromatMap = new HashMap();
+        s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA5, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA6, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA7, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA8, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA9, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA10, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA11, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA12, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA13, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA14, FormatCode.SECS_ASCII);
         byte hcack = -1;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out("LOTCONFIG",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTCONFIG", s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to CHECK the LotConfig");
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -382,32 +373,33 @@ public class TR48MK5Host extends EquipHost {
         }
         return resultMap;
     }
+
     //TODO
     public Map sendS2f41CmdLotStart(String DATA1, String DATA2, String DATA3, String DATA4) {
-        Map s2f41outMap=new HashMap();
-        s2f41outMap.put("DATA1",DATA1);
-        s2f41outMap.put("DATA2",DATA2);
-        s2f41outMap.put("DATA3",DATA3);
-        s2f41outMap.put("DATA4",DATA4);
+        Map s2f41outMap = new HashMap();
+        s2f41outMap.put("DATA1", DATA1);
+        s2f41outMap.put("DATA2", DATA2);
+        s2f41outMap.put("DATA3", DATA3);
+        s2f41outMap.put("DATA4", DATA4);
 
-        Map s2f41outNameFromatMap=new HashMap();
-        s2f41outNameFromatMap.put("DATA1",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA2",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA3",FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA4",FormatCode.SECS_ASCII);
+        Map s2f41outNameFromatMap = new HashMap();
+        s2f41outNameFromatMap.put("DATA1", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA2", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA3", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("DATA4", FormatCode.SECS_ASCII);
 
-        Map s2f41outVauleFromatMap=new HashMap();
-        s2f41outVauleFromatMap.put(DATA1,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA2,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA3,FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA4,FormatCode.SECS_ASCII);
+        Map s2f41outVauleFromatMap = new HashMap();
+        s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4, FormatCode.SECS_ASCII);
 
-        byte hcack =-1;
+        byte hcack = -1;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out("LOTSTART",s2f41outMap,s2f41outNameFromatMap,s2f41outVauleFromatMap);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTSTART", s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to Start the Lot");
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -423,34 +415,12 @@ public class TR48MK5Host extends EquipHost {
 
     @Override
     public Map holdDevice() {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-//            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
-            Map cmdMap = this.sendS2f41Cmd("STOP");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
-                Map panelMap = new HashMap();
-                panelMap.put("AlarmState", 2);
-                changeEquipPanel(panelMap);
-                holdSuccessFlag = true;
-            } else {
-                holdSuccessFlag = false;
-            }
-            return cmdMap;
-        } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
-            return null;
-        }
+        return super.holdDevice();
     }
 
     @Override
     public Map releaseDevice() {
-        this.setAlarmState(0);
-        //startCheckPass = true;
-        holdFlag = false;
-        return null;//this.sendS2f41Cmd("RESUME_H");
+        return super.releaseDevice();
     }
 
     @Override
@@ -463,7 +433,7 @@ public class TR48MK5Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte hcack = (byte)  data.get("HCACK");
+        byte hcack = (byte) data.get("HCACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
@@ -471,8 +441,6 @@ public class TR48MK5Host extends EquipHost {
         return resultMap;
     }
     // </editor-fold>
-
-
 
 
 //    @Override

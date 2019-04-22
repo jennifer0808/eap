@@ -28,18 +28,12 @@ public class HP_EPL2400RecipeUtil {
     private static void doUncompressFile(String inFileName) {
 
         try {
-
-//            if (!getExtension(inFileName).equalsIgnoreCase("gz")) {
-//                System.err.println("File name must have extension of \".gz\"");
-//                System.exit(1);
-//            }
             System.out.println("Opening the compressed file.");
             GZIPInputStream in = null;
             try {
                 in = new GZIPInputStream(new FileInputStream(inFileName));
             } catch (FileNotFoundException e) {
                 System.err.println("File not found. " + inFileName);
-                System.exit(1);
             }
 
             System.out.println("Open the output file.");
@@ -50,7 +44,6 @@ public class HP_EPL2400RecipeUtil {
                 out = new FileOutputStream(outFileName);
             } catch (FileNotFoundException e) {
                 System.err.println("Could not write to file. " + outFileName);
-                System.exit(1);
             }
 
             System.out.println("Transfering bytes from compressed file to the output file.");
@@ -66,7 +59,6 @@ public class HP_EPL2400RecipeUtil {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
         }
 
     }

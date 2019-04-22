@@ -123,8 +123,8 @@ public class DownloadPaneController implements Initializable {
             for (DeviceInfo deviceInfo : deviceInfostmp) {
                 SimpleRecipeUploadProperty srp = new SimpleRecipeUploadProperty();
                 if (deviceInfo.getDeviceTypeId().equals(deviceTypeId)) {
-                    srp.setDeviceName(recipe.getDeviceName());
-                    srp.setDeviceCode(recipe.getDeviceCode());
+                    srp.setDeviceName(deviceInfo.getDeviceName());
+                    srp.setDeviceCode(deviceInfo.getDeviceCode());
                     list.add(srp);
                 }
             }

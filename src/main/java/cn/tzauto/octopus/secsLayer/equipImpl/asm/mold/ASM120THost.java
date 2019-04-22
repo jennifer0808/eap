@@ -314,10 +314,6 @@ public class ASM120THost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -472,36 +468,35 @@ public class ASM120THost extends EquipHost {
     @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-
-        try {
-//            data = activeWrapper.sendAwaitMessage(s7f19out);
-            data = handleOverTime(s7f19out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+//        Map resultMap = new HashMap();
+//        resultMap.put("msgType", "s7f20");
+//        resultMap.put("deviceCode", deviceCode);
+//        resultMap.put("Description", "Get eppd from equip " + deviceCode);
+//        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s7f19out.setTransactionId(transactionId);
+//        DataMsgMap data = null;
+//
+//        try {
+////            data = activeWrapper.sendAwaitMessage(s7f19out);
+//            data = handleOverTime(s7f19out);
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
 //        if (data == null || data.get("EPPD") == null) {
 //            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
 //        }
-        if (data == null || data.get("EPPD") == null) {
+
+        Map resultMap =  super.sendS7F19out();
+        if (resultMap.get("eppd") == null) {
            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList list = (ArrayList) resultMap.get("eppd");
+        if (list.size()>0){
             List<Object> recipeNames = new ArrayList<>();
-            for (Object obj : listtmp) {
+            for (Object obj : list) {
                 String recipeName = String.valueOf(obj);
                 if (recipeName.contains(".prp")) {
                     recipeName = recipeName.replace(".prp", "");

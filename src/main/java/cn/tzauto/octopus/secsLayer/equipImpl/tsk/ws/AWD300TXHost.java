@@ -30,8 +30,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @SuppressWarnings("serial")
@@ -350,22 +352,6 @@ public class AWD300TXHost extends EquipHost {
     }
 
     @Override
-    public void processS2F17in(DataMsgMap msg) {
-//        throw new UnsupportedOperationException("Not yet implemented");
-        try {
-            DataMsgMap s2f18out = new DataMsgMap("s2f18out", activeWrapper.getDeviceId());
-            String time = "";
-            time = new SimpleDateFormat("yyMMddHHmmss").format(new Date());
-            s2f18out.put("TIME", time);
-            long transactionId = msg.getTransactionId();
-            s2f18out.setTransactionId(transactionId);
-            activeWrapper.respondMessage(s2f18out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     public void startCheckRecipePara(Recipe checkRecipe, String type) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -530,20 +516,5 @@ public class AWD300TXHost extends EquipHost {
     @Override
     public void initRemoteCommand() {
     }
-//    @SuppressWarnings("unchecked")
-//    public void sendS1F13out() {
-//        DataMsgMap s1f13out = new DataMsgMap("s1f13out", activeWrapper.getDeviceId());
-//        long transactionId = activeWrapper.getNextAvailableTransactionId();
-//        s1f13out.setTransactionId(transactionId);
-//        s1f13out.put("Mdln", "DR3003");
-//        s1f13out.put("SoftRev", "GA2013");
-//        try {
-//            DataMsgMap data = activeWrapper.sendAwaitMessage(s1f13out);
-//            if (data != null) {
-//                setCommState(1);
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+
 }

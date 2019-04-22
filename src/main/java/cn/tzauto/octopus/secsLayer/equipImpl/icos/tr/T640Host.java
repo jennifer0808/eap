@@ -270,17 +270,13 @@ public class T640Host extends EquipHost {
             }
             if (ceid == 14032) {
                 needCheck = true;
-            }
-
-            if(ceid == 100 || ceid == 110 || ceid ==111 || ceid ==112 ){
+            }else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        updateCommStateInExt();
-        showCollectionsEventInfo(ceid);
     }
 
     @Override
@@ -730,8 +726,10 @@ public class T640Host extends EquipHost {
 
     @Override
     public Map releaseDevice() {
-        return null;//this.sendS2f41Cmd("RESUME");
-//        return this.setEqptOffline();
+        Map map = new HashMap();
+        map.put("HCACK", "0");
+
+        return map;
     }
     // </editor-fold> 
 

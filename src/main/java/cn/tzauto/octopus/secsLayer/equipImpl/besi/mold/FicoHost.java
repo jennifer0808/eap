@@ -294,9 +294,6 @@ public class FicoHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 62) {
                 findDeviceRecipe();
-                Map map = new HashMap();
-                map.put("PPExecName", ppExecName);
-                changeEquipPanel(map);
             } else if (ceid == 1555) {
                 processS6F11SVGetFinish(data);
             }
@@ -371,11 +368,6 @@ public class FicoHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
