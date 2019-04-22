@@ -8,30 +8,23 @@ package cn.tzauto.octopus.secsLayer.equipImpl.TP.NITTO;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TPRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @SuppressWarnings("serial")
@@ -366,20 +359,6 @@ public class DR3000IIIHost extends EquipHost {
         return map;
     }
 
-    public void processS2F17in(DataMsgMap msg) {
-//        throw new UnsupportedOperationException("Not yet implemented");
-        try {
-            DataMsgMap s2f18out = new DataMsgMap("s2f18out", activeWrapper.getDeviceId());
-            String time = "";
-            time = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-            s2f18out.put("TIME", time + "00");
-            long transactionId = msg.getTransactionId();
-            s2f18out.setTransactionId(transactionId);
-            activeWrapper.respondMessage(s2f18out);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     @SuppressWarnings("unchecked")
     public void sendS6F23clear() {

@@ -50,6 +50,7 @@ public class HM2128FFWMHost extends EquipHost {
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        EquipStateChangeCeid = 5L;
     }
 
 
@@ -79,7 +80,9 @@ public class HM2128FFWMHost extends EquipHost {
                     HM2128FFWMHost.sleep(200);
                 }
                 if (this.getCommState() != HM2128FFWMHost.COMMUNICATING) {
+
                     this.sendS1F13out();
+                    sendS1F17out();
                 }
 //                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
 //                    sendS1F1out();
@@ -202,7 +205,6 @@ public class HM2128FFWMHost extends EquipHost {
             if (ceid == 1009) {
                 processS6F11EquipStart(data);
             } else if (ceid == EquipStateChangeCeid) {
-                //todo ceid unknown ?
                 processS6F11EquipStatusChange(data);
             }
         } catch (Exception e) {
@@ -602,11 +604,18 @@ public class HM2128FFWMHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F5out(String recipeName) {
-        Recipe recipe = setRecipe(recipeName);
+        String ppid = recipeName;
+        if (!recipeName.contains(".rcp")) {
+            recipeName = recipeName.concat(".rcp");
+        }
+        if (ppid.contains(".rcp")) {
+            ppid = ppid.replace(".rcp","");
+        }
+        Recipe recipe = setRecipe(ppid);
         recipePath = getRecipePathByConfig(recipe);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendS7F5out(recipeName.concat(".rcp"));
+            msgdata = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             e.printStackTrace();
         }

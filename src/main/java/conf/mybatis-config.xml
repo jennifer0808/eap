@@ -15,8 +15,7 @@
                 <!-- 这是 JDBC 连接对象的数据源连接池的实现,用来避免创建新的连接实例时必要的初始连接和认证时间。这是一种当前 Web 应用程序用来快速响应请求很流行的方 法。 -->
                 <!--           16 <dataSource type="POOLED">  -->
                 <property name="driver" value="com.mysql.jdbc.Driver" />
-                <!--<property name="url" value="jdbc:mysql://172.17.33.7:3306/octopus?characterEncoding=utf-8" />-->
-                <!--<property name="url" value="jdbc:mysql://localhost:3306/htautoclient?characterEncoding=utf-8&amp;autoReconnect=true" />-->
+                <!--<property name="url" value="jdbc:mysql://172.17.37.4:3306/octopus?characterEncoding=utf-8" />-->
                 <property name="url" value="jdbc:mysql://localhost:3306/octopus?characterEncoding=utf-8&amp;autoReconnect=true" />
                 <property name="username" value="root" />
                 <property name="password" value="123456" />

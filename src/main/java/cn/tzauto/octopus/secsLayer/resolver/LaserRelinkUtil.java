@@ -289,7 +289,7 @@ public class LaserRelinkUtil {
 //        String newFilePath = unzip(filePath);
         String newFilePath = doUncompressFile(filePath);
 
-        System.out.println(newFilePath);
+        System.out.println("recipe path:"+newFilePath);
         File file = new File(newFilePath + File.separator);
         if (file.exists()) {
 
