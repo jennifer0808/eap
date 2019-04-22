@@ -21,6 +21,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.AWD300TXRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
@@ -243,7 +244,7 @@ public class AWD300TXHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = getRecipePathByConfig(recipe);
         DataMsgMap msgData = null;
@@ -369,7 +370,13 @@ public class AWD300TXHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException e) {
+            return;
+
+        }
         List<RecipePara> recipeParasdiff = this.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();

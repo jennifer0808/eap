@@ -525,7 +525,7 @@ public class RecipeService extends BaseService {
         //获取机台状态，判断是否可以下载Recipe
         //验证机台状态
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceId();
+        String deviceId = deviceInfo.getDeviceCode();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
         /*
@@ -707,8 +707,8 @@ public class RecipeService extends BaseService {
         //DB800从ftp上传recipe
         if (recipe.getDeviceTypeCode().contains("DB810")) {
             recipeLocalPath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
         }
         RecipeOperationLog recipeOperationLog = setRcpOperationLog(recipe, "upload");
         this.saveRecipeOperationLog(recipeOperationLog);
@@ -747,7 +747,7 @@ public class RecipeService extends BaseService {
         }
         //日志
 //      UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
 
     }
 
@@ -812,7 +812,7 @@ public class RecipeService extends BaseService {
 //       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
         return existFlag;
     }
 
@@ -887,7 +887,12 @@ public class RecipeService extends BaseService {
     public int saveRcpParaBatch(List<RecipePara> recipeParas) {
         int result = 0;
         if (recipeParas != null && !recipeParas.isEmpty()) {
-            result = this.recipeParaMapper.saveRcpParaBatch(recipeParas);
+            for (int i = 0; i < recipeParas.size(); i++) {
+                result = saveRecipePara(recipeParas.get(i));
+                if (i % 1000 == 0) {
+                    session.commit();
+                }
+            }
         }
         return result;
     }
@@ -1478,7 +1483,7 @@ public class RecipeService extends BaseService {
                 String recipeFilePath = organizeRecipeDownloadFullFilePath(recipe);
                 String downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
                 if (downLoadResult.equals("0")) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceId, "下载Reciep[" + recipe.getRecipeName() + "]成功");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceId, "下载Reciep[" + recipe.getRecipeName() + "]成功");
                 }
             }
         }

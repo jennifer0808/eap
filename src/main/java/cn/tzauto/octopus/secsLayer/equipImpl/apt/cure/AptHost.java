@@ -17,6 +17,7 @@ import cn.tzauto.octopus.common.util.tool.CSVUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
@@ -38,6 +39,7 @@ public class AptHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT="PPSELECT";
     }
 
     @Override
@@ -90,12 +92,6 @@ public class AptHost extends EquipHost {
                 // logger.fatal("Caught Interruption", e);
             }
         }
-    }
-
-    @Override
-    public Map sendS1F3SingleCheck(String svidName) {
-        CSVUtil.setCSVFile(getProfile(), deviceCode, ppExecName);
-        return null;
     }
 
     @Override
@@ -234,15 +230,36 @@ public class AptHost extends EquipHost {
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
-            logger.info("1data == null:" + data == null);
-            logger.info("1data.get(RESULT) == null:" + data.get("SV") == null);
             return (ArrayList) sendS1F3SingleCheck("2107").get("SV");
         } catch (Exception e) {
             logger.error("Exception:getProfile", e);
             return null;
         }
     }
+    public Map sendS1F3SingleCheck(String svid) {
 
+        List svidlist = new ArrayList();
+        svidlist.add(Long.parseLong(svid));
+        DataMsgMap data = null;
+        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
+        try {
+            data = activeWrapper.sendS1F3out(svidlist, svFormat);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (data == null || data.get("SV") == null) {
+            return null;
+        }
+        ArrayList listtmp = (ArrayList) data.get("SV");
+        String fileName = CSVUtil.setCSVFile(listtmp, deviceCode, ppExecName);
+        Map resultMap = new HashMap();
+        String svValue = String.valueOf(listtmp.get(0));
+        resultMap.put("msgType", "s1f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("Value", svValue);
+        logger.info("resultMap=" + resultMap);
+        return resultMap;
+    }
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
 
@@ -365,16 +382,10 @@ public class AptHost extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        String ppbody = (String) msgdata.get("PPBODY");
+        String ppbody = (String) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 0, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析

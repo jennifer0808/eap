@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -14,6 +13,7 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -59,7 +59,6 @@ public class AsmAD8312Host extends EquipHost {
                     rptDefineNum++;
                     sendS2F37outAll();
                     sendS5F3out(true);
-                    Thread.sleep(2000);
                 }
 
                 DataMsgMap msg = null;
@@ -285,61 +284,6 @@ public class AsmAD8312Host extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
-        //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        long controlStateTmp = 0L;
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportID");
-            controlStateTmp = data.getSingleNumber("ControlState");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 1 && reportID == 1) {
-            Map panelMap = new HashMap();
-            if (controlStateTmp == 0) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-            }
-            if (controlStateTmp == 1) {
-                controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-            }
-            if (controlStateTmp == 2) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-            }
-            equipState.setControlState(controlState);
-            changeEquipPanel(panelMap);
-        }
-    }
-
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120 && reportID == 120) {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-
-    }
-
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
@@ -393,7 +337,7 @@ public class AsmAD8312Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
 
         recipeName = recipeName.replace(".rcp", "");
         if (!"ASMAD8312PLUS".equals(deviceType)) {
@@ -401,31 +345,24 @@ public class AsmAD8312Host extends EquipHost {
         }
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         List<RecipePara> recipeParaList = null;
         List<RecipePara> recipeParaListExtra = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, 1, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 //            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-            //Recipe解析   
-            if (deviceType.equals("ASMAD8312PLUS")) {
-                recipeParaList = new ArrayList<>();
-                recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDBForPlus(recipePath, deviceType);
-            } else {
-                recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-                recipeParaListExtra = getRecipeParasByECSV();
-                logger.info("recipeParaListExtra = " + recipeParaListExtra);
-                Boolean result = recipeParaList.addAll(recipeParaListExtra);
-                logger.info(result);
-            }
+        //Recipe解析
+        if (deviceType.equals("ASMAD8312PLUS")) {
+            recipeParaList = new ArrayList<>();
+            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDBForPlus(recipePath, deviceType);
+        } else {
+            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
+            recipeParaListExtra = getRecipeParasByECSV();
+            logger.info("recipeParaListExtra = " + recipeParaListExtra);
+            Boolean result = recipeParaList.addAll(recipeParaListExtra);
+            logger.info(result);
         }
+
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);

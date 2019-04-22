@@ -21,6 +21,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.besi.FicoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -258,7 +259,7 @@ public class FicoHost extends EquipHost {
         byte ALCD = (byte) data.get("ALCD");
         String ALTX = data.get("ALTX").toString();
         logger.info("Received s5f1 ID:" + ALID + " from " + deviceCode + " with the ALCD=" + ALCD + " means " + ACKDescription.description(ALCD, "ALCD") + ", and the ALTX is: " + ALTX);
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
         resultMap.put("deviceCode", deviceCode);
@@ -272,7 +273,7 @@ public class FicoHost extends EquipHost {
                 "100020697", "100020699", "100021389", "100021391", "100021393", "100021371", "100021373", "100021375"};
         List<String> ALIDList = Arrays.asList(ALIDs);
         if (ALIDList.contains(String.valueOf(ALID))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到设备特殊报警，报警ID: " + ALID + " 报警详情: " + ALTX);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到设备特殊报警，报警ID: " + ALID + " 报警详情: " + ALTX);
             checkFlagFunction();
         }
         AutoAlter.alter(resultMap);
@@ -352,7 +353,7 @@ public class FicoHost extends EquipHost {
         }
 
         String pressState = ACKDescription.describeOPMode(pressStateId, deviceType);
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到事件报告[" + ceid + "], Press状态[" + pressState + "], CavityVacuum[" + cavityVacuumValue + "], BoardVacuum[" + boardVacuumValue + "]");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到事件报告[" + ceid + "], Press状态[" + pressState + "], CavityVacuum[" + cavityVacuumValue + "], BoardVacuum[" + boardVacuumValue + "]");
         if ("Production".equals(pressState)) {
             //使用FutureTask，延迟3s，如果收到特殊报警，则不进行比对
             checkSVSpecTask(String.valueOf(ceid), String.valueOf(cavityVacuumValue), String.valueOf(boardVacuumValue));
@@ -394,7 +395,7 @@ public class FicoHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -420,14 +421,14 @@ public class FicoHost extends EquipHost {
 //                    return;
 //                }
                 //获取
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机获取SV数据");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机获取SV数据");
                 saveSVDataAndSituation("Start");
                 //1、获取设备需要校验的信息类型,
                 String startCheckMod = deviceInfoExt.getStartCheckMod();
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                    holdDeviceAndShowDetailInfo();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -453,11 +454,11 @@ public class FicoHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                         if (!checkResult) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         }
                     }
 
@@ -466,22 +467,22 @@ public class FicoHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check(Unique)");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck(Gold)");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck(Gold)");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -516,7 +517,7 @@ public class FicoHost extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
@@ -599,7 +600,7 @@ public class FicoHost extends EquipHost {
             sqlSession.close();
             if (deviceInfoLocks != null && !deviceInfoLocks.isEmpty()) {
                 //在锁机消息页面，如果设备正常回复消息给工控机，则发送解锁命令
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到设备正常回复消息[OK]，发送解锁命令");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "收到设备正常回复消息[OK]，发送解锁命令");
                 releaseDeviceByServer("SV_REAL_LOCK");
             }
         }
@@ -612,7 +613,7 @@ public class FicoHost extends EquipHost {
         super.pressUseMap.clear();
         for (int i = 0; i < pressResults.size(); i++) {
             String svValue = ACKDescription.describeOPMode(pressResults.get(i), deviceType);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Press" + (i + 1) + ", OperationMode:" + svValue);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Press" + (i + 1) + ", OperationMode:" + svValue);
             if ("Production".equals(svValue)) {
                 super.pressUseMap.put(i + 1, true);
             }
@@ -631,7 +632,13 @@ public class FicoHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+            return;
+        }
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
@@ -643,10 +650,10 @@ public class FicoHost extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常，参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     String eventDescEN = "(" + dateStr + ") Start Check Para Error! RecipePara[" + recipePara.getParaName() + "], realValue: " + recipePara.getSetValue() + ", defaultValue: " + recipePara.getDefValue() + ", out of spec[" + recipePara.getMinValue() + "-" + recipePara.getMaxValue() + "], machine locked.";
                     this.sendTerminalMsg2EqpSingle(eventDescEN);
@@ -654,7 +661,7 @@ public class FicoHost extends EquipHost {
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }
@@ -705,19 +712,19 @@ public class FicoHost extends EquipHost {
                         }
                     }
                     deviceRealtimeParas = putSV2DeviceRealtimeParas(recipeTemplates, svList, recipeParas, deviceRealtimeParas, remark);
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "获取Press管控SV数据成功，SV数据量为" + deviceRealtimeParas.size());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "获取Press管控SV数据成功，SV数据量为" + deviceRealtimeParas.size());
                 } else {
                     deviceRealtimeParas = putSV2DeviceRealtimeParas(recipeTemplatesAll, svListAll, recipeParas, deviceRealtimeParas, remark);
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "获取全部SV数据成功，SV数据量为" + deviceRealtimeParas.size());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "获取全部SV数据成功，SV数据量为" + deviceRealtimeParas.size());
                 }
                 monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保存SV数据成功");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保存SV数据成功");
             }
             sqlSession.commit();
         } catch (Exception e) {
             logger.error("Exception:", e);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, e.getMessage());
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保存SV数据失败");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, e.getMessage());
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保存SV数据失败");
             sqlSession.rollback();
         } finally {
             sqlSession.close();
@@ -793,7 +800,7 @@ public class FicoHost extends EquipHost {
         String paraName = press + "_CAVITYVACUUM";
         String setValue = getRcpParaSetValue(paraName);
         if (setValue == null || "".equals(setValue)) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有获取到参数" + paraName + "的设定值，请联系ME处理");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有获取到参数" + paraName + "的设定值，请联系ME处理");
             return;
         }
         double setValueD = Double.parseDouble(setValue) / 100;//单位转换，把帕转换成百帕
@@ -801,19 +808,19 @@ public class FicoHost extends EquipHost {
         double minValueD = setValueD - 100;
         double realTimeValueD = Double.parseDouble(cavityValue);
         if (realTimeValueD > maxValueD || realTimeValueD < minValueD) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "参数" + paraName + "实时值为" + cavityValue + "，超出设定范围[" + minValueD + "-" + maxValueD + "]");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "参数" + paraName + "实时值为" + cavityValue + "，超出设定范围[" + minValueD + "-" + maxValueD + "]");
             String dateStr = GlobalConstants.dateFormat.format(new Date());
             this.sendTerminalMsg2EqpSingle("(" + dateStr + ") RecipePara[" + paraName + "] current value is " + cavityValue + ", out of spec[" + minValueD + "-" + maxValueD + "], machine locked.");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "向设备发送PAUSE命令");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "向设备发送PAUSE命令");
             this.holdDeviceByServer("SV_REAL_LOCK");
         }
         double realTimeValueD2 = Double.parseDouble(boardValue);
         String paraName2 = press + "_CAVITYVACUUM";
         if (realTimeValueD2 == 0) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "参数" + paraName2 + "实时值为" + boardValue + "，超出设定范围");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "参数" + paraName2 + "实时值为" + boardValue + "，超出设定范围");
             String dateStr = GlobalConstants.dateFormat.format(new Date());
             this.sendTerminalMsg2EqpSingle("(" + dateStr + ") RecipePara[" + paraName2 + "] realtimevalue is " + boardValue + ", out of spec, machine locked.");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "向设备发送PAUSE命令");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "向设备发送PAUSE命令");
             this.holdDeviceByServer("SV_REAL_LOCK");
         }
     }
@@ -891,7 +898,7 @@ public class FicoHost extends EquipHost {
         mqMap.put("unit", "");
         mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
         GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
         logger.info("设备" + deviceCode + " UPH参数为:" + mqMap);
 //       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
@@ -936,7 +943,7 @@ public class FicoHost extends EquipHost {
             }
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -983,7 +990,7 @@ public class FicoHost extends EquipHost {
 
     public void checkFlagFunction() {
         cancelCheckFlag = true;
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         FutureTask<Boolean> future = new FutureTask<>(
                 new Callable<Boolean>() {
@@ -992,7 +999,7 @@ public class FicoHost extends EquipHost {
                     public Boolean call() throws InterruptedException {
                         Thread.sleep(5000);
                         cancelCheckFlag = false;
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备的取消校验标记(cancelCheckFlag)为" + cancelCheckFlag);
                         return false;
                     }
                 });
@@ -1012,10 +1019,10 @@ public class FicoHost extends EquipHost {
                     public Boolean call() throws InterruptedException {
                         Thread.sleep(3000);
                         if (!cancelCheckFlag) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始进行SV参数比对");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始进行SV参数比对");
                             checkSVSpec(ceidF, cavityVacuumValueF, boardVacuumValueF);
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "取消此次SV参数比对");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "取消此次SV参数比对");
                         }
                         return false;
                     }

@@ -17,6 +17,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
@@ -610,7 +611,7 @@ public class ASMIdeal3GHost extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap msgdata = null;

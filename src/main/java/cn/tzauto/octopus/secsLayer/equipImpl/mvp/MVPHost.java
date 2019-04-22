@@ -8,22 +8,15 @@ package cn.tzauto.octopus.secsLayer.equipImpl.mvp;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.ws.WSUtility;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.XmlUtil;
-import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author njtz
@@ -258,7 +251,7 @@ public class MVPHost extends EquipHost {
 
 
 //    @Override
-//    public Map sendS7F5out(String recipeName) {
+//    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
 //        throw new UnsupportedOperationException("Not supported yet.");
 //    }
 }

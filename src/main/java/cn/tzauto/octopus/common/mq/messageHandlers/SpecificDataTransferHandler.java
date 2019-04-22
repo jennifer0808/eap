@@ -11,6 +11,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -64,6 +65,8 @@ public class SpecificDataTransferHandler implements MessageHandler {
 //           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的数据");
         } catch (JMSException ex) {
             logger.error("Execption occur:" + ex);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
         } finally {
             sqlSession.close();
         }

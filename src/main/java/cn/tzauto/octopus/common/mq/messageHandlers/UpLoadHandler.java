@@ -16,6 +16,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -81,6 +82,8 @@ public class UpLoadHandler implements MessageHandler {
            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
         } finally {
             sqlSession.close();
         }

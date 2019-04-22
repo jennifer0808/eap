@@ -12,6 +12,7 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.pg300.PG300RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -271,7 +272,7 @@ public class Pg300Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         String ppid = recipeName;
         Recipe recipe = setRecipe(recipeName);
         recipePath = getRecipePathByConfig(recipe);

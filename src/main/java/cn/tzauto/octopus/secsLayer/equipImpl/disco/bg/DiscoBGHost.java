@@ -19,6 +19,7 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -230,7 +231,12 @@ public class DiscoBGHost extends EquipHost {
      */
     private List complementSvlist(List svValueList) {
         List fullList = svValueList;
-        Map map = sendS7F5out(ppExecName);
+        Map map = null;
+        try {
+            map = sendS7F5out(ppExecName);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+        }
         List<RecipePara> recipeParaList = null;
         if (map != null && map.get("recipeParaList") != null) {
             recipeParaList = (List<RecipePara>) map.get("recipeParaList");
@@ -536,7 +542,7 @@ public class DiscoBGHost extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);

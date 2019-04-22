@@ -5,6 +5,7 @@
 package cn.tzauto.octopus.gui.guiUtil;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.main.EapClient;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TextArea;
 import org.apache.log4j.Logger;
@@ -63,24 +64,28 @@ public class UiLogUtil {
 
 
     public void appendLog2SeverTab(String deviceCode, String msg) {
-//        TextArea secsLog = (TextArea) EapClient.root.lookup("#severLog");
+        TextArea serverLog = (TextArea) EapClient.root.lookup("#severLog");
         String finalMsg = formateMsg(deviceCode, msg);
 //        secsLog.appendText(finalMsg + "\n");
         logger.info("[ServerLog]" + finalMsg);
-        setServerMsgProperty(finalMsg);
+//        setServerMsgProperty(finalMsg);
+        appendText(serverLog, finalMsg);
     }
 
     public void appendLog2SecsTab(String deviceCode, String msg) {
-//        TextArea secsLog = (TextArea) EapClient.root.lookup("#secsLog");
+        TextArea secsLog = (TextArea) EapClient.root.lookup("#secsLog");
         String finalMsg = formateMsg(deviceCode, msg);
         logger.info("[SecsLog]" + finalMsg);
-        setSecsMsgProperty(finalMsg);
+//        setSecsMsgProperty(finalMsg);
+        appendText(secsLog, finalMsg);
     }
 
     public void appendLog2EventTab(String deviceCode, String msg) {
+        TextArea eventLog = (TextArea) EapClient.root.lookup("#eventLog");
         String finalMsg = formateMsg(deviceCode, msg);
         logger.info("[EventLog]" + finalMsg);
-        setEventMsgProperty(finalMsg);
+//        setEventMsgProperty(finalMsg);
+        appendText(eventLog, finalMsg);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -139,7 +144,7 @@ public class UiLogUtil {
             logArea.clear();
         }
         builder.append(msg);
-        logArea.appendText(builder.toString());
+        logArea.appendText(builder.toString()+ "\n");
 
     }
 

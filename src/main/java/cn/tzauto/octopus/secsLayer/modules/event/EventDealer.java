@@ -1,11 +1,9 @@
 package cn.tzauto.octopus.secsLayer.modules.event;
 
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -13,24 +11,26 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.common.ws.WSUtility;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.secsLayer.domain.*;
+import cn.tzauto.octopus.secsLayer.domain.Judge;
 import cn.tzauto.octopus.secsLayer.domain.Process;
+import cn.tzauto.octopus.secsLayer.domain.ProcessFunction;
+import cn.tzauto.octopus.secsLayer.domain.ProcessFunctionNotSupportException;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.modules.Dealer;
 import cn.tzauto.octopus.secsLayer.modules.JudgeResult;
 import cn.tzauto.octopus.secsLayer.modules.edc.EdcDealer;
 import cn.tzauto.octopus.secsLayer.modules.remotecontrol.RcmdDealer;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.XmlUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by luosy on 2019/4/3.
@@ -91,18 +91,18 @@ public class EventDealer {
 //            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
             String stripMapData = (String) ((ArrayList) reportData.get(1)).get(0);
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
             byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
 //            byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
             if (ack == 0) {//上传成功
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
                 GlobalConstants.stage.equipHosts.get(deviceCode).getActiveWrapper().sendS6F12out((byte) 0, data.getTransactionId());
                 judgeResult.setJudgePass(true);
                 judgeResult.setResultDescription(deviceCode + "上传Strip Map成功！StripID:[" + stripId + "]");
 
             } else {//上传失败
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map失败！StripID:[" + stripId + "]");
                 GlobalConstants.stage.equipHosts.get(deviceCode).getActiveWrapper().sendS6F12out((byte) 1, data.getTransactionId());
                 judgeResult.setJudgePass(false);
                 judgeResult.setResultDescription(deviceCode + "上传Strip Map失败！StripID:[" + stripId + "]");
@@ -113,9 +113,6 @@ public class EventDealer {
         }
         return judgeResult;
     }
-
-
-
 
 
     private static boolean checkRecipeName(DataMsgMap dataMsgMap, String deviceCode, ProcessFunction processFunction) {
@@ -154,7 +151,13 @@ public class EventDealer {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         logger.info("START CHECK: ready to upload recipe:" + new Date());
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+            return null;
+        }
         logger.info("START CHECK: transfer recipe over :" + new Date());
         logger.info("START CHECK: ready to check recipe para:" + new Date());
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
@@ -164,11 +167,11 @@ public class EventDealer {
             String checkRecultDesc = "";
             String eventDescEng = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue() + "],默认值为[" + recipePara.getDefValue() + "]"
                             + "其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]";
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                     checkRecultDesc = checkRecultDesc + eventDesc;
                     String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
                     eventDescEng = eventDescEng + eventDescEngtmp;
@@ -176,7 +179,7 @@ public class EventDealer {
                 processFunction.getJudge().getFailedFunction().getJudge().setJudgeStandardStr("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:" + eventDescEng);
                 return Dealer.deal(processFunction.getJudge().getFailedFunction(), deviceCode);
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
                 checkRecultDesc = eventDesc;

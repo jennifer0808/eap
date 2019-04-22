@@ -23,6 +23,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -122,7 +123,7 @@ public class Disco6340Host extends EquipHost {
                         }
                         if (ceid == 7) {
                             if (!kerfCheck) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要刀痕检测,设备将自动暂停.");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要刀痕检测,设备将自动暂停.");
                                 pauseDevice();
                                 kerfCheck = true;
                             }
@@ -130,7 +131,7 @@ public class Disco6340Host extends EquipHost {
                         }
                         if (ceid == 13) {
                             if (equipStatus.equalsIgnoreCase("run")) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "换刀后需要刀痕检测,设备将自动暂停.");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "换刀后需要刀痕检测,设备将自动暂停.");
                                 pauseDevice();
                                 Map map = new HashMap();
                                 map.put("msgName", "KerfCheck");
@@ -213,7 +214,7 @@ public class Disco6340Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -228,13 +229,13 @@ public class Disco6340Host extends EquipHost {
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else {
                 //开机check
                 if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
                     //如果设备应该是锁机，那么首先发送锁机命令给机台
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         holdDeviceAndShowDetailInfo();
                     } else {
                         if (!checkBladeId()) {
@@ -243,19 +244,19 @@ public class Disco6340Host extends EquipHost {
                         }
                         Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                         if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
                             this.holdDevice();
                             return;
                         }
                         //检查程序是否存在 GOLD
                         Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                         if (goldRecipe == null) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                             this.holdDevice();
                             return;
                         }
                         if (checkRecipe == null) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + "！ 请确认是否已审核通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + "！ 请确认是否已审核通过！");
                             this.holdDevice();
                         } else {
 //                    startCheckEC();
@@ -281,7 +282,7 @@ public class Disco6340Host extends EquipHost {
         if (eqpRecipeName.contains("\\")) {
             String[] recipeNames = eqpRecipeName.split("\\\\");
             if (recipeNames.length < 2) {
-               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
                 for (int i = 0; i < recipeNames.length; i++) {
                     logger.info("recipeNames:" + i + recipeNames[i]);
                 }
@@ -294,7 +295,12 @@ public class Disco6340Host extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         List<RecipePara> recipeParaList = null;
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        byte[] ppbody = new byte[0];
+        try {
+            ppbody = (byte[]) getPPBODY(recipeName);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+        }
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析     
@@ -335,7 +341,7 @@ public class Disco6340Host extends EquipHost {
             }
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -571,37 +577,37 @@ public class Disco6340Host extends EquipHost {
         String cut_proc = String.valueOf(elementsMap.get("CUT_PROC"));
         if ("Z1".equalsIgnoreCase(cut_proc)) {
             if (z1BladeEdge > z1BladeEdgeCountResult) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
                 checkResult = true;
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量不足，剩余量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量不足，剩余量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
                 holdDevice();
                 checkResult = false;
             }
         }
         if ("Z2".equalsIgnoreCase(cut_proc)) {
             if (z2BladeEdge > z2BladeEdgeCountResult) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
                 checkResult = true;
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量不足，剩余量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量不足，剩余量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
                 holdDevice();
                 checkResult = false;
             }
         }
         if ("STEP".equalsIgnoreCase(cut_proc) || "DUAL".equalsIgnoreCase(cut_proc)) {
             if (z1BladeEdge > z1BladeEdgeCountResult) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量不足，剩余量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片1暴露量不足，剩余量：" + z1BladeEdge + "nm,计算值：" + z1BladeEdgeCountResult + "nm");
                 holdDevice();
                 checkResult = false;
             }
             if (z2BladeEdge > z2BladeEdgeCountResult) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
 
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量不足，剩余量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片2暴露量不足，剩余量：" + z2BladeEdge + "nm,计算值：" + z2BladeEdgeCountResult + "nm");
                 holdDevice();
                 checkResult = false;
             }
@@ -709,14 +715,14 @@ public class Disco6340Host extends EquipHost {
         String clientValue2 = String.valueOf(mapClient.get("Z2"));
         if (serverValue1.equals(clientValue1)) {
             if (!serverValue2.equals(clientValue2)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z2刀片信息与领用记录不符!设备在用[" + clientValue2 + "],领用记录[" + serverValue2 + "]");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z2刀片信息与领用记录不符!设备在用[" + clientValue2 + "],领用记录[" + serverValue2 + "]");
                 return false;
             }
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片信息与领用记录不符!设备在用[" + clientValue1 + "],领用记录[" + serverValue1 + "]");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片信息与领用记录不符!设备在用[" + clientValue1 + "],领用记录[" + serverValue1 + "]");
             return false;
         }
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片信息与领用记录一致!核对通过!");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "刀片信息与领用记录一致!核对通过!");
         return true;
     }
 
@@ -726,7 +732,13 @@ public class Disco6340Host extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+            return;
+        }
 //        if (!startBladeCheck(equipRecipeParas)) {
 //            return;
 //        }
@@ -741,7 +753,7 @@ public class Disco6340Host extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 logger.debug("设备：" + deviceCode + " 开机Check失败");
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
@@ -749,12 +761,12 @@ public class Disco6340Host extends EquipHost {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + "，其异常设定值为： " + recipePara.getSetValue() + "，其最小设定值为：" + recipePara.getMinValue() + "，其最大设定值为：" + recipePara.getMaxValue();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 this.releaseDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.debug("设备：" + deviceCode + " 开机Check成功");
             }
@@ -790,11 +802,11 @@ public class Disco6340Host extends EquipHost {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         sqlSession.close();
         if (deviceInfoExt == null) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
         if ("Engineer".equals(deviceInfoExt.getBusinessMod())) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式,取消刀痕检测.");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式,取消刀痕检测.");
             return null;
         }
         if ("Y".equals(deviceInfoExt.getLockSwitch())) {
@@ -804,7 +816,7 @@ public class Disco6340Host extends EquipHost {
             }
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -845,7 +857,7 @@ public class Disco6340Host extends EquipHost {
             logger.error("Exception:", e);
         }
         if (!kerfCheck) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要刀痕检测,设备将自动暂停.");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要刀痕检测,设备将自动暂停.");
             pauseDevice();
             kerfCheck = true;
         }

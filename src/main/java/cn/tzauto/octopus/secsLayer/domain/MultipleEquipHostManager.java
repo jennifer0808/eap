@@ -22,6 +22,7 @@ import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.UtilityFengCe;
 import org.apache.ibatis.session.SqlSession;
@@ -506,7 +507,7 @@ public class MultipleEquipHostManager {
     /*
      * 获取指定recipe的详情（解析）
      */
-    public Map getRecipeParaFromDevice(String deviceCode, String recipeName) {
+    public Map getRecipeParaFromDevice(String deviceCode, String recipeName) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceCode) != null) {
             EquipHost equipHost = equipHosts.get(deviceCode);
             if (equipHost.deviceType.contains("DEKHorizon03ix")) {
@@ -1147,7 +1148,7 @@ public class MultipleEquipHostManager {
      * @param dataIdMap
      * @return
      */
-    public Map getSpecificData(String deviceId, Map<String, String> dataIdMap) {
+    public Map getSpecificData(String deviceId, Map<String, String> dataIdMap) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             if (equipHost.getEquipState().isCommOn()) {
@@ -1598,7 +1599,7 @@ public class MultipleEquipHostManager {
      * @param dataIdMap
      * @return
      */
-    public Map getEDCData(String deviceId, Map<String, String> dataIdMap) {
+    public Map getEDCData(String deviceId, Map<String, String> dataIdMap) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             if (equipHost.getEquipState().isCommOn()) {
