@@ -603,7 +603,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     public Map sendS1F3SingleCheck(String svid) {
-
         List svidlist = new ArrayList();
         svidlist.add(svid);
         DataMsgMap data = null;
