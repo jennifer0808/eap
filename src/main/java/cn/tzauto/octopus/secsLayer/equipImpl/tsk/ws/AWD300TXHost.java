@@ -484,7 +484,6 @@ public class AWD300TXHost extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            ;
             if (ceid == EquipStateChangeCeid) {
                 this.processS6F11EquipStatusChange(data);
             } else if (ceid == 272 || ceid == 273) {
