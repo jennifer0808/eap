@@ -148,12 +148,12 @@ public class DekHost extends EquipHost {
             //发送s2f33
             List list1 = new ArrayList();
             list1.add(269352993L);
-            sendS2F33Out(1001L, 1001L, list1);//15339
-            sendS2F33Out(1001L, 1002L, list1);//15338
+            sendS2F33out(1001L, 1001L, list1);//15339
+            sendS2F33out(1001L, 1002L, list1);//15338
 
             List list2 = new ArrayList();
             list2.add(269352995L);
-            sendS2F33Out(1001L, 1003L, list2);//15328
+            sendS2F33out(1001L, 1003L, list2);//15328
 
 
             //SEND S2F35
@@ -164,7 +164,7 @@ public class DekHost extends EquipHost {
             List list = new ArrayList();
             list.add(2031L);
             list.add(2009L);
-            sendS2F33Out(4L, 2031L, list);
+            sendS2F33out(4L, 2031L, list);
             sendS2F35out(4L, 4L, 4L);
             //SEND S2F37
 
@@ -191,24 +191,7 @@ public class DekHost extends EquipHost {
     }
 
     // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
-    public void processS6f5in(DataMsgMap data) {
-        try {
-            DataMsgMap out = new DataMsgMap("s6f6out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[1];
-            ack[0] = 0;  //granted
-            out.put("GrantCode", ack);
-            out.setTimeStamp(new Date());
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            System.out.println(" ----- s6f6 sended - Multi Block Request Granted-----.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {

@@ -410,12 +410,12 @@ public class YAMADAHost extends EquipHost {
     private void initRptPara() {
         //重定义机台的equipstatuschange事件报告
 //
-//        sendS2F33Out(101l, 5000l, 5002l);
+//        sendS2F33out(101l, 5000l, 5002l);
 //        sendS2F35out(101l, 101l, 101l);
 
 //        sendS2F37out(101l);
 //        //重定义ppchange事件
-//        sendS2F33Out(601l, 5002l);
+//        sendS2F33out(601l, 5002l);
 //        sendS2F35out(601l, 601l, 601l);
 //        sendS2F37out(601l);
         sendS2F37outAll();

@@ -442,23 +442,6 @@ public class DiscoLSHost extends EquipHost {
         return map;//this.sendS2f41Cmd("RESUME_H");
     }
 
-    @Override
-    public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outCommand", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        return resultMap;
-    }
     // </editor-fold>
 
     @Override
@@ -484,7 +467,10 @@ public class DiscoLSHost extends EquipHost {
             Map cpValueMp = new HashMap();
             cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
             cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameMap, cpValueMp);
+            List cplist = new ArrayList();
+            cplist.add("Port");
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameMap, cpValueMp);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

@@ -194,7 +194,7 @@ public class VSP88DNHTHost extends EquipHost {
         list.add(2320L);
         list.add(2331L);
         list.add(2330L);
-        super.sendS2F33Out(1, 1, list);
+        super.sendS2F33out(1, 1, list);
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
@@ -386,7 +386,9 @@ public class VSP88DNHTHost extends EquipHost {
             cpName.put("RESULT", FormatCode.SECS_ASCII);
             Map cpValue = new HashMap();
             cpValue.put(isOk, FormatCode.SECS_BOOLEAN);
-            activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM", cp, cpName, cpValue);
+            List list = new ArrayList();
+            list.add("RESULT");
+            activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM", list, cp, cpName, cpValue);
         } catch (Exception ex) {
             logger.error("Exception:", ex);
         }
@@ -457,7 +459,9 @@ public class VSP88DNHTHost extends EquipHost {
             cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
             Map cpValue = new HashMap();
             cpValue.put(recipeName + ".rcp", FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cp, cpName, cpValue);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cp, cpName, cpValue);
 
             hcack = (byte) data.get("HCACK");
             logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

@@ -170,7 +170,7 @@ public class OcrHost extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName.replace(".ini", ""));
         recipePath = super.getRecipePathByConfig(recipe);
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName+".ini");
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
@@ -240,7 +240,7 @@ public class OcrHost extends EquipHost {
             }
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -259,5 +259,14 @@ public class OcrHost extends EquipHost {
         return svIdList;
     }
 
+    @Override
+    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        return super.sendS7F1out(localFilePath, targetRecipeName + ".ini");
+    }
+
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        return super.sendS7F3out(localRecipeFilePath, targetRecipeName + ".ini");
+    }
 
 }
