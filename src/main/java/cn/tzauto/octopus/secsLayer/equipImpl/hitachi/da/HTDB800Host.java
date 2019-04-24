@@ -63,6 +63,8 @@ public class HTDB800Host extends EquipHost {
     public HTDB800Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         CPN_PPID = "PPROGRAM";
+        StripMapUpCeid = 115L;
+        EquipStateChangeCeid = 4L;
     }
 
 
@@ -106,9 +108,6 @@ public class HTDB800Host extends EquipHost {
                     super.updateLotId();
                     initRptPara();
                     rptDefineNum++;
-                }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-                    sendS1F1out();
                 }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
@@ -581,16 +580,7 @@ public class HTDB800Host extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         //获取本地FTP地址
         recipePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         String recipeSecsGemPath = super.getRecipePathByConfig(recipe);
         TransferUtil.setPPBody(ppbody, recipeType, recipeSecsGemPath);
         try {
@@ -606,7 +596,6 @@ public class HTDB800Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -696,8 +685,8 @@ public class HTDB800Host extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
     @SuppressWarnings("unchecked")
-    @Override
-    protected void processS14F1in(DataMsgMap data) {
+
+    protected void processS14F1inOld(DataMsgMap data) {
         if (data == null) {
             return;
         }
@@ -747,12 +736,22 @@ public class HTDB800Host extends EquipHost {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void processS14f3in(DataMsgMap data) {
         try {
-            DataMsgMap out = new DataMsgMap("s14f4out", activeWrapper.getDeviceId());
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
+            Map objMap = new HashMap();
+            Map attrMap = new HashMap();
+            attrMap.put("Orientation", "0");
+            attrMap.put("OriginLocation", "UpperRight");
+            attrMap.put("SubstrateSide", "TopSide");
+            attrMap.put("AxisDirection", "DownLeft");
+            objMap.put(new String(), attrMap);
+            Map stripIDformatMap = new HashMap();
+            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -874,32 +873,13 @@ public class HTDB800Host extends EquipHost {
         return "0";
     }
 
-    @Override
-    public void sendS5F3out(boolean enable) {
-        DataMsgMap s5f3out = new DataMsgMap("s5f3allout", activeWrapper.getDeviceId());
-        s5f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] aled = new byte[1];
-        boolean[] flag = new boolean[1];
-        flag[0] = enable;
-        if (enable) {
-            aled[0] = -128;
-        } else {
-            aled[0] = 0;
-        }
-        s5f3out.put("ALED", aled);
-        try {
-            activeWrapper.sendAwaitMessage(s5f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     @Override
     public boolean testInitLink() throws HsmsProtocolNotSelectedException {
         try {
             DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
             s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-            DataMsgMap s1f14in = activeWrapper.sendAwaitMessage(s1f13out);
+            DataMsgMap s1f14in = activeWrapper.sendS1F13out();
             logger.info("testInitLink成功 建立连接、通信正常 ");
             setCommState(1);
             return true;

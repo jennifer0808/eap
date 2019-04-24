@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -16,14 +15,12 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
-import cn.tzauto.octopus.common.ws.WSUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB730Util;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -53,7 +50,6 @@ public class HTDB730Host extends EquipHost {
     private String Mdln = "DB730";
     private String SoftRev = "02.155";
     private boolean canDownladMap = true;
-    private final long StripMapUpCeid = 115L;
     //private boolean startCheckPass = true;
     private boolean recipeParaChange = false;
     private boolean checkNameFlag = true;
@@ -62,6 +58,8 @@ public class HTDB730Host extends EquipHost {
     public HTDB730Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         CPN_PPID = "PPROGRAM";
+        StripMapUpCeid = 115L;
+        EquipStateChangeCeid = 4L;
     }
 
 
@@ -167,10 +165,12 @@ public class HTDB730Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 long ceid = (long) data.get("CEID");
                 if (ceid == 26 || ceid == 27) {
                     processS6F11SpecialEvent(data);
+                }else {
+                    processS6F11in(data);
                 }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
@@ -256,7 +256,8 @@ public class HTDB730Host extends EquipHost {
             //SEND S2F37
 
 //            sendS2F37outAll(false);
-            activeWrapper.sendS2F37out(false, null, ceFormat);
+//            activeWrapper.sendS2F37out(false, null, ceFormat);
+            this.sendS2F37outCloseAll();
             activeWrapper.sendS2F37out(true, ceids2list, ceFormat);
 //            sendS2F37out(true, ceids2);
             logger.debug("sendS2F37outAll:==" + ack);
@@ -674,38 +675,6 @@ public class HTDB730Host extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
-    /**
-     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
-     *
-     * @param localFilePath
-     * @param targetRecipeName
-     * @return
-     */
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
 
     /**
      * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
@@ -716,47 +685,20 @@ public class HTDB730Host extends EquipHost {
      */
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
         try {
             sleep(3000);
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            return super.sendS7F3out(localRecipeFilePath, targetRecipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
+            return null;
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
     }
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap msgdata = null;
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (msgdata == null || msgdata.isEmpty()) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传请求被设备拒绝,请调整设备状态重试.");
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -850,90 +792,12 @@ public class HTDB730Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS7F17outReal(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
+        return super.sendS7F17out(recipeName);
     }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void processS14F1in(DataMsgMap data
-    ) {
-        if (data == null) {
-            return;
-        }
-        String objType = null;
-        if (data.get("ObjectType") != null) {
-            objType = (String) ((SecsItem) data.get("ObjectType")).getData();
-        }
-        String stripId = "";
-        if (data.get("StripId") != null) {
-            stripId = (String) ((SecsItem) data.get("StripId")).getData();
-        }
-        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
-        DataMsgMap out = null;
-        //通过Web Service获得xml字符串
-        String stripMapData = WSUtility.binGet(stripId, deviceCode);
-        if (stripMapData == null) {//stripId不存在  
-            out = new DataMsgMap("s14f2outNoExist", activeWrapper.getDeviceId());
-            out.setTransactionId(data.getTransactionId());
-            long[] u1 = new long[1];
-            u1[0] = 0;
-            out.put("ObjectAck", u1);
-            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
-        } else {//stripId存在
-            String downLoadResult = stripMapData.substring(0, 1);
-            if ("<".equals(downLoadResult)) {
-                out = new DataMsgMap("s14f2out", activeWrapper.getDeviceId());
-                out.put("StripId", stripId);
-                out.put("MapData", stripMapData);
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
-            } else {
-                //是分号
-                long[] errorCodes = new long[1];
-                try {
-                    errorCodes[0] = Long.valueOf(stripMapData.split(";")[0]);
-                } catch (Exception e) {
-                    errorCodes[0] = 10L;
-                }
-                out = new DataMsgMap("s14f2outException", activeWrapper.getDeviceId());
-                out.put("StripId", stripId);
-                out.put("MapData", stripMapData);
-                out.put("ErrCode", errorCodes);
-                out.put("ErrText", stripMapData);
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
-            }
-            out.setTransactionId(data.getTransactionId());
-        }
-        try {
-            activeWrapper.respondMessage(out);
-            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 
 
     public void processS14f3in(DataMsgMap data) {
@@ -967,7 +831,7 @@ public class HTDB730Host extends EquipHost {
             s1f13out.setTransactionId(transactionId);
             s1f13out.put("Mdln", Mdln);
             s1f13out.put("SoftRev", SoftRev);
-            activeWrapper.sendAwaitMessage(s1f13out);
+            activeWrapper.sendS1F13out();
             return true;
         } catch (Exception e) {
             return false;
@@ -980,7 +844,7 @@ public class HTDB730Host extends EquipHost {
             long transactionId = activeWrapper.getNextAvailableTransactionId();
             s1f1out.setTransactionId(transactionId);
             logger.info("transactionId = " + transactionId);
-            DataMsgMap s1f2in = activeWrapper.sendAwaitMessage(s1f1out);
+            DataMsgMap s1f2in = activeWrapper.sendS1F1out();
             if (s1f2in != null) {
                 //如果回复取消会话，那么需要重新发送S1F13
                 if (s1f2in.getMsgSfName().contains("s1f0")) {
