@@ -204,7 +204,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //    }
 //
 //    @SuppressWarnings("unchecked")
-//    public void sendS2F33Out() {
+//    public void sendS2F33out() {
 //
 //        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
 //        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());

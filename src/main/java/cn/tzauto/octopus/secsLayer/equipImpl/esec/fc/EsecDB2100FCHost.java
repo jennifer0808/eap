@@ -192,13 +192,13 @@ public class EsecDB2100FCHost extends EquipHost {
             long rptid = 1001l;
             long vid = 269352993l;
             long ceid = 15338l;
-            sendS2F33Out(1001l, 269352993l);//15339
+            sendS2F33out(1001l, 269352993l);//15339
 
 
-            sendS2F33Out(1002l, 269352993l);//15338
+            sendS2F33out(1002l, 269352993l);//15338
 
 
-            sendS2F33Out(1003l, 269352995l);//15328
+            sendS2F33out(1003l, 269352995l);//15328
 
 
             //SEND S2F35
@@ -215,11 +215,11 @@ public class EsecDB2100FCHost extends EquipHost {
             list.add(2031L);
             list.add(2009L);
             list.add(2028L);
-//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
-            sendS2F33Out(3255L, 3255L, list);
+//            sendS2F33out(3255L, 2031L, 2009L, 2028L);
+            sendS2F33out(3255L, 3255L, list);
             sendS2F35out(3255L, 3255L, 3255L);
 //
-//            sendS2F33Out(8L, 8L);
+//            sendS2F33out(8L, 8L);
 //            sendS2F35out(3L, 3L, 8L);
             //SEND S2F37
             if (!"".equals(ack)) {

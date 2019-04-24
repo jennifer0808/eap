@@ -23,7 +23,6 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -189,10 +188,10 @@ public class EsecDB2009Host extends EquipHost {
             logger.debug("initRptPara+++++++++++++++++++");
             List list = new ArrayList();
             list.add(20002L);
-            sendS2F33Out(100000L, 100000L, list);
+            sendS2F33out(100000L, 100000L, list);
             List list1 = new ArrayList();
             list1.add(20004L);
-            sendS2F33Out(100001L, 100001L, list1);
+            sendS2F33out(100001L, 100001L, list1);
             sendS2F35out(3L, 301L, 100000L);
             sendS2F35outDelete(4L, 302L);
             sendS2F35out(5L, 302L, 100001L);
@@ -243,7 +242,7 @@ public class EsecDB2009Host extends EquipHost {
 //                rptid = 1003l;
 //                ack = sendS2F35out(ceid, rptid);//15339 1001
 //            }
-//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
+//            sendS2F33out(3255L, 2031L, 2009L, 2028L);
 //            sendS2F35out(3255L, 3255L, 3255L);
 //            //SEND S2F37
 //            if (!"".equals(ack)) {
@@ -834,80 +833,6 @@ public class EsecDB2009Host extends EquipHost {
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 
-
-    /**
-     * WaferMappingInfo Upload
-     *
-     * @param dataMsgMap
-     * @return
-     */
-    @Override
-    public Map processS12F1in(DataMsgMap dataMsgMap) {
-        try {
-            String MaterialID = (String) ((SecsItem) dataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) dataMsgMap.get("IDTYP")).getData());
-            upFlatNotchLocation = dataMsgMap.getSingleNumber("FlatNotchLocation");
-//            long FileFrameRotation = DataMsgMap.getSingleNumber("FileFrameRotation");
-            byte[] OriginLocation = ((byte[]) ((SecsItem) dataMsgMap.get("OriginLocation")).getData());
-            long RowCountInDieIncrements = dataMsgMap.getSingleNumber("RowCountInDieIncrements");
-            long ColumnCountInDieIncrements = dataMsgMap.getSingleNumber("ColumnCountInDieIncrements");
-            uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
-            uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
-            //kong
-            //String NullBinCodeValue = (String)((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((SecsItem) DataMsgMap.get("ProcessAxis")).getData());
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
-            DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
-            //TODO 调用webservices回传waferMapping信息
-            byte[] ack = new byte[]{0};
-            s12f2out.put("SDACK", ack);
-            s12f2out.setTransactionId(dataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f2out);
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        return null;
-    }
-
-    /**
-     * WaferMapping Upload (Simple)
-     *
-     * @param DataMsgMap
-     * @return
-     */
-    @Override
-    public Map processS12F9in(DataMsgMap DataMsgMap) {
-        try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
-            String binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
-            //上传WaferMapping,
-            String _uploadWaferMappingRow = uploadWaferMappingRow;
-            String _uploadWaferMappingCol = uploadWaferMappingCol;
-            if (this.deviceType.contains("ESEC")) {
-                binList = WaferTransferUtil.transferAngleAsFlatNotchLocation(binList, 360L - upFlatNotchLocation, uploadWaferMappingRow, uploadWaferMappingCol);
-                if (upFlatNotchLocation == 90 || upFlatNotchLocation == 270) {
-                    _uploadWaferMappingRow = uploadWaferMappingCol;
-                    _uploadWaferMappingCol = uploadWaferMappingRow;
-                }
-            }
-            //上传旋转后的行列数及mapping
-            AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
-            DataMsgMap s12f10out = new DataMsgMap("s12f10out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[]{0};
-            s12f10out.put("MDACK", ack);
-            s12f10out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f10out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        return null;
-    }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 

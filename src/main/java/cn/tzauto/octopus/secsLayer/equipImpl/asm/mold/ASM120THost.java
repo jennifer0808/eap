@@ -620,7 +620,7 @@ public class ASM120THost extends EquipHost {
 
 
     private void initRptPara() {
-//        sendS2F33Out(5l, 8l, 19l);
+//        sendS2F33out(5l, 8l, 19l);
 //        sendS2F35out(5l, 5l, 5l);
 //        sendS2F37out(5l);
 

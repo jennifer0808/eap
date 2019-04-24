@@ -280,34 +280,34 @@ public class SigmaPlusHost extends EquipHost {
             list.add(10000L);
 
             logger.debug("initRptPara+++++++++++++++++++");
-            sendS2F33Out(10004L, 10004L, list);
+            sendS2F33out(10004L, 10004L, list);
             sendS2F35out(49L, 49L, 10004L);
 
             sendS2F37out(49L);
             sendS2F37out(2L);
 
-//            sendS2F33Out(3255L, 2031L, 2009L, 2028L);
+//            sendS2F33out(3255L, 2031L, 2009L, 2028L);
 //            sendS2F35out(3255L, 3255L, 3255L);
             //SEND S2F37
             //StripMapping事件定义
-//            sendS2F33Out(403L, 290L, 738L);
+//            sendS2F33out(403L, 290L, 738L);
             List list1 = new ArrayList();
             list1.add(290L);
 
-            sendS2F33Out(403L, 403L, list1);
+            sendS2F33out(403L, 403L, list1);
             sendS2F35out(403L, 403L, 403L);
             sendS2F37out(403L);
             //Parameter参数获取事件定义
             List list2 = new ArrayList();
             list2.add(4905L);
-            sendS2F33Out(50L, 50L, list2);
+            sendS2F33out(50L, 50L, list2);
             sendS2F35out(50L, 50L, 50L);
             sendS2F37out(50L);
             //Parameter provider Event
 
             List list3 = new ArrayList();
             list3.add(4905L);
-            sendS2F33Out(1001L,4905L, list3);
+            sendS2F33out(1001L,4905L, list3);
             sendS2F35out(4905L, 4905L, 4905L);
             sendS2F37out(4905L);
             //
@@ -784,14 +784,8 @@ public class SigmaPlusHost extends EquipHost {
         return resultMap;
     }
 
-    /**
-     * WaferMapping Upload (Simple)
-     *
-     * @param DataMsgMap
-     * @return
-     */
-    @Override
-    public Map processS12F9in(DataMsgMap DataMsgMap) {
+
+    public Map processS12F9inold(DataMsgMap DataMsgMap) {
         try {
             String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
             byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());

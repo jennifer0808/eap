@@ -845,9 +845,9 @@ public class DiscoWSHost extends EquipHost {
 
         sendS2F33clear();
         sendS2F35clear();
-//        sendS2F33Out(7, 7613, 7615);
-//        sendS2F33Out(7, 7602, 7603);
-//        sendS2F33Out(7, 1400, 1401);
+//        sendS2F33out(7, 7613, 7615);
+//        sendS2F33out(7, 7602, 7603);
+//        sendS2F33out(7, 1400, 1401);
 //        sendS2F35out(7, 7, 7);
     }
 

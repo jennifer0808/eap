@@ -194,7 +194,7 @@ public class VSP88DNHTHost extends EquipHost {
         list.add(2320L);
         list.add(2331L);
         list.add(2330L);
-        super.sendS2F33Out(1, 1, list);
+        super.sendS2F33out(1, 1, list);
     }
 
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">

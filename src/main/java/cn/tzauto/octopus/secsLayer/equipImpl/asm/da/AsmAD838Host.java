@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -150,36 +149,25 @@ public class AsmAD838Host extends EquipHost {
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
-
+    public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
+        List<RecipePara> recipeParaList = null;
         try {
-            data = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
+            byte[] ppbody = (byte[]) getPPBODY("PPBODY");
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            recipeParaList = getRecipeParasByECSV();
+        } catch (UploadRecipeErrorException e) {
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
             logger.error("Exception:", e);
         }
-        List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-//            byte[] ppbody = (byte[]) data.get("PPBODY");
-            String ppbody = (String) data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, 0, recipePath);
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析      
-            recipeParaList = getRecipeParasByECSV();
-        } else {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
-            return null;
-        }
-
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
-        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -356,25 +344,6 @@ public class AsmAD838Host extends EquipHost {
 
     }
 
-    private void processS6F11PPExecName(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long reportID = 0L;
-        try {
-            out.setTransactionId(data.getTransactionId());
-            reportID = data.getSingleNumber("ReportId");
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (reportID == 127) {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备正在使用的程序为：" + ppExecName);
-            Map panelMap = new HashMap();
-            panelMap.put("PPExecName", ppExecName);
-            changeEquipPanel(panelMap);
-        }
-
-    }
-
     // </editor-fold>
 
     @Override
@@ -457,7 +426,6 @@ public class AsmAD838Host extends EquipHost {
                 ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {

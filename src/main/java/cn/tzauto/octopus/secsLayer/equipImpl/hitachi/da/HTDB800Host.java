@@ -215,7 +215,7 @@ public class HTDB800Host extends EquipHost {
             List list = new ArrayList();
             list.add(50062L);
             list.add(50070L);
-            sendS2F33Out(10002L, 10002L, list);//50062:当前状态,50070：当前recipe
+            sendS2F33out(10002L, 10002L, list);//50062:当前状态,50070：当前recipe
             long[] ceids2 = new long[7];
             ceids2[0] = 3L;
             ceids2[1] = 4L;
@@ -253,7 +253,7 @@ public class HTDB800Host extends EquipHost {
             long rptid = 10001l;
             long vid = 50200l;
             long ceid = 115l;
-            sendS2F33Out(rptid, vid);//115
+            sendS2F33out(rptid, vid);//115
             //SEND S2F35
             if (!"".equals(ack)) {
                 ack = "";
