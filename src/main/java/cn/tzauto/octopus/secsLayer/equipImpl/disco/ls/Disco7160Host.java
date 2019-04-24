@@ -413,37 +413,6 @@ public class Disco7160Host extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        DataMsgMap s7f17outDevid = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17outDevid.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17outDevid.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
-    }
-
     /*    
     从ppbody中找到长号（devid）
      */
