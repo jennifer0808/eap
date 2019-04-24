@@ -2580,7 +2580,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return null;
         }
         for (int i = 0; i < recipeTemplates.size(); i++) {
-            ecsvIdList.add(recipeTemplates.get(i).getDeviceVariableId());
+            ecsvIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
         }
         return ecsvIdList;
     }

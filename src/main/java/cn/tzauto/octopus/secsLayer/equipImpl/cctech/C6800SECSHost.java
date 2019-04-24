@@ -41,6 +41,8 @@ public class C6800SECSHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT";
+        CPN_PPID = "PP_NAME";
     }
 
     public Object clone() {
@@ -519,4 +521,29 @@ public class C6800SECSHost extends EquipHost {
         }
     }
 
+    @Override
+    public Map sendS2F41outPPselect(String recipeName) {
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        try {
+            Map cpmap = new HashMap();
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
+            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+            byte hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
+        }
+        return resultMap;
+    }
 }

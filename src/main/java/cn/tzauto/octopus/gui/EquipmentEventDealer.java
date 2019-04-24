@@ -86,7 +86,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                         hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
                     logger.info("Equip State is changed. publish is called");
-                    hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
+//                    hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
                 } else if (ev instanceof ReceivedSeparateEvent) {
                     logger.info("Received Separate event, SECS prototcols has been terminated.");
                     newState.setCommOn(false);

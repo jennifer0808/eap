@@ -154,6 +154,7 @@ public class YAMADAHost extends EquipHost {
 //               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
+//                runMode = (long) ((List) ((List) data.get("REPORT")).get(1)).get(1);
                 if (runMode == 0 || runMode == 2) {
 //                    sendS2f41Cmd("UNLOCK");
 //                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
@@ -162,15 +163,7 @@ public class YAMADAHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
                 return;
             } else if (ceid == ppselectfinishCeid) { //601L
-                List list = (List) data.get("REPORT");
-
-                List listCollection = (List) list.get(1);
-                ppExecName = (String) listCollection.get(0);
-
-                Map map = new HashMap();
-                map.put("PPExecName", ppExecName);
-                changeEquipPanel(map);
-                return;
+                findDeviceRecipe();
             }
 
             updateCommStateInExt();
