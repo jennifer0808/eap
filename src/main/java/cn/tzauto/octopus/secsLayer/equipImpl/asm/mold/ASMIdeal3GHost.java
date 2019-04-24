@@ -437,10 +437,12 @@ public class ASMIdeal3GHost extends EquipHost {
             if (ceid == 5 || ceid == 6 || ceid == 1) {
                 processS6F11EquipStatus(data);
             }
-            if (ceid == 32 || ceid == 52 || ceid == 72 || ceid == 92) {
+            //开机校验看日志找ceid
+//            if (ceid == 32 || ceid == 52 || ceid == 72 || ceid == 92 ) {
+            if (ceid == 2 ) {
                 processS6F11EquipStatusChange(data);
             }
-            if (ceid == 13) {
+            if (ceid == 8) {
                 findDeviceRecipe();
             }
         } catch (Exception e) {

@@ -51,7 +51,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
-    protected int commState = NOT_COMMUNICATING;
+    public int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
     private int alarmState = 0;
     private boolean sdrReady = false;
@@ -192,6 +192,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         if (commState == 1) {
             equipState.setCommOn(true);
+            equipState.setNetConnect(true);
             this.sdrReady = true;
 //            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
         }
@@ -202,6 +203,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.commState = commState;
         Map resultMap = new HashMap();
         resultMap.put("CommState", commState);
+        resultMap.put("NetConnect", commState);
         changeEquipPanel(resultMap);
     }
 
@@ -623,10 +625,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         ArrayList listtmp = (ArrayList) data.get("SV");
         Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
+        if (listtmp.size() > 0) {
+            String svValue = String.valueOf(listtmp.get(0));
+            resultMap.put("Value", svValue);
+        } else {
+            resultMap.put("Value", null);
+        }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
+
         logger.info("resultMap=" + resultMap);
         return resultMap;
     }
@@ -2383,8 +2390,19 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 if (resultMap.get("CommState") != null) {
                     newPanel.setNetState(Integer.parseInt(resultMap.get("CommState").toString()));
                     EquipState equipState = equipNodeBean.getEquipStateProperty();
-                    equipState.setCommOn(true);
+                    if (1 == (int) resultMap.get("CommState")) {
+                        equipState.setCommOn(true);
+                    } else {
+                        equipState.setCommOn(false);
+                    }
                     equipNodeBean.setEquipStateProperty(equipState);
+                }
+                if (resultMap.get("NetConnect") != null) {
+                    if (1 == (int) resultMap.get("NetConnect")) {
+                        EquipState equipState = equipNodeBean.getEquipStateProperty();
+                        equipState.setNetConnect(true);
+                        equipNodeBean.setEquipStateProperty(equipState);
+                    }
                 }
                 equipNodeBean.setEquipPanelProperty(newPanel);
                 break;

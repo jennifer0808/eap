@@ -542,21 +542,30 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                equipStatusPane.updateUI();
             }
             if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_STATE_PROPERTY)) {
-                if (src.getEquipStateProperty().isCommOn()) {
-                    logger.info("CommOn==========================");
+                if(!src.getEquipStateProperty().isNetConnect()){
+                    logger.info("network disconnect==========================");
                     EquipHost equipHost = equipHosts.get(src.getDeviceCode());
-                    Map map = new HashMap();
-                    map.put("NetState", 1);
-                    equipHost.changeEquipPanel(map);
-//                  thePanel.setCommLabelForegroundColorCommOn();
-                } else {
-                    logger.info("CommOff==========================");
-                    EquipHost equipHost = equipHosts.get(src.getDeviceCode());
+                    equipHost.commState = 0;
                     Map map = new HashMap();
                     map.put("NetState", 0);
                     equipHost.changeEquipPanel(map);
-                    //监听到通信失败事件，重新启动线程通信
-                    startComByEqp(src);
+                }else {
+                    if (src.getEquipStateProperty().isCommOn()) {
+                        logger.info("CommOn==========================");
+                        EquipHost equipHost = equipHosts.get(src.getDeviceCode());
+                        Map map = new HashMap();
+                        map.put("NetState", 1);
+                        equipHost.changeEquipPanel(map);
+                    } else {
+                        logger.info("CommOff==========================");
+                        EquipHost equipHost = equipHosts.get(src.getDeviceCode());
+                        Map map = new HashMap();
+                        map.put("NetState", 0);
+                        equipHost.setCommState(0);
+                        equipHost.changeEquipPanel(map);
+                        //监听到通信失败事件，重新启动线程通信
+//                        startComByEqp(src);
+                    }
                 }
             }
         } else if (source instanceof UiLogUtil) {

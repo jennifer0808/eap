@@ -163,23 +163,21 @@ public class HongTeng7200Host extends EquipHost {
         long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
+                ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) { //102L
-                processS6F11EquipStatusChange(data);
+            } else {
                 replyS6F12WithACK(data, (byte) 0);
-            } else if (ceid == 201) {
-                processS6F11LotCheck(data);
-                replyS6F12WithACK(data, (byte) 0);
-            } else if (ceid == 202) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
-                replyS6F12WithACK(data, (byte) 0);
-            } else{
-                replyS6F12WithACK(data, (byte) 0);
+                if (ceid == EquipStateChangeCeid) {//102L
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 201) {
+                    processS6F11LotCheck(data);
+                } else if (ceid == 202) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
+                }
             }
 
             if (commState != 1) {
@@ -243,21 +241,21 @@ public class HongTeng7200Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long[] nowStatus = null;
+        long nowStatus = -1L;
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
             ArrayList  list = (ArrayList) data.get("REPORT");
-            nowStatus = (long[]) ((ArrayList)list.get(1)).get(1);
+            nowStatus = (long) ((ArrayList)list.get(1)).get(1);
 
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus[0]), deviceType);
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
-        findDeviceRecipe();
+
         if (equipStatus.equalsIgnoreCase("run")) {
             //首先从服务端获取机台是否处于锁机状态
             //如果设备应该是锁机，那么首先发送锁机命令给机台
