@@ -98,13 +98,16 @@ public class Disco7160Host extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-//                            processS6F11EquipStatus(msg);
                         }
                         if (ceid == 191) {
+                            logger.info("接受到CoatingEnd事件，发送锁机指令");
                             processCoatingEndEvent(msg);
                         }
                         if (ceid == 150) {
                             processS6F11EquipStatusChange(msg);
+                        }
+                        if(ceid ==73 ){
+                            findDeviceRecipe();
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
@@ -131,7 +134,7 @@ public class Disco7160Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
+                replyS6F12WithACK(data,(byte)0);
                 long ceid = 0l;
                 try {
                     ceid = (long) data.get("CEID");
@@ -142,10 +145,7 @@ public class Disco7160Host extends EquipHost {
                     isFullAutoState1st = true;
                     logger.info(deviceCode + ":设备已进入全自动模式！");
                 }
-                if (ceid == 191) {
-                    logger.info("接受到CoatingEnd事件，发送锁机指令");
-                    this.inputMsgQueue.put(data);
-                }
+                this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11equipstatuschange")) {
                 byte[] ack = new byte[1];
                 ack[0] = 0;
@@ -231,13 +231,7 @@ public class Disco7160Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (ceid == 73) {
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-        }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -312,17 +306,12 @@ public class Disco7160Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long
-                length = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
+        long length = TransferUtil.getPPLength(localFilePath);
         //从ppbody中找到长号（devid）
         String recipeName = getDevIdFromPPBody(localFilePath);
         if (!"".equals(recipeName)) {
-            s7f1out.put("ProcessprogramID", recipeName);
+            targetRecipeName = recipeName;
         }
-        s7f1out.put("Length", length);
         DataMsgMap data = null;
         byte ppgnt = 0;
         try {
@@ -344,16 +333,11 @@ public class Disco7160Host extends EquipHost {
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
         String recipeName = getDevIdFromPPBody(localRecipeFilePath);
         if (!"".equals(recipeName)) {
-            s7f3out.put("ProcessprogramID", recipeName);
+            targetRecipeName = recipeName;
         }
-        s7f3out.put("Processprogram", secsItem);
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
         } catch (Exception e) {
@@ -392,7 +376,7 @@ public class Disco7160Host extends EquipHost {
         } catch (UploadRecipeErrorException e) {
             e.printStackTrace();
         }
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipe.getRecipeName() + " has been saved at " + recipePath);
         //Recipe解析     
         try {
@@ -429,17 +413,16 @@ public class Disco7160Host extends EquipHost {
     }
 
     private boolean rcpInEqp(String recipeName) {
-        boolean rcpInEqp = false;
         ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
         if (eppd != null && eppd.size() > 0) {
             for (int i = 0; i < eppd.size(); i++) {
                 String rcpNameString = eppd.get(i).toString();
                 if (recipeName.equals(rcpNameString)) {
-                    rcpInEqp = true;
+                    return true;
                 }
             }
         }
-        return rcpInEqp;
+        return false;
     }
 
     // </editor-fold>
@@ -454,7 +437,7 @@ public class Disco7160Host extends EquipHost {
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
 //            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
             Map cmdMap = this.sendS2f41Cmd("STOP");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
+            if (0 == (byte)cmdMap.get("HCACK")) {
                 Map panelMap = new HashMap();
                 panelMap.put("AlarmState", 2);
                 changeEquipPanel(panelMap);
@@ -478,7 +461,7 @@ public class Disco7160Host extends EquipHost {
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
 //            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
             Map cmdMap = this.sendS2f41Cmd2("PAUSE_H");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
+            if (0 == (byte)cmdMap.get("HCACK")) {
 //                Map panelMap = new HashMap();
 //                panelMap.put("AlarmState", 2);
 //                changeEquipPanel(panelMap);
