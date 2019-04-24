@@ -566,7 +566,7 @@ public class HTDB800Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception", e);
         }
-        byte ackc7 = (byte) (data.get("ACKC7");
+        byte ackc7 = (byte) data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -690,7 +690,7 @@ public class HTDB800Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS7F17outReal(String recipeName) {
-        super.sendS7F17out(recipeName);
+        return super.sendS7F17out(recipeName);
     }
 
     // </editor-fold> 
