@@ -109,9 +109,7 @@ public class AsmAD838Host extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
-            } else if (tagName.equalsIgnoreCase("s7f3in")) {
-                processS7F3in(data);
-            } else if (tagName.equalsIgnoreCase("S5F1IN")) {
+            }  else if (tagName.equalsIgnoreCase("S5F1IN")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("S14F1IN")) {

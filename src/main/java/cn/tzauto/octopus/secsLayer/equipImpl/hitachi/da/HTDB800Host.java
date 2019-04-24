@@ -298,7 +298,7 @@ public class HTDB800Host extends EquipHost {
                 event = "Pickup Height Offset Teach";
             }
             logger.info("检测到设备触发[" + event + "]事件,设备即将被锁!请联系ME进行检查!");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备触发[" + event + "]事件,设备即将被锁!请联系ME进行检查!");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备触发[" + event + "]事件,设备即将被锁!请联系ME进行检查!");
             // TODO 需要检查下MES状态，判断是否需要发送锁机指令
             //sendS2F15outLearnDevice();
 
@@ -325,10 +325,10 @@ public class HTDB800Host extends EquipHost {
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
             if (ceid == 80) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
             }
             if (ceid == 88L) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
                 //reciep参数修改事件
                 recipeParaChange = true;
             }
@@ -352,7 +352,7 @@ public class HTDB800Host extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -370,17 +370,17 @@ public class HTDB800Host extends EquipHost {
                 if (svValue.get("54121").equals("0")) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
                 }
             }
             if (AxisUtility.isEngineerMode(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                 sqlSession.close();
                 return;
             }
             if (equipStatus.equalsIgnoreCase("run")) {
                 if (holdFlag || this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
                     //此时所正式锁机
                     holdDeviceAndShowDetailInfo("Host hold the equipment,you can see the detail log from Host");
                 }
@@ -393,7 +393,7 @@ public class HTDB800Host extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -407,7 +407,7 @@ public class HTDB800Host extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdFlag = true;
                 } else {
                     //根据检查模式执行开机检查逻辑
@@ -418,15 +418,15 @@ public class HTDB800Host extends EquipHost {
                     //不管怎样都比对recipe
                     checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
                     if (!checkResult) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                         checkNameFlag = false;
                     } else {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         checkNameFlag = true;
                     }
                     //参数比对
                     if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机检查模式!");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机检查模式!");
                     }
                     if (true) {
                         if (checkResult && "A".equals(startCheckMod)) {
@@ -434,15 +434,15 @@ public class HTDB800Host extends EquipHost {
                             //1、如果下载的是Unique版本，那么执行完全比较
                             String downloadRcpVersionType = downLoadRecipe.getVersionType();
                             if (false) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                                 this.startCheckRecipePara(downLoadRecipe, "abs");
                             } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                                 if (!hasGoldRecipe) {
-                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                     checkParaFlag = false;
                                 } else {
-                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                     checkParaFlag = this.startCheckRecipeParaReturnFlag(downLoadGoldRecipe.get(0));
                                     if (!checkParaFlag) {
                                         sendStatus2Server("LOCK");
@@ -452,7 +452,7 @@ public class HTDB800Host extends EquipHost {
                         } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
                             //如果未设置参数比对模式，默认参数比对通过
                             checkParaFlag = true;
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                         }
                     } else {
                         //如果参数未改变，默认参数比对通过
@@ -506,7 +506,7 @@ public class HTDB800Host extends EquipHost {
             String eventDesc = "";
             if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
                 this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
                 checkParaFlag = false;
 //                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
 //                realTimePara.setSize(1000, 650);
@@ -514,13 +514,13 @@ public class HTDB800Host extends EquipHost {
 //                realTimePara.setVisible(true);
                 for (RecipePara recipePara : recipeParasdiff) {
                     eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                 }
                 monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
             } else {
                 checkParaFlag = true;
                 this.releaseDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
                 eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
                 logger.info("设备：" + deviceCode + " 开机Check成功");
             }
@@ -538,40 +538,6 @@ public class HTDB800Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
-
-    /**
-     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
-     *
-     * @param localFilePath
-     * @param targetRecipeName
-     * @return
-     */
-    @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        //length[0] = TransferUtil.getPPLength(localFilePath);
-        length[0] = 1024L;
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f2");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
-        return resultMap;
-    }
 
     /**
      * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
@@ -596,17 +562,17 @@ public class HTDB800Host extends EquipHost {
         s7f3out.put("ProcessprogramID", targetRecipeName);
         s7f3out.put("Processprogram", secsItem);
         try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception", e);
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte ackc7 = (byte) (data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -724,29 +690,7 @@ public class HTDB800Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS7F17outReal(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
-            logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
-                logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
-            } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f18");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
-        return resultMap;
+        super.sendS7F17out(recipeName);
     }
 
     // </editor-fold> 
@@ -765,7 +709,7 @@ public class HTDB800Host extends EquipHost {
         if (data.get("StripId") != null) {
             stripId = (String) ((SecsItem) data.get("StripId")).getData();
         }
-       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
         DataMsgMap out = null;
         //通过Web Service获得xml字符串
         String stripMapData = WSUtility.binGet(stripId, deviceCode);
@@ -775,14 +719,14 @@ public class HTDB800Host extends EquipHost {
             long[] u1 = new long[1];
             u1[0] = 0;
             out.put("ObjectAck", u1);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId：[" + stripId + "] Strip Map 不存在！");
         } else {//stripId存在
             String downLoadResult = stripMapData.substring(0, 1);
             if ("<".equals(downLoadResult)) {
                 out = new DataMsgMap("s14f2out", activeWrapper.getDeviceId());
                 out.put("StripId", stripId);
                 out.put("MapData", stripMapData);
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map成功,StripId：[" + stripId + "]");
             } else {
                 //是分号
                 long errorCode = Long.valueOf(stripMapData.split(";")[0]);
@@ -791,13 +735,13 @@ public class HTDB800Host extends EquipHost {
                 out.put("MapData", stripMapData);
                 out.put("ErrCode", errorCode);
                 out.put("ErrText", stripMapData);
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务器下载Strip Map失败,StripId：[" + stripId + "],失败原因：" + stripMapData);
             }
             out.setTransactionId(data.getTransactionId());
         }
         try {
             activeWrapper.respondMessage(out);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -867,7 +811,7 @@ public class HTDB800Host extends EquipHost {
             recipeParaChange = false;
             return resultMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return resultMap;
         }
     }
@@ -974,7 +918,7 @@ public class HTDB800Host extends EquipHost {
         // 上传ftpGlobalConstants.getProperty("ftpPath") +
         localRcpPath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
         FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         return true;
     }
 }

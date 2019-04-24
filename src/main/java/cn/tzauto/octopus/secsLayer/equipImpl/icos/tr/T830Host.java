@@ -86,10 +86,10 @@ public class T830Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                 //   processS6F11EquipStatus(msg);
+                    //   processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
                 } else {
@@ -174,7 +174,7 @@ public class T830Host extends EquipHost {
     public Map sendS1F17outByT830() {
         DataMsgMap msgdata = null;
         try {
-             msgdata = activeWrapper.sendS1F17out();
+            msgdata = activeWrapper.sendS1F17out();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -235,35 +235,35 @@ public class T830Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
     public Map sendS2F41outStart(String batchName) {
-        String rcmd = "START" ;
+        String rcmd = "START";
 
-        Map<String,String> cpMap = new HashMap();
-        cpMap.put("BATCH-NAME",batchName);
-        cpMap.put("ACTION","NEW");
-        cpMap.put("BATCH-TO-PROCESS","");
-        cpMap.put("CARRIER-COUNT","");
-        cpMap.put("INPUT-TRAY-MAP","");
-        cpMap.put("TRAY-REPORTING","NO");
+        Map<String, String> cpMap = new HashMap();
+        cpMap.put("BATCH-NAME", batchName);
+        cpMap.put("ACTION", "NEW");
+        cpMap.put("BATCH-TO-PROCESS", "");
+        cpMap.put("CARRIER-COUNT", "");
+        cpMap.put("INPUT-TRAY-MAP", "");
+        cpMap.put("TRAY-REPORTING", "NO");
 
         Map cpNameFormatMap = new HashMap();
-        cpNameFormatMap.put("BATCH-NAME",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("BATCH-TO-PROCESS",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("CARRIER-COUNT",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("INPUT-TRAY-MAP",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("TRAY-REPORTING",FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-NAME", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-TO-PROCESS", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("CARRIER-COUNT", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("INPUT-TRAY-MAP", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("TRAY-REPORTING", FormatCode.SECS_ASCII);
 
 
         Map cpValueFormatMap = new HashMap();
-        cpNameFormatMap.put(batchName,FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NEW",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NO",FormatCode.SECS_ASCII);
+        cpNameFormatMap.put(batchName, FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("NEW", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("NO", FormatCode.SECS_ASCII);
 
         byte hcack = -1;
         try {
-            DataMsgMap data =  activeWrapper.sendS2F41out(rcmd,cpMap,cpNameFormatMap,cpValueFormatMap);
+            DataMsgMap data = activeWrapper.sendS2F41out(rcmd, null, cpMap, cpNameFormatMap, cpValueFormatMap);
             hcack = (byte) data.get("HCACK");
             logger.debug("Recieve s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK = " + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
@@ -280,7 +280,7 @@ public class T830Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6F11 Code">
 
     @Override
-    public void processS6F11in(DataMsgMap data){
+    public void processS6F11in(DataMsgMap data) {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
@@ -290,7 +290,7 @@ public class T830Host extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            }else if (ceid == 10002) {
+            } else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             }
         } catch (Exception e) {
@@ -313,7 +313,7 @@ public class T830Host extends EquipHost {
         equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
         if (equipStatus.equalsIgnoreCase("Run")) {
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备设置为锁机，设备将被锁！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备设置为锁机，设备将被锁！");
                 pauseDevice();
             }
         }
@@ -330,7 +330,7 @@ public class T830Host extends EquipHost {
         deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (equipStatus.equalsIgnoreCase("READY")) {
             if ("Engineer".equals(deviceInfoExt.getBusinessMod())) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机卡控！");
             } else {
                 //检查领料程序与设备在用程序是否一致
                 boolean recipeNameOk = checkRecipeName(deviceInfoExt.getRecipeName());
@@ -342,7 +342,7 @@ public class T830Host extends EquipHost {
                     //1、如果下载的是Unique版本，那么执行完全比较
                     String downloadRcpVersionType = downloadRecipe.getVersionType();
                     if ("Unique".equals(downloadRcpVersionType)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                     }
                 }
             }
@@ -381,14 +381,14 @@ public class T830Host extends EquipHost {
         DataMsgMap data = null;
         byte ppgnt = -1;
         try {
-            data = activeWrapper.sendS7F1out(targetRecipeName,length0,lengthFormat);
+            data = activeWrapper.sendS7F1out(targetRecipeName, length0, lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             e.printStackTrace();
         }
         try {
-            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("hanRcpName")),length1,lengthFormat);
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("hanRcpName")), length1, lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
@@ -396,7 +396,7 @@ public class T830Host extends EquipHost {
         }
 
         try {
-            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("compRcpName")),length2,lengthFormat);
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("compRcpName")), length2, lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
@@ -434,46 +434,46 @@ public class T830Host extends EquipHost {
         //下载han文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")),ppbody1,FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
         byte ackc7han = (byte) data.get("ACKC7");
         if (ackc7han == 0) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
         } else {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
             logger.error("Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载失败.");
         }
         //下载comp文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")),ppbody2,FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte ackc7comp =   (byte) data.get("ACKC7");
+        byte ackc7comp = (byte) data.get("ACKC7");
         if (ackc7comp == 0) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
         } else {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
             logger.error("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
         }
         //下载recipe文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(targetRecipeName,ppbody0,FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte ackc7 =   (byte) data.get("ACKC7");
+        byte ackc7 = (byte) data.get("ACKC7");
         if (ackc7 == 0) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载成功.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载成功.");
             logger.debug("Recipe:" + targetRecipeName + "下载成功.");
         } else {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载失败.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载失败.");
             logger.error("Recipe:" + targetRecipeName + "下载失败.");
         }
         Map resultMap = new HashMap();
@@ -493,7 +493,7 @@ public class T830Host extends EquipHost {
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         if ("Run".equalsIgnoreCase(equipStatus)) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备正在运行，无法上传Recipe.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备正在运行，无法上传Recipe.");
             return null;
         }
         Recipe recipe = setRecipe(recipeName);
@@ -503,7 +503,7 @@ public class T830Host extends EquipHost {
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         List<String> list = TrRecipeUtil.readRCP(recipePath);
         String rcpContent = "";
-        DataMsgMap  data = null;
+        DataMsgMap data = null;
         for (String str : list) {
             if (str.contains("handler") || str.contains("component")) {
                 String recipePathTem = recipePath.substring(0, recipePath.lastIndexOf("/") + 1) + str + "_V" + recipe.getVersionNo() + ".txt";
@@ -522,11 +522,11 @@ public class T830Host extends EquipHost {
         }
         String rcpAnalyseSucceed = "Y";
         if (!rcpContent.contains("handler")) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的handler文件，请检测文件是否存在或文件名是否正确");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的handler文件，请检测文件是否存在或文件名是否正确");
             rcpAnalyseSucceed = "N";
         }
         if (!rcpContent.contains("component")) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的component文件，请检测文件是否存在或文件名是否正确");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]没有找到关联的component文件，请检测文件是否存在或文件名是否正确");
             rcpAnalyseSucceed = "N";
         }
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
@@ -606,9 +606,9 @@ public class T830Host extends EquipHost {
         ArrayList listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         ArrayList t830RecipeList = new ArrayList();
         for (Object recipeName : listtmp) {
-                if (recipeName.toString().contains("recipe")) {
-                    t830RecipeList.add(recipeName);
-                }
+            if (recipeName.toString().contains("recipe")) {
+                t830RecipeList.add(recipeName);
+            }
         }
         resultMap.put("eppd", t830RecipeList);
 
@@ -662,14 +662,14 @@ public class T830Host extends EquipHost {
             }
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中为开启锁机功能！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中为开启锁机功能！");
             return null;
         }
     }
 
     @Override
     public Map releaseDevice() {
-        
+
         Map map = new HashMap();
         map.put("HCACK", "0");
 
@@ -717,7 +717,7 @@ public class T830Host extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         List<Recipe> downloadGoldRecipe = recipeService.searchRecipeGoldByPara(recipeName, deviceType, "GOLD", verNo);
         if (downloadGoldRecipe == null || downloadGoldRecipe.isEmpty()) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在[" + ppExecName + "]的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
             //不允许开机
             this.holdDeviceAndShowDetailInfo();
         } else {
@@ -734,10 +734,10 @@ public class T830Host extends EquipHost {
             checkResult = true;
         }
         if (!checkResult) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
             holdDeviceAndShowDetailInfo();
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]与改机后程序一致，核对通过！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为[" + ppExecName + "]与改机后程序一致，核对通过！");
         }
         return checkResult;
     }
@@ -795,7 +795,7 @@ public class T830Host extends EquipHost {
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
         // 上传ftp
         FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         List<String> rcpContent = TrRecipeUtil.readRCP(localRcpPath);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         for (String item : rcpContent) {
@@ -803,7 +803,7 @@ public class T830Host extends EquipHost {
                 String relLocalPath = GlobalConstants.localRecipePath + new RecipeService(sqlSession).organizeUploadRecipePath(recipe) + item + "_V" + recipe.getVersionNo() + ".txt";
                 String relRemotePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
                 FtpUtil.uploadFile(relLocalPath, relRemotePath, item + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "关联文件存储位置：" + relLocalPath);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "关联文件存储位置：" + relLocalPath);
             }
         }
         sqlSession.close();

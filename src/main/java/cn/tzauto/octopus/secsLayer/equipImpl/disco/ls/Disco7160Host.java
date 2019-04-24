@@ -18,7 +18,6 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -71,8 +70,6 @@ public class Disco7160Host extends EquipHost {
                 }
                 if (this.getCommState() != this.COMMUNICATING) {
                     this.sendS1F13out();
-                }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
@@ -202,14 +199,15 @@ public class Disco7160Host extends EquipHost {
         s2f13out.put("DevID", devids);
         s2f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
+        List<Long> list = new ArrayList();
+        list.add(DEVID);
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13out);
+            data = activeWrapper.sendS2F13out(list, ecFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data != null && data.get("RESULT") != null) {
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+            ArrayList listtmp = (ArrayList) (data.get("EC"));
             devid = String.valueOf(listtmp.get(0));
         }
         return devid;
@@ -220,7 +218,7 @@ public class Disco7160Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
             String prestate = equipStatus;
@@ -248,7 +246,7 @@ public class Disco7160Host extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
                 holdDevice();
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -260,34 +258,34 @@ public class Disco7160Host extends EquipHost {
             sqlSession.commit();
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
                 if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                         return;
                     }
                     if (!rcpInEqp(deviceInfoExt.getRecipeName())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备上不存在改机程序，确认是否成功提交改机！禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     if (!checkRecipe.getId().equals(deviceInfoExt.getRecipeId())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备使用程序： " + ppExecName + " ;与领料程序：" + checkRecipe.getRecipeName() + " 不一致，禁止开机，设备被锁定！请联系ME处理！");
                         this.holdDevice();
                         return;
                     }
                     //检查程序是否存在 GOLD
                     Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                     if (goldRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                         this.holdDevice();
                         return;
                     }
                     if (checkRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在程序：" + ppExecName + "！请确认是否已审核通过！");
                         this.holdDevice();
                     } else {
                         this.startCheckRecipePara(checkRecipe);
@@ -314,8 +312,8 @@ public class Disco7160Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
+        long
+                length = TransferUtil.getPPLength(localFilePath);
         DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
         s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s7f1out.put("ProcessprogramID", targetRecipeName);
@@ -326,10 +324,10 @@ public class Disco7160Host extends EquipHost {
         }
         s7f1out.put("Length", length);
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
+        byte ppgnt = 0;
         try {
-            data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, lengthFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -338,8 +336,8 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        resultMap.put("ppgnt", ppgnt);
+        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
@@ -357,17 +355,17 @@ public class Disco7160Host extends EquipHost {
         }
         s7f3out.put("Processprogram", secsItem);
         try {
-            data = activeWrapper.sendAwaitMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte ackc7 = (byte) data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -377,7 +375,7 @@ public class Disco7160Host extends EquipHost {
         if (eqpRecipeName.contains("\\")) {
             String[] recipeNames = eqpRecipeName.split("\\\\");
             if (recipeNames.length < 2) {
-               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "无法获取准确程序名,请检查程序名！");
                 return null;
             }
             recipeName = recipeNames[1];
@@ -422,15 +420,17 @@ public class Disco7160Host extends EquipHost {
         DataMsgMap s7f17outDevid = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
         s7f17outDevid.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s7f17outDevid.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
+        byte ackc7 = 0;
+        List list = new ArrayList();
+        list.add(recipeName);
         try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(list);
             logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+            ackc7 = (byte) data.get("ACKC7");
+            if (ackc7 == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -439,8 +439,8 @@ public class Disco7160Host extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
@@ -497,7 +497,7 @@ public class Disco7160Host extends EquipHost {
             }
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
             return null;
         }
     }
@@ -524,7 +524,7 @@ public class Disco7160Host extends EquipHost {
             logger.info("开始start线程！！！！！！！！！！！！！！！");
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！\n");
             return null;
         }
     }
@@ -551,46 +551,12 @@ public class Disco7160Host extends EquipHost {
     }
 
     public Map sendS2f41Cmd2(String Remotecommand) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41zeroout2", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s2f41out.put("Remotecommand", Remotecommand);
-        DataMsgMap msgdata = null;
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("prevCmd", Remotecommand);
-        byte[] hcack = new byte[1];
-        try {
-            msgdata = activeWrapper.sendAwaitMessage(s2f41out);
-            logger.info("The equip " + deviceCode + " request to " + Remotecommand);
-            hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd " + Remotecommand + " at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
-        }
-        return resultMap;
+        return super.sendS2f41Cmd(Remotecommand);
     }
 
 
     public Map resumeDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41resume2", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        return resultMap;
+        return super.sendS2f41Cmd("RESUME_H");
     }
 
 
@@ -601,24 +567,7 @@ public class Disco7160Host extends EquipHost {
         map.put("HCACK", 0);
         return map;
     }
-
-    @Override
-    public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outCommand", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        return resultMap;
-    }
+    
     // </editor-fold>
 
     @Override
@@ -644,7 +593,10 @@ public class Disco7160Host extends EquipHost {
             Map cpValueMp = new HashMap();
             cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
             cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameMap, cpValueMp);
+            List cplist = new ArrayList();
+            cplist.add("Port");
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameMap, cpValueMp);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

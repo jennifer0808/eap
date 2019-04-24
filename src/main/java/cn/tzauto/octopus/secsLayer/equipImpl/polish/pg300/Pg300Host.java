@@ -185,7 +185,11 @@ public class Pg300Host extends EquipHost {
             cpValueFromatMap.put("testlotid", FormatCode.SECS_ASCII);
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
             cpValueFromatMap.put(this.portId, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
+            List list = new ArrayList();
+            list.add("LOTID");
+            list.add("PPID");
+            list.add("PORTID");
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, list, cpmap, cpNameFromatMap, cpValueFromatMap);
 
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

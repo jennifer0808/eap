@@ -276,7 +276,9 @@ public class EsecDB2100Host extends EquipHost {
             cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
             Map cpValue = new HashMap();
             cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cp, cpName, cpValue);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT,cplist, cp, cpName, cpValue);
             //选中成功标识
             if (data != null) {
                 ppselectFlag = true;

@@ -1042,7 +1042,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
             cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1073,7 +1075,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("prevCmd", rcmd);
 
         try {
-            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null);
+            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null, null);
             logger.info("The equip " + deviceCode + " request to " + rcmd);
             byte hcack = (byte) msgdata.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1549,9 +1551,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
+            resultMap.put("EPPD", new ArrayList<>());
         } else {
             logger.info("recipeNameList:" + list);
             resultMap.put("eppd", list);
+            resultMap.put("EPPD", list);
         }
         return resultMap;
     }
