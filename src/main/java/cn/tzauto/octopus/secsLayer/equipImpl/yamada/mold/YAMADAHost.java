@@ -154,6 +154,7 @@ public class YAMADAHost extends EquipHost {
 //               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
+//                runMode = (long) ((List) ((List) data.get("REPORT")).get(1)).get(1);
                 if (runMode == 0 || runMode == 2) {
 //                    sendS2f41Cmd("UNLOCK");
 //                   UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
@@ -162,15 +163,7 @@ public class YAMADAHost extends EquipHost {
                 processS6F11EquipStatusChange(data);
                 return;
             } else if (ceid == ppselectfinishCeid) { //601L
-                List list = (List) data.get("REPORT");
-
-                List listCollection = (List) list.get(1);
-                ppExecName = (String) listCollection.get(0);
-
-                Map map = new HashMap();
-                map.put("PPExecName", ppExecName);
-                changeEquipPanel(map);
-                return;
+                findDeviceRecipe();
             }
 
             updateCommStateInExt();
@@ -417,12 +410,12 @@ public class YAMADAHost extends EquipHost {
     private void initRptPara() {
         //重定义机台的equipstatuschange事件报告
 //
-//        sendS2F33Out(101l, 5000l, 5002l);
+//        sendS2F33out(101l, 5000l, 5002l);
 //        sendS2F35out(101l, 101l, 101l);
 
 //        sendS2F37out(101l);
 //        //重定义ppchange事件
-//        sendS2F33Out(601l, 5002l);
+//        sendS2F33out(601l, 5002l);
 //        sendS2F35out(601l, 601l, 601l);
 //        sendS2F37out(601l);
         sendS2F37outAll();

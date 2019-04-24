@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author Administrator
  */
 public class OCRRecipeUtil {
@@ -29,11 +28,11 @@ public class OCRRecipeUtil {
     public static void main(String[] args) {
         String filePath = "C://ocr//1-12-RDA8809J-0.ini";
         List<RecipePara> recipeParas = transRcpParaFromDB(filePath, "OCRDH-OBCP5000");
-        for(RecipePara recipePara:recipeParas){
-            System.out.println(recipePara.getParaName()+"---"+recipePara.getSetValue());
+        for (RecipePara recipePara : recipeParas) {
+            System.out.println(recipePara.getParaName() + "---" + recipePara.getSetValue());
         }
-         System.out.println(recipeParas.size());
-        
+        System.out.println(recipeParas.size());
+
 //        List<OCRPPBody> oCRPPBodys = unOcrRecipe(filePath);
 //        oCRPPBodys = handleOcrBody(oCRPPBodys);
 //        for (OCRPPBody oCRPPBody : oCRPPBodys) {
@@ -59,7 +58,7 @@ public class OCRRecipeUtil {
                     recipePara.setSetValue(oCRPPBody.getValue());
                     recipePara.setMinValue(recipeTemplate.getMinValue());
                     recipePara.setMaxValue(recipeTemplate.getMaxValue());
-                    recipePara.setParaMeasure(recipeTemplate.getParaUnit());    
+                    recipePara.setParaMeasure(recipeTemplate.getParaUnit());
                     recipePara.setParaShotName(recipeTemplate.getParaShotName());
                     recipeParas.add(recipePara);
                     break;
@@ -78,7 +77,7 @@ public class OCRRecipeUtil {
         try {
             isr = new InputStreamReader(new FileInputStream(source));
             reader = new BufferedReader(isr);
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null && line.contains("=")) {
                 OCRPPBody body = new OCRPPBody();
                 if (line.contains("[")) {
                     String type = line.substring(line.indexOf("[") + 1, line.lastIndexOf("]")) + "-";

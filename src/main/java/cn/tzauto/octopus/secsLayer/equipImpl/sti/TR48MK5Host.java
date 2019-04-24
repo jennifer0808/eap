@@ -266,7 +266,6 @@ public class TR48MK5Host extends EquipHost {
             ex.printStackTrace();
         }
 
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -295,7 +294,7 @@ public class TR48MK5Host extends EquipHost {
 
     private boolean rcpInEqp(String recipeName) {
         boolean rcpInEqp = false;
-        ArrayList eppd = (ArrayList) sendS7F19out().get("EPPD");
+        ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
         for (int i = 0; i < eppd.size(); i++) {
             String rcpNameString = eppd.get(i).toString();
             if (recipeName.equals(rcpNameString)) {
@@ -311,35 +310,52 @@ public class TR48MK5Host extends EquipHost {
     public Map sendS2F41CmdLotConfig(String DATA1, String DATA2, String DATA3, String DATA4, String DATA5, String DATA6, String DATA7,
                                      String DATA8, String DATA9, String DATA10, String DATA11, String DATA12, String DATA13, String DATA14) {
         Map s2f41outMap = new HashMap();
-        s2f41outMap.put("DATA1", DATA1);
-        s2f41outMap.put("DATA2", DATA2);
-        s2f41outMap.put("DATA3", DATA3);
-        s2f41outMap.put("DATA4", DATA4);
-        s2f41outMap.put("DATA5", DATA5);
-        s2f41outMap.put("DATA6", DATA6);
-        s2f41outMap.put("DATA7", DATA7);
-        s2f41outMap.put("DATA8", DATA8);
-        s2f41outMap.put("DATA9", DATA9);
-        s2f41outMap.put("DATA10", DATA10);
-        s2f41outMap.put("DATA11", DATA11);
-        s2f41outMap.put("DATA12", DATA12);
-        s2f41outMap.put("DATA13", DATA13);
-        s2f41outMap.put("DATA14", DATA14);
+        s2f41outMap.put("OutputMode", DATA1);
+        s2f41outMap.put("TopStationEnable", DATA2);
+        s2f41outMap.put("BtmStationEnable", DATA3);
+        s2f41outMap.put("FiveSideStationEnable", DATA4);
+        s2f41outMap.put("InPocketCheck", DATA5);
+        s2f41outMap.put("PostSealInspection", DATA6);
+        s2f41outMap.put("TopVisionRecipe", DATA7);
+        s2f41outMap.put("BottomVisionRecipe", DATA8);
+        s2f41outMap.put("FiveSideVisionRecipe", DATA9);
+        s2f41outMap.put("PostSeal", DATA10);
+        s2f41outMap.put("InPocket", DATA11);
+        s2f41outMap.put("OpPartsPerReel", DATA12);
+        s2f41outMap.put("NonStdBoxQty", DATA13);
+        s2f41outMap.put("AddTrailerPockets", DATA14);
+        List cpnamelist = new ArrayList();
+        cpnamelist.add("OutputMode");
+        cpnamelist.add("TopStationEnable");
+        cpnamelist.add("BtmStationEnable");
+        cpnamelist.add("FiveSideStationEnable");
+        cpnamelist.add("InPocketCheck");
+        cpnamelist.add("PostSealInspection");
+        cpnamelist.add("TopVisionRecipe");
+        cpnamelist.add("BottomVisionRecipe");
+        cpnamelist.add("FiveSideVisionRecipe");
+        cpnamelist.add("PostSeal");
+        cpnamelist.add("InPocket");
+        cpnamelist.add("OpPartsPerReel");
+        cpnamelist.add("NonStdBoxQty");
+        cpnamelist.add("AddTrailerPockets");
+
         Map s2f41outNameFromatMap = new HashMap();
-        s2f41outNameFromatMap.put("DATA1", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA2", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA3", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA4", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA5", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA6", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA7", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA8", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA9", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA10", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA11", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA12", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA13", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA14", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("OutputMode", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("TopStationEnable", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("BtmStationEnable", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("FiveSideStationEnable", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("InPocketCheck", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("PostSealInspection", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("TopVisionRecipe", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("BottomVisionRecipe", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("FiveSideVisionRecipe", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("PostSeal", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("InPocket", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("OpPartsPerReel", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("NonStdBoxQty", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("AddTrailerPockets", FormatCode.SECS_ASCII);
+
         Map s2f41outVauleFromatMap = new HashMap();
         s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
         s2f41outVauleFromatMap.put(DATA2, FormatCode.SECS_ASCII);
@@ -360,7 +376,7 @@ public class TR48MK5Host extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out("LOTCONFIG", s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTCONFIG", cpnamelist, s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to CHECK the LotConfig");
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -374,19 +390,24 @@ public class TR48MK5Host extends EquipHost {
         return resultMap;
     }
 
-    //TODO
     public Map sendS2f41CmdLotStart(String DATA1, String DATA2, String DATA3, String DATA4) {
         Map s2f41outMap = new HashMap();
-        s2f41outMap.put("DATA1", DATA1);
-        s2f41outMap.put("DATA2", DATA2);
-        s2f41outMap.put("DATA3", DATA3);
-        s2f41outMap.put("DATA4", DATA4);
+        s2f41outMap.put("LotNumber", DATA1);
+        s2f41outMap.put("LotQuantity", DATA2);
+        s2f41outMap.put("OperatorNumber", DATA3);
+        s2f41outMap.put("Shift", DATA4);
+        List cpNameList = new ArrayList();
+        cpNameList.add("LotNumber");
+        cpNameList.add("LotQuantity");
+        cpNameList.add("OperatorNumber");
+        cpNameList.add("Shift");
+
 
         Map s2f41outNameFromatMap = new HashMap();
-        s2f41outNameFromatMap.put("DATA1", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA2", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA3", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("DATA4", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("LotNumber", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("LotQuantity", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("OperatorNumber", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("Shift", FormatCode.SECS_ASCII);
 
         Map s2f41outVauleFromatMap = new HashMap();
         s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
@@ -399,7 +420,7 @@ public class TR48MK5Host extends EquipHost {
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         try {
-            DataMsgMap data = activeWrapper.sendS2F41out("LOTSTART", s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
+            DataMsgMap data = activeWrapper.sendS2F41out("LOTSTART", cpNameList, s2f41outMap, s2f41outNameFromatMap, s2f41outVauleFromatMap);
             logger.info("The equip " + deviceCode + " request to Start the Lot");
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

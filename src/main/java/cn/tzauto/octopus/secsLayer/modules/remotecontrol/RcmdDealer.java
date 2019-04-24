@@ -18,7 +18,7 @@ public class RcmdDealer {
         //todo 完善每个判断逻辑
         if (processFunction.getFunctionCode().equals(ProcessFunction.RCMD_STOP)) {
             String rcmd = processFunction.getFunctionPara().get(0).getValue();
-            GlobalConstants.stage.equipHosts.get(deviceCode).getActiveWrapper().sendS2F41out(rcmd, null, null, null);
+            GlobalConstants.stage.equipHosts.get(deviceCode).getActiveWrapper().sendS2F41out(rcmd, null, null, null, null);
         } else if (processFunction.getFunctionCode().equals(ProcessFunction.RCMD_TRML_MSG)) {
             String text = processFunction.getFunctionPara().get(0).getValue();
             GlobalConstants.stage.equipHosts.get(deviceCode).getActiveWrapper().sendS10F3out((byte) 0, text);

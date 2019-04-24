@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -164,27 +163,6 @@ public class T740Host extends EquipHost {
 
 
     // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S2FX Code"> 
-    public Map sendS2F41outStart(String batchName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outstart", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("BatchName", batchName);
-        byte[] hcack = new byte[1];
-        try {
-            DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        } catch (Exception e) {
-            logger.error("Exception occur,Exception info:" + e.getMessage());
-        }
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s2f42");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-        return resultMap;
-    }
-    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6F11 Code">
 
 
@@ -198,9 +176,9 @@ public class T740Host extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            }else if (ceid == 14032) {
+            } else if (ceid == 14032) {
                 needCheck = true;
-            }else if (ceid == 10002) {
+            } else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 10003) {
                 sendS2f41NotApprove();
@@ -774,7 +752,9 @@ public class T740Host extends EquipHost {
         Map map = new HashMap();
         map.put("MESSAGE-TEXT", "Taper IDS of LEFT-TAPER bar code not correct. Please scan again.");
         map.put("CARRIER-NAME", "LEFT-TAPER");
-
+        List cpNameList = new ArrayList();
+        cpNameList.add("MESSAGE-TEXT");
+        cpNameList.add("CARRIER-NAME");
         Map cpNameFormatMap = new HashMap();
         cpNameFormatMap.put("MESSAGE-TEXT", FormatCode.SECS_ASCII);
         cpNameFormatMap.put("CARRIER-NAME", FormatCode.SECS_ASCII);
@@ -783,8 +763,7 @@ public class T740Host extends EquipHost {
         cpValueFormatMap.put("Taper IDS of LEFT-TAPER bar code not correct. Please scan again.", FormatCode.SECS_ASCII);
         cpValueFormatMap.put("LEFT-TAPER", FormatCode.SECS_ASCII);
         try {
-            activeWrapper.sendS2F41out(rcmd, map, cpNameFormatMap, cpValueFormatMap);
-
+            activeWrapper.sendS2F41out(rcmd, cpNameList, map, cpNameFormatMap, cpValueFormatMap);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

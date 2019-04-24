@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cn.tzauto.octopus.secsLayer.equipImpl.TP.NITTO;
 
 
@@ -9,13 +5,10 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TPRecipeUtil;
@@ -28,7 +21,6 @@ import org.apache.log4j.MDC;
 
 import java.util.*;
 
-@SuppressWarnings("serial")
 public class DR3000IIIHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
@@ -37,7 +29,7 @@ public class DR3000IIIHost extends EquipHost {
 
     public DR3000IIIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-//        EquipStateChangeCeid = 9;
+        EquipStateChangeCeid = 9;
 //        StripMapUpCeid = 0;
         RCMD_PPSELECT = "PPSELECT";
 
@@ -74,31 +66,14 @@ public class DR3000IIIHost extends EquipHost {
                     this.sleep(200);
                 }
                 if (this.getCommState() != this.COMMUNICATING) {
-                    this.sleep(10000);
+//                    this.sleep(5000);
                     this.sendS1F13out();
-                }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
-                    this.sleep(30000);
                     sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
                     //获取设备开机状态
-
                     super.findDeviceRecipe();
-//                    this.sendS1F3Check();
-
-//                    initRptPara();
-                }
-                if (rptDefineNum < 1) {
-//                    sendS1F1out();
-//                    //为了能调整为online remote
-//                    sendS1F17out();
-                    //获取设备开机状态
-                    super.findDeviceRecipe();
-                    //获取lot号/
                     super.updateLotId();
-//                    initRptPara();
-                    rptDefineNum++;
                 }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
@@ -111,6 +86,7 @@ public class DR3000IIIHost extends EquipHost {
                         if (ceid == 22) {
                             super.findDeviceRecipe();
                         }
+                        processS6F11in(msg);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -168,115 +144,15 @@ public class DR3000IIIHost extends EquipHost {
         }
     }
 
-    private void processS6F11EquipStart(DataMsgMap data) {
-        //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        byte[] ack = new byte[1];
-        ack[0] = 0;
-        out.put("AckCode", ack);
-        long ceid = 0l;
+    @SuppressWarnings("unchecked")
+    public void processS1F13in(DataMsgMap data) {
         try {
-            out.setTransactionId(data.getTransactionId());
-            activeWrapper.respondMessage(out);
-            ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(data.get("EquipStatus"), deviceType);
+            activeWrapper.sendS1F14out((byte) 0, data.getTransactionId());
+            setCommState(1);
+            sendS1F17out();
+            super.findDeviceRecipe();
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        RecipeService recipeService = new RecipeService(sqlSession);
-
-        DeviceOplog deviceOplog = new DeviceOplog();
-        //更新设备模型状态
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        Recipe goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
-        if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-            holdDeviceAndShowDetailInfo();
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
-        }
-        if (goldRecipe == null) {
-            //TODO  这里需要讨论做试产时的情况
-
-            //todo 显示界面日志
-        }
-        try {
-            if (deviceInfoExt == null) {
-                deviceInfoExt = setDeviceInfoExt();
-                deviceService.saveDeviceInfoExt(deviceInfoExt);
-            } else {
-                deviceInfoExt.setDeviceStatus(equipStatus);
-                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-            }
-            //保存到设备操作记录数据库
-            List<DeviceOplog> deviceOplogList = deviceService.getDeviceOplog(deviceCode);
-            if (deviceOplogList == null || deviceOplogList.isEmpty()) {
-                deviceOplog = setDeviceOplog(ceid, ppExecName, equipStatus, "", lotId);
-                deviceService.saveDeviceOplog(deviceOplog);
-                //发送设备状态变化记录到服务端
-//                this.sendEqptStatus2Server(ppExecName, deviceCode, lotId, ceid, equipStatus, deviceOplog.getOpType(), deviceOplog.getOpDesc(), deviceOplog.getOpTime().toString());
-                sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
-            } else {
-                String formerDeviceStatus = deviceOplogList.get(0).getCurrDeviceStatus();
-                if (!formerDeviceStatus.equals(equipStatus)) {
-                    deviceOplog = setDeviceOplog(ceid, ppExecName, equipStatus, formerDeviceStatus, lotId);
-                    deviceService.saveDeviceOplog(deviceOplog);
-                    //发送设备状态到服务端
-//                    sendEqptStatus2Server(ppExecName, deviceCode, lotId, ceid, equipStatus, deviceOplog.getOpType(), deviceOplog.getOpDesc(), deviceOplog.getOpTime().toString());
-                    sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
-                    // sendEqptStatus2Server(ppExecName, deviceCode, lotId, ceid, equipStatus, deviceOplog.getOpDesc(),deviceOplog.getOpTime());
-                }
-            }
-            sqlSession.commit();
-
-            //开机check
-            String startCheckMod = deviceInfoExt.getStartCheckMod();
-            boolean checkResult = false;
-            Recipe checkRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-            //根据检查模式执行开机检查逻辑
-            //1、A1-检查recipe名称是否一致
-            //2、A-检查recipe名称和参数
-            //3、B-检查SV
-            //4、AB都检查
-            if (startCheckMod != null && !"".equals(startCheckMod)) {
-                checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
-                if (!checkResult) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
-                    //不允许开机
-                    holdDeviceAndShowDetailInfo();
-                } else {
-                    this.setAlarmState(0);
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
-                }
-            }
-            if (checkResult && "A".equals(startCheckMod)) {
-                //首先判断下载的Recipe类型
-                //1、如果下载的是Unique版本，那么执行完全比较
-                String downloadRcpVersionType = checkRecipe.getVersionType();
-                if ("Unique".equals(downloadRcpVersionType)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
-                    this.startCheckRecipePara(checkRecipe, "abs");
-                } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
-                    if (goldRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
-                        //不允许开机
-                        this.holdDeviceAndShowDetailInfo();
-                    } else {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
-                        this.startCheckRecipePara(goldRecipe);
-                    }
-
-                }
-            } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            sqlSession.rollback();
-        } finally {
-            sqlSession.close();
+            logger.error("Exception:", e);
         }
     }
 
@@ -302,7 +178,6 @@ public class DR3000IIIHost extends EquipHost {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -321,9 +196,6 @@ public class DR3000IIIHost extends EquipHost {
     //hold机台，先停再锁
     @Override
     public Map holdDevice() {
-//            super.sendS2f41Cmd("PAUSE");
-//            //????????????????
-//            return this.sendS2f41Cmd("PAUSE");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);

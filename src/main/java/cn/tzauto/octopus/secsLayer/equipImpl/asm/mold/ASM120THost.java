@@ -253,10 +253,10 @@ public class ASM120THost extends EquipHost {
             if (ceid == 39 || ceid == 40 || ceid == 1) {
                 processS6F11EquipStatus(data);
             }
-            if (ceid == 120 || ceid == 121 || ceid == 122 || ceid == 123) {
+            if (ceid == 5) {
                 processS6F11EquipStatusChange(data);
             }
-            if (ceid == 232) {
+            if (ceid == 111) {
                 findDeviceRecipe();
                 if (ppExecName.contains(".prp")) {
                     ppExecName = ppExecName.replace(".prp", "");
@@ -436,11 +436,11 @@ public class ASM120THost extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
-        Recipe recipe = setRecipe(recipeName.replace(".prp", ""));
+        Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap msgdata = null;
         try {
-            msgdata = activeWrapper.sendS7F5out(recipeName);
+            msgdata = activeWrapper.sendS7F5out(recipeName + ".prp");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -468,25 +468,6 @@ public class ASM120THost extends EquipHost {
     @Override
     @SuppressWarnings("unchecked")
     public Map sendS7F19out() {
-//        Map resultMap = new HashMap();
-//        resultMap.put("msgType", "s7f20");
-//        resultMap.put("deviceCode", deviceCode);
-//        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-//        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-//        long transactionId = activeWrapper.getNextAvailableTransactionId();
-//        s7f19out.setTransactionId(transactionId);
-//        DataMsgMap data = null;
-//
-//        try {
-////            data = activeWrapper.sendAwaitMessage(s7f19out);
-//            data = handleOverTime(s7f19out);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        if (data == null || data.get("EPPD") == null) {
-//            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-//        }
-
         Map resultMap =  super.sendS7F19out();
         if (resultMap.get("eppd") == null) {
            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "从设备获取recipe列表信息失败，请检查设备通讯状态！");
@@ -620,7 +601,7 @@ public class ASM120THost extends EquipHost {
 
 
     private void initRptPara() {
-//        sendS2F33Out(5l, 8l, 19l);
+//        sendS2F33out(5l, 8l, 19l);
 //        sendS2F35out(5l, 5l, 5l);
 //        sendS2F37out(5l);
 

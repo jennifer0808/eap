@@ -172,10 +172,6 @@ public class AsmAD8312Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -289,9 +285,7 @@ public class AsmAD8312Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-        if ("ASMAD8312PLUS".equals(deviceType)) {
-
-        } else {
+        if (!"ASMAD8312PLUS".equals(deviceType)) {
             targetRecipeName = targetRecipeName + ".rcp";
         }
         DataMsgMap data = null;
@@ -316,8 +310,7 @@ public class AsmAD8312Host extends EquipHost {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        if ("ASMAD8312PLUS".equals(deviceType)) {
-        } else {
+        if (!"ASMAD8312PLUS".equals(deviceType)) {
             targetRecipeName = targetRecipeName + ".rcp";
         }
         try {
@@ -326,7 +319,7 @@ public class AsmAD8312Host extends EquipHost {
             logger.error("Exception:", e);
             return null;
         }
-        byte ackc7 = (byte) data.get("AckCode");
+        byte ackc7 = (byte) data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -377,8 +370,7 @@ public class AsmAD8312Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        if ("ASMAD8312PLUS".equals(deviceType)) {
-        } else {
+        if (!"ASMAD8312PLUS".equals(deviceType)) {
             recipeName = recipeName + ".rcp";
         }
         List list = new ArrayList();
@@ -407,33 +399,13 @@ public class AsmAD8312Host extends EquipHost {
 
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+        Map resultMap = super.sendS7F19out();
+        List eppd = (ArrayList) resultMap.get("eppd");
+        ArrayList recipeNames = new ArrayList();
+        for (int i = 0; i < eppd.size(); i++) {
+            recipeNames.add(eppd.get(i).toString().replace(".rcp", ""));
         }
-
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList list = (ArrayList) data.get("EPPD");
-        if (list == null || list.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ArrayList listtmp = (ArrayList) data.get("EPPD");
-            ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString().replace(".rcp", ""));
-            }
-            resultMap.put("eppd", list1);
-        }
+        resultMap.put("eppd", recipeNames);
         return resultMap;
     }
 // </editor-fold> 

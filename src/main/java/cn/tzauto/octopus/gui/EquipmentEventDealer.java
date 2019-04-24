@@ -1,7 +1,6 @@
 package cn.tzauto.octopus.gui;
 
 import cn.tzauto.generalDriver.api.EqpEventDealer;
-import cn.tzauto.generalDriver.entity.msg.MessageHeader;
 import cn.tzauto.generalDriver.exceptions.InvalidHsmsDataLengthException;
 import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
 import cn.tzauto.octopus.gui.equipevent.CommFailureEvent;
@@ -87,6 +86,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                         hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
                     logger.info("Equip State is changed. publish is called");
+//                    hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
                 } else if (ev instanceof ReceivedSeparateEvent) {
                     logger.info("Received Separate event, SECS prototcols has been terminated.");
                     newState.setCommOn(false);
@@ -97,23 +97,17 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 //                    Thread.yield();
                     logger.info("Ready to terminate host comm thread ...");
 //                    hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
-//                    hostsManager.terminateHostThread(this.equipNodeBean.getDeviceIdProperty());
+                    hostsManager.terminateHostThread(this.equipNodeBean.getDeviceCode());
 //                    DeviceComm.restartHost(equipNodeBean);
                     logger.info("terminate host comm thread done...");
                     continue;
 //                    break;
                 } else if (ev instanceof CommFailureEvent) {
-                    logger.info("Communication Failure occured, SECS prototcols has been terminated.");
-                    hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
-                    newState.setCommOn(false);
-                    newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
+                    //EAP不处理协议，只变动界面
+                    logger.info("Network closed, SECS prototcol has been terminated.");
+                    newState.setNetConnect(false);
                     sync++;
                     publish(newState);
-                    //terminate the host server
-//                    Thread.yield();
-                    //this.eventQueue.put(new EquipmentHoldEvent(true, this.equipNodeBean.getDeviceIdProperty())); 
-                    hostsManager.terminateHostThread(this.equipNodeBean.getDeviceIdProperty());
-//                    break;
                     continue;
                 }
             }
@@ -149,9 +143,6 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         //it will throw an interrupted exception into the doBackground() method
     }
 
-    /*
-     * The following block is from UpLevelAnouncer interface
-     **/
     @Override
     public void notificationOfSecsDriverReady(int deviceId) {
         logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
@@ -170,18 +161,6 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(false);
     }
 
-
-    public void notificationOfSentPrimaryMessage(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentPrimaryMessage Invoked at device id " + deviceId + " " + msgTagName);
-    }
-
-
-    public void notificationOfSentSecondaryMessage(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentSecondaryMessage Invoked at device id " + deviceId + " " + msgTagName);
-//        eventQueue.add(new ServiceStatusEvent(true, deviceId)); //to be changed
-//       eventQueue.add(new BehaviorStatusEvent(EquipState.ACTIVE_ACTIVE_SERVICE_STATE, deviceId));
-    }
-
     @Override
     public void notificationOfT3Timeout(int deviceId, long transId, String msgTagName) {
         logger.debug("notificationOfT3Timeout Invoked at device id " + deviceId + " " + msgTagName
@@ -189,13 +168,13 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     }
 
     @Override
-    public void notificationOfSentMessage(int i, long l, String s) {
-
+    public void notificationOfSentMessage(int deviceId, long transId, String msgTagName) {
+        logger.debug("notificationOfSentMessage Invoked at device id " + deviceId + " " + msgTagName);
     }
 
     @Override
-    public void notificationOfRespondMessage(int i, long l, String s) {
-
+    public void notificationOfRespondMessage(int deviceId, long transId, String msgTagName) {
+        logger.debug("notificationOfRespondMessage Invoked at device id " + deviceId + " " + msgTagName);
     }
 
     @Override
@@ -207,62 +186,36 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 
     @Override
     public void notificationOfCloseNetwork(int deviceId) {
-        logger.info("notificationOfJsipCloseNetwork Invoked at device id " + deviceId + " equip name "
+        logger.info("notificationOfCloseNetwork Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
-//        eventQueue.add(new CommStatusEvent(false, deviceId));
         eventQueue.add(new CommFailureEvent(null, deviceId));
 
     }
 
     @Override
-    public void notificationOfSentMessageFailed(int i, long l, String s) {
-
+    public void notificationOfSentMessageFailed(int deviceId, long transId, String msgTagName) {
+        logger.debug("notificationOfSentMessageFailed Invoked at device id " + deviceId + " "
+                + msgTagName + " with transId = " + transId);
     }
 
     @Override
-    public void notificationOfSentMessageFailedCommFailure(int i, long l, String s) {
-
+    public void notificationOfSentMessageFailedCommFailure(int deviceId, long transId, String msgTagName) {
+        logger.debug("notificationOfSentMessageFailedCommFailure Invoked at device id " + deviceId + " "
+                + msgTagName + " with transId = " + transId);
     }
 
     @Override
-    public void notificationOfRespondMessageFailed(int i, long l, String s) {
-
-    }
-
-
-    public void notificationOfSentPrimaryMessageFailed(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentPrimaryMessageFailed Invoked at device id " + deviceId + " "
+    public void notificationOfRespondMessageFailed(int deviceId, long transId, String msgTagName) {
+        logger.debug("notificationOfRespondMessageFailed Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
-
-    public void notificationOfSentPrimaryMessageFailedCommFailure(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentPrimaryMessageFailedCommFailure Invoked at device id " + deviceId + " "
-                + msgTagName + " with transId = " + transId);
-    }
-
-
-    public void notificationOfSentSecondaryMessageFailed(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentSecondaryMessageFailed Invoked at device id " + deviceId + " "
-                + msgTagName + " with transId = " + transId);
-    }
-
-    /*
-     * The following block is from HsmsCommunicationFailureDealer interface
-     **/
     @Override
     public void processDataReadIOException(IOException e, int deviceId) {
         logger.debug("Communication Failure occured: "
                 + "DataReadIOException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(false);
-    }
-
-
-    public void processDataSendIOException(IOException e, int deviceId) {
-        logger.debug("Communication Failure occured: "
-                + "DataSendIOException with device id = " + deviceId + ".", e);
-        eventQueue.add(new CommFailureEvent(e, deviceId));
     }
 
     @Override
@@ -283,70 +236,11 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 
     }
 
-
     @Override
     public void processWrongMessageLengthException(InvalidHsmsDataLengthException e, int deviceId) {
         logger.debug("Communication Failure occured:  "
                 + "WrongMessageLengthException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));
-    }
-
-
-    public void processHeartBeatingFailuret(int deviceId) {
-        logger.debug("Communication Failure occured:  "
-                + "Heart Beating Failure with device id = " + deviceId + ".");
-        eventQueue.add(new CommFailureEvent(null, deviceId));
-    }
-
-    /*
-     * The following block is from ErrorDataMessageDealer interface
-     **/
-
-    public void processDataMessageOfWrongDevId(MessageHeader header) {
-        logger.info("Received a Data Message Of Wrong DevId." + " msg info " + header);
-    }
-
-    /*
-     * (non-Javadoc)
-     * Send S9F7 out.
-     */
-
-    public void processMessageOfMistakeDataFormat(byte[] headerBytes) {
-        logger.info("Received a Data Message Of Mistake Data Format.");
-    }
-
-    /*
-     * (non-Javadoc)
-     * Send S9F5 out.
-     */
-
-    public void processMessageOfWrongFunctionType(byte[] headerBytes) {
-        logger.info("Received a Data Message Of  Wrong Function Type.");
-    }
-
-    /*
-     * (non-Javadoc)
-     * Send S9F3 out.
-     */
-
-    public void processMessageOfWrongStreamType(byte[] headerBytes) {
-        logger.info("Received a Data Message Of  Wrong Stream Type.");
-    }
-
-    /*
-     * (non-Javadoc)
-     * Send S9F9 out.
-     */
-
-    public void processT3Timeout(MessageHeader header) {
-    }
-
-    /*
-     * Send S9F11
-     */
-
-    public void processDataMessageOfTooLongData(byte[] headerBytes) {
-        logger.info("Received a Data Message Of Too Long Data.");
     }
 
 }

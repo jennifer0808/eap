@@ -356,12 +356,12 @@ public class MultipleEquipHostManager {
         if (equip != null) {
             if (equip.isThreadUsed()) //need to instantiate a new object
             {
-                EquipHost newEquip = (EquipHost) equip.clone();
-                equipHosts.remove(deviceId);
-                equipHosts.put(deviceId, newEquip);
-                newEquip.start();
-                logger.info("调用了start方法" + deviceId);
-                equip = newEquip;
+//                EquipHost newEquip = (EquipHost) equip.clone();
+//                equipHosts.remove(deviceId);
+//                equipHosts.put(deviceId, newEquip);
+//                newEquip.start();
+//                logger.info("调用了start方法" + deviceId);
+//                equip = newEquip;
             } else {
                 equip.start();
             }

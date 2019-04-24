@@ -227,19 +227,19 @@ public class MVPHost extends EquipHost {
         List list1 = new ArrayList();
         list1.add(1037L);
         list1.add(1023L);
-        sendS2F33Out(3014L, 3014L, list1);
+        sendS2F33out(3014L, 3014L, list1);
         sendS2F35out(3014L, 3014L, 3014L);
         sendS2F37out(3014L);
         logger.info("If the device software upgrades, you need to redefine the ceid=3043 event!！");
         List list = new ArrayList();
         list.add(1037L);
-        sendS2F33Out(3043L, 3043L, list);
+        sendS2F33out(3043L, 3043L, list);
         sendS2F35out(3043L, 3043L, 3043L);
         sendS2F37out(3043L);
 //        sendS2F37outAll();
     }
 
-    public void sendS2F33Out(long dataid, long reportId, List svidList) {
+    public void sendS2F33out(long dataid, long reportId, List svidList) {
         // TODO: 2019/4/13  在s2f33out中svFormat和rptFormat为U2，s2f35中为U4
         try {
             short format = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;

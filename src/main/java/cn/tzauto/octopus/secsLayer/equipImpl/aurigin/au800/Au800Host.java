@@ -392,8 +392,8 @@ public class Au800Host extends EquipHost {
         List list = new ArrayList();
         list.add(810L);
         list.add(720L);
-        sendS2F33Out(4L, 810L, list);
-//        sendS2F33Out(271l, 810l, 720l);
+        sendS2F33out(4L, 810L, list);
+//        sendS2F33out(271l, 810l, 720l);
         sendS2F35out(271L, 271L, 271L);
         sendS2F37out(271L);
         sendS2F37outAll();

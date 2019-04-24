@@ -222,10 +222,10 @@ public class ASM80THost extends EquipHost {
             if(ceid == 39 ||ceid == 40 ||ceid == 1 ){
                 processS6F11EquipStatus(data);
             }
-            if(ceid == 120 ||ceid == 121 ||ceid == 122 ||ceid == 123){
+            if(ceid == 5){
                 processS6F11EquipStatusChange(data);
             }
-            if(ceid == 232){
+            if(ceid == 111){
                 findDeviceRecipe();
                 if (ppExecName.contains(".prp")) {
                     ppExecName = ppExecName.replace(".prp", "");
@@ -539,7 +539,7 @@ public class ASM80THost extends EquipHost {
 
 
     private void initRptPara() {
-//        sendS2F33Out(5l, 8l, 19l);
+//        sendS2F33out(5l, 8l, 19l);
 //        sendS2F35out(5l, 5l, 5l);
 //        sendS2F37out(5l);
 
