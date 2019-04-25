@@ -7,11 +7,8 @@ import cn.tzauto.octopus.secsLayer.domain.EquipState;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
-import javax.swing.*;
 import java.util.Map;
 import java.util.Optional;
-
-import static javafx.scene.control.Alert.AlertType.INFORMATION;
 
 /**
  * Created by zm730 on 2019/2/13.
@@ -21,26 +18,33 @@ public class CommonUiUtil {
     public static Optional<ButtonType> alert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);
 
-        switch (type) {
-            case INFORMATION:
-                alert.setTitle("Information Dialog");
-                break;
-            case WARNING:
-                alert.setTitle("Warning Dialog");
-                break;
-            case CONFIRMATION:
-                alert.setTitle("Confirmation Dialog");
-                break;
-        }
-
+      if(null != type) {
+          switch (type) {
+              case INFORMATION:
+                  alert.setTitle("Information");
+                  break;
+              case WARNING:
+                  alert.setTitle("Warning");
+                  break;
+              case CONFIRMATION:
+                  alert.setTitle("Confirmation");
+                  break;
+          }
+      }
         alert.setHeaderText(null);
-
+     //   Image image = new Image(CommonUiUtil.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+//        ImageView alertImage = new ImageView(image);
+//        alert.setGraphic(alertImage);
+//        alert.getIcons().add(image);
         alert.setContentText(message);
+
 
         return alert.showAndWait();
 
 
     }
+
+
 
     /**
      * 更新设备作业信息显示
