@@ -35,7 +35,7 @@ public class HongTeng7300Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        EquipStateChangeCeid=102L;
+        EquipStateChangeCeid = 102L;
     }
 
 
@@ -85,7 +85,7 @@ public class HongTeng7300Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
                 } else {
                     //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
@@ -152,7 +152,7 @@ public class HongTeng7300Host extends EquipHost {
         }
     }
 
-    
+
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0L;
         try {
@@ -163,19 +163,16 @@ public class HongTeng7300Host extends EquipHost {
             //TODO 根据ceid分发处理事件 StripMapUpCeid unkown!
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) {//102L
-                processS6F11EquipStatusChange(data);
+            } else {
                 replyS6F12WithACK(data, (byte) 0);
-            } else if (ceid == 201) {
-                processS6F11LotCheck(data);
-                replyS6F12WithACK(data, (byte) 0);
-            } else if (ceid == 202) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
-                replyS6F12WithACK(data, (byte) 0);
-            }else{
-                replyS6F12WithACK(data, (byte) 0);
+                if (ceid == EquipStateChangeCeid) {//102L
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 201) {
+                    processS6F11LotCheck(data);
+                } else if (ceid == 202) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次已结批！");
+                }
             }
-
             if (commState != 1) {
                 this.setCommState(1);
             }
@@ -189,34 +186,34 @@ public class HongTeng7300Host extends EquipHost {
         String lotId = "";
         try {
             ArrayList list = (ArrayList) data.get("REPORT");
-            lotId = (String) ((ArrayList)list.get(1)).get(1);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备当前批次号为" + lotId);
+            lotId = (String) ((ArrayList) list.get(1)).get(1);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备当前批次号为" + lotId);
         } catch (Exception e) {
             e.printStackTrace();
         }
         Boolean flag = true;
         if (flag == true) {
             sendS2f41Cmd("NEWLOT-OK");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次号匹配一致，执行开机");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "批次号匹配一致，执行开机");
         } else {
             sendS2f41Cmd("NEWLOT-NG");
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备当前批次号与MES系统不匹配，不允许执行开机");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备当前批次号与MES系统不匹配，不允许执行开机");
         }
     }
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
-        long[] nowStatus = null;
+        long nowStatus = -1L;
         try {
             ceid = (long) data.get("CEID");
-            ArrayList  list = (ArrayList) data.get("REPORT");
-            nowStatus = (long[]) ((ArrayList)list.get(1)).get(1);
+            ArrayList list = (ArrayList) data.get("REPORT");
+            nowStatus = (long) ((ArrayList) list.get(1)).get(1);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus[0]), deviceType);
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
 
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
@@ -224,7 +221,7 @@ public class HongTeng7300Host extends EquipHost {
             //首先从服务端获取机台是否处于锁机状态
             //如果设备应该是锁机，那么首先发送锁机命令给机台
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                 this.sendS2f41Cmd("PAUSE");
             }
         }
@@ -240,10 +237,10 @@ public class HongTeng7300Host extends EquipHost {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (equipStatus.equalsIgnoreCase("READY")) {
             if ("Engineer".equals(deviceInfoExt.getBusinessMod())) {
-               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消开机卡控！");
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消开机卡控！");
             } else {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                     holdDevice();
                 }
                 //检查领料程序与设备在用程序是否一致
@@ -256,7 +253,7 @@ public class HongTeng7300Host extends EquipHost {
                     //1、如果下载的是Unique版本，那么执行完全比较
                     String downloadRcpVersionType = downLoadRecipe.getVersionType();
                     if ("Unique".equals(downloadRcpVersionType)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                         startCheckRecipePara(downLoadRecipe, "abs");
                     } else {
                         //2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
@@ -285,8 +282,8 @@ public class HongTeng7300Host extends EquipHost {
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F3out(localRecipeFilePath,targetRecipeName.replace("@", "/"));
-        resultMap.put("ppid",targetRecipeName);
+        Map resultMap = super.sendS7F3out(localRecipeFilePath, targetRecipeName.replace("@", "/"));
+        resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
 
@@ -415,7 +412,7 @@ public class HongTeng7300Host extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(recipeName, deviceType, "GOLD", null);
         if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在：" + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
             //不允许开机
             this.holdDeviceAndShowDetailInfo();
         } else {

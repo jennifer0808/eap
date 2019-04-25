@@ -150,8 +150,6 @@ public class ASMIdeal3GHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s7f3in")) {
-                processS7F3in(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
                 putDataIntoWaitMsgValueMap(data);
@@ -204,7 +202,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //    }
 //
 //    @SuppressWarnings("unchecked")
-//    public void sendS2F33Out() {
+//    public void sendS2F33out() {
 //
 //        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
 //        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -437,10 +435,12 @@ public class ASMIdeal3GHost extends EquipHost {
             if (ceid == 5 || ceid == 6 || ceid == 1) {
                 processS6F11EquipStatus(data);
             }
-            if (ceid == 32 || ceid == 52 || ceid == 72 || ceid == 92) {
+            //开机校验看日志找ceid
+//            if (ceid == 32 || ceid == 52 || ceid == 72 || ceid == 92 ) {
+            if (ceid == 2 ) {
                 processS6F11EquipStatusChange(data);
             }
-            if (ceid == 13) {
+            if (ceid == 8) {
                 findDeviceRecipe();
             }
         } catch (Exception e) {

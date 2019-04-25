@@ -608,16 +608,16 @@ public class TowaHost extends EquipHost {
             List list = new ArrayList();
             list.add(902L);
             list.add(906L);
-//            sendS2F33Out(50007L, 902L, 906L);
-            sendS2F33Out(50007L, 50007L, list);
+//            sendS2F33out(50007L, 902L, 906L);
+            sendS2F33out(50007L, 50007L, list);
             sendS2F35out(50007L, 50007L, 50007L);
             sendS2F37out(50007L);
         } else {
             List list = new ArrayList();
             list.add(102L);
             list.add(111L);
-//            sendS2F33Out(271L, 102L, 111L);
-            sendS2F33Out(271L, 271L, list);
+//            sendS2F33out(271L, 102L, 111L);
+            sendS2F33out(271L, 271L, list);
             sendS2F35out(271L, 271L, 271L);
             sendS2F37out(271L);
         }
@@ -629,7 +629,7 @@ public class TowaHost extends EquipHost {
             List list = new ArrayList();
             list.add(906L);
 
-            sendS2F33Out(50013L, 50013L, list);
+            sendS2F33out(50013L, 50013L, list);
             sendS2F35out(50013L, 50013L, 50013L);
             sendS2F37out(50013L);
             //重定义 2DCode追溯事件报告
@@ -640,7 +640,7 @@ public class TowaHost extends EquipHost {
             svidlist.add(1053L);
             svidlist.add(1050L);
             svidlist.add(1051L);
-            sendS2F33Out(19005L, 19005L, svidlist);
+            sendS2F33out(19005L, 19005L, svidlist);
             sendS2F35out(19005L, 19005L, 19005L);
             sendS2F37out(19005L);
 
@@ -651,7 +651,7 @@ public class TowaHost extends EquipHost {
             svidlist1.add(2053L);
             svidlist1.add(2050L);
             svidlist1.add(2051L);
-            sendS2F33Out(19006L, 19006L, svidlist);
+            sendS2F33out(19006L, 19006L, svidlist);
             sendS2F35out(19006L, 19006L, 19006L);
             sendS2F37out(19006L);
 
@@ -662,7 +662,7 @@ public class TowaHost extends EquipHost {
             svidlist2.add(3053L);
             svidlist2.add(3050L);
             svidlist2.add(3051L);
-            sendS2F33Out(19007L, 19007L, svidlist);
+            sendS2F33out(19007L, 19007L, svidlist);
             sendS2F35out(19007L, 19007L, 19007L);
             sendS2F37out(19007L);
 
@@ -673,7 +673,7 @@ public class TowaHost extends EquipHost {
             svidlist3.add(4053L);
             svidlist3.add(4050L);
             svidlist3.add(4051L);
-            sendS2F33Out(19008L, 19008L, svidlist);
+            sendS2F33out(19008L, 19008L, svidlist);
             sendS2F35out(19008L, 19008L, 19008L);
             sendS2F37out(19008L);
         }
@@ -682,7 +682,7 @@ public class TowaHost extends EquipHost {
             list.add(906L);
 
             //重定义 recipe change事件报告
-            sendS2F33Out(50010L, 50010L, list);
+            sendS2F33out(50010L, 50010L, list);
             sendS2F35out(50010L, 50010L, 50010L);
             sendS2F37out(50010L);
         }
@@ -690,7 +690,7 @@ public class TowaHost extends EquipHost {
             //重定义 recipe change事件报告
             List list = new ArrayList();
             list.add(906L);
-            sendS2F33Out(5001400L, 5001400L, list);
+            sendS2F33out(5001400L, 5001400L, list);
             sendS2F35out(5001400L, 50014L, 5001400L);
             sendS2F37out(50014L);
         }

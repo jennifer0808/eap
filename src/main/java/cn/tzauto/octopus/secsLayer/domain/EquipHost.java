@@ -51,7 +51,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
-    protected int commState = NOT_COMMUNICATING;
+    public int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
     private int alarmState = 0;
     private boolean sdrReady = false;
@@ -192,6 +192,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         if (commState == 1) {
             equipState.setCommOn(true);
+            equipState.setNetConnect(true);
             this.sdrReady = true;
 //            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
         }
@@ -202,6 +203,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.commState = commState;
         Map resultMap = new HashMap();
         resultMap.put("CommState", commState);
+        resultMap.put("NetConnect", commState);
         changeEquipPanel(resultMap);
     }
 
@@ -623,10 +625,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         ArrayList listtmp = (ArrayList) data.get("SV");
         Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
+        if (listtmp.size() > 0) {
+            String svValue = String.valueOf(listtmp.get(0));
+            resultMap.put("Value", svValue);
+        } else {
+            resultMap.put("Value", null);
+        }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
+
         logger.info("resultMap=" + resultMap);
         return resultMap;
     }
@@ -841,8 +848,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
 
-    @SuppressWarnings("unchecked")
-    public void sendS2F33Out(long dataid, long reportId, List svidList) {
+    public void sendS2F33out(long dataid, long reportId, List svidList) {
         try {
             activeWrapper.sendS2F33out(dataid, svFormat, reportId, rptFormat, svidList, svFormat);
         } catch (Exception e) {
@@ -850,7 +856,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public void sendS2F33Out(long reportId, long svid) {
+    public void sendS2F33out(long reportId, long svid) {
         List svidList = new ArrayList();
         svidList.add(svid);
         try {
@@ -860,16 +866,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void sendS2f33outDelete(long reportId) {
-        DataMsgMap s2f33out = new DataMsgMap("s2f33zeroout", activeWrapper.getDeviceId());
-        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] dataid = new long[1];
-        dataid[0] = reportId;
-        long[] reportid = new long[1];
-        reportid[0] = reportId;
-        s2f33out.put("DataID", dataid);
-        s2f33out.put("ReportID", reportid);
         try {
             activeWrapper.sendS2F33out(reportId, svFormat, reportId, rptFormat, null, svFormat);
         } catch (Exception e) {
@@ -878,7 +875,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
 
-    @SuppressWarnings("unchecked")
     public void processS2F34in(DataMsgMap data) {
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
     }
@@ -888,7 +884,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @param ceid
      * @param rptid
      */
-    @SuppressWarnings("unchecked")
     public void sendS2F35out(long dataid, long ceid, long rptid) {
         List reportidList = new ArrayList();
         reportidList.add(rptid);
@@ -950,14 +945,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     /**
      * 开启机台所有事件报告
      */
-    @SuppressWarnings("unchecked")
     public void sendS2F37outAll() {
-//        DataMsgMap s2f37outAll = new DataMsgMap("s2f37outAll", activeWrapper.getDeviceId());
-//        long transactionId = activeWrapper.getNextAvailableTransactionId();
-//        s2f37outAll.setTransactionId(transactionId);
-//        boolean[] flag = new boolean[1];
-//        flag[0] = true;
-//        s2f37outAll.put("Booleanflag", flag);
         try {
             activeWrapper.sendS2F37out(true, new ArrayList<>(), ceFormat);
         } catch (Exception e) {
@@ -965,7 +953,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void sendS2F37outCloseAll() {
         try {
             activeWrapper.sendS2F37out(false, new ArrayList<>(), ceFormat);
@@ -974,7 +961,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void processS2F38in(DataMsgMap data) {
         logger.info("----------Received s2f38in---------");
         byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
@@ -1056,7 +1042,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
             cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1087,7 +1075,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("prevCmd", rcmd);
 
         try {
-            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null);
+            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null, null);
             logger.info("The equip " + deviceCode + " request to " + rcmd);
             byte hcack = (byte) msgdata.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -1490,55 +1478,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
 
-    public void processS7F3in(DataMsgMap data) {
-//不允许从机台直接上传Recipe此段已注释，勿删！        
-//        String ppid = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
-//        Object ppbody = new Object();
-//        if (rcptype == 1) {
-//            ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-//        } else {
-//            ppbody = (String) ((SecsItem) data.get("Processprogram")).getData();
-//        }
-//        TransferUtil.setPPBody(ppid, ppbody, rcptype, rcpPath + ppid + ".txt");
-
-        DataMsgMap s7f4out = new DataMsgMap("s7f4out", activeWrapper.getDeviceId());
-        s7f4out.setTransactionId(data.getTransactionId());
-        byte[] ack = new byte[1];
-        //目前不允许从机台直接上传recipe
-        ack[0] = 1;
-        s7f4out.put("AckCode", ack);
-        try {
-            activeWrapper.respondMessage(s7f4out);
-        } catch (Exception e) {
-        }
-    }
-
-    public void processS7F5in(DataMsgMap data) {
-        try {
-//            DataMsgMap s7f6out = new DataMsgMap("s7f6out", activeWrapper.getDeviceId());
-            String ppid = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
-            logger.info("This equipment" + deviceCode + " is requesting to download recipe :" + ppid);
-//暂时不用的功能，代码勿删            
-//            String ppbody = (String) TransferUtil.getPPBody(0, recipePath + ppid).get(0);
-//            if (ppbody != null) {
-//                byte[] ack = new byte[1];
-//                ack[0] = 0;
-//                s7f6out.put("AckCode", ack);
-//                s7f6out.setTimeStamp(new Date());
-//            s7f6out.setTransactionId(data.getTransactionId());
-//            activeWrapper.respondMessage(s7f6out);
-//                sendS7F6out(ppid, recipePath + ppid, activeWrapper);
-//            } else {
-//               logger.error("The recipe named" + ppid + "is not exist");
-//            }
-            DataMsgMap s7f6out = new DataMsgMap("s7f6zeroout", activeWrapper.getDeviceId());
-            s7f6out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-            activeWrapper.sendAwaitMessage(s7f6out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
     protected Object getPPBODY(String recipeName) throws UploadRecipeErrorException {
         try {
             return activeWrapper.sendS7F5out(recipeName).get("PPBODY");
@@ -1573,13 +1512,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        byte ackc7;
         List recipeIDlist = new ArrayList();
         recipeIDlist.add(recipeName);
         try {
             DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
             logger.info("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte) data.get("ACKC7");
+            byte ackc7 = (byte) data.get("ACKC7");
             if (ackc7 == 0) {
                 logger.info("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
@@ -1613,9 +1551,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
+            resultMap.put("EPPD", new ArrayList<>());
         } else {
             logger.info("recipeNameList:" + list);
             resultMap.put("eppd", list);
+            resultMap.put("EPPD", list);
         }
         return resultMap;
     }
@@ -1743,11 +1683,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         logger.info("SECS Protocol for " + this.deviceId + " is being started.");
         this.activeWrapper.connectByActiveMode(eqpEventDealer);
-//        eqpEventDealer.exit();
         eqpEventDealer.execute();
         activeWrapper.addInputMessageListenerToAll(this);
         activeWrapper.startInActiveMode();
-        //if hsms, then it can be MliHsms instance. //this will make the MSP hsms specific.
     }
 
     // </editor-fold> 
@@ -2456,8 +2394,19 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 if (resultMap.get("CommState") != null) {
                     newPanel.setNetState(Integer.parseInt(resultMap.get("CommState").toString()));
                     EquipState equipState = equipNodeBean.getEquipStateProperty();
-                    equipState.setCommOn(true);
+                    if (1 == (int) resultMap.get("CommState")) {
+                        equipState.setCommOn(true);
+                    } else {
+                        equipState.setCommOn(false);
+                    }
                     equipNodeBean.setEquipStateProperty(equipState);
+                }
+                if (resultMap.get("NetConnect") != null) {
+                    if (1 == (int) resultMap.get("NetConnect")) {
+                        EquipState equipState = equipNodeBean.getEquipStateProperty();
+                        equipState.setNetConnect(true);
+                        equipNodeBean.setEquipStateProperty(equipState);
+                    }
                 }
                 equipNodeBean.setEquipPanelProperty(newPanel);
                 break;
@@ -2631,7 +2580,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return null;
         }
         for (int i = 0; i < recipeTemplates.size(); i++) {
-            ecsvIdList.add(recipeTemplates.get(i).getDeviceVariableId());
+            ecsvIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
         }
         return ecsvIdList;
     }
@@ -3486,4 +3435,18 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
+    public void processS6F5in(DataMsgMap data) {
+        try {
+            DataMsgMap out = new DataMsgMap("S6F6OUT", activeWrapper.getDeviceId());
+            byte[] ack = new byte[1];
+            ack[0] = 0;
+            out.put("AckCode", ack);
+            out.setTransactionId(data.getTransactionId());
+            SecsItem secsItem = new SecsItem((byte) 0, FormatCode.SECS_BINARY);
+            out.put("S6F6OUT", secsItem);
+            activeWrapper.respondMessage(out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

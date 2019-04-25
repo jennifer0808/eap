@@ -39,6 +39,7 @@ public class AsmAD8312FCHost extends EquipHost {
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+//        RCMD_PPSELECT = "PP_SELECT";
     }
 
     @Override
@@ -90,7 +91,7 @@ public class AsmAD8312FCHost extends EquipHost {
                         processS6F11EquipStatusChange(msg);
                     } else if (msg.getMsgSfName().equals("s6f11ControlStateChange")) {
                         processS6F11ControlStateChange(msg);
-                    }else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                    } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
                     } else {
                         System.out.println("A message in queue with tag = " + msg.getMsgSfName()
@@ -348,7 +349,7 @@ public class AsmAD8312FCHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath,targetRecipeName+".rcp");
+        Map resultMap = super.sendS7F1out(localFilePath, targetRecipeName + ".rcp");
         resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }

@@ -284,7 +284,10 @@ public class DiscoBGHost extends EquipHost {
                                 Map cpValueFromatMap = new HashMap();
                                 cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
                                 cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
-                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cpmap, cpNameFromatMap, cpValueFromatMap);
+                                List cplist = new ArrayList();
+                                cplist.add("PPID_A");
+                                cplist.add("LOTID_A");
+                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
 
                                 hcack = (byte) data.get("HCACK");
                                 portARcpName = recipeName;
@@ -302,7 +305,10 @@ public class DiscoBGHost extends EquipHost {
                                 Map cpValueFromatMap = new HashMap();
                                 cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
                                 cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
-                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cpmap, cpNameFromatMap, cpValueFromatMap);
+                                List cplist = new ArrayList();
+                                cplist.add("PPID_B");
+                                cplist.add("LOTID_B");
+                                DataMsgMap data = activeWrapper.sendS2F41out("PP_SELECT", cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
 
                                 hcack = (byte) data.get("HCACK");
                                 portARcpName = recipeName;
@@ -319,7 +325,7 @@ public class DiscoBGHost extends EquipHost {
                 }
             }
             if (!selectOkFlag) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功SET UP！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功SET UP！\n");
                 hcack = (byte) 9;
                 description = "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 ";
             }
@@ -350,9 +356,6 @@ public class DiscoBGHost extends EquipHost {
                 processS6F11PPselect(data);
             } else if (ceid == 150) {
                 processS6F11EquipStatusChange(data);
-            } else if (ceid == -1L) {
-                //todo ceid ?
-                processS6F11AlarmClear(data);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -368,10 +371,7 @@ public class DiscoBGHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        Map map = new HashMap();
-        //TODO 此设备可以反馈前一状态
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -380,11 +380,11 @@ public class DiscoBGHost extends EquipHost {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
             if (execRecipe == null) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，将无法执行开机检查。请联系PE处理！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，将无法执行开机检查。请联系PE处理！\n");
             }
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！\n");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -400,28 +400,28 @@ public class DiscoBGHost extends EquipHost {
             }
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
                 if (equipStatus.equalsIgnoreCase("run")) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
                     }
                     String trackInRcpName = deviceInfoExt.getRecipeName();
                     if (!"".equals(portARcpName) && !trackInRcpName.equals(portARcpName)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortA:" + portARcpName);
                         this.holdDevice();
                     }
                     if (!"".equals(portBRcpName) && !trackInRcpName.equals(portBRcpName)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料程序与Port口程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " PortB:" + portBRcpName);
                         this.holdDevice();
                     }
                     if (!ppExecName.equals(trackInRcpName)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName + "\n");
                         this.holdDevice();
                     }
                     if (execRecipe == null) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Unique或Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！\n");
                         //不允许开机
                         this.holdDevice();
                     }
@@ -473,21 +473,9 @@ public class DiscoBGHost extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == 77) {
                 //ppselect 事件
-                portARcpName = "";
-                portARcpName = "";
+                findDeviceRecipe();
             }
-//            if (ceid == 17) {
-//                //211 Cass A move in complete 
-//                //221 Cass B move in complete
-//                //17 init over
-//                this.findDeviceRecipe();
-//                if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus)) {
-//                    sendS1F3CheckCassUse();
-//                    if (!"".equals(ppExecName) && ppExecName != null) {
-//                        this.sendS2F41outPPselect(ppExecName);
-//                    }
-//                }
-//            }
+
             if (ceid == 211 || ceid == 221) {
                 if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
                     sendS1F3CheckCassUse();
@@ -497,7 +485,7 @@ public class DiscoBGHost extends EquipHost {
                     sqlSession.close();
                     String trackInRcpName = deviceInfoExt.getRecipeName();
                     if (trackInRcpName == null || "".equals(trackInRcpName)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料信息不完整！\n");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "领料信息不完整！\n");
                     } else {
                         ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
                         boolean selectOkFlag = false;
@@ -508,14 +496,14 @@ public class DiscoBGHost extends EquipHost {
                             }
                         }
                         if (!selectOkFlag) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功提交改机！\n");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不存在领料程序，确认是否成功提交改机！\n");
                         }
                     }
                 }
             }
             if (ceid == 1000000401) {
                 String DFMppExecName = ppExecName;
-               UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "DFM部分使用的程序为： " + DFMppExecName + "\n");
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "DFM部分使用的程序为： " + DFMppExecName + "\n");
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -536,7 +524,7 @@ public class DiscoBGHost extends EquipHost {
         String z1life = dataMap.get(z1).toString();
         String z2life = dataMap.get(z2).toString();
         String z3life = dataMap.get(z3).toString();
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "当前磨轮可用量: Z1[" + z1life + "],Z2[" + z2life + "],Z3[" + z3life + "]");
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "当前磨轮可用量: Z1[" + z1life + "],Z2[" + z2life + "],Z3[" + z3life + "]");
     }
 
     // </editor-fold>
@@ -576,7 +564,7 @@ public class DiscoBGHost extends EquipHost {
         sqlSession.close();
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
             Map cmdMap = this.sendS2f41Cmd("PAUSE");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
+            if (0 == (byte)cmdMap.get("HCACK")) {
                 holdSuccessFlag = true;
                 this.setAlarmState(2);
             } else {
@@ -585,7 +573,7 @@ public class DiscoBGHost extends EquipHost {
             }
             return cmdMap;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "在系统中未开启锁机功能！");
             return null;
         }
     }

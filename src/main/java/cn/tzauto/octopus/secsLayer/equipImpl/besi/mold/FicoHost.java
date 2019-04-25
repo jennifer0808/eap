@@ -851,11 +851,15 @@ public class FicoHost extends EquipHost {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+        List<Long>svidListLong=new ArrayList<>();
+        for (String str : svidlist) {
+            svidListLong.add(Long.parseLong(str));
+        }
         sqlSession.close();
         //获取前一状态与当前状态
 //todo z这里处理的逻辑不正确
-        Map shotCountMap = activeWrapper.sendS1F3out(svidlist, svFormat);
+        Map shotCountMap = activeWrapper.sendS1F3out(svidListLong, svFormat);
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);
@@ -1006,7 +1010,7 @@ public class FicoHost extends EquipHost {
         List list1 = new ArrayList();
         list1.add(15L);
         list1.add(97L);
-        sendS2F33Out(10L, 15L, list1);
+        sendS2F33out(10L, 15L, list1);
         sendS2F35out(10L, 10L, 10L);
 //        sendS2F37out(10l);
 
@@ -1014,8 +1018,8 @@ public class FicoHost extends EquipHost {
         List list = new ArrayList();
         list.add(97L);
 
-        sendS2F33Out(4L, 60L, list);
-//        sendS2F33Out(60l, 97l);
+        sendS2F33out(4L, 60L, list);
+//        sendS2F33out(60l, 97l);
         sendS2F35out(60L, 60L, 60L);
 //        sendS2F37out(60l);
 
@@ -1024,21 +1028,21 @@ public class FicoHost extends EquipHost {
         list2.add(3300L);
         list2.add(3371L);
         list2.add(3370L);
-        sendS2F33Out(1551L, 1551L, list2);
+        sendS2F33out(1551L, 1551L, list2);
 //        sendS2f33outMulti(1551L, 3300L, 3371L, 3370L);
         sendS2F35out(1551L, 1551L, 1551L);
         List list3 = new ArrayList();
         list3.add(3400L);
         list3.add(3471L);
         list3.add(3470L);
-        sendS2F33Out(1555L, 1555L, list3);
+        sendS2F33out(1555L, 1555L, list3);
 //        sendS2f33outMulti(1555L, 3400L, 3471L, 3470L);
         sendS2F35out(1555L, 1555L, 1555L);
         List list4 = new ArrayList();
         list4.add(3500L);
         list4.add(3571L);
         list4.add(3570L);
-        sendS2F33Out(1559L, 1559L, list4);
+        sendS2F33out(1559L, 1559L, list4);
 //        sendS2f33outMulti(1559L, 3500L, 3571L, 3570L);
         sendS2F35out(1559L, 1559L, 1559L);
 

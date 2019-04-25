@@ -44,6 +44,8 @@ public class EquipState  {
     private int alarmState;
     private String controlState;
 
+    private boolean netConnect;
+
     public EquipState() {
         behaviorState = IDLE_STATE;
         serviceState = OUT_OF_SERVICE_STATE;
@@ -54,6 +56,7 @@ public class EquipState  {
         workLot = "--";
         runningRcp = "--";
         alarmState = 0;
+        netConnect = true;
     }
 
     public EquipState(int behavior_state, int service_state) {
@@ -232,6 +235,7 @@ public class EquipState  {
         another.setAlarmState(alarmState);
         another.setAlarm(isAlarm);
         another.setEventString(this.getEventString());
+        another.setNetConnect(this.isNetConnect());
         return another;
     }
 
@@ -294,4 +298,11 @@ public class EquipState  {
         this.controlState = controlState;
     }
 
+    public boolean isNetConnect() {
+        return netConnect;
+    }
+
+    public void setNetConnect(boolean netConnect) {
+        this.netConnect = netConnect;
+    }
 }

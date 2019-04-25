@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.polish.pg300;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -16,7 +15,6 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.pg300.PG300RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
@@ -140,15 +138,16 @@ public class Pg300Host extends EquipHost {
         DataMsgMap data = null;
         try {
             List svidlist = new ArrayList();
+            svidlist.add(109L);
+            svidlist.add(111L);
             data = activeWrapper.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
+        if (data == null || data.get("SV") == null) {
             return;
         }
-        ArrayList<SecsItem> list = (ArrayList) data.get("RESULT");
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         String port1Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         String port2Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(1)), deviceType);
         if ("Ready".equalsIgnoreCase(port1Status)) {
@@ -160,35 +159,6 @@ public class Pg300Host extends EquipHost {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public Map sendS1F3RcpParaCheckout(List svidlist) {
-        //// TODO: 2019/4/10 sml文件中没有找到对应的消息体
-        DataMsgMap s1f3out = new DataMsgMap("s1f3" + deviceType + "RcpPara", activeWrapper.getDeviceId());
-        DataMsgMap dataHashtable = null;
-        s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        for (int i = 0; i < svidlist.size(); i++) {
-            long[] svid = new long[1];
-            // Long.parseLong(svidlist.get(i));
-            svid[0] = Long.parseLong(svidlist.get(i).toString());
-            s1f3out.put("Data" + i, svid);
-        }
-        try {
-            dataHashtable = activeWrapper.sendAwaitMessage(s1f3out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = new ArrayList<>();
-        if (dataHashtable != null) {
-            list = (ArrayList) dataHashtable.get("RESULT");
-        }
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("SVList", listtmp);
-        resultMap.put("Description", "Get SVList from equip " + listtmp);
-        return resultMap;
-    }
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
@@ -215,7 +185,11 @@ public class Pg300Host extends EquipHost {
             cpValueFromatMap.put("testlotid", FormatCode.SECS_ASCII);
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
             cpValueFromatMap.put(this.portId, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameFromatMap, cpValueFromatMap);
+            List list = new ArrayList();
+            list.add("LOTID");
+            list.add("PPID");
+            list.add("PORTID");
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, list, cpmap, cpNameFromatMap, cpValueFromatMap);
 
             hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
@@ -285,7 +259,6 @@ public class Pg300Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -340,7 +313,7 @@ public class Pg300Host extends EquipHost {
     private void initRptPara() {
 //sendS6F23clear();
         //重写事件 报告
-//            sendS2F33Out(50007l, 902l, 906l);
+//            sendS2F33out(50007l, 902l, 906l);
 //            sendS2F35out(50007l, 50007l, 50007l);
 //            sendS2F37out(50007l);
         sendS2F37outCloseAll();
@@ -368,16 +341,41 @@ public class Pg300Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public void sendS2F33init() {
         // TODO: 2019/4/10  sml 文件中的结构为多个list,且参数值固定
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-
         try {
-//            List list = new ArrayList();
-//            list.add()
-            activeWrapper.sendAwaitMessage(s2f37outAll);
-//            sendS2F33Out()
+            List<Long> list = new ArrayList();
+            list.add(27L);
+            activeWrapper.sendS2F33out(0, svFormat, 1, rptFormat, list, svFormat);
+            list.clear();
+            list.add(105L);
+            list.add(106L);
+            activeWrapper.sendS2F33out(0, svFormat, 2, rptFormat, list, svFormat);
+            list.clear();
+            list.add(113L);
+            activeWrapper.sendS2F33out(0, svFormat, 8, rptFormat, list, svFormat);
+            list.clear();
+            list.add(114L);
+            activeWrapper.sendS2F33out(0, svFormat, 9, rptFormat, list, svFormat);
+            list.clear();
+            list.add(412L);
+            activeWrapper.sendS2F33out(0, svFormat, 10, rptFormat, list, svFormat);
+            list.clear();
+            list.add(462L);
+            activeWrapper.sendS2F33out(0, svFormat, 11, rptFormat, list, svFormat);
+            list.clear();
+            list.add(512L);
+            activeWrapper.sendS2F33out(0, svFormat, 12, rptFormat, list, svFormat);
+            list.clear();
+            list.add(566L);
+            list.add(567L);
+            activeWrapper.sendS2F33out(0, svFormat, 14, rptFormat, list, svFormat);
+            list.clear();
+            list.add(568L);
+            list.add(569L);
+            activeWrapper.sendS2F33out(0, svFormat, 15, rptFormat, list, svFormat);
+            list.clear();
+            list.add(108L);
+            activeWrapper.sendS2F33out(0, svFormat, 16, rptFormat, list, svFormat);
+//            sendS2F33out()
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -386,11 +384,19 @@ public class Pg300Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public void sendS2F35init() {
         //// TODO: 2019/4/10 sml 文件中的结构为多个list
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f35initout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
         try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
+            List<Long> rptlist = new ArrayList();
+            rptlist.add(1L);
+            activeWrapper.sendS2F35out(1, svFormat, 1, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 2, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 8, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 9, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 10, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 11, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 12, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 14, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 15, ceFormat, rptlist, rptFormat);
+            activeWrapper.sendS2F35out(1, svFormat, 16, ceFormat, rptlist, rptFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

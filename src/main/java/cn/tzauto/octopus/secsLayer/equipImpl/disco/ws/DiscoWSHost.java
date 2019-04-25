@@ -845,9 +845,9 @@ public class DiscoWSHost extends EquipHost {
 
         sendS2F33clear();
         sendS2F35clear();
-//        sendS2F33Out(7, 7613, 7615);
-//        sendS2F33Out(7, 7602, 7603);
-//        sendS2F33Out(7, 1400, 1401);
+//        sendS2F33out(7, 7613, 7615);
+//        sendS2F33out(7, 7602, 7603);
+//        sendS2F33out(7, 1400, 1401);
 //        sendS2F35out(7, 7, 7);
     }
 
@@ -899,7 +899,10 @@ public class DiscoWSHost extends EquipHost {
             Map cpValueMp = new HashMap();
             cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
             cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpmap, cpNameMap, cpValueMp);
+            List cplist = new ArrayList();
+            cplist.add("Port");
+            cplist.add(CPN_PPID);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameMap, cpValueMp);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
