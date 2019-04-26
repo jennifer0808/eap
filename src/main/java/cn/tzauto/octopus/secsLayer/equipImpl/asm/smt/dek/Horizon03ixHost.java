@@ -73,9 +73,9 @@ public class Horizon03ixHost extends EquipHost {
                 }
                 if (this.getCommState() != Horizon03ixHost.COMMUNICATING) {
                     this.sendS1F13out();
-                    this.sendS2F37outAll();
                     //this.sendS14F1out();
                     sendS1F1out();
+                    this.sendS2F37outAll();
                     super.findDeviceRecipe();
                 }
 
@@ -205,7 +205,6 @@ public class Horizon03ixHost extends EquipHost {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                         goldRecipe = recipeService.getGoldRecipe(ppExecName, deviceCode, deviceType);
                         if (goldRecipe == null) {
-                            //TODO  这里需要讨论做试产时的情况
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，将无法对设备执行开机检查，清模程序例外。请联系PE处理！");
                         }
                     }
@@ -396,20 +395,19 @@ public class Horizon03ixHost extends EquipHost {
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
             //todo　s14f1 ???
-            recipeParaList = this.sendS14F1out();
+//            recipeParaList = this.sendS14F1out();
 //            recipeParaList = TowaRecipeUtil.transferTowaRcp(TowaRecipeUtil.Y1R_RECIPE_CONFIG, ppbody);
 //            recipeParaList = TPRecipeUtil.tPRecipeTran(recipePath);// TowaRecipeUtil.transferTowaRcpFromDB(deviceType, ppbody);
-            for (int i = 0; i < recipeParaList.size(); i++) {
-                String paraName = recipeParaList.get(i).getParaName();
-                if (paraName.equals("") || paraName.equals("NULL")) {
-                    recipeParaList.remove(i);
-                    i--;
-                }
-            }
+//            for (int i = 0; i < recipeParaList.size(); i++) {
+//                String paraName = recipeParaList.get(i).getParaName();
+//                if (paraName.equals("") || paraName.equals("NULL")) {
+//                    recipeParaList.remove(i);
+//                    i--;
+//                }
+//            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);

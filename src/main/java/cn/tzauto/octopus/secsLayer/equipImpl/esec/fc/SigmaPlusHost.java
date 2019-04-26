@@ -9,7 +9,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.esec.fc;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -19,11 +18,10 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.resolver.besi.Sigma8800RecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
@@ -99,8 +97,6 @@ public class SigmaPlusHost extends EquipHost {
                 }
                 if (this.getCommState() != SigmaPlusHost.COMMUNICATING) {
                     sendS1F13out();
-                }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
                 if (rptDefineNum < 1) {
@@ -212,33 +208,6 @@ public class SigmaPlusHost extends EquipHost {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void sendS2F33clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f33clear", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-        try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void sendS2F35clear() {
-        DataMsgMap s2f37outAll = new DataMsgMap("s2f35clear", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s2f37outAll.setTransactionId(transactionId);
-
-        try {
-            activeWrapper.sendAwaitMessage(s2f37outAll);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    @Override
     public void processS6F11in(DataMsgMap data) {
         long ceid = 0;
         try {
@@ -307,7 +276,7 @@ public class SigmaPlusHost extends EquipHost {
 
             List list3 = new ArrayList();
             list3.add(4905L);
-            sendS2F33out(1001L,4905L, list3);
+            sendS2F33out(1001L, 4905L, list3);
             sendS2F35out(4905L, 4905L, 4905L);
             sendS2F37out(4905L);
             //
@@ -322,119 +291,10 @@ public class SigmaPlusHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        List listtmp = getNcessaryData();
-        if (listtmp != null) {
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-            ppExecName = String.valueOf(listtmp.get(1));
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        }
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName.replaceAll(".dbrcp", ""));
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
 
-
-    public Map sendS2F15outParameter() {
-        DataMsgMap out = new DataMsgMap("s2f15out", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] u1 = new long[1];
-        u1[0] = 9903;
-        String ecv = "<datacon_parameters>"
-                + "<group id='100'>"
-                + "<parameter id='10014'/><parameter id='10040'/>"
-                + "<parameter id='10044'/><parameter id='10015'/>"
-                + "<parameter id='10022'/><parameter id='10030'/>"
-                + "<parameter id='10028'/><parameter id='10029'/>"
-                + "<parameter id='10025'/>"
-                + "<parameter id='10024'/><parameter id='10016'/>"
-                + "<parameter id='10031'/>"
-                + "<parameter id='10021'/>"
-                + "<parameter id='10043'/><parameter id='10046'/>"
-                + "</group>"
-                + "<group id='133'>"
-                + "<parameter id='26544'/>"
-                + "</group>"//133
-                + "<group id='110'>"
-                + "<parameter id='15022'/><parameter id='15061'/>"
-                + "</group>"//110
-                + "<group id='15'>"
-                + "<parameter id='1503'/><parameter id='1504'/>"
-                + "<parameter id='1506'/><parameter id='1507'/>"
-                + "</group>"//15
-                //                + "<group id='25'>"
-                //                + "<parameter id='2516'/>"
-                //                + "</group>"//25
-                + "<group id='31'>"
-                + "<parameter id='3119'/><parameter id='3120'/>"
-                + "</group>"//31
-                + "<group id='34'>"
-                + "<parameter id='3408'/>"
-                + "</group>"//34
-                + "<group id='32'>"
-                + "<parameter id='3210'/>"
-                + "</group>"//32
-                + "<group id='23'>"
-                + "<parameter id='2306'/>"
-                + "</group>"//23
-                + "<group id='30'>"
-                + "<parameter id='3008'/>"
-                + "</group>"//30
-                + "</datacon_parameters>";
-        out.put("ECID", u1);
-        out.put("ECV", ecv);
-        try {//todo s2f15增加
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        Map resultMap = new HashMap();
-        resultMap = sendS1F3SingleCheck("14903");
-        logger.info("sendS1F3SingleCheck" + resultMap);
-//        resultMap = sendS1F3SingleCheck("14903");
-        return resultMap;
-    }
-
-    public void processS2f16in(DataMsgMap in) {
-        if (in == null) {
-            return;
-        }
-        System.out.println("--------Received s2f16in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
-        System.out.println();
-        System.out.println("EAC = " + ((value == null) ? "" : value[0]));
-    }
-
-    public void sendS2F29outECID() {
-        DataMsgMap out = new DataMsgMap("s2f29oneout", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] u1 = new long[1];
-        u1[0] = 5012;
-        out.put("ECID", u1);
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
-
-    public void processS2f30in(DataMsgMap in) {
-        if (in == null) {
-            return;
-        }
-        System.out.println("--------Received s2f30in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
-        System.out.println();
-        System.out.println("EAC = " + ((value == null) ? "" : value[0]));
-    }
 
 
     // </editor-fold> 
@@ -466,7 +326,7 @@ public class SigmaPlusHost extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
@@ -486,7 +346,7 @@ public class SigmaPlusHost extends EquipHost {
                 boolean hasGoldRecipe = true;
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
 //                    holdDeviceAndShowDetailInfo();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
                     return;
                 }
                 //查询trackin时的recipe和GoldRecipe
@@ -501,7 +361,7 @@ public class SigmaPlusHost extends EquipHost {
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
 //                    holdDeviceAndShowDetailInfo();
                 } else {
                     //根据检查模式执行开机检查逻辑
@@ -513,12 +373,12 @@ public class SigmaPlusHost extends EquipHost {
                     if (startCheckMod != null && !"".equals(startCheckMod)) {
                         String ppexecnametemp = ppExecName.split("/")[1];
                         if (!ppexecnametemp.equals(deviceInfoExt.getRecipeName())) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
                             holdDeviceAndShowDetailInfo("The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + deviceInfoExt.getRecipeName() + ">,equipment will be locked.");
 
                         } else {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
                             releaseDevice();
                             checkResult = true;
                         }
@@ -528,23 +388,23 @@ public class SigmaPlusHost extends EquipHost {
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
                         if ("Unique".equals(downloadRcpVersionType)) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
                                 this.holdDeviceAndShowDetailInfo("There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.");
 
                             } else {
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
                                 this.startCheckRecipePara(downLoadGoldRecipe.get(0), "");
                             }
 
                         }
                     } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                     }
                 }
             }
@@ -571,7 +431,7 @@ public class SigmaPlusHost extends EquipHost {
             }
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
@@ -654,20 +514,6 @@ public class SigmaPlusHost extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath, "Production/" + targetRecipeName);
-        resultMap.put("ppid", targetRecipeName);
-        return resultMap;
-    }
-
-    @Override
-    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F3out(localRecipeFilePath, "Production/" + targetRecipeName);
-        resultMap.put("ppid", targetRecipeName);
-        return resultMap;
-    }
-
-    @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Map mapTemp = sendS1F3Check();
         String rcpName = (String) mapTemp.get("PPExecName");
@@ -675,16 +521,15 @@ public class SigmaPlusHost extends EquipHost {
         logger.info("===================recipeName:" + recipeName);
         Map resultMap = new HashMap();
         if (!rcpName.contains(recipeName)) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
             resultMap.put("checkResult", "Y");
-            return resultMap;
+//            return resultMap;
         }
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendS7F5out("Production/" + recipeName);
+            data = activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -707,8 +552,8 @@ public class SigmaPlusHost extends EquipHost {
 //                listTemp [i] = Sigma8800RecipeUtil.transferFromDB(map[i]);
 //                recipeParaList.add(listTemp);
 //        }
-            Map map = sendS2F15outParameter();
-            recipeParaList = Sigma8800RecipeUtil.transferFromDB(map, deviceType);
+
+//            recipeParaList = Sigma8800RecipeUtil.transferFromDB(map, deviceType);
             //设备发过来的参数部分为科学计数法，这里转为一般的
 //            recipeParaList = recipeParaBD2Str(recipeParaList);
         }
@@ -720,13 +565,6 @@ public class SigmaPlusHost extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F17out(String recipeName) {
-        Map resultMap = super.sendS7F17out("Production/" + recipeName);
-        resultMap.put("recipeName", recipeName);
-        return resultMap;
-    }
 
     // </editor-fold>
 
@@ -758,77 +596,133 @@ public class SigmaPlusHost extends EquipHost {
         }
         return recipeParas;
     }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS7F19out() {
-        Map resultMap = super.sendS7F19out();
-        ArrayList recipeList = (ArrayList) resultMap.get("eppd");
-        if (recipeList.size() != 0) {
-            ArrayList list1 = new ArrayList();
-            for (Object object : recipeList) {
-                if (String.valueOf(object).contains("Production/")) {
-                    list1.add(String.valueOf(object).replaceAll("Production/", "").replaceAll(".dbrcp", ""));
-                }
-            }
-            resultMap.put("eppd", list1);
-        }
-        return resultMap;
-    }
-
-    @Override
-    public Map getSpecificSVData(List dataIdList) {
-        Map resultMap = new HashMap();
-        resultMap = Sigma8800RecipeUtil.transferSV(sendS2F15outParameter());
-        logger.info("getSpecificSVData" + resultMap);
-        return resultMap;
-    }
-
-
-    public Map processS12F9inold(DataMsgMap DataMsgMap) {
+    /**
+     * WaferMappingInfo Download
+     *
+     * @param DataMsgMap
+     * @return
+     */
+    public Map processS12F3in(DataMsgMap DataMsgMap) {
+        DataMsgMap s12f4out = null;
+        String MaterialID = "";
         try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
-            SecsItem BinListItem = (SecsItem) DataMsgMap.get("BinList");
-            String binList = "";
-            if (BinListItem.getData() instanceof Long[] || BinListItem.getData() instanceof long[]) {
-                long[] binlists = (long[]) BinListItem.getData();
-                StringBuffer binBuffer = new StringBuffer();
-                for (Long binlistLong : binlists) {
-                    int temp = binlistLong.intValue();
-                    char c = (char) temp;
-                    binBuffer.append(c);
+            //DataMsgMap s12f4out = new DataMsgMap("s12f4out2", activeWrapper.getDeviceId());
+            MaterialID = (String) DataMsgMap.get("MID");
+            MaterialID = MaterialID.trim();
+            byte IDTYP = ((byte) DataMsgMap.get("IDTYP"));
+            byte MapDataFormatType = (byte) DataMsgMap.get("MAPFT");
+            downFlatNotchLocation = (long) DataMsgMap.get("FNLOC");
+            byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
+            byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
+//            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
+//            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
+            Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
+            Object NullBinCodeValue = DataMsgMap.get("NULBC");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+            Map<String, String> mappingInfo = AxisUtility.downloadWaferMap(deviceCode, MaterialID);
+            if ("N".equals(mappingInfo.get("flag"))) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "WaferId：[" + MaterialID + "]下载失败," + mappingInfo.get("msg"));
+                s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+
+                activeWrapper.sendS12F4out(null, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                        , 0, 0, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 0 * 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                );
+                this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
+                return null;
+            }
+            logger.info("mappingInfo:" + mappingInfo);
+            String binList = mappingInfo.get("BinList");
+            int mapRow = Integer.parseInt(mappingInfo.get("RowCountInDieIncrements")); //原始wafer map行
+            int mapCol = Integer.parseInt(mappingInfo.get("ColumnCountInDieIncrements")); //原始wafer map列
+            String rote = mappingInfo.get("rote");//mapping原路径
+
+            //esec 单独处理
+            if (this.deviceType.contains("ESEC")) {
+                StringBuilder newbinList = new StringBuilder("");
+                char[][] binArray = WaferTransferUtil.toDoubleArray(binList, mapRow, mapCol);
+                Map<String, Integer> map = WaferTransferUtil.blankCheck(binList.charAt(0), binList, mapRow, mapCol);
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UP:" + map.get("UP") + "DOWN:" + map.get("DOWN")
+                        + "LEFT:" + map.get("LEFT") + "RIGHT:" + map.get("RIGHT"));
+
+                int mapRowEsecNoNull = map.get("DOWN") - map.get("UP") + 1;
+                int mapColEsecNoNull = map.get("RIGHT") - map.get("LEFT") + 1;
+
+                for (int i = 0; i < mapRow; i++) {
+                    if (i < map.get("UP") || i > map.get("DOWN")) {
+                        continue;
+                    }
+                    for (int j = 0; j < mapCol; j++) {
+                        if (j < map.get("LEFT") || j > map.get("RIGHT")) {
+                            continue;
+                        }
+                        newbinList.append(binArray[i][j]);
+                    }
                 }
-                binList = binBuffer.toString();
-            } else {
-                binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
+                binList = newbinList.toString();
+                mapRow = mapRowEsecNoNull;
+                mapCol = mapColEsecNoNull;
             }
 
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
-            //上传WaferMapping,
-            String _uploadWaferMappingRow = uploadWaferMappingRow;
-            String _uploadWaferMappingCol = uploadWaferMappingCol;
-            if (this.deviceType.contains("ESEC") || this.deviceType.contains("SIGMA") || this.deviceType.contains("8800")) {
-                binList = WaferTransferUtil.transferAngleAsFlatNotchLocation(binList, 360L - upFlatNotchLocation, uploadWaferMappingRow, uploadWaferMappingCol);
-                if (upFlatNotchLocation == 90 || upFlatNotchLocation == 270) {
-                    _uploadWaferMappingRow = uploadWaferMappingCol;
-                    _uploadWaferMappingCol = uploadWaferMappingRow;
+//            waferMappingrow = String.valueOf(RowCountInDieIncrementss[0]);
+//            waferMappingcol = String.valueOf(ColumnCountInDieIncrementss[0]);
+//            String _waferMappingcol = waferMappingcol;
+//            String _waferMappingrow = waferMappingrow;
+            waferMappingbins = binList;
+            logger.info(this.deviceType + "wafer map 旋转角度:" + downFlatNotchLocation + ";waferMappingrow:" + mapRow + ";waferMappingcol" + mapCol);
+            if (this.deviceType.contains("ESEC") || this.deviceType.contains("SIGMA") || this.deviceType.contains("8800") || this.deviceType.contains("DB-800")) {
+                logger.info(this.deviceType + "程序旋转方向和bin");
+                waferMappingbins = WaferTransferUtil.transferAngleAsFlatNotchLocation(waferMappingbins, downFlatNotchLocation, mapRow, mapCol);
+                if (downFlatNotchLocation == 90 || downFlatNotchLocation == 270) {
+                    int temp = mapRow;
+                    mapRow = mapCol;
+                    mapCol = temp;
                 }
             }
-            //上传旋转后的行列数及mapping
-            AxisUtility.sendWaferMappingInfo(MaterialID, _uploadWaferMappingRow, _uploadWaferMappingCol, binList, deviceCode);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送WaferMapping成功！WaferId：[" + MaterialID + "]");
-            DataMsgMap s12f10out = new DataMsgMap("s12f10out", activeWrapper.getDeviceId());
-            byte[] ack = new byte[]{0};
-            s12f10out.put("MDACK", ack);
-            s12f10out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.respondMessage(s12f10out);
+
+            s12f4out = new DataMsgMap("s12f4out", activeWrapper.getDeviceId());
+            s12f4out.put("MaterialID", MaterialID);
+            s12f4out.put("IDTYP", IDTYP);
+            s12f4out.put("FlatNotchLocation", new long[]{downFlatNotchLocation});
+            s12f4out.put("OriginLocation", OriginLocation);
+            s12f4out.put("RowCountInDieIncrements", new long[]{mapRow});
+            s12f4out.put("ColumnCountInDieIncrements", new long[]{mapCol});
+            s12f4out.put("BinCodeEquivalents", BinCodeEquivalents);
+            s12f4out.put("NullBinCodeValue", NullBinCodeValue);
+            s12f4out.put("MessageLength", new long[]{mapRow * mapCol});
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "从服务端成功获取WaferMapping设置信息！WaferId：[" + MaterialID + "]");
+
+            //针对DB800 mapping展示软件
+            if (this.deviceType.contains("DB-800")) {
+                String port = "8080";
+                ISecsHost iSecsHost = new ISecsHost("127.0.0.1", port, deviceType, deviceCode);
+                String commond = rote + "," + mapRow + "," + mapCol + "," + binList + "," + MaterialID;
+                logger.info("准备发送服务器端数据至wafer软件" + commond);
+                iSecsHost.executeCommand3("START," + commond + ",END;");
+            }
+            try {
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+
+                activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                        , mapRow, mapCol, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER, mapRow * mapCol, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                );
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
+            } catch (Exception ex) {
+                logger.error("Exception:", ex);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
+            try {
+                s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
+                s12f4out.setTransactionId(DataMsgMap.getTransactionId());
+                activeWrapper.respondMessage(s12f4out);
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "获取服务端WaferMappingInfo出现异常！");
+            } catch (Exception ex) {
+                logger.error("Exception:", e);
+            }
         }
+
         return null;
     }
-
-
 }

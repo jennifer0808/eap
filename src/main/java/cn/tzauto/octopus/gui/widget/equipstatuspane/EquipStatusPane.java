@@ -108,17 +108,25 @@ public class EquipStatusPane {
 
     public void setCommLabelForegroundColorCommOn() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath()));
-        Image image = new Image(getClass().getClassLoader().getResource(equipNodeBean.getDeviceType() + ".jpg").toString());
+        String iconPath = equipNodeBean.getIconPath();
+        if (iconPath.contains("/")) {
+            iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
+        }
+        Image image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }
 
     public void setCommLabelForegroundColorCommOff() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath().replaceAll(".jpg", "-commoff.jpg")));
-        String equipIconName = equipNodeBean.getDeviceType() + ".jpg";
-        Image image = new Image(getClass().getClassLoader().getResource(equipIconName.replaceAll(".jpg", "-commoff.jpg")).toString());
+        String iconPath = equipNodeBean.getIconPath();
+        if (iconPath.contains("/")) {
+            iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
+        }
+        String lastName = iconPath.split("\\.")[1];
+        String commofficonpath = iconPath.replaceAll("." + lastName, "-commoff." + lastName);
+        Image image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
         this.equipImg.setImage(image);
-
         this.P_EquipPane.setBackground(bgGray);
 
     }

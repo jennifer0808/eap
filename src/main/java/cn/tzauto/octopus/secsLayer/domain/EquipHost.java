@@ -117,6 +117,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected long EquipStateChangeCeid;
     protected String RCMD_PPSELECT = "PP-SELECT";
     protected String CPN_PPID = "PPID";
+    protected String iconPath;
 
     public EquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
                      String connectMode, String deviceType, String deviceCode) {
@@ -3449,4 +3450,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
             e.printStackTrace();
         }
     }
+
+    public String getIconPath() {
+        return iconPath;
+    }
+
+    public void setIconPath(String iconPath) {
+        this.iconPath = iconPath;
+    }
+
 }

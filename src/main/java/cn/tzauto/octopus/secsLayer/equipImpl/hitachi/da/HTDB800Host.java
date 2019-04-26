@@ -124,7 +124,6 @@ public class HTDB800Host extends EquipHost {
                             + " which I do not want to process! ");
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 logger.fatal("Caught Interruption", e);
             }
         }
@@ -206,7 +205,7 @@ public class HTDB800Host extends EquipHost {
         }
     }
 
-    public String initRptPara() {
+    public void initRptPara() {
         try {
             sendS2F37outCloseAll();
             logger.info("initRptPara+++++++++++++++++++");
@@ -252,22 +251,18 @@ public class HTDB800Host extends EquipHost {
             long rptid = 10001l;
             long vid = 50200l;
             long ceid = 115l;
-            sendS2F33out(rptid, vid);//115
-            //SEND S2F35
-            if (!"".equals(ack)) {
-                ack = "";
-                sendS2F35out(ceid, rptid);//115 10001
-            }
+            sendS2F33out(rptid, vid);//115            //SEND S2F35
+
+            sendS2F35out(ceid, rptid);//115 10001
             //SEND S2F37
-            if (!"".equals(ack)) {
-                sendS2F37out(ceid);
-            }
+            sendS2F37out(ceid);
+
             sendS5F3out(true);
-            return "1";
+
 
         } catch (Exception ex) {
             logger.error("Exception:", ex);
-            return "0";
+
         }
     }
 
@@ -900,5 +895,21 @@ public class HTDB800Host extends EquipHost {
         FtpUtil.uploadFile(localRcpPath, remoteRcpPath, recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + localRcpPath);
         return true;
+    }
+
+    public void sendS5F3out(boolean enable) {
+        byte aled;
+        boolean[] flag = new boolean[1];
+        flag[0] = enable;
+        if (enable) {
+            aled = -128;
+        } else {
+            aled = 0;
+        }
+        try {
+            activeWrapper.sendS5F3out(aled, -1, FormatCode.SECS_4BYTE_UNSIGNED_INTEGER);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
     }
 }

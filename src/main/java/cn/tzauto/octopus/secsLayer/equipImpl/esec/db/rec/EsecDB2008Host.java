@@ -153,9 +153,9 @@ public class EsecDB2008Host extends EquipHost {
             sendS2F33out(4l, 4l, list);
             sendS2F35out(4L, 4L, 4L);
             //SEND S2F37
-            if (!"".equals(ack)) {
-                sendS2F37outAll();
-            }
+
+            sendS2F37outAll();
+
             return "1";
 
         } catch (Exception ex) {

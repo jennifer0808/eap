@@ -270,6 +270,7 @@ public class MultipleEquipHostManager {
                         remoteTcpPort, activeMode, hostJavaClass, deviceType, deviceCode);
                 equip.setStartUp(isStart);
                 equip.setDaemon(true);
+                equip.setIconPath(iconPath);
                 equipHosts.put(deviceCode, equip);
             } else {
                 result = false;
@@ -498,7 +499,7 @@ public class MultipleEquipHostManager {
                         return map;
                     }
                 }
-               UiLogUtil.getInstance().appendLog2EventTab(deviceId, "获取Recipe列表失败,通讯资源正在被占用,请稍后重试");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, "获取Recipe列表失败,通讯资源正在被占用,请稍后重试");
             }
         }
         return null;
@@ -515,7 +516,7 @@ public class MultipleEquipHostManager {
                 if (!equipHost.ppExecName.equalsIgnoreCase(recipeName)) {
                     Map resultMap = new HashMap();
                     resultMap.put("checkResult", "只可以上传机台正在使用的Recipe，其他Recipe无法上传！");
-                   UiLogUtil.getInstance().appendLog2EventTab(equipHost.deviceCode, "只可以上传机台正在使用的Recipe，其他Recipe无法上传！");
+                    UiLogUtil.getInstance().appendLog2EventTab(equipHost.deviceCode, "只可以上传机台正在使用的Recipe，其他Recipe无法上传！");
                     return resultMap;
                 }
             }
@@ -546,7 +547,7 @@ public class MultipleEquipHostManager {
                         return map;
                     }
                 }
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe失败,通讯资源正在被占用,请稍后重试");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe失败,通讯资源正在被占用,请稍后重试");
             }
         }
         return null;
@@ -563,7 +564,7 @@ public class MultipleEquipHostManager {
             if (deviceInfo.getDeviceType().contains("HITACHIDB8")) {
                 //本地地址    D:/DB-800HSDRecipe/
                 localRecipeFilePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从[" + recipeFilePath + "]FTP上下载到本地[" + localRecipeFilePath + "]本地");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从[" + recipeFilePath + "]FTP上下载到本地[" + localRecipeFilePath + "]本地");
             }
             if (!GlobalConstants.isLocalMode) {
                 //从Ftp 下载到本地
@@ -576,10 +577,10 @@ public class MultipleEquipHostManager {
                     new RecipeTransfer().edit(recipe, equipHost.deviceType, localRecipeFilePath);
                 }
                 if (!"0".equals(downLoadFileResult)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName());
                     return "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName();
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
                 }
                 if (deviceInfo.getDeviceType().contains("ICOST")) {
                     Map map = equipHost.getRelativeFileInfo(localRecipeFilePath, recipe.getRecipeName());
@@ -593,10 +594,10 @@ public class MultipleEquipHostManager {
                     String downLoadCompResult = FtpUtil.connectServerAndDownloadFile(localCompRcpPath, compRcpPath, GlobalConstants.ftpIP,
                             GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
                     if (!"0".equals(downLoadHanResult) || !"0".equals(downLoadCompResult)) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName());
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName());
                         return downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName();
                     } else {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
                     }
                 }
                 if (deviceInfo.getDeviceType().contains("8760inline")) {
@@ -604,13 +605,13 @@ public class MultipleEquipHostManager {
                             GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
                 }
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Local 模式,仅读取本地文件...");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Local 模式,仅读取本地文件...");
             }
 
             //获取设备下载许可
             Map resultMap = equipHost.sendS7F1out(localRecipeFilePath, recipe.getRecipeName());
             if ("0".equals(String.valueOf(resultMap.get("ppgnt")))) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());
             } else {
                 String failReason = "";
                 if (deviceInfo.getDeviceName().contains("TOWA") && "6".equals(String.valueOf(resultMap.get("ppgnt")))) {
@@ -618,16 +619,16 @@ public class MultipleEquipHostManager {
                 } else {
                     failReason = String.valueOf(resultMap.get("Description"));
                 }
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + String.valueOf(resultMap.get("Description")));
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + String.valueOf(resultMap.get("Description")));
                 return "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + failReason;
             }
             //下载将recipe下载到机台
             resultMap = equipHost.sendS7F3out(localRecipeFilePath, recipe.getRecipeName());
             if (resultMap != null) {
                 if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载成功！PPID=" + recipe.getRecipeName());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载成功！PPID=" + recipe.getRecipeName());
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description")));
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description")));
                     return "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description"));
                 }
             } else {
@@ -660,10 +661,10 @@ public class MultipleEquipHostManager {
 //                GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
 
             if (!"0".equals(downLoadFileResult)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName());
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName());
                 return "RMS服务器不存在该Recipe，无法完成下载.PPID=" + recipe.getRecipeName();
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
             }
             if (deviceInfo.getDeviceType().contains("ICOS")) {
                 Map map = equipHost.getRelativeFileInfo(localRecipeFilePath, recipe.getRecipeName());
@@ -677,10 +678,10 @@ public class MultipleEquipHostManager {
                 String downLoadCompResult = FtpUtil.connectServerAndDownloadFile(localCompRcpPath, compRcpPath, GlobalConstants.ftpIP,
                         GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
                 if (!"0".equals(downLoadHanResult) || !"0".equals(downLoadCompResult)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName());
                     return downLoadHanResult + "-->" + downLoadCompResult + ".PPID=" + recipe.getRecipeName();
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
                 }
             }
         }
@@ -688,9 +689,9 @@ public class MultipleEquipHostManager {
         //获取设备下载许可
         Map resultMap = equipHost.sendS7F1out(localRecipeFilePath, recipe.getRecipeName());
         if ("0".equals(String.valueOf(resultMap.get("ppgnt")))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());
+            UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());
         } else if ("1".equals(String.valueOf(resultMap.get("ppgnt")))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "设备已存在，直接覆盖，开始下载.....PPID=" + recipe.getRecipeName());
+            UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "设备已存在，直接覆盖，开始下载.....PPID=" + recipe.getRecipeName());
         } else {
             String failReason = "";
             if (deviceInfo.getDeviceName().contains("TOWA") && "6".equals(String.valueOf(resultMap.get("ppgnt")))) {
@@ -698,15 +699,15 @@ public class MultipleEquipHostManager {
             } else {
                 failReason = String.valueOf(resultMap.get("Description"));
             }
-           UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + String.valueOf(resultMap.get("Description")));
+            UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + String.valueOf(resultMap.get("Description")));
             return "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + failReason;
         }
         //下载将recipe下载到机台
         resultMap = equipHost.sendS7F3out(localRecipeFilePath, recipe.getRecipeName());
         if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载成功！PPID=" + recipe.getRecipeName());
+            UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载成功！PPID=" + recipe.getRecipeName());
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description")));
+            UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description")));
             return "下载失败，PPID=" + recipe.getRecipeName() + "；原因：" + String.valueOf(resultMap.get("Description"));
         }
         return "0";
@@ -737,11 +738,11 @@ public class MultipleEquipHostManager {
             Map resultMap = equipHost.sendS2F41outPPselect(recipeName);
             if (resultMap != null && !resultMap.isEmpty()) {
                 if ("0".equals(String.valueOf(resultMap.get("HCACK"))) || "4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                   UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "PPSelect成功，PPID=" + recipeName);
+                    UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "PPSelect成功，PPID=" + recipeName);
                     return "0";
                 } else {
                     Map eqptStateMap = equipHost.findEqptStatus();//失败上报机台状态
-                   UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "选中Recipe失败,PPID=" + recipeName + ";原因：" + String.valueOf(resultMap.get("Description")) + ",机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+                    UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "选中Recipe失败,PPID=" + recipeName + ";原因：" + String.valueOf(resultMap.get("Description")) + ",机台状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                     return "选中Recipe失败,PPID=" + recipeName + ",原因：" + String.valueOf(resultMap.get("Description") + ",设备状态为 " + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
                 }
             } else {
@@ -751,10 +752,10 @@ public class MultipleEquipHostManager {
         if (equipModels.get(deviceId) != null) {
             if (equipModels.get(deviceId).getPassport(1)) {
                 String selectResult = equipModels.get(deviceId).selectRecipe(recipeName);
-               UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + selectResult);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + selectResult);
                 equipModels.get(deviceId).returnPassport();
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]选中失败,通讯资源正在被占用,请稍后重试");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]选中失败,通讯资源正在被占用,请稍后重试");
             }
         }
         return "";
@@ -816,17 +817,17 @@ public class MultipleEquipHostManager {
             EquipHost equipHost = equipHosts.get(deviceId);
             Map resultMap = equipHost.sendS7F17out(recipeName);
             if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-               UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上删除成功!");
+                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上删除成功!");
             } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) { //这里4表示 PPID not found
-               UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上不存在，无需删除!");
+                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上不存在，无需删除!");
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
             }
             return resultMap;
         }
         if (equipModels.get(deviceId) != null) {
             String deleteResult = equipModels.get(deviceId).deleteRecipe(recipeName);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + deleteResult);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + deleteResult);
         }
         Map resultMap = null;
         return resultMap;
@@ -901,7 +902,7 @@ public class MultipleEquipHostManager {
     public String sendCommand2Eqp(String deviceId, String commandKey) {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-           UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "向设备发送" + commandKey);
+            UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), "向设备发送" + commandKey);
             Map resultMap = equipHost.sendCommandByDymanic(commandKey);
             byte[] ack = (byte[]) resultMap.get("HCACK");
             if (ack[0] == 0l) {
@@ -927,7 +928,7 @@ public class MultipleEquipHostManager {
                 } else {
                     pass = false;
                 }
-               UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
+                UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "HCACK:" + resultMap.get("HCACK") + " Description:" + resultMap.get("Description").toString());
             }
         }
         if (equipModels.get(deviceId) != null) {
@@ -935,7 +936,7 @@ public class MultipleEquipHostManager {
             if ("0".equals(stopResult)) {
                 pass = true;
             } else {
-               UiLogUtil.getInstance().appendLog2SecsTab(deviceId, stopResult);
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceId, stopResult);
                 pass = false;
             }
         }
@@ -1011,7 +1012,7 @@ public class MultipleEquipHostManager {
                 if ("0".equals(stopResult)) {
                     pass = true;
                 } else {
-                   UiLogUtil.getInstance().appendLog2SecsTab(deviceId, stopResult);
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceId, stopResult);
                     pass = false;
                 }
             } else if ("RELEASE".equals(state)) {
@@ -1032,7 +1033,7 @@ public class MultipleEquipHostManager {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
-               UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
+                UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return null;
             }
             return equipHost.findDeviceRecipe();
@@ -1049,7 +1050,7 @@ public class MultipleEquipHostManager {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
-               UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
+                UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return "Offline";
             }
             return equipHost.findDeviceRecipe().get("EquipStatus").toString();
@@ -1193,6 +1194,7 @@ public class MultipleEquipHostManager {
             nBean.setDeviceCode(value.getDeviceCode());
             nBean.setDeviceType(value.deviceType);
             nBean.setProtocolTypeProperty("SECS");
+            nBean.setIconPath(value.getIconPath());
             result.add(nBean);
         }
         for (EquipModel value : equipModels.values()) {
@@ -1202,6 +1204,7 @@ public class MultipleEquipHostManager {
             nBean.setProtocolTypeProperty("ISECS");
             nBean.setDeviceCode(value.deviceCode);
             nBean.setDeviceType(value.deviceType);
+            nBean.setIconPath(value.getIconPath());
             result.add(nBean);
         }
         logger.info("Extracted " + result.size() + " EquipNodeBean objects.");
@@ -1569,9 +1572,9 @@ public class MultipleEquipHostManager {
                     recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceId);
 
                     sqlSession.commit();
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceId, "Recipe[" + recipeName + "]上传成功！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceId, "Recipe[" + recipeName + "]上传成功！");
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceId, "Recipe[" + recipeName + "]上传失败！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceId, "Recipe[" + recipeName + "]上传失败！");
                 }
             }
             equipModels.get(deviceId).returnPassport();
@@ -1619,13 +1622,13 @@ public class MultipleEquipHostManager {
 
         Map resultMap = deleteRecipeFromDevice(deviceId, recipeName);
         if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上删除成功!");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上删除成功!");
             return "0";
         } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上不存在，无需删除!");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上不存在，无需删除!");
             return "0";
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
             return recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description"));
         }
     }

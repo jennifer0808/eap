@@ -227,9 +227,9 @@ public class EsecDB2100Host extends EquipHost {
             sendS2F33out(3255L, 3255L, list);
             sendS2F35out(3255L, 3255L, 3255L);
             //SEND S2F37
-            if (!"".equals(ack)) {
-                sendS2F37outAll();
-            }
+
+            sendS2F37outAll();
+
             sendS2F37outClose(15650L);
             sendS2F37outClose(15652L);
             sendS5F3out(true);
@@ -278,7 +278,7 @@ public class EsecDB2100Host extends EquipHost {
             cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
-            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT,cplist, cp, cpName, cpValue);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cp, cpName, cpValue);
             //选中成功标识
             if (data != null) {
                 ppselectFlag = true;

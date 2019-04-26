@@ -1,9 +1,10 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
-import java.beans.*;
-import java.io.Serializable;
-
 import org.apache.log4j.Logger;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 
 public class EquipNodeBean implements Serializable {
 
@@ -22,6 +23,7 @@ public class EquipNodeBean implements Serializable {
     private EquipState equipStateProperty; //if equipment state is changed, this instance must be replaced.
     private static final Logger logger = Logger.getLogger(EquipNodeBean.class.getName());
     private EquipPanel equipPanelProperty;
+    private String iconPath;
 
     public EquipNodeBean() {
         propertySupport = new PropertyChangeSupport(this);
@@ -176,5 +178,13 @@ public class EquipNodeBean implements Serializable {
 
     public void setDeviceType(String deviceType) {
         this.deviceType = deviceType;
+    }
+
+    public String getIconPath() {
+        return iconPath;
+    }
+
+    public void setIconPath(String iconPath) {
+        this.iconPath = iconPath;
     }
 }

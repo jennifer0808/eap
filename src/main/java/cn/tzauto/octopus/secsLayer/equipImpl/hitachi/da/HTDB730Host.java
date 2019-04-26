@@ -169,7 +169,7 @@ public class HTDB730Host extends EquipHost {
                 long ceid = (long) data.get("CEID");
                 if (ceid == 26 || ceid == 27) {
                     processS6F11SpecialEvent(data);
-                }else {
+                } else {
                     processS6F11in(data);
                 }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
@@ -214,7 +214,6 @@ public class HTDB730Host extends EquipHost {
 
     public String initRptPara() {
         try {
-            System.out.println("initRptPara+++++++++++++++++++");
 //            //重新定义ppselect事件报告
 //            sendS2F33out(10002l, 50070l);//
 //            sendS2F35out(80l, 10002l);
@@ -797,7 +796,6 @@ public class HTDB730Host extends EquipHost {
 
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
-
 
 
     public void processS14f3in(DataMsgMap data) {

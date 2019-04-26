@@ -319,7 +319,7 @@ public class ACKDescription {
             } else {
                 description = "Reserved";
             }
-        } else if (deviceType.contains("DB730") || deviceType.contains("DB800") || deviceType.contains("DB810")) {
+        } else if (deviceType.contains("DB730") || deviceType.contains("DB800") || deviceType.contains("DB810")|| deviceType.contains("DB-800") ) {
             if (ack.equals("1")) {
                 description = "INIT";
             } else if (ack.equals("2")) {

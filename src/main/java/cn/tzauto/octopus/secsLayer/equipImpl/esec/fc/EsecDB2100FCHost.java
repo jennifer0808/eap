@@ -186,7 +186,6 @@ public class EsecDB2100FCHost extends EquipHost {
         try {
 //            sendS2F33clear();
 //            sendS2F35clear();
-            logger.debug("initRptPara+++++++++++++++++++");
             //发送s2f33
             String ack = "";
             long rptid = 1001l;
@@ -222,9 +221,9 @@ public class EsecDB2100FCHost extends EquipHost {
 //            sendS2F33out(8L, 8L);
 //            sendS2F35out(3L, 3L, 8L);
             //SEND S2F37
-            if (!"".equals(ack)) {
-                sendS2F37outAll();
-            }
+
+            sendS2F37outAll();
+
             sendS5F3out(true);
             return "1";
 
