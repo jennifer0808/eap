@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class SYMLSSP2000EDHost extends EquipModel {
     private Logger logger = Logger.getLogger(SYMLSSP2000EDHost.class);
-
+    private Boolean isflag = false;
     private long getRecipeAndStatusTime = new Date().getTime();
     //D:\autotz\sinyang\Recipe副本\UserDat\File.dat
     int last = equipRecipePath.lastIndexOf("\\");
@@ -564,37 +564,111 @@ public class SYMLSSP2000EDHost extends EquipModel {
      *
      * @return
      */
-    public void initStatus(List<String> statusResult) {
-        if (statusResult != null && !statusResult.isEmpty()) {
-            if ("status".equalsIgnoreCase(statusResult.get(0)) || "any".equalsIgnoreCase(statusResult.get(0))) {
-                equipStatus = "Idle";
-            } else {
+//    public void initStatus(List<String> statusResult) {
+//        if (statusResult != null && !statusResult.isEmpty()) {
+//            if ("status".equalsIgnoreCase(statusResult.get(0)) || "any".equalsIgnoreCase(statusResult.get(0))) {
+//                equipStatus = "Idle";
+//            } else {
+//                equipStatus = "Run";
+//            }
+//        }
+//    }
+
+
+
+
+    /**
+     * 初始状态
+     *
+     * @return
+     */
+    public void initStatus() {
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+
+            //指令存放map容器
+            Map map = initial();
+            //遍历循环执行指令
+            for (int i = 0; i < map.size(); i++) {
+                List<String> statusResult =  this.sendMsg2Equip("readrectcolor " + map.get(i + 1));
+
+                if (!statusResult.contains("Error")) { //TODO unkown?
+                    if ("0xff00".equalsIgnoreCase(statusResult.get(0))) {
+                        isflag = true;
+                        break;
+                    } else if("0x0".equalsIgnoreCase(statusResult.get(0))){
+                        continue;
+                    }
+                }
+
+            }
+            //若全是0x0，停止；若其中至少有一个是0xff00,运行
+            if (isflag) {
                 equipStatus = "Run";
+            } else {
+                equipStatus = "Idle";
             }
         }
     }
 
-    @Override
+
+    public Map initial() {
+        Map<Integer, String> map = new HashMap<>();
+        map.put(1, "157 440 160 443");
+        map.put(2, "203 440 206 443");
+        map.put(3, "320 440 323 443");
+        map.put(4, "451 440 454 443");
+        map.put(5, "514 440 517 443");
+        map.put(6, "577 440 580 443");
+        map.put(7, "641 440 644 443");
+        map.put(8, "704 440 708 443");
+        map.put(9, "765 440 768 443");
+        map.put(10, "850 440 853 443");
+        map.put(11, "908 440 911 443");
+        map.put(12, "977 440 980 443");
+        map.put(13, "1036 440 1039 443");
+
+        return map;
+
+    }
+
+//    @Override
+//    public String getEquipStatus() {
+//        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+//            try {
+//                //TODO:读颜色有误差，读截图。不同界面同一位置：any done ;同界面同位置：status done
+//                List<String> statusResult = this.sendMsg2Equip("curscreen");
+//                // List<String> nameResult = this.sendMsg2Equip("read nameStatus");
+//                // if("type".equalsIgnoreCase(nameResult.get(0))) {
+//                initStatus(statusResult);
+//                //read xxx同一个页面指定位置被遮挡，报空；不同页面指定位置，报Error;
+//                //   }
+////                else if (nameResult.get(0).contains("Error") || "".equals(nameResult.get(0))){
+////                    if(statusResult != null && !statusResult.isEmpty() ) {
+////                        if (getCheckIntervalTimeFlag()) {
+////                            iSecsHost.executeCommand("playback main.txt");
+////                            initStatus(statusResult);
+////                        }else{
+////                            equipStatus = "--";
+////                        }
+////                    }
+////                }
+//            } catch (Exception e) {
+//                logger.info("SYMLSSP2000EDHost getEquipStatus()-获取状态失败" + e);
+//            } finally {
+//                Map<String, String> map = new HashMap<>();
+//                map.put("PPExecName", ppExecName);
+//                map.put("EquipStatus", equipStatus);
+//
+//            }
+//        }
+//        return equipStatus;
+//    }
+
     public String getEquipStatus() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 //TODO:读颜色有误差，读截图。不同界面同一位置：any done ;同界面同位置：status done
-                List<String> statusResult = this.sendMsg2Equip("curscreen");
-                // List<String> nameResult = this.sendMsg2Equip("read nameStatus");
-                // if("type".equalsIgnoreCase(nameResult.get(0))) {
-                initStatus(statusResult);
-                //read xxx同一个页面指定位置被遮挡，报空；不同页面指定位置，报Error;
-                //   }
-//                else if (nameResult.get(0).contains("Error") || "".equals(nameResult.get(0))){
-//                    if(statusResult != null && !statusResult.isEmpty() ) {
-//                        if (getCheckIntervalTimeFlag()) {
-//                            iSecsHost.executeCommand("playback main.txt");
-//                            initStatus(statusResult);
-//                        }else{
-//                            equipStatus = "--";
-//                        }
-//                    }
-//                }
+                initStatus();
             } catch (Exception e) {
                 logger.info("SYMLSSP2000EDHost getEquipStatus()-获取状态失败" + e);
             } finally {
@@ -606,6 +680,13 @@ public class SYMLSSP2000EDHost extends EquipModel {
         }
         return equipStatus;
     }
+
+
+
+
+
+
+
 
     @Override
     public void run() {

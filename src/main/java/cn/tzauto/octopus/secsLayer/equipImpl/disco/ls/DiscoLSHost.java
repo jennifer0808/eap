@@ -112,10 +112,12 @@ public class DiscoLSHost extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-//                            processS6F11EquipStatus(msg);
                         }
                         if (ceid == 150) {
                             processS6F11EquipStatusChange(msg);
+                        }
+                        if(ceid ==73 ){
+                            findDeviceRecipe();
                         }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
@@ -152,18 +154,8 @@ public class DiscoLSHost extends EquipHost {
                 replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = 0l;
-                try {
-                    ceid = (long) data.get("CEID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if (ceid == 75 || ceid == 76) {
-                    this.inputMsgQueue.put(data);
-                }
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -185,23 +177,19 @@ public class DiscoLSHost extends EquipHost {
 
 
     // </editor-fold> 
-    private String getDevIdFromEqp(long DEVID) {
+    private String getDevIdFromEqp(long devId) {
         String devid = "--";
-        DataMsgMap s2f13out = new DataMsgMap("s2f13DEVIDout", activeWrapper.getDeviceId());
-        long[] devids = new long[1];
-        devids[0] = DEVID;
-        s2f13out.put("DevID", devids);
-        s2f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        List eclist = new ArrayList();
+        eclist.add(devId);
         DataMsgMap data = null;
         try {
-            data = activeWrapper.sendAwaitMessage(s2f13out);
+            data = activeWrapper.sendS2F13out(eclist,ecFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data != null && data.get("RESULT") != null) {
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            devid = String.valueOf(listtmp.get(0));
+        if (data != null && data.get("EC") != null) {
+            List list = (List) data.get("EC");
+            devid = String.valueOf(list.get(0));
         }
         return devid;
     }
@@ -218,13 +206,7 @@ public class DiscoLSHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (ceid == 73) {
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-        }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -395,15 +377,14 @@ public class DiscoLSHost extends EquipHost {
     }
 
     private boolean rcpInEqp(String recipeName) {
-        boolean rcpInEqp = false;
         ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
         for (int i = 0; i < eppd.size(); i++) {
             String rcpNameString = eppd.get(i).toString();
             if (recipeName.equals(rcpNameString)) {
-                rcpInEqp = true;
+                return true;
             }
         }
-        return rcpInEqp;
+        return false;
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="RemoteCommand">
@@ -417,7 +398,7 @@ public class DiscoLSHost extends EquipHost {
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
 //            Map cmdMap = this.sendS2f41Cmd("PAUSE_H");
             Map cmdMap = this.sendS2f41Cmd("STOP");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
+            if (0 == (byte)cmdMap.get("HCACK")) {
                 setAlarmState(2);
                 Map panelMap = new HashMap();
                 panelMap.put("AlarmState", 2);

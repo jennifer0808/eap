@@ -32,6 +32,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -47,11 +48,12 @@ import java.util.ResourceBundle;
  * @author luosy
  */
 public class UploadPaneController implements Initializable {
+    private static Logger logger = Logger.getLogger(UploadPaneController.class);
     private MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
     private String deviceId;
     List<DeviceInfo> deviceInfos;
     private String deviceType;
-
+    Boolean isAlert = true ;
     @FXML
     private TableView<RecipeName> dataTable; //tableView
     @FXML
@@ -64,6 +66,8 @@ public class UploadPaneController implements Initializable {
     private TableColumn saveCol;
     @FXML
     private ComboBox CMB_deviceCode;
+    @FXML
+    private Button BTN_ok;
 //  private TableColumn<SimpleRecipeProperty, String> numberCol = new TableColumn<>();
 
     ObservableList<RecipeName> recipeNames = FXCollections.observableArrayList();
@@ -198,8 +202,10 @@ public class UploadPaneController implements Initializable {
         }
 
         List rns = new ArrayList<>();
-
-        for (int i = 0; i < recipeNames.size(); i++) {
+        SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        try {
+            for (int i = 0; i < recipeNames.size(); i++) {
             RecipeName rn = recipeNames.get(i);
             if (rn.getCheckBox().isSelected()) {
                 String recipeName = rn.getRecipeName().getValue();
@@ -247,24 +253,18 @@ public class UploadPaneController implements Initializable {
                     List<RecipePara> recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
                     RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
                     //保存数据
-//                    if (recipeParaList != null && !recipeParaList.isEmpty()) {
                     boolean re;
-                    SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
-                    RecipeService recipeService = new RecipeService(sqlSession);
-                    try {
                         if (recipeNameMapping != null) {
                             re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
                         } else {
                             re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
                         }
-                    } catch (Exception wx) {
-                        re = false;
-                        stage.close();
-                    }
 
-
+                    //打日志
                     if (!re) {
-                        JOptionPane.showMessageDialog(null, "上传失败，ftp文件传送失败，请重新上传");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"上传失败，ftp文件传送失败，请重新上传");
+                        isAlert = false ;
                     } else {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
                     }
@@ -272,11 +272,20 @@ public class UploadPaneController implements Initializable {
                 } else {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
                 }
+              }
+           }
+            if(isAlert){
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
             }
+
+        }catch(Exception e){
+            sqlSession.rollback();
+            logger.error("Exception:", e);
+            CommonUiUtil.alert(null, "上传失败！请重试！");
+            return;
+        }finally {
+            sqlSession.close();
         }
-
-        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
-
         stage.close();
 
     }

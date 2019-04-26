@@ -356,9 +356,6 @@ public class DiscoBGHost extends EquipHost {
                 processS6F11PPselect(data);
             } else if (ceid == 150) {
                 processS6F11EquipStatusChange(data);
-            } else if (ceid == -1L) {
-                //todo ceid ?
-                processS6F11AlarmClear(data);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -374,10 +371,7 @@ public class DiscoBGHost extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        Map map = new HashMap();
-        //TODO 此设备可以反馈前一状态
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -479,21 +473,9 @@ public class DiscoBGHost extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == 77) {
                 //ppselect 事件
-                portARcpName = "";
-                portARcpName = "";
+                findDeviceRecipe();
             }
-//            if (ceid == 17) {
-//                //211 Cass A move in complete 
-//                //221 Cass B move in complete
-//                //17 init over
-//                this.findDeviceRecipe();
-//                if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus)) {
-//                    sendS1F3CheckCassUse();
-//                    if (!"".equals(ppExecName) && ppExecName != null) {
-//                        this.sendS2F41outPPselect(ppExecName);
-//                    }
-//                }
-//            }
+
             if (ceid == 211 || ceid == 221) {
                 if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
                     sendS1F3CheckCassUse();
@@ -582,7 +564,7 @@ public class DiscoBGHost extends EquipHost {
         sqlSession.close();
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
             Map cmdMap = this.sendS2f41Cmd("PAUSE");
-            if (cmdMap.get("HCACK").toString().equals("0")) {
+            if (0 == (byte)cmdMap.get("HCACK")) {
                 holdSuccessFlag = true;
                 this.setAlarmState(2);
             } else {
