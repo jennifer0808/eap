@@ -18,6 +18,7 @@ import org.apache.log4j.MDC;
 
 import java.util.*;
 
+@Deprecated
 public class DekHost extends EquipHost {
 
 
