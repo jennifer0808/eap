@@ -6,6 +6,7 @@ package cn.tzauto.octopus.gui.guiUtil;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.main.EapClient;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TextArea;
 import org.apache.log4j.Logger;
@@ -134,7 +135,7 @@ public class UiLogUtil {
             tmpLogs.remove(logs.size() - 1);
             //超过100删30
             ArrayList<CharSequence> tmpList = new ArrayList<>();
-            for (int i = 0; i < 30; i++) {
+            for (int i = 0; i < 90; i++) {
                 tmpList.add(logs.get(i));
             }
             tmpLogs.removeAll(tmpList);
@@ -144,7 +145,13 @@ public class UiLogUtil {
             logArea.clear();
         }
         builder.append(msg);
-        logArea.appendText(builder.toString()+ "\n");
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                logArea.appendText(builder.toString()+ "\n");
+            }
+        });
+
 
     }
 

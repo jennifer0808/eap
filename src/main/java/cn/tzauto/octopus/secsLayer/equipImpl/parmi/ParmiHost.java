@@ -107,7 +107,7 @@ public class ParmiHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
@@ -264,13 +264,13 @@ public class ParmiHost extends EquipHost {
         try {
 //            recipeParaList = TowaRecipeUtil.transferTowaRcp(TowaRecipeUtil.Y1R_RECIPE_CONFIG, ppbody);
 //            recipeParaList = TowaRecipeUtil.transferTowaRcpFromDB(deviceType, ppbody);
-            for (int i = 0; i < recipeParaList.size(); i++) {
-                String paraName = recipeParaList.get(i).getParaName();
-                if (paraName.equals("") || paraName.equals("NULL")) {
-                    recipeParaList.remove(i);
-                    i--;
-                }
-            }
+//            for (int i = 0; i < recipeParaList.size(); i++) {
+//                String paraName = recipeParaList.get(i).getParaName();
+//                if (paraName.equals("") || paraName.equals("NULL")) {
+//                    recipeParaList.remove(i);
+//                    i--;
+//                }
+//            }
             recipeParaList = getRecipeParasByECSV();
         } catch (Exception ex) {
             ex.printStackTrace();

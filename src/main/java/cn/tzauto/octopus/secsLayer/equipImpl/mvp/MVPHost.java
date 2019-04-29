@@ -33,8 +33,7 @@ public class MVPHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        // TODO: 2019/4/12 StripMapUpCeid need check
-        StripMapUpCeid = 3014;
+        StripMapUpCeid = 3014L;
     }
 
 
@@ -126,35 +125,41 @@ public class MVPHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
     public void processS6F11in(DataMsgMap data) {
+        long ceid = -1L;
         try {
-            long ceid = (long) data.get("CEID");
-            if (ceid == 3002) {
-                //TODO 获取状态变化的事件报告
-                replyS6F12WithACK(data, (byte) 0);
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 3006 || ceid == 3007) {
-                replyS6F12WithACK(data, (byte) 0);
-                processS6F11EquipStatus(data);
-            } else if (ceid == 3008 || ceid == 3009 || ceid == 3010 || ceid == 3011 || ceid == 3012 || ceid == 3013) {
-                //TODO 切换recipe后获取事件报告
-                replyS6F12WithACK(data, (byte) 0);
-                findDeviceRecipe();
-//                sendS1F3Check();
-            } else if (ceid == StripMapUpCeid) {
-                // TODO: 2019/4/12  StripMapUpCeid need check
-                logger.info("----Received from Equip Strip Map Upload event - S6F11");
-                long[] result = (long[]) ((ArrayList) ((ArrayList) data.get("REPORT")).get(1)).get(1);
-                // 判断机台检测结果，如果为0则上传，结果为1 || 2则不上传
-                if (result[0] == 0 || result[0] == -1L) {
-                    processS6F11inStripMapUpload(data);
-                } else {
-                    replyS6F12WithACK(data, (byte) 0);
-                    logger.info("检测结果为:" + result[0] + ",不上传mapping!");
-                }
-            }
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
+        if (ceid == 3002) {
+            //获取状态变化的事件报告
+            replyS6F12WithACK(data, (byte) 0);
+            processS6F11EquipStatusChange(data);
+        } else if (ceid == 3006 || ceid == 3007) {
+            replyS6F12WithACK(data, (byte) 0);
+            processS6F11EquipStatus(data);
+        } else if (ceid == 3008 || ceid == 3009 || ceid == 3010 || ceid == 3011 || ceid == 3012 || ceid == 3013) {
+            //切换recipe后获取事件报告
+            replyS6F12WithACK(data, (byte) 0);
+            findDeviceRecipe();
+//                sendS1F3Check();
+        } else if (ceid == StripMapUpCeid) {
+            logger.info("----Received from Equip Strip Map Upload event - S6F11");
+            long result = -1L;
+            try {
+                result = (long) ((ArrayList) ((ArrayList) data.get("REPORT")).get(1)).get(1);
+            } catch (Exception e) {
+
+            }
+            // 判断机台检测结果，如果为0则上传，结果为1 || 2则不上传
+            if (result == 0 || result == -1L) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                replyS6F12WithACK(data, (byte) 0);
+                logger.info("检测结果为:" + result + ",不上传mapping!");
+            }
+        }
+
 
     }
 
@@ -249,9 +254,4 @@ public class MVPHost extends EquipHost {
         }
     }
 
-
-//    @Override
-//    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
-//        throw new UnsupportedOperationException("Not supported yet.");
-//    }
 }
