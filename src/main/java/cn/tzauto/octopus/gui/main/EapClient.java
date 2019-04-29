@@ -252,7 +252,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                EquipStatusListen.startListen();
 
                 //启动ISecs通信
-//                this.startModel();
+                this.startISECSThread();
 
                 GlobalConstants.stage = this;
 
@@ -298,12 +298,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 }
 
                 //开启MQ监听
-                if (!GlobalConstants.isLocalMode) {
-                    MQConstants.initConenction();
-                    new SubscribeMessage().startlistening();
-                    //发送开机日志给服务端
-                    GlobalConstants.sendStartLog2Server(null);
-                }
+                startMq();
 
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
@@ -352,23 +347,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         UiLogUtil.getInstance().addPropertyChangeListener(this);
     }
 
-    public void startHostSwing() {
-        for (int i = 0; i < equipBeans.size(); i++) {
-            String protocol = equipBeans.get(i).getProtocolTypeProperty();
-            if (!"ISECS".equals(protocol)) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
-                int finalI = i;
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        startComByEqp(equipBeans.get(finalI));
-                    }
-                }).start();
-
-            }
-        }
-    }
-
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
@@ -384,17 +362,17 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     }
 
-    public void startModel() {
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-        for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
-            startComByEqp(equipBeans.get(i));
-        }
-//            }
-//        }).start();
+    public void startISECSThread() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (equipModels != null && !equipModels.isEmpty()) {
+                    for (Map.Entry<String, EquipModel> entry : equipModels.entrySet()) {
+                        entry.getValue().start();
+                    }
+                }
+            }
+        }).start();
     }
 
     public void initializeEquipStatusAndRender() throws IOException {
@@ -466,22 +444,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     }
 
-    /**
-     * 启动线程初始化nosecs设备界面
-     *
-     * @param equipNodeBean
-     */
-    public void startIsecsByEqp(EquipNodeBean equipNodeBean) {
-        try {
-            EquipModel equipModel = equipModels.get(equipNodeBean.getDeviceCode());
-            if (equipModel.iSecsHost.iSecsConnection.getSocketClient() != null && !equipModel.isInterrupted()) {
-                equipModel.start();
-            }
-        } catch (Exception e) {
-            logger.fatal(equipNodeBean.getDeviceIdProperty() + "initialization failed...", e);
-        }
-
-    }
 
     @Override
     public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
@@ -542,14 +504,14 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                equipStatusPane.updateUI();
             }
             if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_STATE_PROPERTY)) {
-                if(!src.getEquipStateProperty().isNetConnect()){
+                if (!src.getEquipStateProperty().isNetConnect()) {
                     logger.info("network disconnect==========================");
                     EquipHost equipHost = equipHosts.get(src.getDeviceCode());
                     equipHost.commState = 0;
                     Map map = new HashMap();
                     map.put("NetState", 0);
                     equipHost.changeEquipPanel(map);
-                }else {
+                } else {
                     if (src.getEquipStateProperty().isCommOn()) {
                         logger.info("CommOn==========================");
                         EquipHost equipHost = equipHosts.get(src.getDeviceCode());
@@ -616,5 +578,18 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
         }
         return thePane;
+    }
+
+    private void startMq() {
+        new Thread() {
+            public void run() {
+                if (!GlobalConstants.isLocalMode) {
+                    MQConstants.initConenction();
+                    new SubscribeMessage().startlistening();
+                    //发送开机日志给服务端
+                    GlobalConstants.sendStartLog2Server(null);
+                }
+            }
+        }.start();
     }
 }

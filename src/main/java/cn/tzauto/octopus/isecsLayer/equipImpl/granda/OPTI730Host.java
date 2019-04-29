@@ -5,34 +5,30 @@
  */
 package cn.tzauto.octopus.isecsLayer.equipImpl.granda;
 
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.common.resolver.disco.RecipeEdit;
+import cn.tzauto.octopus.common.resolver.granda.OPTIRcpTransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.common.resolver.granda.OPTIRcpTransferUtil;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import java.util.*;
+
 /**
- *
- * @author 
+ * @author
  */
 public class OPTI730Host extends EquipModel {
 
@@ -40,7 +36,7 @@ public class OPTI730Host extends EquipModel {
 
     public OPTI730Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
- 
+
     }
 
     @Override
@@ -67,7 +63,7 @@ public class OPTI730Host extends EquipModel {
                                     logger.info("recipeName==" + dirsTemp[0]);
                                     rcpNameTemp = dirsTemp[0];
                                     break outer;
-                                    
+
                                 }
                             }
                         } else {
@@ -81,7 +77,7 @@ public class OPTI730Host extends EquipModel {
             }
             ppExecName = rcpNameTemp;
         }
-        
+
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
         changeEquipPanel(map);
@@ -112,7 +108,7 @@ public class OPTI730Host extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -171,7 +167,7 @@ public class OPTI730Host extends EquipModel {
                     }
                 }
                 if (!ocrUploadOk) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                     resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
@@ -261,6 +257,7 @@ public class OPTI730Host extends EquipModel {
     public Map getEquipRealTimeState() {
         equipStatus = getEquipStatus();
         ppExecName = getCurrentRecipeName();
+        equipState.setControlState(controlState);
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
         map.put("EquipStatus", equipStatus);
@@ -327,8 +324,8 @@ public class OPTI730Host extends EquipModel {
 
     @Override
     public List<RecipePara> getRecipeParasFromMonitorMap() {
-         List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");        
-        if (recipeParas == null) {            
+        List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");
+        if (recipeParas == null) {
             return new ArrayList<>();
         }
         return recipeParas;
@@ -521,7 +518,7 @@ public class OPTI730Host extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".jif", remoteRcpPath, recipeName + ".jif_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+        UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }
