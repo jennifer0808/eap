@@ -265,13 +265,19 @@ public class MultipleEquipHostManager {
             }
 
             if (!skip) {
-                EquipHost equip = (EquipHost) instanciateEquipHost(
-                        String.valueOf(deviceId), remoteIp,
-                        remoteTcpPort, activeMode, hostJavaClass, deviceType, deviceCode);
-                equip.setStartUp(isStart);
-                equip.setDaemon(true);
-                equip.setIconPath(iconPath);
-                equipHosts.put(deviceCode, equip);
+                try {
+                    EquipHost equip = (EquipHost) instanciateEquipHost(
+                            String.valueOf(deviceId), remoteIp,
+                            remoteTcpPort, activeMode, hostJavaClass, deviceType, deviceCode);
+                    equip.setStartUp(isStart);
+                    equip.setDaemon(true);
+                    equip.setIconPath(iconPath);
+                    equipHosts.put(deviceCode, equip);
+                } catch (ClassNotFoundException cnfe) {
+                    logger.error("Device " + deviceCode + " config error,(ClassNotFoundException) can't be initialized ");
+                    continue;
+                }
+
             } else {
                 result = false;
             }
@@ -1378,11 +1384,16 @@ public class MultipleEquipHostManager {
             }
 
             if (!skip) {
-                EquipModel equip = (EquipModel) instanciateEquipModel(
-                        deviceCode, remoteIp, remoteTcpPort, hostJavaClass, deviceType, iconPath, equipRecipePath);
-                equip.setStartUp(isStart);
-                equip.setDaemon(true);
-                equipModels.put(deviceCode, equip);
+                try {
+                    EquipModel equip = (EquipModel) instanciateEquipModel(
+                            deviceCode, remoteIp, remoteTcpPort, hostJavaClass, deviceType, iconPath, equipRecipePath);
+                    equip.setStartUp(isStart);
+                    equip.setDaemon(true);
+                    equipModels.put(deviceCode, equip);
+                } catch (ClassNotFoundException cnfe) {
+                    logger.error("Device " + deviceCode + " config error,(ClassNotFoundException) can't be initialized ");
+                    continue;
+                }
             } else {
                 result = false;
             }
@@ -1430,11 +1441,16 @@ public class MultipleEquipHostManager {
         List<DeviceInfo> deviceInfoSecs = new ArrayList<>();
         List<DeviceInfo> deviceInfoIsecs = new ArrayList<>();
         for (DeviceInfo deviceInfo : deviceInfoList) {
-            String protocol = String.valueOf(deviceTypeDic.get(deviceInfo.getDeviceTypeId()).getProtocolType());
-            if ("2".equals(protocol)) {
-                deviceInfoIsecs.add(deviceInfo);
+            if (deviceTypeDic.containsKey(deviceInfo.getDeviceTypeId())) {
+                String protocol = String.valueOf(deviceTypeDic.get(deviceInfo.getDeviceTypeId()).getProtocolType());
+                if ("2".equals(protocol)) {
+                    deviceInfoIsecs.add(deviceInfo);
+                } else {
+                    deviceInfoSecs.add(deviceInfo);
+                }
             } else {
-                deviceInfoSecs.add(deviceInfo);
+                logger.error("devicetype " + deviceInfo.getDeviceType() + " id" + deviceInfo.getDeviceId() + " not found. ");
+                logger.error("device " + deviceInfo.getDeviceCode() + " can not instantiation. ");
             }
         }
         Map<String, List<DeviceInfo>> deviceInfoMap = new HashMap<>();
