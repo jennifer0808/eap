@@ -281,7 +281,7 @@ public class UploadPaneController implements Initializable {
         }catch(Exception e){
             sqlSession.rollback();
             logger.error("Exception:", e);
-            CommonUiUtil.alert(null, "上传失败！请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！");
             return;
         }finally {
             sqlSession.close();
