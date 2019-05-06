@@ -207,6 +207,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 logger.info("开始启动...");
                 logger.info("从本地数据库读取基础配置数据...");
 
+
                 if ("1".equals(GlobalConstants.getProperty("INIT_SERVICE"))) {
                     InitService.init(GlobalConstants.getProperty("clientId"));//同步服务端数据
                 }
@@ -263,11 +264,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                    }
 //                }.start();
                 //自动注销功能
-//                try {
-//                    new MainScheduler().schedulerJob();
-//                } catch (SchedulerException e) {
-//                    e.printStackTrace();
-//                }
+                CommonUtil.startSessCtrlJob(this);
 
                 //Quartz监控
                 if ("1".equals(GlobalConstants.getProperty("MONITOR_PARA"))) {
