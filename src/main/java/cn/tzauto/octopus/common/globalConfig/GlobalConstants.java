@@ -27,7 +27,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class GlobalConstants {
-
+    private static final Logger logger = Logger.getLogger(GlobalConstants.class.getName());
     private static Properties prop;
     public static boolean SYNC_CONIFG = false;
     public static boolean MONITOR_CONIFG = false;
@@ -215,6 +215,8 @@ public class GlobalConstants {
             String mapBinUrl = getProperty("SERVER_URL") + getProperty("Server2DMesUrl");
             if (factory != null && !isLocalMode) {
               //todo  mapBinClient = factory.createClient(mapBinUrl);
+                mapBinClient = factory.createClient(mapBinUrl);
+                logger.info("创建mapBinClient成功！");
             }
         }
         if (getProperty("REDUNDANCYDATA_SAVED_DAYS") != null) {
