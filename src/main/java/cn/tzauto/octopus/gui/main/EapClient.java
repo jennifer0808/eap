@@ -263,9 +263,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //                        baseWebservicePublish.publish();
 //                    }
 //                }.start();
-                //自动注销功能
+                //自动注销
                 CommonUtil.startSessCtrlJob(this);
-
                 //Quartz监控
                 if ("1".equals(GlobalConstants.getProperty("MONITOR_PARA"))) {
                     CommonUtil.startMonitorJob(this);

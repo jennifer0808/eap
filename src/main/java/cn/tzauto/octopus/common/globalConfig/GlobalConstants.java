@@ -214,7 +214,6 @@ public class GlobalConstants {
         if (getProperty("SERVER_URL") != null) {
             String mapBinUrl = getProperty("SERVER_URL") + getProperty("Server2DMesUrl");
             if (factory != null && !isLocalMode) {
-              //todo  mapBinClient = factory.createClient(mapBinUrl);
                 mapBinClient = factory.createClient(mapBinUrl);
                 logger.info("创建mapBinClient成功！");
             }

@@ -1,20 +1,17 @@
 package cn.tzauto.octopus.gui.widget.svquerypane;
 
 import cn.tzauto.octopus.common.util.language.languageUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -48,7 +45,7 @@ public class SVQueryPaneController implements Initializable {
 
         svid = JTF_SVID.getText();
         if (svid == null || !svid.matches("\\d+")) {
-            JOptionPane.showMessageDialog(null, "请输入正确格式的SVID");
+            CommonUiUtil.alert(Alert.AlertType.ERROR, "请输入正确格式的SVID！");
             return;
         }
         Map resultMap = new HashMap();
@@ -58,12 +55,12 @@ public class SVQueryPaneController implements Initializable {
             resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
         }
         if (resultMap == null) {
-            JOptionPane.showMessageDialog(null, "未查到相应值");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！");
             return;
         }
         String SVValue = String.valueOf(resultMap.get("Value"));
         if (SVValue == null || "".equals(SVValue) || "null".equals(SVValue)) {
-            JOptionPane.showMessageDialog(null, "未查到相应值");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！");
             return;
         } else {
             JTF_SVValue.setText(SVValue);
