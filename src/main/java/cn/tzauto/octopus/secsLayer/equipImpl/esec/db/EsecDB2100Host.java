@@ -723,7 +723,7 @@ public class EsecDB2100Host extends EquipHost {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList listtmp = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList listtmp = (ArrayList)  data.get("EPPD");
         if (listtmp == null || listtmp.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
