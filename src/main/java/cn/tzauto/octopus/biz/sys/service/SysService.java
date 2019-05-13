@@ -4,43 +4,43 @@
  */
 package cn.tzauto.octopus.biz.sys.service;
 
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.service.BaseService;
-import cn.tzauto.octopus.biz.sys.domain.SysOffice;
 import cn.tzauto.octopus.biz.sys.dao.SysDictMapper;
 import cn.tzauto.octopus.biz.sys.dao.SysOfficeMapper;
 import cn.tzauto.octopus.biz.sys.dao.SysUserMapper;
 import cn.tzauto.octopus.biz.sys.domain.SysDict;
+import cn.tzauto.octopus.biz.sys.domain.SysOffice;
 import cn.tzauto.octopus.biz.sys.domain.SysUser;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.service.BaseService;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 
 /**
- *
  * @author root
  */
 public class SysService extends BaseService {
 
     private static final Logger logger = Logger.getLogger(SysService.class);
     private SysOfficeMapper sysOfficeMapper;
-    private SysUserMapper sysUserMapper;  
+    private SysUserMapper sysUserMapper;
     private SysDictMapper sysDictMapper;
 
     public SysService(SqlSession sqlSession) {
         super(sqlSession);
         sysOfficeMapper = this.session.getMapper(SysOfficeMapper.class);
-        sysUserMapper = this.session.getMapper(SysUserMapper.class);    
+        sysUserMapper = this.session.getMapper(SysUserMapper.class);
         sysDictMapper = this.session.getMapper(SysDictMapper.class);
     }
 
     /**
      * 插入数据
+     *
      * @param record
-     * @return 
+     * @return
      */
     public int insert(SysUser record) {
         return this.sysUserMapper.insert(record);
@@ -48,18 +48,20 @@ public class SysService extends BaseService {
 
     /**
      * 删除
+     *
      * @param record
-     * @return 
+     * @return
      */
-    public int  deleteByPrimaryKey(SysUser record) {
+    public int deleteByPrimaryKey(SysUser record) {
         return this.sysUserMapper.deleteByPrimaryKey(record);
-        
+
     }
 
     /**
      * 根据登录姓名进行查询
+     *
      * @param loginName
-     * @return 
+     * @return
      */
     public List<SysUser> searchRecipeByPara(String loginName) {
         Map paraMap = new HashMap();
@@ -69,8 +71,9 @@ public class SysService extends BaseService {
 
     /**
      * 修改
+     *
      * @param record 登录对象
-     * @return 
+     * @return
      */
     public int updateSysUser(SysUser record) {
         return this.sysUserMapper.updateSysUser(record);
@@ -92,8 +95,9 @@ public class SysService extends BaseService {
 
     /**
      * 根据登录用户名查询SysUser
+     *
      * @param loginName
-     * @return 
+     * @return
      */
     public List<SysUser> searchSysUsersByLoginName(String loginName) {
         Map paraMap = new HashMap();
@@ -103,10 +107,11 @@ public class SysService extends BaseService {
 
     /**
      * 根据登录用户名密码查询SysUser
+     *
      * @param loginName
      * @return
      */
-    public List<SysUser> searchSysUsersByLoginNamePassword(String loginName,String passWord) {
+    public List<SysUser> searchSysUsersByLoginNamePassword(String loginName, String passWord) {
         Map paraMap = new HashMap();
         paraMap.put("loginName", loginName);
         paraMap.put("passWord", passWord);
@@ -119,8 +124,9 @@ public class SysService extends BaseService {
 
     /**
      * 根据SysUser主键id查询SysUser
+     *
      * @param id
-     * @return 
+     * @return
      */
     public SysUser getSysUserById(String id) {
         return this.sysUserMapper.selectByPrimaryKey(id);
@@ -128,7 +134,8 @@ public class SysService extends BaseService {
 
     /**
      * 删除整张sys_user表里面的数据
-     * @return 
+     *
+     * @return
      */
     public int deleteSysUserBatch(List<SysUser> sysUserList) {
         return this.sysUserMapper.deleteBatch(sysUserList);
@@ -136,8 +143,9 @@ public class SysService extends BaseService {
 
     /**
      * 更新SysUSer
+     *
      * @param sysUser
-     * @return 
+     * @return
      */
     public int modifySysUser(SysUser sysUser) {
         return this.sysUserMapper.updateByPrimaryKeyWithBLOBs(sysUser);
@@ -183,5 +191,9 @@ public class SysService extends BaseService {
 
     public List<Map> searchAllSysProperty() {
         return this.sysDictMapper.searchSysProperties();
+    }
+
+    public int modifyVersionNo(String versionNo) {
+        return this.sysDictMapper.updateVersionNo(versionNo);
     }
 }

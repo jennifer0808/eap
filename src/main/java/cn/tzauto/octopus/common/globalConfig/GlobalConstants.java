@@ -11,6 +11,7 @@ import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.mq.MessageUtils;
+import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
@@ -19,7 +20,8 @@ import org.apache.cxf.endpoint.dynamic.DynamicClientFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import java.io.InputStream;
+import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -59,6 +61,7 @@ public class GlobalConstants {
     public static MessageUtils C2SAlarmQueue = new MessageUtils("C2S.Q.ALARM_D");
     public static MessageUtils C2SAlarmQueueTest = new MessageUtils("C2S.Q.ALARM_Dtest");
     public static MessageUtils C2SInitQueue = new MessageUtils("C2S.Q.INITIAL_REQUEST");
+    public static MessageUtils C2SClientQueue = new MessageUtils("C2S.Q.CLIENT");
     public static MessageUtils C2SLogQueue = new MessageUtils("C2S.Q.LOG_D");
     public static MessageUtils C2SEqptLogQueue = new MessageUtils("C2S.Q.EQPT_LOG_D");
     public static MessageUtils C2SEqptRemoteCommand = new MessageUtils("C2S.Q.EQPT_RCMD");
@@ -130,6 +133,7 @@ public class GlobalConstants {
     public static List<DeviceInfo> deviceInfos;
     public static DynamicClientFactory factory = null;
     public static Client mapBinClient = null;
+    public static String LOCAL_CONFIG_FILE_PATH = System.getProperties().getProperty("user.home") + "\\JcAutoClient\\sys.conf";
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -156,6 +160,9 @@ public class GlobalConstants {
     }
 
     public static boolean initData() {
+        if (!writeSysConfigFile2Local()) {
+            return false;
+        }
         clientId = getProperty("clientId");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -304,5 +311,90 @@ public class GlobalConstants {
             }
         }
 
+    }
+
+    public static boolean writeSysConfigFile2Local() {
+        if (FileUtil.checkExist(GlobalConstants.LOCAL_CONFIG_FILE_PATH)) {
+            sysLogger.info("本地配置文件已存在,读取本地配置...");
+            return true;
+        }
+        sysLogger.info("本地配置文件不存在,写入默认配置...");
+        try {
+            InputStream inputStream = GlobalConstants.class.getResourceAsStream(GlobalConstants.CONFIG_FILE_PATH);
+            if (inputStream == null) {
+                sysLogger.fatal("系统配置文件缺失,启动失败...");
+                return false;
+            }
+            //创建文件夹
+            FileUtil.CreateDirectory(System.getProperties().getProperty("user.home") + "\\JcAutoClient");
+            //写入内容到指定文件
+            FileUtil.SaveFileByPhysicalDir(GlobalConstants.LOCAL_CONFIG_FILE_PATH, inputStream);
+            return true;
+        } catch (Exception e) {
+            sysLogger.fatal("写入配置文件失败,启动取消...");
+            sysLogger.error("Exception occur:" + e.getMessage());
+            return false;
+        }
+    }
+
+    public static Properties updateVersionNo() {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        SysService sysService = new SysService(sqlSession);
+
+        InputStream clientInputStream = null;
+        OutputStream fos = null;
+        Properties clientProp = new Properties();
+        try {
+            File localConfigFile = new File(System.getProperties().getProperty("user.home") + "\\JcAutoClient\\sys.conf");
+            if (!localConfigFile.exists()) {
+                localConfigFile.createNewFile();
+            }
+            clientInputStream = new FileInputStream(localConfigFile);
+            clientProp.load(clientInputStream);
+            clientInputStream.close();
+            fos = new FileOutputStream(System.getProperties().getProperty("user.home") + "\\JcAutoClient\\sys.conf");
+
+            // clientProp.setProperty("PRE_VERSION", String.valueOf(sysProperties.get("PRE_CLIENT_VERSION")));
+            //  clientProp.setProperty("VERSION", String.valueOf(sysProperties.get("CLIENT_VERSION")));
+            clientProp.setProperty("CLIENTCODE", clientId);
+            clientProp.setProperty("CLIENTPID", getClientPid());
+            clientProp.store(fos, "Please do not modify without permission");
+            fos.close();
+
+            sysService.modifyVersionNo(String.valueOf(clientProp.getProperty("VERSION")));
+            sqlSession.commit();
+            if (!GlobalConstants.isLocalMode) {
+                Map mqMap = new HashMap();
+                mqMap.put("msgName", "VersionUpdate");
+                mqMap.put("userId", "System");
+                mqMap.put("eventName", "ClientVersionUpdate");
+                mqMap.put("clientCode", clientId);
+                mqMap.put("clientIP", GlobalConstants.clientInfo.getClientIp());
+                mqMap.put("preVersion", String.valueOf(clientProp.getProperty("PRE_VERSION")));
+                mqMap.put("nowVersion", String.valueOf(clientProp.getProperty("VERSION")));
+                mqMap.put("eventDesc", "工控机软件版本为" + String.valueOf(clientProp.getProperty("VERSION")));
+                C2SClientQueue.sendMessage(mqMap);
+            }
+        } catch (Exception e) {
+            sysLogger.error("Update versionNo  error" + e.getMessage());
+            return clientProp;
+        } finally {
+            sqlSession.close();
+            try {
+                fos.close();
+                clientInputStream.close();
+            } catch (Exception e) {
+                sysLogger.error("Update versionNo  ok,  close stream error" + e.getMessage());
+            }
+        }
+        sysLogger.info("Update versionNo  ok");
+        return clientProp;
+    }
+
+    private static String getClientPid() {// get name representing the running Java virtual machine.
+        String name = ManagementFactory.getRuntimeMXBean().getName();
+// get pid
+        String pid = name.split("@")[0];
+        return pid;
     }
 }
