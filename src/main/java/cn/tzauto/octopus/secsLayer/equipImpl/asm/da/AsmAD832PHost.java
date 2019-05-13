@@ -68,17 +68,6 @@ public class AsmAD832PHost extends EquipHost {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CollEventID") != null) {
-                        long ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == StripMapUpCeid) {
-                            processS6F11inStripMapUpload(msg);
-                        } else {
-                            processS6F11in(msg);
-                        }
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().toLowerCase().contains("s6f11intodo")) {
-                    processS6F11Filter(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
                 } else {
