@@ -286,8 +286,10 @@ public class RcpMngPaneController implements Initializable {
 
     @FXML
     private void btnUploadClick() throws IOException {
-        GlobalConstants.isUpload = true;
-        new EapMainController().loginInterface();
+        if(!GlobalConstants.isUpload){
+            GlobalConstants.isUpload = true;
+            new EapMainController().loginInterface();
+        }
 //        new UploadPaneController().init();
     }
 

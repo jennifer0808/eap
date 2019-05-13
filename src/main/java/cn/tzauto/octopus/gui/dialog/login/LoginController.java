@@ -105,7 +105,7 @@ public class LoginController implements Initializable {
         if (userList.size() > 0 && userList != null) {
             if (GlobalConstants.isUpload) {
                 new UploadPaneController().init();
-                GlobalConstants.isUpload = false;
+                GlobalConstants.onlyOnePage = true;
                 loginStage.close();
                 return true;
             }

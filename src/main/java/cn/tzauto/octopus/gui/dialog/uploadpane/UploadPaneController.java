@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -31,6 +32,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isUpload;
+
 /**
  * FXML Controller class
  *
@@ -51,6 +55,28 @@ public class UploadPaneController implements Initializable {
     private static Logger logger = Logger.getLogger(UploadPaneController.class);
     private MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
     private String deviceId;
+
+    public static  Stage stage= new Stage();
+    static {
+        stage.setAlwaysOnTop(true);
+        System.out.println(stage.isAlwaysOnTop());
+
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                if (isUpload) {
+                    isUpload = false;
+                }
+            }
+        });
+
+
+        Image image = new Image(UploadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+
+        stage.getIcons().add(image);
+        stage.setTitle("Recipe上传");
+
+    }
     List<DeviceInfo> deviceInfos;
     private String deviceType;
     Boolean isAlert = true ;
@@ -126,11 +152,6 @@ public class UploadPaneController implements Initializable {
         dataTable = (TableView<RecipeName>) rcpMngPane.lookup("#dataTable");
         dataTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         fillComboBox(rcpMngPane);
-        Stage stage = new Stage();
-        Image image = new Image(UploadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
-
-        stage.getIcons().add(image);
-        stage.setTitle("Recipe上传");
         Scene scene = new Scene(rcpMngPane);
         stage.setScene(scene);
         stage.show();
