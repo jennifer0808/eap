@@ -114,6 +114,7 @@ public class EapMainController implements Initializable {
         loginStage.setResizable(false);
         loginStage.setTitle("用户登录");
         loginStage.show();
+        loginStage.setAlwaysOnTop(true);
         Button button = (Button) root.lookup("#loginButton");
         userName = (TextField) root.lookup("#userName");
         userName.setText(GlobalConstants.sysUser == null ? "" : GlobalConstants.sysUser.getLoginName());
@@ -128,7 +129,7 @@ public class EapMainController implements Initializable {
         loginStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                if (isUpload) {
+                if (isUpload && !onlyOnePage){
                     isUpload = false;
                 } else if (isDownload) {
                     isDownload = false;

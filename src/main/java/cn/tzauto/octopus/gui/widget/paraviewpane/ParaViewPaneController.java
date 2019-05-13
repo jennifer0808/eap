@@ -87,6 +87,7 @@ public class ParaViewPaneController implements Initializable {
         stage.setTitle("查看");
         stage.setWidth(800);
         stage.setHeight(500);
+        stage.setAlwaysOnTop(true);
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         AnchorPane pvPane = new AnchorPane();
