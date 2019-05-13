@@ -100,7 +100,6 @@ public class DownloadPaneController implements Initializable {
         stage.getIcons().add(image);
         Scene scene = new Scene(downloadPane);
         stage.setScene(scene);
-        stage.setAlwaysOnTop(true);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         //查询recipe表
