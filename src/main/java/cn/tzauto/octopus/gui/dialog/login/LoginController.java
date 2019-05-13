@@ -144,7 +144,7 @@ public class LoginController implements Initializable {
 //                    String recipeVersionNo = column.getCellData(row).toString();
 
 
-                GlobalConstants.isDownload = false;
+                GlobalConstants.onlyOnePageDownload = true;
                 loginStage.close();
                 return true;
             }
