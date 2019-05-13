@@ -5,20 +5,12 @@
  */
 package cn.tzauto.octopus.gui.main;
 
-import cn.tzauto.octopus.biz.sys.domain.SysUser;
-import cn.tzauto.octopus.biz.sys.service.SysService;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
 import cn.tzauto.octopus.gui.dialog.login.LoginController;
-import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.rcpmngpane.RcpMngPaneController;
-import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -29,22 +21,17 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.apache.ibatis.session.SqlSession;
 
 import java.io.IOException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isSvQuery;
 
 /**
  * @author luosy
@@ -199,29 +186,29 @@ public class EapMainController implements Initializable {
         TBP_Main = (TabPane) GlobalConstants.stage.root.lookup("#TBP_Main");
         TBP_Main.getTabs().remove(rcpMngtTab);
     }
-    /**
-     * Timer task to update the time display area
-     */
-
-    public class LabelTimerTask extends TimerTask {
-        SimpleDateFormat dateFormatter = new SimpleDateFormat(DEFAULT_TIME_FORMAT);
-
-        @Override
-        public void run() {
-            Platform.runLater(() -> {
-                time = dateFormatter.format(Calendar.getInstance().getTime());
-                L_Clock.setText(time);
-            });
-
-        }
-    }
+//    /**
+//     * Timer task to update the time display area
+//     */
+//
+//    public class LabelTimerTask extends TimerTask {
+//        SimpleDateFormat dateFormatter = new SimpleDateFormat(DEFAULT_TIME_FORMAT);
+//
+//        @Override
+//        public void run() {
+//            Platform.runLater(() -> {
+//                time = dateFormatter.format(Calendar.getInstance().getTime());
+//                L_Clock.setText(time);
+//            });
+//
+//        }
+//    }
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         //定时器
-        Timer tmr = new Timer();
-        tmr.scheduleAtFixedRate(new LabelTimerTask(), new Date(), ONE_SECOND);
+//        Timer tmr = new Timer();
+//        tmr.scheduleAtFixedRate(new LabelTimerTask(), new Date(), ONE_SECOND);
 
         //按钮图标
         Image ImageMain = new Image("mainPicture.png");

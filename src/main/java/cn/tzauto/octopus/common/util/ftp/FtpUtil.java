@@ -320,7 +320,7 @@ public class FtpUtil {
 
         try {
             mkResult = client.makeDirectory(dir);
-            logger.error("创建目录>>" + dir + ">>" + mkResult);
+            logger.info("创建目录>>" + dir + ">>" + mkResult);
             return mkResult;
         } catch (Exception var4) {
             var4.printStackTrace();
