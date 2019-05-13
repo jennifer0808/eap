@@ -170,7 +170,7 @@ public class DownloadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！",stage);
             return;
         }
         if (flag > 1) {
