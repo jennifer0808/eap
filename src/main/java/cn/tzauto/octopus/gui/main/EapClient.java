@@ -31,7 +31,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -43,7 +42,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
@@ -68,7 +66,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
     private static final Logger logger = Logger.getLogger(EapClient.class.getName());
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
-    public static boolean flag = true;
     private String clientId;
     public List<DeviceInfo> deviceInfos;
 
@@ -179,23 +176,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
                     @Override
                     public void handle(ActionEvent event) {
-                        if(flag){
-                            stage.setMaximized(flag);
-                            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-                            stage.setX(primaryScreenBounds.getMinX());
-                            stage.setY(primaryScreenBounds.getMinY());
-                            double width = primaryScreenBounds.getWidth();
-                            stage.setWidth(width);
-                            double height = primaryScreenBounds.getHeight();
-                            stage.setHeight(height);
-                            root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
-                        }else{
-                            stage.setMaximized(flag);
-                            root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
-                        }
-
+                        stage.setMaximized(!stage.isMaximized());
+                        root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
                     }
                 });
 

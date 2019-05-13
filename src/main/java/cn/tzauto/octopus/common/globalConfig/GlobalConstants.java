@@ -114,8 +114,6 @@ public class GlobalConstants {
     public static Map<String, Boolean> hadHoldLotFlagMap = new HashMap();
     public static long MQ_MSG_WAIT_TIME = 30000;
     public static EapClient stage;
-    // 配合isUpload  控制上传窗口只有一个
-    public static boolean onlyOnePage = false;
 
     public static Boolean isUpload = false;
     public static Boolean isDownload = false;

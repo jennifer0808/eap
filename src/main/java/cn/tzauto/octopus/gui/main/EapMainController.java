@@ -141,7 +141,7 @@ public class EapMainController implements Initializable {
         loginStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                if (isUpload && !onlyOnePage){
+                if (isUpload) {
                     isUpload = false;
                 } else if (isDownload) {
                     isDownload = false;
