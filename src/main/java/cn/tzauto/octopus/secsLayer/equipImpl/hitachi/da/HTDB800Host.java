@@ -113,10 +113,13 @@ public class HTDB800Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11EquipStatusChange")) {
-                    processS6F11EquipStatusChange(msg);
+                }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    long ceid = (long) msg.get("CEID");
+                    if (ceid == 26) {
+                        processS6F11SpecialEvent(msg);
+                    }else{
+                        processS6F11in(msg);
+                    }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
                 } else {
@@ -128,6 +131,7 @@ public class HTDB800Host extends EquipHost {
             }
         }
     }
+
 
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
@@ -156,12 +160,14 @@ public class HTDB800Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                long ceid = (long) data.get("CEID");
-                if (ceid == 26) {
-                    processS6F11SpecialEvent(data);
-                } else {
-                    processS6F11in(data);
-                }
+                replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
+//                long ceid = (long) data.get("CEID");
+//                if (ceid == 26) {
+//                    processS6F11SpecialEvent(data);
+//                } else {
+//                    processS6F11in(data);
+//                }
             } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
@@ -315,9 +321,10 @@ public class HTDB800Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ceid = (long)data.get("CEID");
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("EquipStatus")), deviceType);
+//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            super.findDeviceRecipe();
             if (ceid == 80) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
             }
@@ -577,7 +584,7 @@ public class HTDB800Host extends EquipHost {
         recipePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         String recipeSecsGemPath = super.getRecipePathByConfig(recipe);
-        TransferUtil.setPPBody(ppbody, recipeType, recipeSecsGemPath);
+        TransferUtil.setPPBody(ppbody, 1, recipeSecsGemPath);
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
