@@ -82,7 +82,7 @@ public class SVQueryPaneController implements Initializable {
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("SV数据查询");
-
+        stage.setAlwaysOnTop(true);
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
             root = FXMLLoader.load(getClass().getClassLoader().getResource("SVQueryPane.fxml"),resourceBundle);

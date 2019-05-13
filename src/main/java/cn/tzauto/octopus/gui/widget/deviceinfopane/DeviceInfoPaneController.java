@@ -101,6 +101,7 @@ public class DeviceInfoPaneController implements Initializable {
         Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         stage.setTitle("设备详情");
+        stage.setAlwaysOnTop(true);
         Scene scene = new Scene(root);
         stage.setScene(scene);
         initData(deviceCode, root);

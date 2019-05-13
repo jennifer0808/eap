@@ -44,19 +44,19 @@ public class SimpleRecipeProperty {
     }
 
     public SimpleRecipeProperty(Recipe recipe, int num, String flag) {
-        number = new SimpleStringProperty(String.valueOf(num));
-        recipeName = new SimpleStringProperty(recipe.getRecipeName());
-        deviceCode = new SimpleStringProperty(recipe.getDeviceCode());
-        versionType = new SimpleStringProperty(recipe.getVersionType());
-        versionNo = new SimpleStringProperty(String.valueOf(recipe.getVersionNo()));
-        uploadBy = new SimpleStringProperty(recipe.getCreateBy());
-        uploadDate = new SimpleStringProperty(GlobalConstants.dateFormat.format(recipe.getCreateDate()));
-        this.recipe = recipe;
-        if ("N".equals(flag)) {
-            checkBox.setSelected(false);
-        } else if ("Y".equals(flag)) {
-            checkBox.setSelected(true);
-        }
+            number = new SimpleStringProperty(String.valueOf(num));
+            recipeName = new SimpleStringProperty(recipe.getRecipeName());
+            deviceCode = new SimpleStringProperty(recipe.getDeviceCode());
+            versionType = new SimpleStringProperty(recipe.getVersionType());
+            versionNo = new SimpleStringProperty(String.valueOf(recipe.getVersionNo()));
+            uploadBy = new SimpleStringProperty(recipe.getCreateBy());
+            uploadDate = new SimpleStringProperty(GlobalConstants.dateFormat.format(recipe.getCreateDate()));
+            this.recipe = recipe;
+            if ("N".equals(flag)) {
+                checkBox.setSelected(false);
+            } else if ("Y".equals(flag)) {
+                checkBox.setSelected(true);
+            }
     }
 
 
