@@ -160,6 +160,34 @@ public class LoginController implements Initializable {
 //                    return true;
 //                }
 
+//********************************************************************************************
+//            for (SysUser user : userList) {
+//                String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
+//                System.out.println("==========================="+dbPasswords);
+//                if (dbPasswords.equals(passwordStr)) {
+//                    GlobalConstants.sysUser = user;
+//
+//                    JB_MainPage.setVisible(true);
+//                    JB_RcpMng.setVisible(true);
+//                    JB_Login.setVisible(false);
+//                    JB_SignOut.setVisible(true);
+//                    localMode.setVisible(true);
+//                    loginStage.close();
+//                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+//
+//                 //todo   eapgv.setPartsVisible();
+//                    if (loginFlag) {
+//                        GlobalConstants.loginValid = true;
+//                    }
+//                    GlobalConstants.loginTime = new Date();
+//                    break;
+//                } else {
+//                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！");
+//                }
+//            }
+
+
+ //********************************************************************************************
             GlobalConstants.sysUser = userList.get(0);
             GlobalConstants.loginValid = true;
             GlobalConstants.loginTime = new Date();
@@ -168,7 +196,8 @@ public class LoginController implements Initializable {
             JB_RcpMng.setVisible(true);
             JB_Login.setVisible(false);
             JB_SignOut.setVisible(true);
-            localMode.setVisible(true);
+         //todo   localMode.setVisible(false);
+
             UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
             loginStage.close();
 
