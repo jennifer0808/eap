@@ -4,14 +4,14 @@
  */
 package cn.tzauto.octopus.common.globalConfig;
 
+import cn.tzauto.octopus.biz.device.domain.ClientInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.mq.MessageUtils;
 import cn.tzauto.octopus.gui.main.EapClient;
-import cn.tzauto.octopus.biz.device.domain.ClientInfo;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
 import org.apache.cxf.endpoint.Client;
@@ -213,9 +213,10 @@ public class GlobalConstants {
 
         if (getProperty("SERVER_URL") != null) {
             String mapBinUrl = getProperty("SERVER_URL") + getProperty("Server2DMesUrl");
+
             if (factory != null && !isLocalMode) {
-                mapBinClient = factory.createClient(mapBinUrl);
-                logger.info("创建mapBinClient成功！");
+//                mapBinClient = factory.createClient(mapBinUrl);
+//                logger.info("创建mapBinClient成功！");
             }
         }
         if (getProperty("REDUNDANCYDATA_SAVED_DAYS") != null) {
