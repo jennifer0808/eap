@@ -9,6 +9,7 @@ import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.security.DigestUtil;
 import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
 import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
@@ -100,7 +101,9 @@ public class LoginController implements Initializable {
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         SysService sysService = new SysService(sqlSession);
-        List<SysUser> userList = sysService.searchSysUsersByLoginNamePassword(userNameStr, passwordStr);
+        List<SysUser> userList = sysService.searchSysUsersByLoginName(userNameStr);
+//        List<SysUser> userList = sysService.searchSysUsersByLoginNamePassword(userNameStr, passwordStr);
+
         sqlSession.close();
         if (userList.size() > 0 && userList != null) {
             if (GlobalConstants.isUpload) {
@@ -159,46 +162,28 @@ public class LoginController implements Initializable {
 //                    loginStage.close();
 //                    return true;
 //                }
+            for (SysUser user : userList) {
+                String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
+               if(DigestUtil.validatePassword(passwordStr, user.getPassword())){
+                    GlobalConstants.sysUser = user;
 
-//********************************************************************************************
-//            for (SysUser user : userList) {
-//                String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
-//                System.out.println("==========================="+dbPasswords);
-//                if (dbPasswords.equals(passwordStr)) {
-//                    GlobalConstants.sysUser = user;
-//
-//                    JB_MainPage.setVisible(true);
-//                    JB_RcpMng.setVisible(true);
-//                    JB_Login.setVisible(false);
-//                    JB_SignOut.setVisible(true);
-//                    localMode.setVisible(true);
-//                    loginStage.close();
-//                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
-//
-//                 //todo   eapgv.setPartsVisible();
-//                    if (loginFlag) {
-//                        GlobalConstants.loginValid = true;
-//                    }
-//                    GlobalConstants.loginTime = new Date();
-//                    break;
-//                } else {
-//                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！");
-//                }
-//            }
+                    JB_MainPage.setVisible(true);
+                    JB_RcpMng.setVisible(true);
+                    JB_Login.setVisible(false);
+                    JB_SignOut.setVisible(true);
+                  //todo 本地模式隐藏  localMode.setVisible(true);
 
+                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+                    if (loginFlag) {
+                        GlobalConstants.loginValid = true;
+                    }
+                    GlobalConstants.loginTime = new Date();
+                    break;
+                } else {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！");
+                }
+            }
 
- //********************************************************************************************
-            GlobalConstants.sysUser = userList.get(0);
-            GlobalConstants.loginValid = true;
-            GlobalConstants.loginTime = new Date();
-
-            JB_MainPage.setVisible(true);
-            JB_RcpMng.setVisible(true);
-            JB_Login.setVisible(false);
-            JB_SignOut.setVisible(true);
-         //todo   localMode.setVisible(false);
-
-            UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
             loginStage.close();
 
         } else {
