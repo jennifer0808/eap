@@ -129,11 +129,11 @@ public class EapMainController implements Initializable {
         loginStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                if (isUpload && !onlyOnePage){
+                if (isUpload && !onlyOnePageUpload){
                     isUpload = false;
-                } else if (isDownload) {
+                } else if (isDownload && !onlyOnePageDownload) {
                     isDownload = false;
-                } else if (isSvQuery) {
+                } else if (isSvQuery ) {
                     isSvQuery = false;
                 }
                 loginmark=0;

@@ -9,6 +9,7 @@ import cn.tzauto.octopus.common.util.language.languageUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -20,6 +21,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 
 import java.io.IOException;
@@ -61,6 +63,22 @@ public class ParaViewPaneController implements Initializable {
     @FXML
     private TextField JTF_CreateTime;
 
+    public static  Stage stage= new Stage();
+    public static boolean flag = false;
+    static {
+        stage.setTitle("查看");
+        stage.setWidth(800);
+        stage.setHeight(500);
+
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                flag = false;
+            }
+        });
+    }
+
 //    private List<RecipePara> recipeParaList = new ArrayList<>(); //放置数据的集合
 
     ObservableList<SimpleRecipeParaProperty> list = FXCollections.observableArrayList(); //javaFX 的数据集合
@@ -83,11 +101,7 @@ public class ParaViewPaneController implements Initializable {
     }
 
     public void init(String deviceCode, String recipeName, String versionType, String recipeVersionNo) {
-        Stage stage = new Stage();
-        stage.setTitle("查看");
-        stage.setWidth(800);
-        stage.setHeight(500);
-        stage.setAlwaysOnTop(true);
+        flag = true;
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
         AnchorPane pvPane = new AnchorPane();

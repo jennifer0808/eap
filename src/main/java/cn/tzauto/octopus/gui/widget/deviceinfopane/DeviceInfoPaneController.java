@@ -16,6 +16,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -27,6 +28,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -64,6 +66,18 @@ public class DeviceInfoPaneController implements Initializable {
     @FXML
     private RadioButton JRB_EngineerMode;
 
+    public static  Stage stage= new Stage();
+    public static boolean flag = false;
+    static {
+        stage.setTitle("设备详情");
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                flag = false;
+            }
+        });
+    }
     /**
      * Initializes the controller class.
      */
@@ -88,9 +102,9 @@ public class DeviceInfoPaneController implements Initializable {
     }
 
     public void init(String deviceCode) {
+        flag = true;
         this.deviceCode = deviceCode;
         // TODO   
-        Stage stage = new Stage();
         Pane root = new Pane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
@@ -100,8 +114,7 @@ public class DeviceInfoPaneController implements Initializable {
         }
         Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
-        stage.setTitle("设备详情");
-        stage.setAlwaysOnTop(true);
+
         Scene scene = new Scene(root);
         stage.setScene(scene);
         initData(deviceCode, root);

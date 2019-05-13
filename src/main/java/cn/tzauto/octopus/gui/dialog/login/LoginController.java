@@ -108,7 +108,7 @@ public class LoginController implements Initializable {
         if (userList.size() > 0 && userList != null) {
             if (GlobalConstants.isUpload) {
                 new UploadPaneController().init();
-                GlobalConstants.onlyOnePage = true;
+                GlobalConstants.onlyOnePageUpload = true;
                 loginStage.close();
                 return true;
             }
@@ -147,7 +147,7 @@ public class LoginController implements Initializable {
 //                    String recipeVersionNo = column.getCellData(row).toString();
 
 
-                GlobalConstants.isDownload = false;
+                GlobalConstants.onlyOnePageDownload = true;
                 loginStage.close();
                 return true;
             }
