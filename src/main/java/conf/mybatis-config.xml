@@ -18,9 +18,9 @@
                 <!--<property name="url" value="jdbc:mysql://localhost:3306/autofi7300?characterEncoding=utf-8&amp;autoReconnect=true" />-->
 
                 <!--<property name="url" value="jdbc:mysql://172.17.37.4:3306/octopus?characterEncoding=utf-8" />-->
-                <property name="url" value="jdbc:mysql://localhost:3306/htautoclient?characterEncoding=utf-8&amp;autoReconnect=true" />
+                <property name="url" value="jdbc:mysql://39.104.206.97:3306/octopus?characterEncoding=utf-8&amp;autoReconnect=true" />
                 <property name="username" value="root" />
-                <property name="password" value="123456" />
+                <property name="password" value="654321" />
                 <!--                <property name="initialSize" value="1" />
                 <property name="minIdle" value="1" />
                 <property name="maxActive" value="20" />

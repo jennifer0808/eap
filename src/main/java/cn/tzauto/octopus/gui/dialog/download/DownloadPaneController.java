@@ -58,7 +58,6 @@ public class DownloadPaneController implements Initializable {
     private Recipe recipe;
     public static  Stage stage= new Stage();
     static {
-         stage = new Stage();
         stage.setAlwaysOnTop(true);
         stage.setTitle("Recipe 下载");
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
