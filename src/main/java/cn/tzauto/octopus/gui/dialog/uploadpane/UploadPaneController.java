@@ -312,6 +312,7 @@ public class UploadPaneController implements Initializable {
 
     private void btnCancelClick(Stage stage) {
         stage.close();
+        isUpload = false;
     }
 
     String deviceCode = null;
