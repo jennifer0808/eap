@@ -372,12 +372,12 @@ public class AsmTwin832Host extends EquipHost {
         List<RecipePara> recipeParaList = new ArrayList();
         if (data != null && !data.isEmpty()) {
             byte[] ppbody = (byte[])  data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.info("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析，暂无
             recipeParaList = getRecipeParasByECSV();
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
+
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
