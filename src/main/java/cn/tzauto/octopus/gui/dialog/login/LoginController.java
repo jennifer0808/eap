@@ -27,6 +27,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import org.apache.ibatis.session.SqlSession;
 
 import java.net.URL;
@@ -202,7 +203,8 @@ public class LoginController implements Initializable {
             loginStage.close();
 
         } else {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
             return false;
         }
 

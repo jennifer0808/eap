@@ -174,10 +174,10 @@ public class DownloadPaneController implements Initializable {
             return;
         }
         if (flag > 1) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！",stage);
             return;
         }
-        Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?");
+        Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?",stage);
         if (alert.get() == ButtonType.OK) {
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
@@ -211,11 +211,11 @@ public class DownloadPaneController implements Initializable {
                         recipeOperationLog.setOperationResult("Y");
                         //手动下成功给服务端发mq
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！");
+                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
 
                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
                     } else {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
 
                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                         mqMap.put("eventDesc", downloadResult);
@@ -228,7 +228,7 @@ public class DownloadPaneController implements Initializable {
                 }
 
             } catch (Exception e) {
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
                 GlobalConstants.sysLogger.error(e.toString());
                 sqlSession.rollback();
                 logger.error("Exception:", e);

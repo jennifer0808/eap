@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isUpload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.loginStage;
 
 /**
  * FXML Controller class
@@ -187,7 +188,7 @@ public class UploadPaneController implements Initializable {
                 deviceId = deviceInfo.getDeviceCode();
                 Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
                 if (resultMap == null) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                     return;
                 }
                 eppd = (ArrayList) resultMap.get("eppd");
@@ -211,12 +212,12 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
             return;
         }
 
         if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！",stage);
             return;
         }
 
@@ -238,7 +239,7 @@ public class UploadPaneController implements Initializable {
                 }
 
                 if (deviceCode.equals("")) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
                     GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                     return;
                 }
@@ -281,7 +282,7 @@ public class UploadPaneController implements Initializable {
 
                     //打日志
                     if (!re) {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传",stage);
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"上传失败，ftp文件传送失败，请重新上传");
                         isAlert = false ;
                     } else {
@@ -294,13 +295,13 @@ public class UploadPaneController implements Initializable {
               }
            }
             if(isAlert){
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
             }
 
         }catch(Exception e){
             sqlSession.rollback();
             logger.error("Exception:", e);
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！",stage);
             return;
         }finally {
             sqlSession.close();
