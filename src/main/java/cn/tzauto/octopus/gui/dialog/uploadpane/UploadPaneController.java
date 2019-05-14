@@ -59,8 +59,6 @@ public class UploadPaneController implements Initializable {
     public static  Stage stage= new Stage();
     static {
         stage.setAlwaysOnTop(true);
-        System.out.println(stage.isAlwaysOnTop());
-
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {

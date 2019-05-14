@@ -6,6 +6,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.stage.Stage;
 
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,34 @@ public class CommonUiUtil {
     public static Optional<ButtonType> alert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);
 
+      if(null != type) {
+          switch (type) {
+              case INFORMATION:
+                  alert.setTitle("Information");
+                  break;
+              case WARNING:
+                  alert.setTitle("Warning");
+                  break;
+              case CONFIRMATION:
+                  alert.setTitle("Confirmation");
+                  break;
+          }
+      }
+        alert.setHeaderText(null);
+     //   Image image = new Image(CommonUiUtil.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+//        ImageView alertImage = new ImageView(image);
+//        alert.setGraphic(alertImage);
+//        alert.getIcons().add(image);
+        alert.setContentText(message);
+
+
+        return alert.showAndWait();
+
+
+    }
+    public static Optional<ButtonType> alert(Alert.AlertType type, String message, Stage stage) {
+        Alert alert = new Alert(type);
+        alert.initOwner(stage);
       if(null != type) {
           switch (type) {
               case INFORMATION:

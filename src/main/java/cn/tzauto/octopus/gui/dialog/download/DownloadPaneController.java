@@ -9,12 +9,14 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
+import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -25,12 +27,16 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isUpload;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -50,7 +56,19 @@ public class DownloadPaneController implements Initializable {
     private Label RcpName;
 
     private Recipe recipe;
-
+    public static  Stage stage= new Stage();
+    static {
+        stage.setAlwaysOnTop(true);
+        stage.setTitle("Recipe 下载");
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                if (isDownload) {
+                    isDownload = false;
+                }
+            }
+        });
+    }
 //    @FXML
 //    private TextField TX_EventLog;
 
@@ -70,8 +88,6 @@ public class DownloadPaneController implements Initializable {
 
 
     public void init(String deviceCode, String recipeName, String versionType, String recipeVersionNo) {
-        Stage stage = new Stage();
-        stage.setTitle("Recipe 下载");
         AnchorPane downloadPane = new AnchorPane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
@@ -84,7 +100,6 @@ public class DownloadPaneController implements Initializable {
         stage.getIcons().add(image);
         Scene scene = new Scene(downloadPane);
         stage.setScene(scene);
-
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         //查询recipe表
@@ -155,7 +170,7 @@ public class DownloadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！",stage);
             return;
         }
         if (flag > 1) {

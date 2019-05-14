@@ -105,11 +105,17 @@ public class EquipStatusPaneController implements Initializable {
      * 设备详情
      */
     private void showDeviceInfo(String deviceCode) {
+        if(DeviceInfoPaneController.flag){
+            return;
+        }
         new DeviceInfoPaneController().init(deviceCode);
 
     }
 
     public void showSVQuery(String deviceCode) {
+        if(SVQueryPaneController.flag){
+            return;
+        }
         new SVQueryPaneController().init(deviceCode);
 
 //        GlobalConstants.isSvQuery = true;

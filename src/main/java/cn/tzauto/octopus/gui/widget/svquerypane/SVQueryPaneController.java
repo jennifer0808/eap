@@ -3,6 +3,7 @@ package cn.tzauto.octopus.gui.widget.svquerypane;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -11,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.net.URL;
@@ -27,6 +29,19 @@ public class SVQueryPaneController implements Initializable {
 
     @FXML
     private TextField deviceCodeField;
+
+    public static  Stage stage= new Stage();
+    public static boolean flag = false;
+    static {
+        stage.setTitle("SV数据查询");
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                flag = false;
+            }
+        });
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -76,12 +91,11 @@ public class SVQueryPaneController implements Initializable {
     Pane root = new Pane();
 
     public void init(String deviceCode) {
+        flag = true;
         // TODO String : deviceId, String : deviceCode
         this.deviceCode = deviceCode;
-        Stage stage = new Stage();
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
-        stage.setTitle("SV数据查询");
 
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());

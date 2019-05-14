@@ -308,8 +308,10 @@ public class RcpMngPaneController implements Initializable {
             CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
             return;
         }else if(flag==1){
-            GlobalConstants.isDownload = true;
-            new EapMainController().loginInterface();
+            if(!GlobalConstants.isDownload) {
+                GlobalConstants.isDownload = true;
+                new EapMainController().loginInterface();
+            }
         }else{
             CommonUiUtil.alert(Alert.AlertType.WARNING, "只能选中一条Recipe信息！");
             return;
@@ -409,6 +411,9 @@ public class RcpMngPaneController implements Initializable {
             CommonUiUtil.alert(Alert.AlertType.WARNING, "没有选中的Recipe信息！");
             return;
         }else if(flag==1){
+            if(ParaViewPaneController.flag){
+                return;
+            }
             for (int i = 0; i < list.size(); i++) {
                 SimpleRecipeProperty srp = list.get(i);
                 if (srp.getDelCheckBox().isSelected()) {
