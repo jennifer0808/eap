@@ -152,7 +152,7 @@ public class AsmAD838Host extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         List<RecipePara> recipeParaList = null;
         try {
-            byte[] ppbody = (byte[]) getPPBODY("PPBODY");
+            byte[] ppbody = (byte[]) getPPBODY(recipeName);
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             recipeParaList = getRecipeParasByECSV();
