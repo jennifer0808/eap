@@ -179,13 +179,14 @@ public class LoginController implements Initializable {
                         GlobalConstants.loginValid = true;
                     }
                     GlobalConstants.loginTime = new Date();
-                    break;
+                   loginStage.close();
                 } else {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！",loginStage);
+                    return  false;
                 }
             }
 
-            loginStage.close();
+
 
         } else {
 
