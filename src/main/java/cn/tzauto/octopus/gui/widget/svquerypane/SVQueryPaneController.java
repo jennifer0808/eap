@@ -86,6 +86,7 @@ public class SVQueryPaneController implements Initializable {
 
     private void buttonOKClick(Stage stage) {
         stage.close();
+        flag = false;
     }
 
     Pane root = new Pane();

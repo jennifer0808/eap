@@ -99,6 +99,7 @@ public class DeviceInfoPaneController implements Initializable {
 
     private void buttonOKClick(Stage stage) {
         stage.close();
+        flag=false;
     }
 
     public void init(String deviceCode) {
