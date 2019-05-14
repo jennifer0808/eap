@@ -175,8 +175,8 @@
       </GridPane>
       <GridPane style="-fx-background-color: #2F78C0;" GridPane.rowIndex="1">
          <children>
-            <Label prefHeight="15.0" prefWidth="524.0" text="Copyright 南京泰治自动化技术有限公司" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label fx:id="L_Clock" mnemonicParsing="false" prefHeight="19.0" prefWidth="128.0" text="time" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Label prefHeight="15.0" prefWidth="524.0" text="                                      Copyright 南京泰治自动化技术有限公司" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label fx:id="L_Clock" mnemonicParsing="false" prefHeight="19.0" prefWidth="128.0" text="time" visible="false" GridPane.columnIndex="2" GridPane.rowIndex="1" />
          </children>
          <columnConstraints>
             <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="123.0" />
