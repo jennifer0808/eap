@@ -187,6 +187,7 @@ public class TransferUtil {
                 out.close();
             }
         } catch (Exception e) {
+            logger.error(ppbody.toString()+","+rcptype+",存储路径：["+recipePath+"]",e);
             e.printStackTrace();
         }
     }

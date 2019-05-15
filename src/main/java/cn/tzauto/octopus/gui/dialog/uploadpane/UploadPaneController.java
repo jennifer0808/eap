@@ -192,6 +192,7 @@ public class UploadPaneController implements Initializable {
                     return;
                 }
                 eppd = (ArrayList) resultMap.get("eppd");
+                recipeNames = FXCollections.observableArrayList();
                 for (int i = 0; i < eppd.size(); i++) {
                     recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
                 }
