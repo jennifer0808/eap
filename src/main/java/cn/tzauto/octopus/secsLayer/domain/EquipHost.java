@@ -1873,6 +1873,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
                         resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
+                        logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -1904,10 +1905,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 DataMsgMap data = activeWrapper.sendS2F13out(dataIdList, ecFormat);
 
                 if (data != null && data.get("EC") != null) {
-                    ecValueList = (ArrayList) data.get("EC");
-                    for (int i = 0; i < ecValueList.size(); i++) {
-                        resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
-                    }
+                    //判断返回值String/ArrayList
+                        ecValueList = (ArrayList) data.get("EC");
+                        for (int i = 0; i < ecValueList.size(); i++) {
+                            resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                        }
+
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
                 if (data == null || data.isEmpty()) {
@@ -2621,7 +2624,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             recipePara.setParaCode(recipeTemplate.getParaCode());
             recipePara.setParaMeasure(recipeTemplate.getParaUnit());
             recipePara.setParaName(recipeTemplate.getParaName());
-            recipePara.setSetValue(String.valueOf(totalValueMap.get(recipeTemplate.getDeviceVariableId())));
+            recipePara.setSetValue(String.valueOf(totalValueMap.get(new Long(recipeTemplate.getDeviceVariableId()))));
             recipeParas.add(recipePara);
         }
         return recipeParas;
