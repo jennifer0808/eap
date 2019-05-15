@@ -35,8 +35,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isUpload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -65,6 +64,7 @@ public class DownloadPaneController implements Initializable {
             public void handle(WindowEvent event) {
                 if (isDownload) {
                     isDownload = false;
+                    onlyOnePageDownload = false;
                 }
             }
         });
@@ -151,13 +151,13 @@ public class DownloadPaneController implements Initializable {
         stage.setResizable(false);
 
         Button button = (Button) downloadPane.lookup("#BTNOK");
-        button.setOnAction((value) -> btnOKClick(stage));
+        button.setOnAction((value) -> btnOKClick());
 
         Button buttonC = (Button) downloadPane.lookup("#BTNCancle");
-        buttonC.setOnAction((value) -> btnCancelClick(stage));
+        buttonC.setOnAction((value) -> btnCancelClick());
     }
 
-    private void btnOKClick(Stage stage) {
+    private void btnOKClick() {
         java.util.List deviceCodes = new ArrayList();
         int flag = 0;
 
@@ -237,13 +237,17 @@ public class DownloadPaneController implements Initializable {
             }
 
             stage.close();
+            isDownload = false;
+            onlyOnePageDownload = false;
         }
 
 
     }
 
-    private void btnCancelClick(Stage stage) {
+    private void btnCancelClick() {
         stage.close();
+        isDownload = false;
+        onlyOnePageDownload = false;
     }
 
 
