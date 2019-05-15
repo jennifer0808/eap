@@ -1261,7 +1261,7 @@ public class RecipeService extends BaseService {
         SysOffice sysOffice = sysOfficeMapper.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
         String returnPath = "";
         returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType() + "/" + deviceInfo.getDeviceCode() + "/" + recipe.getRecipeName().replace("/", "@").replace("\\", "@") + "/";
-        logger.info(returnPath);
+        logger.info("recipe上传时的存储路径:"+returnPath);
         return returnPath;
     }
 

@@ -2574,6 +2574,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return recipeParas;
     }
 
+
     protected List getECSVIdList(List<RecipeTemplate> recipeTemplates) {
         List ecsvIdList = new ArrayList();
         if (recipeTemplates == null || recipeTemplates.size() < 1) {
@@ -2581,9 +2582,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         for (int i = 0; i < recipeTemplates.size(); i++) {
             ecsvIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
+//            ecsvIdList.add(((RecipeTemplate)recipeTemplates.get(i)).getDeviceVariableId());
         }
         return ecsvIdList;
     }
+
+
 
     protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
         List<RecipeTemplate> totaltTemplates = null;
