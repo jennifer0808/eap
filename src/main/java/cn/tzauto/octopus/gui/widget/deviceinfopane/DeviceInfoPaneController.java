@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -66,22 +67,34 @@ public class DeviceInfoPaneController implements Initializable {
     @FXML
     private RadioButton JRB_EngineerMode;
 
-    public static  Stage stage= new Stage();
-    public static boolean flag = false;
-    static {
+    public   Stage stage= new Stage();
+    public static Map<String,Boolean>  flag = new HashMap<>();
+    /**
+     * Initializes the controller class.
+     */
+    private final String deviceCode;
+    public DeviceInfoPaneController( ) {
+        this.deviceCode = null;
         stage.setTitle("设备详情");
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                flag = false;
+                flag.put(deviceCode,false) ;
             }
         });
     }
-    /**
-     * Initializes the controller class.
-     */
-    private String deviceCode;
+    public DeviceInfoPaneController( String dc) {
+        this.deviceCode = dc;
+        stage.setTitle("设备详情");
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                flag.put(deviceCode,false) ;
+            }
+        });
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -99,19 +112,19 @@ public class DeviceInfoPaneController implements Initializable {
 
     private void buttonOKClick(Stage stage) {
         stage.close();
-        flag=false;
+        flag.put(deviceCode,false) ;
     }
 
-    public void init(String deviceCode) {
-        flag = true;
-        this.deviceCode = deviceCode;
+    public void init() {
+        flag.put(deviceCode,true) ;
+//        this.deviceCode = deviceCode;
         // TODO   
         Pane root = new Pane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
             root = FXMLLoader.load(getClass().getClassLoader().getResource("DeviceInfoPane.fxml"), resourceBundle);
         } catch (IOException ex) {
-
+            ex.printStackTrace();
         }
         Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
