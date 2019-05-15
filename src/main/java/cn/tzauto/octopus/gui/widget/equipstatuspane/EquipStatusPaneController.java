@@ -105,18 +105,34 @@ public class EquipStatusPaneController implements Initializable {
      * 设备详情
      */
     private void showDeviceInfo(String deviceCode) {
-        if(DeviceInfoPaneController.flag){
+        if(DeviceInfoPaneController.flag.get(deviceCode)==null){
+            DeviceInfoPaneController.flag.put(deviceCode,false);
+        }else if(DeviceInfoPaneController.flag.get(deviceCode)){
             return;
         }
-        new DeviceInfoPaneController().init(deviceCode);
+        try{
+            new DeviceInfoPaneController(deviceCode).init();
+        }catch (Exception e){
+            DeviceInfoPaneController.flag.put(deviceCode,false);
+            e.printStackTrace();
+        }
+
 
     }
 
     public void showSVQuery(String deviceCode) {
-        if(SVQueryPaneController.flag){
+
+        if(SVQueryPaneController.flag.get(deviceCode)==null){
+            SVQueryPaneController.flag.put(deviceCode,false);
+        }else if(SVQueryPaneController.flag.get(deviceCode)){
             return;
         }
-        new SVQueryPaneController().init(deviceCode);
+        try{
+            new SVQueryPaneController(deviceCode).init();
+        }catch (Exception e){
+            SVQueryPaneController.flag.put(deviceCode,false);
+            e.printStackTrace();
+        }
 
 //        GlobalConstants.isSvQuery = true;
 //        try {

@@ -163,7 +163,9 @@ public class ParaViewPaneController implements Initializable {
     }
 
     @FXML
-    private void closeClick(ActionEvent event) {
-        ((Node) (event.getSource())).getScene().getWindow().hide();
+    private void closeClick() {
+//        ((Node) (event.getSource())).getScene().getWindow().hide();
+        stage.close();
+        flag = false;
     }
 }

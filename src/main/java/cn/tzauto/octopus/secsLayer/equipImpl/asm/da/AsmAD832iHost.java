@@ -311,6 +311,8 @@ public class AsmAD832iHost extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) {
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = getRecipePathByConfig(recipe);
         Map map = new HashMap();
         Map resultMap = new HashMap();
         map = sendS1F3Check();
@@ -345,11 +347,12 @@ public class AsmAD832iHost extends EquipHost {
         //Recipe解析
 //            recipeParaList = new AsmAD8312RecipeUtil().transferRecipeParaFromDB(recipePath, deviceType);
 
-
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipe", recipe);
         resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }

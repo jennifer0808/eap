@@ -25,20 +25,34 @@ import java.util.ResourceBundle;
  * Created by wj_co on 2019/2/12.
  */
 public class SVQueryPaneController implements Initializable {
-    private String deviceCode;
+    private final String deviceCode;
 
     @FXML
     private TextField deviceCodeField;
 
-    public static  Stage stage= new Stage();
-    public static boolean flag = false;
-    static {
+    public   Stage stage= new Stage();
+    public static Map<String,Boolean>  flag = new HashMap<>();
+
+    public SVQueryPaneController() {
+        this.deviceCode = null;
         stage.setTitle("SV数据查询");
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                flag = false;
+                flag.put(deviceCode,false) ;
+            }
+        });
+    }
+    public SVQueryPaneController(String deviceCode) {
+
+        this.deviceCode = deviceCode;
+        stage.setTitle("SV数据查询");
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                flag.put(deviceCode,false) ;
             }
         });
     }
@@ -53,14 +67,14 @@ public class SVQueryPaneController implements Initializable {
     private String svid;
 
 
-    private void Btn_Query(Pane root) {
+    private void Btn_Query(Pane root,Stage stage) {
         TextField JTF_SVID = (TextField) root.lookup("#JTF_SVID");
         TextField JTF_SVValue = (TextField) root.lookup("#JTF_SVValue");
         RadioButton JRB_EC = (RadioButton) root.lookup("#JRB_EC");
 
         svid = JTF_SVID.getText();
         if (svid == null || !svid.matches("\\d+")) {
-            CommonUiUtil.alert(Alert.AlertType.ERROR, "请输入正确格式的SVID！");
+            CommonUiUtil.alert(Alert.AlertType.ERROR, "请输入正确格式的SVID！",stage);
             return;
         }
         Map resultMap = new HashMap();
@@ -70,12 +84,12 @@ public class SVQueryPaneController implements Initializable {
             resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
         }
         if (resultMap == null) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
             return;
         }
         String SVValue = String.valueOf(resultMap.get("Value"));
         if (SVValue == null || "".equals(SVValue) || "null".equals(SVValue)) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
             return;
         } else {
             JTF_SVValue.setText(SVValue);
@@ -86,15 +100,14 @@ public class SVQueryPaneController implements Initializable {
 
     private void buttonOKClick(Stage stage) {
         stage.close();
-        flag = false;
+        flag.put(deviceCode,false) ;
     }
 
     Pane root = new Pane();
 
-    public void init(String deviceCode) {
-        flag = true;
+    public void init() {
+        flag.put(deviceCode,true) ;
         // TODO String : deviceId, String : deviceCode
-        this.deviceCode = deviceCode;
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
 
@@ -118,7 +131,7 @@ public class SVQueryPaneController implements Initializable {
         Button svQuery = (Button) root.lookup("#svQuery");
         button.setOnAction((value) -> buttonOKClick(stage));
 
-        svQuery.setOnAction((value) -> Btn_Query(root));
+        svQuery.setOnAction((value) -> Btn_Query(root,stage));
     }
 
 

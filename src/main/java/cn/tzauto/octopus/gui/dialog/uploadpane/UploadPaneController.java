@@ -44,8 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isUpload;
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.loginStage;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
 
 /**
  * FXML Controller class
@@ -65,6 +64,7 @@ public class UploadPaneController implements Initializable {
             public void handle(WindowEvent event) {
                 if (isUpload) {
                     isUpload = false;
+                    onlyOnePageUpload = false;
                 }
             }
         });
@@ -156,9 +156,9 @@ public class UploadPaneController implements Initializable {
         stage.show();
         stage.setResizable(false);
         Button button = (Button) rcpMngPane.lookup("#BTN_ok");
-        button.setOnAction((value) -> btnOKClick(stage));
+        button.setOnAction((value) -> btnOKClick());
         Button buttonC = (Button) rcpMngPane.lookup("#BTN_cancel");
-        buttonC.setOnAction((value) -> btnCancelClick(stage));
+        buttonC.setOnAction((value) -> btnCancelClick());
         CMB_deviceCode = (ComboBox) rcpMngPane.lookup("#CMB_deviceCode");
 
         CMB_deviceCode.getSelectionModel().selectedItemProperty().addListener(
@@ -192,6 +192,7 @@ public class UploadPaneController implements Initializable {
                     return;
                 }
                 eppd = (ArrayList) resultMap.get("eppd");
+                recipeNames = FXCollections.observableArrayList();
                 for (int i = 0; i < eppd.size(); i++) {
                     recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
                 }
@@ -201,7 +202,8 @@ public class UploadPaneController implements Initializable {
         }
     }
 
-    private void btnOKClick(Stage stage) {
+    private void btnOKClick() {
+
         int flag = 0;
 
         for (int i = 0; i < recipeNames.size(); i++) {
@@ -296,6 +298,7 @@ public class UploadPaneController implements Initializable {
            }
             if(isAlert){
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
+                return;
             }
 
         }catch(Exception e){
@@ -307,12 +310,15 @@ public class UploadPaneController implements Initializable {
             sqlSession.close();
         }
         stage.close();
+        isUpload = false;
+        onlyOnePageUpload = false;
 
     }
 
-    private void btnCancelClick(Stage stage) {
+    private void btnCancelClick() {
         stage.close();
         isUpload = false;
+        onlyOnePageUpload = false;
     }
 
     String deviceCode = null;
