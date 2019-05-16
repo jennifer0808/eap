@@ -1894,9 +1894,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 data = activeWrapper.sendS1F3out(dataIdList, svFormat);
 
                 if (data != null && data.get("SV") != null) {
+                    //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
-                        resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
+                       String sv=String.valueOf(svValueList.get(i));
+                       if(sv!=null && sv.contains("@")){
+                           sv="";
+                       }
+                        resultMap.put(svidList.get(i), sv);
                         logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
