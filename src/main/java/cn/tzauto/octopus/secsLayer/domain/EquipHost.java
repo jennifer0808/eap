@@ -623,14 +623,23 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList listtmp = (ArrayList) data.get("SV");
+        Object obj = data.get("SV");
         Map resultMap = new HashMap();
-        if (listtmp.size() > 0) {
-            String svValue = String.valueOf(listtmp.get(0));
-            resultMap.put("Value", svValue);
-        } else {
-            resultMap.put("Value", null);
+        ArrayList listsvValue = new ArrayList();
+        if(obj != null){
+            if(obj  instanceof String ){
+                resultMap.put("Value", (String)obj);
+            }else if(obj instanceof ArrayList){
+                ArrayList listtmp = (ArrayList)obj;
+                for(int i=0;i<listtmp.size();i++){
+                    String svValue = String.valueOf(listtmp.get(i));
+                    listsvValue.add(svValue);
+                }
+                resultMap.put("Value", listsvValue);
+                logger.info("SV查询得值svValue:"+resultMap);
+            }
         }
+
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
 
@@ -779,8 +788,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public Map sendS2F13ECSingleCheckout(String ecid) {
 
-        List ecidList = new ArrayList();
-        ecidList.add(ecid);
+        List<Long> ecidList = new ArrayList();
+        ecidList.add(Long.parseLong(ecid));
         DataMsgMap data = null;
         try {
             data = activeWrapper.sendS2F13out(ecidList, ecFormat);
@@ -791,12 +800,27 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         String ecValue = null;
 
-        ArrayList listtmp = (ArrayList) data.get("EC");
-        ecValue = String.valueOf(listtmp.get(0));
-
+       // ArrayList listtmp = (ArrayList) data.get("EC");
+        //  ecValue = String.valueOf(listtmp.get(0));
+        //EC
+        ArrayList listecValue = new ArrayList();
+        Object obj = data.get("EC");
+        if(obj != null){
+            if(obj  instanceof String ){
+                resultMap.put("Value", (String)obj);
+            }else if(obj instanceof ArrayList){
+                ArrayList listtmp = (ArrayList)obj;
+                for(int i=0;i<listtmp.size();i++){
+                     ecValue = String.valueOf(listtmp.get(i));
+                    listecValue.add(ecValue);
+                }
+                resultMap.put("Value", listecValue);
+                logger.info("EC查询得值ecValue:"+listecValue);
+            }
+        }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", ecValue);
+       // resultMap.put("Value", ecValue);
         return resultMap;
     }
 

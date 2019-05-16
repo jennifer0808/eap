@@ -68,32 +68,37 @@ public class SVQueryPaneController implements Initializable {
 
 
     private void Btn_Query(Pane root,Stage stage) {
-        TextField JTF_SVID = (TextField) root.lookup("#JTF_SVID");
-        TextField JTF_SVValue = (TextField) root.lookup("#JTF_SVValue");
-        RadioButton JRB_EC = (RadioButton) root.lookup("#JRB_EC");
+        try{
 
-        svid = JTF_SVID.getText();
-        if (svid == null || !svid.matches("\\d+")) {
-            CommonUiUtil.alert(Alert.AlertType.ERROR, "请输入正确格式的SVID！",stage);
-            return;
-        }
-        Map resultMap = new HashMap();
-        if (JRB_EC.isSelected()) {
-            resultMap = EapClient.hostManager.getECValueByECID(deviceCode, svid);
-        } else {
-            resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
-        }
-        if (resultMap == null) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
-            return;
-        }
-        String SVValue = String.valueOf(resultMap.get("Value"));
-        if (SVValue == null || "".equals(SVValue) || "null".equals(SVValue)) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
-            return;
-        } else {
-            JTF_SVValue.setText(SVValue);
-            JTF_SVValue.setTooltip(new Tooltip(SVValue));
+            TextField JTF_SVID = (TextField) root.lookup("#JTF_SVID");
+            TextField JTF_SVValue = (TextField) root.lookup("#JTF_SVValue");
+            RadioButton JRB_EC = (RadioButton) root.lookup("#JRB_EC");
+
+            svid = JTF_SVID.getText();
+            if (svid == null || !svid.matches("\\d+")) {
+                CommonUiUtil.alert(Alert.AlertType.ERROR, "请输入正确格式的SVID！",stage);
+                return;
+            }
+            Map resultMap = new HashMap();
+            if (JRB_EC.isSelected()) {
+                resultMap = EapClient.hostManager.getECValueByECID(deviceCode, svid);
+            } else {
+                resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
+            }
+            if (resultMap == null) {
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
+                return;
+            }
+            String SVValue = String.valueOf(resultMap.get("Value"));
+            if (SVValue == null || "".equals(SVValue) || "null".equals(SVValue)) {
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
+                return;
+            } else {
+                JTF_SVValue.setText(SVValue);
+                JTF_SVValue.setTooltip(new Tooltip(SVValue));
+            }
+        }catch (Exception e){
+            CommonUiUtil.alert(Alert.AlertType.WARNING, e.toString(),stage);
         }
     }
 
