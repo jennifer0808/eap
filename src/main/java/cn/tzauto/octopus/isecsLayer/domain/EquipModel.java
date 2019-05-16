@@ -64,6 +64,8 @@ public abstract class EquipModel extends Thread {
     private Map<String, String> candidates = new HashMap<>();
     public ConcurrentLinkedQueue<ISecsHost> iSecsHostList = new ConcurrentLinkedQueue<ISecsHost>();
     public String preAlarm = "";
+    public int notGetAlarmCount = 0;
+    public String partNo = "";
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -965,5 +967,36 @@ public abstract class EquipModel extends Thread {
 
             return false;
         }
+    }
+
+    public String organizeRecipe(String organizeRecipe) {
+        return "";
+    }
+
+    public List<String> sendCmdMsg2Equip(String command) {
+        final String executCommand = command;
+        List<String> result = null;
+        ExecutorService exec = Executors.newSingleThreadExecutor();
+        Callable<List<String>> call = new Callable<List<String>>() {
+
+            @Override
+            public List<String> call() throws Exception {
+                //开始执行耗时操作
+                return iSecsHost.executeCommand(executCommand);
+            }
+        };
+
+        Future<List<String>> future = exec.submit(call);
+        try {
+            result = future.get(GlobalConstants.msgWaitTime, TimeUnit.MILLISECONDS);
+            logger.debug("Execute future task...");
+        } catch (Exception e) {
+            future.cancel(true);//取消该Future里关联的Callable任务
+            logger.error("Exception occur " + e.getMessage());
+        } finally {
+            // 关闭线程池
+            exec.shutdown();
+        }
+        return result;
     }
 }

@@ -28,7 +28,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 import org.apache.ibatis.session.SqlSession;
 
 import java.net.URL;
@@ -165,50 +164,50 @@ public class LoginController implements Initializable {
 //                }
             for (SysUser user : userList) {
                 String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
-               if(DigestUtil.validatePassword(passwordStr, user.getPassword())){
-                    GlobalConstants.sysUser = user;
+//                if (DigestUtil.validatePassword(passwordStr, user.getPassword())) {
+                    if (passwordStr.equals(user.getPassword())) {
+                        GlobalConstants.sysUser = user;
 
-                    JB_MainPage.setVisible(true);
-                    JB_RcpMng.setVisible(true);
-                    JB_Login.setVisible(false);
-                    JB_SignOut.setVisible(true);
-                  //todo 本地模式隐藏  localMode.setVisible(true);
+                        JB_MainPage.setVisible(true);
+                        JB_RcpMng.setVisible(true);
+                        JB_Login.setVisible(false);
+                        JB_SignOut.setVisible(true);
+                        localMode.setVisible(false);
 
-                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
-                    if (loginFlag) {
-                        GlobalConstants.loginValid = true;
+                        UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+                        if (loginFlag) {
+                            GlobalConstants.loginValid = true;
+                        }
+                        GlobalConstants.loginTime = new Date();
+                        loginStage.close();
+                    } else {
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！", loginStage);
+                        return false;
                     }
-                    GlobalConstants.loginTime = new Date();
-                   loginStage.close();
-                } else {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！",loginStage);
-                    return  false;
+                }
+
+
+            } else{
+
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！", loginStage);
+                return false;
+            }
+
+            return true;
+        }
+
+        //登录按钮鼠标点击事件
+        @FXML
+        private void loginAction () {
+            String userNameStr = userName.getText();
+            String passwordStr = password.getText();
+            if (passwordStr != null && !"".equalsIgnoreCase(passwordStr) && userNameStr != null && !"".equalsIgnoreCase(userNameStr)) {
+                //登录验证
+                Boolean isSuc = loginSuc(userNameStr, passwordStr);
+                if (isSuc) {
+                    loginStage.close();
                 }
             }
-
-
-
-        } else {
-
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
-            return false;
         }
 
-        return true;
     }
-
-    //登录按钮鼠标点击事件
-    @FXML
-    private void loginAction() {
-        String userNameStr = userName.getText();
-        String passwordStr = password.getText();
-        if (passwordStr != null && !"".equalsIgnoreCase(passwordStr) && userNameStr != null && !"".equalsIgnoreCase(userNameStr)) {
-            //登录验证
-            Boolean isSuc = loginSuc(userNameStr, passwordStr);
-            if (isSuc) {
-                loginStage.close();
-            }
-        }
-    }
-
-}

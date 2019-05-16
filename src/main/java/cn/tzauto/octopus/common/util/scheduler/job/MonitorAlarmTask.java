@@ -8,22 +8,16 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.isecsLayer.equipImpl.disco.ls.DFL7161Host;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
+import java.util.*;
 
 /**
  *
@@ -63,23 +57,7 @@ public class MonitorAlarmTask implements Job {
                     //  String deviceCode = equipModel.deviceCode;//获取发送触发指令的机台的DeviceCode
                     DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, equipModel.deviceCode);
                     List<AlarmRecord> alarmRecordList = setAlarmRecord(deviceInfo, alarmStrings);
-                    if (equipModel.deviceType.contains("DFL7161")) {
-                        for (String alarmString : alarmStrings) {
-                            if ("G1121".equals(alarmString)) {
-                                Map laserEnergyMap = ((DFL7161Host) equipModel).getLaserEnergy();
-                                if (!GlobalConstants.isLocalMode) {
-                                    //实时发送alarm记录至服务端
-                                    Map laserEnergyRecordMap = new HashMap();
-                                    laserEnergyRecordMap.put("msgName", "LaserEnergyParam");
-                                    laserEnergyRecordMap.put("deviceCode", equipModel.deviceCode);
-                                    laserEnergyRecordMap.put("laserEnergy", JsonMapper.toJsonString(laserEnergyMap));
-                                    laserEnergyRecordMap.put("eventDesc", "");
-                                    GlobalConstants.C2SLogQueue.sendMessage(laserEnergyMap);
-                                    logger.info("Send LaserEnergy to server..." + laserEnergyRecordMap.toString());
-                                }
-                            }
-                        }
-                    }
+
                     if (!GlobalConstants.isLocalMode) {
                         //实时发送alarm记录至服务端
                         Map alarmRecordMap = new HashMap();

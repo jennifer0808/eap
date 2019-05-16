@@ -1666,4 +1666,12 @@ public class MultipleEquipHostManager {
         }
         return null;
     }
+
+    public String getEquipCurrentRecipeName(String deviceId) {
+        String equipStatus = "";
+        if (equipModels.get(deviceId) != null) {
+            return equipModels.get(deviceId).getCurrentRecipeName();
+        }
+        return equipStatus;
+    }
 }

@@ -211,7 +211,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 dragUtil.addDrawFunc(stage, vBox, root);
                 box.getChildren().addAll(gridPane, root);
 
-                stage.setTitle("EAPClient");
+                stage.setTitle("EAP");
                 Scene scene = new Scene(vBox);
                 stage.setScene(scene);
                 stage.initStyle(StageStyle.TRANSPARENT);

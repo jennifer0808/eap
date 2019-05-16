@@ -11,7 +11,6 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.util.tool.MdbUtil;
-import cn.tzauto.octopus.isecsLayer.equipImpl.vision.VSP88AHHost;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -27,7 +26,7 @@ import java.util.Map;
  * @desc
  */
 public class C6Q420RecipeUtil {
-    private static Logger logger = Logger.getLogger(VSP88AHHost.class.getName());
+    private static Logger logger = Logger.getLogger(C6Q420RecipeUtil.class.getName());
 
     public static List<RecipePara> transferFromRecipe(String filePath, String deviceType) {
         List<RecipePara> recipeParaList = new ArrayList<>();
