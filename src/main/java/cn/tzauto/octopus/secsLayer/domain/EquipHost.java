@@ -44,6 +44,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static cn.tzauto.octopus.common.resolver.TransferUtil.getIDValue;
+
 
 public abstract class EquipHost extends Thread implements MsgListener {
 
@@ -635,9 +637,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     listsvValue.add(svValue);
                 }
                 resultMap.put("Value", listsvValue);
-                logger.info("SV查询得值svValue:" + resultMap);
-            } else {
-                resultMap.put("Value", obj);
+                logger.info("SV查询得值svValue:"+resultMap);
+            }else{
+                String s= getSpecificSVEC(obj, 0);
+                resultMap.put("Value", s);
             }
         }
 
@@ -1900,12 +1903,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
-                        String sv = String.valueOf(svValueList.get(i));
-                        if (sv != null && sv.contains("@")) {
-                            sv = "";
-                        }
+                      String sv=  getSpecificSVEC(svValueList.get(i),i);
                         resultMap.put(svidList.get(i), sv);
-                        logger.info("resultMap:" + resultMap);
+                        logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -1919,6 +1919,110 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
         }
         return resultMap;
+    }
+    public String  getSpecificSVEC(Object object,int i) {
+
+            if (object instanceof long[]) {
+                long[] longs = ((long[]) object);
+                if (longs.length == 0) {
+                    return "";
+
+                } else {
+                   return String.valueOf(longs[0]);
+                }
+
+            }
+        if (object instanceof  int[]) {
+            int[] ints = (( int[]) object);
+            if (ints.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(ints[0]);
+            }
+
+        }
+
+        if (object instanceof  String) {
+            String s = (String) object;
+           return s;
+
+        }
+        if (object instanceof  String[]) {
+            String[] strings = (( String[]) object);
+            if (strings.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(strings[0]);
+            }
+
+        }
+        if (object instanceof  float[]) {
+            float[] floats = (( float[]) object);
+            if (floats.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(floats[0]);
+            }
+
+        }
+        if (object instanceof  byte[]) {
+            byte[] bytes = (( byte[]) object);
+            if (bytes.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(bytes[0]);
+            }
+
+        }
+        if (object instanceof  boolean[]) {
+            boolean[] booleans = (( boolean[]) object);
+            if (booleans.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(booleans[0]);
+            }
+
+        }
+        if (object instanceof  double[]) {
+            double[] doubles = (( double[]) object);
+            if (doubles.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(doubles[0]);
+            }
+
+        }
+        if (object instanceof  char[]) {
+            char[] chars = (( char[]) object);
+            if (chars.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(chars[0]);
+            }
+
+        }
+
+        if (object instanceof List) {
+            List list = (List) object;
+            if (((List) object).isEmpty()) {
+                return "";
+
+            } else {
+                ArrayList obj = new ArrayList<>();
+                ArrayList tmp = getIDValue((ArrayList) list.get(i));
+                return String.valueOf(tmp.get(0));
+            }
+
+            }
+
+          return String.valueOf(object);
     }
 
     /**

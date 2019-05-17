@@ -85,7 +85,7 @@ public class SVQueryPaneController implements Initializable {
             } else {
                 resultMap = EapClient.hostManager.getSVValueBySVID(deviceCode, svid);
             }
-            if (resultMap == null) {
+            if (resultMap == null || resultMap.size()==0 ) {
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "未查到相应值！",stage);
                 return;
             }
