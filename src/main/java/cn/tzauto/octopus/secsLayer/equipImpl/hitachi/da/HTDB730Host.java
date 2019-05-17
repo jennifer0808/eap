@@ -3,7 +3,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -797,27 +796,6 @@ public class HTDB730Host extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
 
-
-    public void processS14f3in(DataMsgMap data) {
-        try {
-            Map objMap = new HashMap();
-            Map attrMap = new HashMap();
-            attrMap.put("Orientation", "0");
-            attrMap.put("OriginLocation", "UpperRight");
-            attrMap.put("SubstrateSide", "TopSide");
-            attrMap.put("AxisDirection", "DownLeft");
-            objMap.put(new String(), attrMap);
-            Map stripIDformatMap = new HashMap();
-            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
-            activeWrapper.sendS14F2out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
-                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
     // </editor-fold> 
 
 

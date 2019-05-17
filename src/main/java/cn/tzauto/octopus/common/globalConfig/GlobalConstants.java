@@ -326,7 +326,7 @@ public class GlobalConstants {
         }
         sysLogger.info("本地配置文件不存在,写入默认配置...");
         try {
-            InputStream inputStream = GlobalConstants.class.getResourceAsStream(GlobalConstants.CONFIG_FILE_PATH);
+            InputStream inputStream = GlobalConstants.class.getClassLoader().getResourceAsStream(GlobalConstants.CONFIG_FILE_PATH);
             if (inputStream == null) {
                 sysLogger.fatal("系统配置文件缺失,启动失败...");
                 return false;

@@ -55,7 +55,7 @@ public class DownLoadHandler implements MessageHandler {
                 recipeParaListGold = (List<RecipePara>) JsonMapper.String2List(mapMessage.getString("recipeParaGold"), RecipePara.class);
                 attachGolds = (List<Attach>) JsonMapper.String2List(mapMessage.getString("arAttachGold"), Attach.class);
             }
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求下载recipe " + recipe.getRecipeName() + " 到设备");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "收到MQ消息，服务端请求下载recipe " + recipe.getRecipeName() + " 到设备");
         } catch (JMSException e) {
             logger.error("Exception:", e);
         }
@@ -63,7 +63,7 @@ public class DownLoadHandler implements MessageHandler {
             //判断服务端发来的数据是否有GOLD版本
             if (!"GOLD".equalsIgnoreCase(recipe.getVersionType())) {
                 if (recipeGold == null || !"GOLD".equalsIgnoreCase(recipeGold.getVersionType())) {
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端没有下载recipe " + recipe.getRecipeName() + " 的Gold版本到设备，请联系ME处理");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端没有下载recipe " + recipe.getRecipeName() + " 的Gold版本到设备，请联系ME处理");
                     return;
                 }
             }
@@ -95,7 +95,7 @@ public class DownLoadHandler implements MessageHandler {
                 recipeService.deleteRcpParaByRecipeId(recipe.getId());
                 logger.info("recipePara批量删除成功");
 
-                    recipeService.saveRcpParaBatch(recipeParaList);
+                recipeService.saveRcpParaBatch(recipeParaList);
 
                 logger.info("recipePara批量保存成功");
                 recipeService.deleteAttachByRcpRowId(recipe.getId());
@@ -154,22 +154,44 @@ public class DownLoadHandler implements MessageHandler {
                 }
                 //根据不同的下载模式，下载recipe
                 RecipeOperationLog recipeOperationLog = recipeService.setRcpOperationLog(recipe, "autodownload");
+                //0:表示下载成功，1:表示机台中已是当前程序，其他下载失败
                 if (downLoadResultString.equals("0")) {
-                    deviceInfoExt.setRecipeId(recipe.getId());
-                    deviceInfoExt.setRecipeName(recipe.getRecipeName());
-                    deviceInfoExt.setVerNo(recipe.getVersionNo());
-                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                    sqlSession.commit();
-                    mqMap.put("eventDesc", "下载成功!");
+                    mqMap.put("eventDesc", "下载成功！");
                     recipeOperationLog.setOperationResult("Y");
                     mqMap.put("downloadResult", "Y");
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载成功!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载成功！");
+                    //不管成功与否都更新ext表
+                    deviceInfoExt.setRecipeId(recipe.getId());
+                    deviceInfoExt.setRecipeName(recipe.getRecipeName());
+                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                    sqlSession.commit();
+                } else if (downLoadResultString.equals("1")) {
+                    mqMap.put("eventDesc", "下载取消,正在使用预下载的Recipe!");
+                    mqMap.put("downloadResult", "N");
+                    recipeOperationLog.setOperationResult("N");
+                    recipeOperationLog.setOperationResultDesc("正在使用预下载的Recipe!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载取消,正在使用预下载的Recipe!");
+                    //不管成功与否都更新ext表
+                    deviceInfoExt.setRecipeId(recipe.getId());
+                    deviceInfoExt.setRecipeName(recipe.getRecipeName());
+                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                    sqlSession.commit();
+                } else if (downLoadResultString.equals("2")) {
+                    mqMap.put("eventDesc", "下载成功,选中失败!");
+                    mqMap.put("downloadResult", "Y");
+                    recipeOperationLog.setOperationResult("Y");
+                    recipeOperationLog.setOperationResultDesc("下载成功,选中失败!");
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载成功,选中失败!");
+                    deviceInfoExt.setRecipeId(recipe.getId());
+                    deviceInfoExt.setRecipeName(recipe.getRecipeName());
+                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                    sqlSession.commit();
                 } else {
                     mqMap.put("eventDesc", "下载失败," + downLoadResultString);
                     mqMap.put("downloadResult", "N");
                     recipeOperationLog.setOperationResult("N");
                     recipeOperationLog.setOperationResultDesc(downLoadResultString);
-                   UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载失败," + downLoadResultString);
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "下载失败," + downLoadResultString);
                 }
                 //保存下载结果至数据库并发送至服务端
                 recipeService.saveRecipeOperationLog(recipeOperationLog);
@@ -179,7 +201,7 @@ public class DownLoadHandler implements MessageHandler {
                 mqMap.put("eventDesc", "下载失败");
                 mqMap.put("downloadResult", "N");
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
             }
             sqlSession.commit();
         } catch (ParseException e) {

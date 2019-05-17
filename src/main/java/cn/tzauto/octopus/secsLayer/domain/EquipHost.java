@@ -627,17 +627,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Object obj = data.get("SV");
         Map resultMap = new HashMap();
         ArrayList listsvValue = new ArrayList();
-        if(obj != null){
-            if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
+        if (obj != null) {
+            if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
                     String svValue = String.valueOf(listtmp.get(i));
                     listsvValue.add(svValue);
                 }
                 resultMap.put("Value", listsvValue);
-                logger.info("SV查询得值svValue:"+resultMap);
-            }else{
-                    resultMap.put("Value", obj);
+                logger.info("SV查询得值svValue:" + resultMap);
+            } else {
+                resultMap.put("Value", obj);
             }
         }
 
@@ -801,27 +801,27 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         String ecValue = null;
 
-       // ArrayList listtmp = (ArrayList) data.get("EC");
+        // ArrayList listtmp = (ArrayList) data.get("EC");
         //  ecValue = String.valueOf(listtmp.get(0));
         //EC
         ArrayList listecValue = new ArrayList();
         Object obj = data.get("EC");
-        if(obj != null){
-           if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
-                     ecValue = String.valueOf(listtmp.get(i));
+        if (obj != null) {
+            if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
+                    ecValue = String.valueOf(listtmp.get(i));
                     listecValue.add(ecValue);
                 }
                 resultMap.put("Value", listecValue);
-                logger.info("EC查询得值ecValue:"+listecValue);
-            }else{
+                logger.info("EC查询得值ecValue:" + listecValue);
+            } else {
                 resultMap.put("Value", obj);
             }
         }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-       // resultMap.put("Value", ecValue);
+        // resultMap.put("Value", ecValue);
         return resultMap;
     }
 
@@ -1900,12 +1900,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
-                       String sv=String.valueOf(svValueList.get(i));
-                       if(sv!=null && sv.contains("@")){
-                           sv="";
-                       }
+                        String sv = String.valueOf(svValueList.get(i));
+                        if (sv != null && sv.contains("@")) {
+                            sv = "";
+                        }
                         resultMap.put(svidList.get(i), sv);
-                        logger.info("resultMap:"+resultMap);
+                        logger.info("resultMap:" + resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -1938,10 +1938,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("EC") != null) {
                     //判断返回值String/ArrayList
-                        ecValueList = (ArrayList) data.get("EC");
-                        for (int i = 0; i < ecValueList.size(); i++) {
-                            resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
-                        }
+                    ecValueList = (ArrayList) data.get("EC");
+                    for (int i = 0; i < ecValueList.size(); i++) {
+                        resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                    }
 
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -2621,7 +2621,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         return ecsvIdList;
     }
-
 
 
     protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
@@ -3497,4 +3496,24 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.iconPath = iconPath;
     }
 
+    public void processS14f3in(DataMsgMap data) {
+        try {
+            Map objMap = new HashMap();
+            Map attrMap = new HashMap();
+            attrMap.put("Orientation", "0");
+            attrMap.put("OriginLocation", "UpperRight");
+            attrMap.put("SubstrateSide", "TopSide");
+            attrMap.put("AxisDirection", "DownLeft");
+            objMap.put(new String(), attrMap);
+            Map stripIDformatMap = new HashMap();
+            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
 }
