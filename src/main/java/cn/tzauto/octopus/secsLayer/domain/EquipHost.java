@@ -627,9 +627,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map resultMap = new HashMap();
         ArrayList listsvValue = new ArrayList();
         if(obj != null){
-            if(obj  instanceof String ){
-                resultMap.put("Value", (String)obj);
-            }else if(obj instanceof ArrayList){
+            if(obj instanceof ArrayList){
                 ArrayList listtmp = (ArrayList)obj;
                 for(int i=0;i<listtmp.size();i++){
                     String svValue = String.valueOf(listtmp.get(i));
@@ -637,6 +635,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
                 resultMap.put("Value", listsvValue);
                 logger.info("SV查询得值svValue:"+resultMap);
+            }else{
+                    resultMap.put("Value", obj);
             }
         }
 
@@ -806,9 +806,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         ArrayList listecValue = new ArrayList();
         Object obj = data.get("EC");
         if(obj != null){
-            if(obj  instanceof String ){
-                resultMap.put("Value", (String)obj);
-            }else if(obj instanceof ArrayList){
+           if(obj instanceof ArrayList){
                 ArrayList listtmp = (ArrayList)obj;
                 for(int i=0;i<listtmp.size();i++){
                      ecValue = String.valueOf(listtmp.get(i));
@@ -816,6 +814,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 }
                 resultMap.put("Value", listecValue);
                 logger.info("EC查询得值ecValue:"+listecValue);
+            }else{
+                resultMap.put("Value", obj);
             }
         }
         resultMap.put("msgType", "s1f4");
@@ -2648,7 +2648,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             recipePara.setParaCode(recipeTemplate.getParaCode());
             recipePara.setParaMeasure(recipeTemplate.getParaUnit());
             recipePara.setParaName(recipeTemplate.getParaName());
-            recipePara.setSetValue(String.valueOf(totalValueMap.get(new Long(recipeTemplate.getDeviceVariableId()))));
+            recipePara.setSetValue(String.valueOf(totalValueMap.get(Long.parseLong(recipeTemplate.getDeviceVariableId()))));
             recipeParas.add(recipePara);
         }
         return recipeParas;

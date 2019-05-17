@@ -555,8 +555,7 @@ public class EsecDB2100Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long
-                length = TransferUtil.getPPLength(localFilePath);
+        long length = TransferUtil.getPPLength(localFilePath);
         DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
         s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
@@ -600,13 +599,12 @@ public class EsecDB2100Host extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName + ".dbrcp");
         recipeName = recipeName.replace(".dbrcp", "");
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
+
         List<RecipePara> recipeParaList = null;
+        try{
         byte[] ppbody = (byte[]) getPPBODY(recipeName + ".dbrcp");
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
@@ -615,6 +613,10 @@ public class EsecDB2100Host extends EquipHost {
         //设备发过来的参数部分为科学计数法，这里转为一般的
         recipeParaList = recipeParaBD2Str(recipeParaList);
 
+        } catch (UploadRecipeErrorException e) {
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
+            logger.error("Exception:", e);
+        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
