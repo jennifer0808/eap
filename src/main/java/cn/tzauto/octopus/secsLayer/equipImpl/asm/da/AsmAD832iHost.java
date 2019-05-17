@@ -337,7 +337,7 @@ public class AsmAD832iHost extends EquipHost {
             resultMap.put("checkResult", "ppbody为空，请检查程序！");
             return resultMap;
         }
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 
         //Recipe解析
