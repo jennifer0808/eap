@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -31,6 +32,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+
 /**
  * FXML Controller class
  *
@@ -51,6 +55,27 @@ public class UploadPaneController implements Initializable {
     private static Logger logger = Logger.getLogger(UploadPaneController.class);
     private MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
     private String deviceId;
+
+    public static  Stage stage= new Stage();
+    static {
+        stage.setAlwaysOnTop(true);
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                if (isUpload) {
+                    isUpload = false;
+                    onlyOnePageUpload = false;
+                }
+            }
+        });
+
+
+        Image image = new Image(UploadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
+
+        stage.getIcons().add(image);
+        stage.setTitle("Recipe上传");
+
+    }
     List<DeviceInfo> deviceInfos;
     private String deviceType;
     Boolean isAlert = true ;
@@ -126,19 +151,14 @@ public class UploadPaneController implements Initializable {
         dataTable = (TableView<RecipeName>) rcpMngPane.lookup("#dataTable");
         dataTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         fillComboBox(rcpMngPane);
-        Stage stage = new Stage();
-        Image image = new Image(UploadPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
-
-        stage.getIcons().add(image);
-        stage.setTitle("Recipe上传");
         Scene scene = new Scene(rcpMngPane);
         stage.setScene(scene);
         stage.show();
         stage.setResizable(false);
         Button button = (Button) rcpMngPane.lookup("#BTN_ok");
-        button.setOnAction((value) -> btnOKClick(stage));
+        button.setOnAction((value) -> btnOKClick());
         Button buttonC = (Button) rcpMngPane.lookup("#BTN_cancel");
-        buttonC.setOnAction((value) -> btnCancelClick(stage));
+        buttonC.setOnAction((value) -> btnCancelClick());
         CMB_deviceCode = (ComboBox) rcpMngPane.lookup("#CMB_deviceCode");
 
         CMB_deviceCode.getSelectionModel().selectedItemProperty().addListener(
@@ -168,10 +188,11 @@ public class UploadPaneController implements Initializable {
                 deviceId = deviceInfo.getDeviceCode();
                 Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
                 if (resultMap == null) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                     return;
                 }
                 eppd = (ArrayList) resultMap.get("eppd");
+                recipeNames = FXCollections.observableArrayList();
                 for (int i = 0; i < eppd.size(); i++) {
                     recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
                 }
@@ -181,7 +202,8 @@ public class UploadPaneController implements Initializable {
         }
     }
 
-    private void btnOKClick(Stage stage) {
+    private void btnOKClick() {
+
         int flag = 0;
 
         for (int i = 0; i < recipeNames.size(); i++) {
@@ -192,12 +214,12 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
             return;
         }
 
         if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！",stage);
             return;
         }
 
@@ -219,7 +241,7 @@ public class UploadPaneController implements Initializable {
                 }
 
                 if (deviceCode.equals("")) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
                     GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                     return;
                 }
@@ -262,7 +284,7 @@ public class UploadPaneController implements Initializable {
 
                     //打日志
                     if (!re) {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传",stage);
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"上传失败，ftp文件传送失败，请重新上传");
                         isAlert = false ;
                     } else {
@@ -275,23 +297,28 @@ public class UploadPaneController implements Initializable {
               }
            }
             if(isAlert){
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
+                return;
             }
 
         }catch(Exception e){
             sqlSession.rollback();
             logger.error("Exception:", e);
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！",stage);
             return;
         }finally {
             sqlSession.close();
         }
         stage.close();
+        isUpload = false;
+        onlyOnePageUpload = false;
 
     }
 
-    private void btnCancelClick(Stage stage) {
+    private void btnCancelClick() {
         stage.close();
+        isUpload = false;
+        onlyOnePageUpload = false;
     }
 
     String deviceCode = null;

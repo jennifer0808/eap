@@ -459,7 +459,7 @@ public class ACKDescription {
             } else if (ack.equals("5")) {
                 description = "PAUSE";
             }
-        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832") || deviceType.contains("8312Plus")) {
+        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832") || deviceType.contains("8312Plus") || deviceType.contains("832Z")) {
             if (ack.equals("1")) {
                 description = "Unknown Status ";
             } else if (ack.equals("2")) {

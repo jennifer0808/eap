@@ -149,10 +149,11 @@ public class AsmAD838Host extends EquipHost {
     @Override
     public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
+        recipePath = super.getRecipePathByConfig(recipe);//路径
         List<RecipePara> recipeParaList = null;
+
         try {
-            byte[] ppbody = (byte[]) getPPBODY("PPBODY");
+            byte[] ppbody = (byte[]) getPPBODY(recipeName);
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             recipeParaList = getRecipeParasByECSV();
@@ -166,6 +167,7 @@ public class AsmAD838Host extends EquipHost {
         resultMap.put("recipe", recipe);
         resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }

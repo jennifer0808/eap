@@ -73,6 +73,7 @@ public class DigestUtil {
     public static void main(String[] args) {
 
         System.out.println(entryptPassword("tzinfo"));
+      //  System.out.println(passwordDeEncrypt("511fa94db45856e1986872ed882a89d2ee371011172fa0cc0c91dd88"));
 
 //        System.out.println(passwordDeEncrypt("squpds(sPpstb\\t{]papLosxaukssqmrn"));
 //        System.out.println("00007965  施宾:" + passwordDeEncrypt("srrq*sAsCpssQ]t_Pscrxrq2bnpsposrn"));

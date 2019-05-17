@@ -624,14 +624,23 @@ public abstract class EquipHost extends Thread implements MsgListener {
         if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList listtmp = (ArrayList) data.get("SV");
+        Object obj = data.get("SV");
         Map resultMap = new HashMap();
-        if (listtmp.size() > 0) {
-            String svValue = String.valueOf(listtmp.get(0));
-            resultMap.put("Value", svValue);
-        } else {
-            resultMap.put("Value", null);
+        ArrayList listsvValue = new ArrayList();
+        if(obj != null){
+            if(obj instanceof ArrayList){
+                ArrayList listtmp = (ArrayList)obj;
+                for(int i=0;i<listtmp.size();i++){
+                    String svValue = String.valueOf(listtmp.get(i));
+                    listsvValue.add(svValue);
+                }
+                resultMap.put("Value", listsvValue);
+                logger.info("SV查询得值svValue:"+resultMap);
+            }else{
+                    resultMap.put("Value", obj);
+            }
         }
+
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
 
@@ -780,8 +789,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public Map sendS2F13ECSingleCheckout(String ecid) {
 
-        List ecidList = new ArrayList();
-        ecidList.add(ecid);
+        List<Long> ecidList = new ArrayList();
+        ecidList.add(Long.parseLong(ecid));
         DataMsgMap data = null;
         try {
             data = activeWrapper.sendS2F13out(ecidList, ecFormat);
@@ -792,12 +801,27 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         String ecValue = null;
 
-        ArrayList listtmp = (ArrayList) data.get("EC");
-        ecValue = String.valueOf(listtmp.get(0));
-
+       // ArrayList listtmp = (ArrayList) data.get("EC");
+        //  ecValue = String.valueOf(listtmp.get(0));
+        //EC
+        ArrayList listecValue = new ArrayList();
+        Object obj = data.get("EC");
+        if(obj != null){
+           if(obj instanceof ArrayList){
+                ArrayList listtmp = (ArrayList)obj;
+                for(int i=0;i<listtmp.size();i++){
+                     ecValue = String.valueOf(listtmp.get(i));
+                    listecValue.add(ecValue);
+                }
+                resultMap.put("Value", listecValue);
+                logger.info("EC查询得值ecValue:"+listecValue);
+            }else{
+                resultMap.put("Value", obj);
+            }
+        }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", ecValue);
+       // resultMap.put("Value", ecValue);
         return resultMap;
     }
 
@@ -1871,9 +1895,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 data = activeWrapper.sendS1F3out(dataIdList, svFormat);
 
                 if (data != null && data.get("SV") != null) {
+                    //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
-                        resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
+                       String sv=String.valueOf(svValueList.get(i));
+                       if(sv!=null && sv.contains("@")){
+                           sv="";
+                       }
+                        resultMap.put(svidList.get(i), sv);
+                        logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -1905,10 +1935,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 DataMsgMap data = activeWrapper.sendS2F13out(dataIdList, ecFormat);
 
                 if (data != null && data.get("EC") != null) {
-                    ecValueList = (ArrayList) data.get("EC");
-                    for (int i = 0; i < ecValueList.size(); i++) {
-                        resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
-                    }
+                    //判断返回值String/ArrayList
+                        ecValueList = (ArrayList) data.get("EC");
+                        for (int i = 0; i < ecValueList.size(); i++) {
+                            resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                        }
+
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
                 if (data == null || data.isEmpty()) {
@@ -2575,6 +2607,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return recipeParas;
     }
 
+
     protected List getECSVIdList(List<RecipeTemplate> recipeTemplates) {
         List ecsvIdList = new ArrayList();
         if (recipeTemplates == null || recipeTemplates.size() < 1) {
@@ -2582,9 +2615,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         for (int i = 0; i < recipeTemplates.size(); i++) {
             ecsvIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
+//            ecsvIdList.add(((RecipeTemplate)recipeTemplates.get(i)).getDeviceVariableId());
         }
         return ecsvIdList;
     }
+
+
 
     protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
         List<RecipeTemplate> totaltTemplates = null;
@@ -2618,7 +2654,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             recipePara.setParaCode(recipeTemplate.getParaCode());
             recipePara.setParaMeasure(recipeTemplate.getParaUnit());
             recipePara.setParaName(recipeTemplate.getParaName());
-            recipePara.setSetValue(String.valueOf(totalValueMap.get(recipeTemplate.getDeviceVariableId())));
+            recipePara.setSetValue(String.valueOf(totalValueMap.get(Long.parseLong(recipeTemplate.getDeviceVariableId()))));
             recipeParas.add(recipePara);
         }
         return recipeParas;
