@@ -68,6 +68,7 @@ public class AsmAD8312FCHost extends EquipHost {
                     AsmAD8312FCHost.sleep(200);
                 }
                 if (this.getCommState() != AsmAD8312FCHost.COMMUNICATING) {
+                    AsmAD8312FCHost.sleep(1000);
                     sendS1F13out();
                 }
                 if (rptDefineNum < 1) {

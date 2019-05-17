@@ -1132,6 +1132,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         byte ALCD = (byte) data.get("ALCD");
         long ALID = (long) data.get("ALID");
         String ALTX = (String) data.get("ALTX");
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s5f1");
         resultMap.put("deviceCode", deviceCode);
