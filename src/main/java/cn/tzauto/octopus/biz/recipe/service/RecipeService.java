@@ -632,12 +632,12 @@ public class RecipeService extends BaseService {
 
 
         if (!GlobalConstants.isLocalMode) {
-//            boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-//            if (!existFlag) {
-//                return false;
-//            }
-            System.out.println("开始上传至ftp啦。。。。");
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
+            boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+            if (!existFlag) {
+                return false;
+            }
+            System.out.println("开始上传至ftp啦。。。。");
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }
         return true;
