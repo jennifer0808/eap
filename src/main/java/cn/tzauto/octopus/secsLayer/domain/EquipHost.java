@@ -43,6 +43,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static cn.tzauto.octopus.common.resolver.TransferUtil.getIDValue;
+
 
 public abstract class EquipHost extends Thread implements MsgListener {
 
@@ -1896,12 +1898,99 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 if (data != null && data.get("SV") != null) {
                     //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
+
                     for (int i = 0; i < svValueList.size(); i++) {
-                       String sv=String.valueOf(svValueList.get(i));
-                       if(sv!=null && sv.contains("@")){
-                           sv="";
-                       }
-                        resultMap.put(svidList.get(i), sv);
+                        if (svValueList.get(i) instanceof long[]) {
+                            long[] longs = ((long[]) svValueList.get(i));
+                            if (longs.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(longs[0]));
+                            }
+                            continue;
+                        }
+
+                        if (svValueList.get(i) instanceof int[]) {
+                            int[] ints = ((int[]) svValueList.get(i));
+                            if (ints.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(ints[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof String) {
+                            String s = (String) svValueList.get(i);
+                            resultMap.put(svidList.get(i), s);
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof String[]) {
+                            String[] s = (String[]) svValueList.get(i);
+                            if (s.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(s[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  float[]) {
+                            float[] floats = ( float[]) svValueList.get(i);
+                            if (floats.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(floats[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  byte[]) {
+                            byte[] bytes = ( byte[]) svValueList.get(i);
+                            if (bytes.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(bytes[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  boolean[]) {
+                            boolean[] booleans = (boolean[]) svValueList.get(i);
+                            if (booleans.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(booleans[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  double[]) {
+                            double[] doubles = (double[]) svValueList.get(i);
+                            if (doubles.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(doubles[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  char[]) {
+                            char[] chars = (char[]) svValueList.get(i);
+                            if (chars.length == 0) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                resultMap.put(svidList.get(i), String.valueOf(chars[0]));
+                            }
+                            continue;
+                        }
+                        if (svValueList.get(i) instanceof  List) {
+                            List list = (List) svValueList.get(i);
+                            if (((List) list.get(i)).isEmpty()) {
+                                resultMap.put(svidList.get(i), "");
+                            } else {
+                                ArrayList obj = new ArrayList<>();
+                                ArrayList tmp = getIDValue((ArrayList) list.get(i));
+                                resultMap.put(svidList.get(i), String.valueOf(tmp.get(0)));
+                            }
+                            continue;
+
+                        }
+                        resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
                         logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
