@@ -1,5 +1,6 @@
 package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
+
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
@@ -9,27 +10,34 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.resolver.TransferUtil;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AsmAD832PHost extends EquipHost {
+
+public class AsmAD832iHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(AsmAD832PHost.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmAD832iHost.class.getName());
+    public String Installation_Date;
+    public String Lot_Id;
+    public String Left_Epoxy_Id;
+    public String Lead_Frame_Type_Id;
+    public String Datelength;
 
-    public AsmAD832PHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+    public AsmAD832iHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 8L;
@@ -38,44 +46,54 @@ public class AsmAD832PHost extends EquipHost {
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
+
+    @Override
+    public void interrupt() {
+        isInterrupted = true;
+        super.interrupt();
+    }
+
     @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
-        while (!this.isInterrupted()) {
+        while (!isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
-                    AsmAD832PHost.sleep(200);
+                    this.sleep(200);
                 }
-                if (this.getCommState() != AsmAD832PHost.COMMUNICATING) {
+                if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
+                }
+                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
-
                 if (rptDefineNum < 1) {
-                    sendS5F3out(true);
 //                    sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
                     super.findDeviceRecipe();
                     rptDefineNum++;
                     sendS2F37outAll();
+                    sendS2F37outClose(267);
+                    sendS5F3out(true);
+                    sendStatus2Server(equipStatus);
                 }
 
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
-                    this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                    this.processS5F1in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
+
                 logger.fatal("Caught Interruption", e);
             }
         }
@@ -88,7 +106,7 @@ public class AsmAD832PHost extends EquipHost {
             return;
         }
         try {
-            LastComDate = System.currentTimeMillis();
+            LastComDate = new Date().getTime();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
@@ -103,36 +121,13 @@ public class AsmAD832PHost extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
+            } else if (tagName.equalsIgnoreCase("s1f4in")) {
+                putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
-                logger.info("Receive a s1f4 value,and will put in waitMsgValueMap===>" + JSONArray.toJSON(data));
-                putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
-            } else if (tagName.equalsIgnoreCase("s12f1in")) {
-                processS12F1in(data);
-            } else if (tagName.equalsIgnoreCase("s12f3in")) {
-                processS12F3in(data);
-            } else if (tagName.equalsIgnoreCase("s12f5in")) {
-                processS12F5in(data);
-            } else if (tagName.equalsIgnoreCase("s12f7in")) {
-                processS12F7in(data);
-            } else if (tagName.equalsIgnoreCase("s12f9in")) {
-                processS12F9in(data);
-            } else if (tagName.equalsIgnoreCase("s12f11in")) {
-                processS12F11in(data);
-            } else if (tagName.equalsIgnoreCase("s12f13in")) {
-                processS12F13in(data);
-            } else if (tagName.equalsIgnoreCase("s12f15in")) {
-                processS12F15in(data);
-            } else if (tagName.equalsIgnoreCase("s12f17in")) {
-                processS12F17in(data);
-            } else if (tagName.equalsIgnoreCase("s12f19in")) {
-                processS12F19in(data);
-            } else if (tagName.equalsIgnoreCase("s12f67in")) {
-                processS12F67in(data);
             } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
@@ -142,70 +137,20 @@ public class AsmAD832PHost extends EquipHost {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="S1FXin Code">
-
-    // </editor-fold>
-    // <editor-fold defaultstate="collapsed" desc="S6FXin Code">
-
-    //根据ReportId来处理不同事件报告
-    protected void processS6F11Filter(DataMsgMap data) {
-        long ceid = 0L;
-        long reportId = 0L;
-        try {
-            ceid = (long) data.get("CEID");
-//            reportId = data.get("ReportId");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-
-        if (ceid == 4) {
-            processS6F11EquipStatusChange(data);
-        } else if (ceid == 1) {
-            processS6F11ControlStateChange(data);
-        } else if (ceid == 175) {
-            processS6F11PPExecNameChange(data);
-        }
-
-    }
-
-    @Override
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = (long) data.get("CEID");
-            //TODO rpt id  : 1 4 175
-            if (ceid == StripMapUpCeid) {
-                processS6F11inStripMapUpload(data);
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                } else if (ceid == 4 || ceid == 2 || ceid == 3) {
-                    processS6F11ControlStateChange(data);
-                } else if (ceid == 175) {
-                    processS6F11PPExecNameChange(data);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-
-    }
+    // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            findDeviceRecipe();
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+//            logger.info("机台状态变化,当前状态为=======" + equipStatus);
         } catch (Exception e) {
             logger.error("Exception:", e);
-            return;
         }
         //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
+        findEqptStatus();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -231,11 +176,15 @@ public class AsmAD832PHost extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (dataReady && equipStatus.equalsIgnoreCase("run")) {
+                if (AxisUtility.checkBusinessMode(deviceCode)) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "处于工程模式,取消开机检查");
+                    sqlSession.close();
+                    return;
+                }
                 //首先从服务端获取机台是否处于锁机状态
                 //如果设备应该是锁机，那么首先发送锁机命令给机台
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
-                    holdDeviceAndShowDetailInfo();
                 } else {
                     //1、获取设备需要校验的信息类型,
                     String startCheckMod = deviceInfoExt.getStartCheckMod();
@@ -263,33 +212,33 @@ public class AsmAD832PHost extends EquipHost {
                         if (!checkResult) {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
                             //不允许开机
-                            holdDeviceAndShowDetailInfo();
+//                            holdDeviceAndShowDetailInfo();
+                            holdDeviceAndShowDetailInfo("The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + deviceInfoExt.getRecipeName() + ">,equipment will be locked.");
                         } else {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                            setAlarmState(0);
                         }
-                    }
-                    logger.info("设备[" + deviceCode + "]的开机检查模式为:" + startCheckMod);
-                    if (startCheckMod.contains("B")) {
-                        startSVcheckPass = false;
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行开机前SVCheck");
-                        startSVcheck();
                     }
                     if (checkResult && "A".equals(startCheckMod)) {
                         //首先判断下载的Recipe类型
                         //1、如果下载的是Unique版本，那么执行完全比较
                         String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                        if (false) {
+                        if ("Unique".equals(downloadRcpVersionType)) {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            //这里要把设备上recipe的后缀加上，否则获取不到
+                            downLoadRecipe.setRecipeName(downLoadRecipe.getRecipeName() + ".rcp");
                             this.startCheckRecipePara(downLoadRecipe, "abs");
                         } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
                             if (!hasGoldRecipe) {
                                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
                                 //不允许开机
-                                this.holdDeviceAndShowDetailInfo();
+                                this.holdDeviceAndShowDetailInfo("There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.");
                             } else {
                                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
-                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
+                                //这里要把设备上recipe的后缀加上，否则获取不到
+                                downLoadGoldRecipe.get(0).setRecipeName(downLoadGoldRecipe.get(0).getRecipeName() + ".rcp");
+                                this.startCheckRecipePara(downLoadGoldRecipe.get(0), "");
                             }
 
                         }
@@ -306,64 +255,98 @@ public class AsmAD832PHost extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
-        long ceid = 0l;
-        long reportID = 0l;
+    @Override
+    public void startCheckRecipePara(Recipe checkRecipe, String type) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+//        MonitorService monitorService = new MonitorService(sqlSession);
+        List<RecipePara> equipRecipeParas = getRecipeParasByECSV();
+        for (int i = 0; i < equipRecipeParas.size(); i++) {
+            logger.info("=========设备实时参数：" + equipRecipeParas.get(i));
+        }
+        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
-            ceid = (long) data.get("CEID");
+            Map mqMap = new HashMap();
+            mqMap.put("msgName", "eqpt.StartCheckWI");
+            mqMap.put("deviceCode", deviceCode);
+            mqMap.put("recipeName", ppExecName);
+            mqMap.put("EquipStatus", equipStatus);
+            mqMap.put("lotId", lotId);
+            String eventDesc = "";
+            String eventDescEng = "";
+            if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+//                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
+//                realTimePara.setSize(1000, 650);
+//                SwingUtil.setWindowCenter(realTimePara);
+//                realTimePara.setVisible(true);
+                for (RecipePara recipePara : recipeParasdiff) {
+                    eventDesc = "开机Check参数异常参数编码为：" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为：" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
+                    eventDescEng = eventDescEng + eventDescEngtmp;
+                }
+                this.holdDeviceAndShowDetailInfo("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:" + eventDescEng);
+//                monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
+            } else {
+                this.releaseDevice();
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
+                logger.info("设备：" + deviceCode + " 开机Check成功");
+            }
+            mqMap.put("eventDesc", eventDesc);
+            GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+            sqlSession.commit();
         } catch (Exception e) {
             logger.error("Exception:", e);
+        } finally {
+            sqlSession.close();
         }
-        Map panelMap = new HashMap();
-        if (ceid == 4) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-        }
-        if (ceid == 2) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-        }
-        if (ceid == 3) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-        }
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-    }
-
-    private void processS6F11PPExecNameChange(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = (long) data.get("CEID");
-            findDeviceRecipe();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID: " + ceid + ", 设备正在使用的程序为: " + ppExecName);
     }
 
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
+
+
     @Override
-    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
+    public Map sendS7F5out(String recipeName) {
         Recipe recipe = setRecipe(recipeName);
-        recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = new ArrayList();
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, 1, recipePath);
-            logger.debug("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析   
-            recipeParaList = getRecipeParasByECSV();
-        }
+        recipePath = getRecipePathByConfig(recipe);
+        Map map = new HashMap();
         Map resultMap = new HashMap();
+        map = sendS1F3Check();
+        String rcpName = (String) map.get("PPExecName");
+        logger.info("===================rcpName:" + rcpName);
+        logger.info("===================recipeName:" + recipeName);
+        if (!recipeName.contains(rcpName)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
+
+            resultMap.put("checkResult", "Y");
+            return resultMap;
+        }
+        List<RecipePara> recipeParaList = null;
+
+        byte[] ppbody = new byte[0];
+        try {
+            ppbody = (byte[]) getPPBODY(recipeName);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+        }
+        if (ppbody == null && ppbody.length == 0) {
+            resultMap.put("checkResult", "ppbody为空，请检查程序！");
+            return resultMap;
+        }
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+
+        //Recipe解析
+        recipeParaList = getRecipeParasByECSV();
+//            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
+
+        //Recipe解析
+//            recipeParaList = new AsmAD8312RecipeUtil().transferRecipeParaFromDB(recipePath, deviceType);
+
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
@@ -376,6 +359,8 @@ public class AsmAD832PHost extends EquipHost {
 
 // </editor-fold> 
 
+
+    // <editor-fold defaultstate="collapsed" desc="sendS2FXout Code">
     //释放机台
     @Override
     public Map releaseDevice() {
@@ -384,13 +369,31 @@ public class AsmAD832PHost extends EquipHost {
 //            this.setAlarmState(0);
 //        }
         map.put("HCACK", 0);
+        setAlarmState(0);
         return map;
     }
 
 
+    // </editor-fold>
+
+
+    @Override
+    public void initRemoteCommand() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String checkPPExecName(String recipeName) {
+        if (ppExecName.equals(recipeName)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "正在使用预下载的Recipe,下载取消.");
+            return "下载取消";
+        }
+        return "0";
+    }
+
     @Override
     public Object clone() {
-        AsmAD832PHost newEquip = new AsmAD832PHost(deviceId,
+        AsmAD832iHost newEquip = new AsmAD832iHost(deviceId,
                 this.iPAddress,
                 this.tCPPort, this.connectMode,
                 this.deviceType, this.deviceCode);
@@ -402,14 +405,5 @@ public class AsmAD832PHost extends EquipHost {
         newEquip.activeWrapper.addInputMessageListenerToAll(newEquip);
         this.clear();
         return newEquip;
-    }
-
-
-    @Override
-    public String checkPPExecName(String recipeName) {
-        if (ppExecName.equals(recipeName)) {
-            return "1";
-        }
-        return "0";
     }
 }

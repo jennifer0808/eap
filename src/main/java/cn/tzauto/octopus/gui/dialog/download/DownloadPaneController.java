@@ -9,12 +9,14 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
+import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -25,12 +27,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -50,7 +55,20 @@ public class DownloadPaneController implements Initializable {
     private Label RcpName;
 
     private Recipe recipe;
-
+    public static  Stage stage= new Stage();
+    static {
+        stage.setAlwaysOnTop(true);
+        stage.setTitle("Recipe 下载");
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                if (isDownload) {
+                    isDownload = false;
+                    onlyOnePageDownload = false;
+                }
+            }
+        });
+    }
 //    @FXML
 //    private TextField TX_EventLog;
 
@@ -70,8 +88,6 @@ public class DownloadPaneController implements Initializable {
 
 
     public void init(String deviceCode, String recipeName, String versionType, String recipeVersionNo) {
-        Stage stage = new Stage();
-        stage.setTitle("Recipe 下载");
         AnchorPane downloadPane = new AnchorPane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
@@ -84,7 +100,6 @@ public class DownloadPaneController implements Initializable {
         stage.getIcons().add(image);
         Scene scene = new Scene(downloadPane);
         stage.setScene(scene);
-
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         //查询recipe表
@@ -136,13 +151,13 @@ public class DownloadPaneController implements Initializable {
         stage.setResizable(false);
 
         Button button = (Button) downloadPane.lookup("#BTNOK");
-        button.setOnAction((value) -> btnOKClick(stage));
+        button.setOnAction((value) -> btnOKClick());
 
         Button buttonC = (Button) downloadPane.lookup("#BTNCancle");
-        buttonC.setOnAction((value) -> btnCancelClick(stage));
+        buttonC.setOnAction((value) -> btnCancelClick());
     }
 
-    private void btnOKClick(Stage stage) {
+    private void btnOKClick() {
         java.util.List deviceCodes = new ArrayList();
         int flag = 0;
 
@@ -155,14 +170,14 @@ public class DownloadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一台设备！",stage);
             return;
         }
         if (flag > 1) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！");
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "目前只支持单台设备下载！",stage);
             return;
         }
-        Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?");
+        Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?",stage);
         if (alert.get() == ButtonType.OK) {
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
@@ -196,11 +211,11 @@ public class DownloadPaneController implements Initializable {
                         recipeOperationLog.setOperationResult("Y");
                         //手动下成功给服务端发mq
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！");
+                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
 
                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
                     } else {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
 
                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                         mqMap.put("eventDesc", downloadResult);
@@ -213,7 +228,7 @@ public class DownloadPaneController implements Initializable {
                 }
 
             } catch (Exception e) {
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！");
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
                 GlobalConstants.sysLogger.error(e.toString());
                 sqlSession.rollback();
                 logger.error("Exception:", e);
@@ -222,13 +237,17 @@ public class DownloadPaneController implements Initializable {
             }
 
             stage.close();
+            isDownload = false;
+            onlyOnePageDownload = false;
         }
 
 
     }
 
-    private void btnCancelClick(Stage stage) {
+    private void btnCancelClick() {
         stage.close();
+        isDownload = false;
+        onlyOnePageDownload = false;
     }
 
 

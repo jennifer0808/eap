@@ -9,6 +9,7 @@ import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.security.DigestUtil;
 import cn.tzauto.octopus.gui.dialog.download.DownloadPaneController;
 import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
@@ -27,6 +28,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import org.apache.ibatis.session.SqlSession;
 
 import java.net.URL;
@@ -100,12 +102,14 @@ public class LoginController implements Initializable {
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         SysService sysService = new SysService(sqlSession);
-        List<SysUser> userList = sysService.searchSysUsersByLoginNamePassword(userNameStr, passwordStr);
+        List<SysUser> userList = sysService.searchSysUsersByLoginName(userNameStr);
+//        List<SysUser> userList = sysService.searchSysUsersByLoginNamePassword(userNameStr, passwordStr);
+
         sqlSession.close();
         if (userList.size() > 0 && userList != null) {
             if (GlobalConstants.isUpload) {
                 new UploadPaneController().init();
-                GlobalConstants.isUpload = false;
+                GlobalConstants.onlyOnePageUpload = true;
                 loginStage.close();
                 return true;
             }
@@ -144,7 +148,7 @@ public class LoginController implements Initializable {
 //                    String recipeVersionNo = column.getCellData(row).toString();
 
 
-                GlobalConstants.isDownload = false;
+                GlobalConstants.onlyOnePageDownload = true;
                 loginStage.close();
                 return true;
             }
@@ -159,21 +163,34 @@ public class LoginController implements Initializable {
 //                    loginStage.close();
 //                    return true;
 //                }
+            for (SysUser user : userList) {
+                String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
+               if(DigestUtil.validatePassword(passwordStr, user.getPassword())){
+                    GlobalConstants.sysUser = user;
 
-            GlobalConstants.sysUser = userList.get(0);
-            GlobalConstants.loginValid = true;
-            GlobalConstants.loginTime = new Date();
+                    JB_MainPage.setVisible(true);
+                    JB_RcpMng.setVisible(true);
+                    JB_Login.setVisible(false);
+                    JB_SignOut.setVisible(true);
+                  //todo 本地模式隐藏  localMode.setVisible(true);
 
-            JB_MainPage.setVisible(true);
-            JB_RcpMng.setVisible(true);
-            JB_Login.setVisible(false);
-            JB_SignOut.setVisible(true);
-            localMode.setVisible(true);
-            UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
-            loginStage.close();
+                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userNameStr + "登录系统...");
+                    if (loginFlag) {
+                        GlobalConstants.loginValid = true;
+                    }
+                    GlobalConstants.loginTime = new Date();
+                   loginStage.close();
+                } else {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "用户名与密码不匹配！",loginStage);
+                    return  false;
+                }
+            }
+
+
 
         } else {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！");
+
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
             return false;
         }
 

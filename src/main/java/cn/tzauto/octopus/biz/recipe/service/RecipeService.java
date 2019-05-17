@@ -611,9 +611,12 @@ public class RecipeService extends BaseService {
 //        String remoteRecipePath = GlobalConstants.clientFtpPath + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + recipeName.replaceAll("/", "@") + "/";
         //本地路径需要到文件
         String recipeLocalPath = GlobalConstants.localRecipePath + organizeRecipePath(recipe) + recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt";
+
         //ftp路径需要到目录
         String recipeRemotePath = organizeUploadRecipePath(recipe);
+
         RecipeOperationLog recipeOperationLog = setRcpOperationLog(recipe, "upload");
+
         this.saveRecipeOperationLog(recipeOperationLog);
         if (recipeParas != null && !recipeParas.isEmpty()) {
             recipeParas = setParasRCProwId(recipeParas, recipe.getId());
@@ -626,12 +629,15 @@ public class RecipeService extends BaseService {
         List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
+
+
         if (!GlobalConstants.isLocalMode) {
+            uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
             boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             if (!existFlag) {
                 return false;
             }
-            uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
+            System.out.println("开始上传至ftp啦。。。。");
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }
         return true;
@@ -643,13 +649,20 @@ public class RecipeService extends BaseService {
 
     private void sendUploadInfo2Server(String deviceCode, List<Recipe> recipes, List<RecipePara> recipeParas, List<RecipeOperationLog> recipeOperationLogs, List<Attach> attachs) {
         Map mqMap = new HashMap();
-        mqMap.put("msgName", "Upload");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("recipe", JSON.toJSONString(recipes));
-        mqMap.put("recipePara", JSON.toJSONString(recipeParas));
-        mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
-        mqMap.put("attach", JSON.toJSONString(attachs));
-        mqMap.put("eventId", AxisUtility.getReplyMessage());
+            mqMap.put("msgName", "Upload");
+            mqMap.put("deviceCode", deviceCode);
+            mqMap.put("recipe", JSON.toJSONString(recipes));
+            mqMap.put("recipePara", JSON.toJSONString(recipeParas));
+            mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
+            mqMap.put("attach", JSON.toJSONString(attachs));
+            String eventId = "";
+            try {
+                eventId = AxisUtility.getReplyMessage();
+            }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        mqMap.put("eventId", eventId==null?"":eventId);
         GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
         GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipes) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLogs));
     }
@@ -738,7 +751,13 @@ public class RecipeService extends BaseService {
             mqMap.put("recipePara", JSON.toJSONString(recipeParas));
             mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
             mqMap.put("attach", JSON.toJSONString(attachs));
-            mqMap.put("eventId", AxisUtility.getReplyMessage());
+            String eventId = "";
+            try {
+                eventId = AxisUtility.getReplyMessage();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            mqMap.put("eventId", eventId == null?"":eventId);
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
 
@@ -1242,7 +1261,7 @@ public class RecipeService extends BaseService {
         SysOffice sysOffice = sysOfficeMapper.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
         String returnPath = "";
         returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType() + "/" + deviceInfo.getDeviceCode() + "/" + recipe.getRecipeName().replace("/", "@").replace("\\", "@") + "/";
-        logger.info(returnPath);
+        logger.info("recipe上传时的存储路径:"+returnPath);
         return returnPath;
     }
 
