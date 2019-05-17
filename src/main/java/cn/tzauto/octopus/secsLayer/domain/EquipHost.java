@@ -581,7 +581,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", "recipename1");
+        panelMap.put("PPExecName",ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
