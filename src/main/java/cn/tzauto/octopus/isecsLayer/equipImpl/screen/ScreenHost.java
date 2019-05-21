@@ -6,6 +6,7 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,37 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String getCurrentRecipeName() {
-        return null;
+        String prerecipeName = ppExecName;
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            try {
+                List<String> result = iSecsHost.executeCommand("curscreen");
+                if (result != null && !result.isEmpty()) {
+                    if ("process".equals(result.get(0))) {
+                        String recipeNameTemp = iSecsHost.executeCommand("read recipename").get(0);
+                        ppExecName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("/") + 1);
+//                        String lotIdtemp = iSecsHost.executeCommand("read lotno").get(0);
+                        if ("done".equals(ppExecName)) {
+                            ppExecName = prerecipeName;
+                        }
+//                        if (!"done".equals(lotIdtemp)) {
+//                            lotId = lotIdtemp;
+//                        }
+                    } else {
+                        ppExecName = prerecipeName;
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Get equip ExecName error:" + e.getMessage());
+                ppExecName = "--";
+                return prerecipeName;
+            }
+        }
+        Map map = new HashMap();
+        map.put("PPExecName", ppExecName);
+        map.put("WorkLot", lotId);
+        changeEquipPanel(map);
+        selectRecipe("123");
+        return ppExecName;
     }
 
     @Override
@@ -64,7 +95,16 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
-        return null;
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            try {
+                List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
+
+                return "选中失败";
+            } catch (Exception e) {
+                logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
+                return "选中失败";
+            }
+        }
     }
 
     @Override
