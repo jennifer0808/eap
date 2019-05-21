@@ -211,9 +211,14 @@ public class DownloadPaneController implements Initializable {
                         recipeOperationLog.setOperationResult("Y");
                         //手动下成功给服务端发mq
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
-
+                      Optional<ButtonType> result=  CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
+                        if (result.get() == ButtonType.OK){
+                            stage.close();
+                            isDownload = false;
+                            onlyOnePageDownload = false;
+                        }
                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
+
                     } else {
                         CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
 
