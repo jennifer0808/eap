@@ -1,9 +1,13 @@
 package cn.tzauto.octopus.common.rabbit;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import com.rabbitmq.client.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -24,7 +28,6 @@ public class RabbitProducer {
     public void sendQueueMessage(String queueName, String message) {
         //获取连接
         Connection connection = MessageUtils.getConnection();
-        System.out.println(connection);
         //创建通道
         Channel channel = null;
         try {
@@ -47,7 +50,6 @@ public class RabbitProducer {
         } catch (TimeoutException e) {
             e.printStackTrace();
         }
-
     }
 
     public void sendExchangeMsg(String exchangeName, String message) {
@@ -63,7 +65,7 @@ public class RabbitProducer {
             参数4：交换机在不被使用时是否删除
             参数5：交换机的其他属性
          */
-            channel.exchangeDeclare(exchangeName, "direct", true, false, null);
+            channel.exchangeDeclare(exchangeName, "fanout", true, false, null);
 
             channel.basicPublish(exchangeName, "", null, message.getBytes());
             System.out.println("send exchange msg：" + message);
@@ -76,14 +78,59 @@ public class RabbitProducer {
         }
     }
 
+    public HashMap<String, String> sendAwaitMessage(String message) {
+        //获取连接
+        Connection connection = MessageUtils.getConnection();
+        //创建通道
+        Channel channel = null;
+        String result = "";
+
+        final String corrId = UUID.randomUUID().toString();
+        final String replyQueueName;
+        try {
+            replyQueueName = channel.queueDeclare().getQueue();
+            AMQP.BasicProperties props = new AMQP.BasicProperties
+                    .Builder()
+                    .correlationId(corrId)
+                    .replyTo(replyQueueName)
+                    .build();
+            channel.basicPublish("", queueName, props, message.getBytes("UTF-8"));
+            final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
+            channel.basicConsume(replyQueueName, true, new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    if (properties.getCorrelationId().equals(corrId)) {
+                        response.offer(new String(body, "UTF-8"));
+                    }
+                }
+            });
+            channel.close();
+            connection.close();
+            //json格式的map
+            result = response.take();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        HashMap<String, String> resultMap = new HashMap<>();
+
+        if(!"".equalsIgnoreCase(result)){
+            resultMap = (HashMap<String, String>) JsonMapper.fromJsonString(result,HashMap.class);
+        }
+        return resultMap;
+    }
+
 
     public static void main(String[] args) {
-        String queueName = "queue_demo";
+        String queueName = "S2C.T.RECIPE_C";
         RabbitProducer producer = new RabbitProducer(queueName);
         String message = "Hello World!";
-        String exchangeName = "exchange_demo";
-        producer.sendQueueMessage(queueName, message);
-//            producer.sendExchangeMsg(exchangeName, message);
+        String exchangeName = "S2C.T.EXCHANGE1";
+//        producer.sendQueueMessage(queueName, message);
+            producer.sendExchangeMsg(exchangeName, message);
     }
 
 }

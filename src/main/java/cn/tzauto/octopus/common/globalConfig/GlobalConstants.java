@@ -50,29 +50,49 @@ public class GlobalConstants {
     public static final String REFRESH_EQUIPSTATE_JOB_NAME = "REFRESH_EQUIPSTATE_JOB";
     public static String HOST_JSON_FILE;
     public static String CONFIG_FILE_PATH = "config.properties";
-//    public static MessageUtils C2SRcpQueue = new MessageUtils("C2S.Q.RECIPE_C");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpUpLoadQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPUPLOAD");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpDownLoadQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPDOWNLOAD");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SCheckRcpNameQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.CHECKRCPNAME");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpDeleteQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPDELETE");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpSelectQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.PPSELECT");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SAlarmQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.ALARM_D");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SAlarmQueueTest = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.ALARM_Dtest");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SInitQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.INITIAL_REQUEST");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SLogQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.LOG_D");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SEqptLogQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.EQPT_LOG_D");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SEqptRemoteCommand = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.EQPT_RCMD");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SSpecificDataQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.SPECIFIC_DATA");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SSvDataQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.SV_DATA");
-    public static cn.tzauto.octopus.common.mq.MessageUtils C2SPlasma2DQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.PLASMA_2D");
-    //public static MessageUtils S2CRcpQueue = new MessageUtils("S2C_Recipe_Queue");
-    public static cn.tzauto.octopus.common.mq.MessageUtils S2CRcpTopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.RECIPE_C");
-    public static cn.tzauto.octopus.common.mq.MessageUtils S2CRcpTopicTest = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.RECIPE_CTest");
-    public static cn.tzauto.octopus.common.mq.MessageUtils S2CDataTopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.DATA_TRANSFER");
-    public static cn.tzauto.octopus.common.mq.MessageUtils S2CDataTopicTest = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.DATA_TRANSFERTest");
-    public static cn.tzauto.octopus.common.mq.MessageUtils S2CEQPT_PARATopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.EQPT_PARAMETER");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RECIPE_C");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpUpLoadQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPUPLOAD");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpDownLoadQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPDOWNLOAD");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SCheckRcpNameQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.CHECKRCPNAME");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpDeleteQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.RCPDELETE");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SRcpSelectQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.PPSELECT");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SAlarmQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.ALARM_D");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SAlarmQueueTest = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.ALARM_Dtest");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SInitQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.INITIAL_REQUEST");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SLogQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.LOG_D");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SEqptLogQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.EQPT_LOG_D");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SEqptRemoteCommand = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.EQPT_RCMD");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SSpecificDataQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.SPECIFIC_DATA");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SSvDataQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.SV_DATA");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils C2SPlasma2DQueue = new cn.tzauto.octopus.common.mq.MessageUtils("C2S.Q.PLASMA_2D");
+//    //public static MessageUtils S2CRcpQueue = new MessageUtils("S2C_Recipe_Queue");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils S2CRcpTopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.RECIPE_C");
+////    public static cn.tzauto.octopus.common.mq.MessageUtils S2CRcpTopicTest = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.RECIPE_CTest");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils S2CDataTopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.DATA_TRANSFER");
+////    public static cn.tzauto.octopus.common.mq.MessageUtils S2CDataTopicTest = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.DATA_TRANSFERTest");
+//    public static cn.tzauto.octopus.common.mq.MessageUtils S2CEQPT_PARATopic = new cn.tzauto.octopus.common.mq.MessageUtils("S2C.T.EQPT_PARAMETER");
+//
+    public static MessageUtils C2SRcpQueue = new MessageUtils("C2S.Q.RECIPE_C","","1");
+    public static MessageUtils C2SRcpUpLoadQueue = new MessageUtils("C2S.Q.RCPUPLOAD","","1");
+    public static MessageUtils C2SRcpDownLoadQueue = new MessageUtils("C2S.Q.RCPDOWNLOAD","","1");
+    public static MessageUtils C2SCheckRcpNameQueue = new MessageUtils("C2S.Q.CHECKRCPNAME","","1");
+    public static MessageUtils C2SRcpDeleteQueue = new MessageUtils("C2S.Q.RCPDELETE","","1");
+    public static MessageUtils C2SRcpSelectQueue = new MessageUtils("C2S.Q.PPSELECT","","1");
+    public static MessageUtils C2SAlarmQueue = new MessageUtils("C2S.Q.ALARM_D","","1");
+    public static MessageUtils C2SInitQueue = new MessageUtils("C2S.Q.INITIAL_REQUEST","","1");
+    public static MessageUtils C2SLogQueue = new MessageUtils("C2S.Q.LOG_D","","1");
+    public static MessageUtils C2SEqptLogQueue = new MessageUtils("C2S.Q.EQPT_LOG_D","","1");
+    public static MessageUtils C2SEqptRemoteCommand = new MessageUtils("C2S.Q.EQPT_RCMD","","1");
+    public static MessageUtils C2SSpecificDataQueue = new MessageUtils("C2S.Q.SPECIFIC_DATA","","1");
+    public static MessageUtils C2SSvDataQueue = new MessageUtils("C2S.Q.SV_DATA","","1");
+    public static MessageUtils C2SPlasma2DQueue = new MessageUtils("C2S.Q.PLASMA_2D","","1");//RCP关注点 rabbit
 
-    public static MessageUtils C2SRcpQueue = new MessageUtils("C2S.Q.RECIPE_C");
+    public static MessageUtils S2CRcpTopic = new MessageUtils("S2C.T.RECIPE_C","S2C.T.EXCHANGE","2");
+    public static MessageUtils S2CDataTopic = new MessageUtils("S2C.T.DATA_TRANSFER","S2C.T.EXCHANGE","2");
+    public static MessageUtils S2CEQPT_PARATopic = new MessageUtils("S2C.T.EQPT_PARAMETER","S2C.T.EXCHANGE","2");
+
+
+
     public static SysUser sysUser;
     public static Logger sysLogger = Logger.getLogger(GlobalConstants.class.getName());
     public static String clientId;

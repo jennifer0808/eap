@@ -350,10 +350,9 @@ public class VSP88DNHTHost extends EquipHost {
         msgMap.put("stripId", stripId);
         String result = "";
         try {
-            Message message = GlobalConstants.C2SPlasma2DQueue.sendMessageWithReplay(msgMap);
-            if (message != null) {
-                MapMessage mapMessage = (MapMessage) message;
-                result = mapMessage.getString("message");
+            HashMap<String,String> messageMap = GlobalConstants.C2SPlasma2DQueue.sendMessageWithReplay(msgMap);
+            if (messageMap != null) {
+                result = messageMap.get("message");
             } else {
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
             }

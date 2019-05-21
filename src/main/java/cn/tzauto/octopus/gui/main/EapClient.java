@@ -7,8 +7,7 @@ package cn.tzauto.octopus.gui.main;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.mq.SubscribeMessage;
-import cn.tzauto.octopus.common.mq.common.MQConstants;
+import cn.tzauto.octopus.common.rabbit.SubscribeMessage;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
@@ -598,7 +597,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
         new Thread() {
             public void run() {
                 if (!GlobalConstants.isLocalMode) {
-                    MQConstants.initConenction();
+//                    MQConstants.initConenction();
                     new SubscribeMessage().startlistening();
                     //发送开机日志给服务端
                     GlobalConstants.sendStartLog2Server(null);
