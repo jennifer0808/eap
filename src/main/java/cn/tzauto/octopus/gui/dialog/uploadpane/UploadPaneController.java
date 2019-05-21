@@ -39,10 +39,7 @@ import org.apache.log4j.Logger;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
 
@@ -214,7 +211,7 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
+         CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
             return;
         }
 
@@ -249,14 +246,17 @@ public class UploadPaneController implements Initializable {
                 try {
                     recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
                     if (recipeMap == null) {
-                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+//                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
                         return;
                     } else if (recipeMap.get("checkResult") != null) {
-                        JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, (String) recipeMap.get("checkResult"),stage);
+//                        JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
                         return;
                     }
                 } catch (UploadRecipeErrorException upe) {
-                    JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+//                    JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
                     return;
                 }
 
@@ -266,7 +266,8 @@ public class UploadPaneController implements Initializable {
                     recipe = (Recipe) recipeMap.get("recipe");
                 }
                 if ("N".equals(recipeMap.get("shortNameOK"))) {
-                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
+//                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！",stage);
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
                     return;
                 }
@@ -297,7 +298,13 @@ public class UploadPaneController implements Initializable {
               }
            }
             if(isAlert){
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
+                Optional<ButtonType> result=  CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
+
+                if (result.get() == ButtonType.OK){
+                   stage.close();
+                    isUpload = false;
+                    onlyOnePageUpload = false;
+                }
                 return;
             }
 
