@@ -30,7 +30,6 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- *
  * @author luosy
  */
 public class HitachiLaserDrillHost extends EquipModel {
@@ -195,7 +194,7 @@ public class HitachiLaserDrillHost extends EquipModel {
                 String ftpPort = GlobalConstants.ftpPort;
                 String ftpUser = GlobalConstants.ftpUser;
                 String ftpPwd = GlobalConstants.ftpPwd;
-                Recipe recipe =setRecipe(recipeName);
+                Recipe recipe = setRecipe(recipeName);
                 SqlSession sqlSession = MybatisSqlSession.getSqlSession();
                 String ftpRecipePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
                 sqlSession.close();
@@ -846,6 +845,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         }
         return lineUseStatus;
     }
+
     String Date = "";
     String Axis = "";
     String AP_No = "";
@@ -921,5 +921,11 @@ public class HitachiLaserDrillHost extends EquipModel {
         }
 
         return recipeName;
+    }
+
+    public boolean startCheck() {
+        //todo  生產前品質確認
+        //todo 掃描線長/代理人/工程師工號條碼登陸
+        return true;
     }
 }
