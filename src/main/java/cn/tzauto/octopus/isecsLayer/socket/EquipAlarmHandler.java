@@ -152,6 +152,9 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             remark = splitStrs[3];
                         }
                         break;
+                    case "SCREEN":
+
+                        break;
                     default:
                         alarm = str;
                         break;

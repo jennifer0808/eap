@@ -124,7 +124,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 gridPane.setStyle("-fx-background-color: white;");
                 gridPane.setPrefHeight(32);
                 gridPane.setAlignment(Pos.CENTER_LEFT);
-                Label label = new Label("  EAPClient");
+                Label label = new Label("  EAP");
                 label.setFont(Font.font(14));
                 label.setTextFill(Paint.valueOf("BLACK"));
                 ImageView imageView = new ImageView("logoTaiZhi.png");
