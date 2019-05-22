@@ -9,7 +9,6 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -35,7 +34,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -211,13 +211,18 @@ public class DownloadPaneController implements Initializable {
                         recipeOperationLog.setOperationResult("Y");
                         //手动下成功给服务端发mq
                         sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                        CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
+                        Optional<ButtonType> result=  CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
+                        if (result.get() == ButtonType.OK){
+                            stage.close();
+                            isDownload = false;
+                            onlyOnePageDownload = false;
+                        }
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
 
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
                     } else {
                         CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
 
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                         mqMap.put("eventDesc", downloadResult);
                         recipeOperationLog.setOperationResult("N");
                         recipeOperationLog.setOperationResultDesc(downloadResult);
