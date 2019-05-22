@@ -30,16 +30,13 @@ public class ScreenHost extends EquipModel {
             try {
                 List<String> result = iSecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    if ("process".equals(result.get(0))) {
+                    if ("main".equals(result.get(0))) {
                         String recipeNameTemp = iSecsHost.executeCommand("read recipename").get(0);
                         ppExecName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("/") + 1);
 //                        String lotIdtemp = iSecsHost.executeCommand("read lotno").get(0);
                         if ("done".equals(ppExecName)) {
                             ppExecName = prerecipeName;
                         }
-//                        if (!"done".equals(lotIdtemp)) {
-//                            lotId = lotIdtemp;
-//                        }
                     } else {
                         ppExecName = prerecipeName;
                     }
@@ -52,9 +49,12 @@ public class ScreenHost extends EquipModel {
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
-        map.put("WorkLot", lotId);
         changeEquipPanel(map);
-        selectRecipe("123");
+        iSecsHost.executeCommand("playback writenumber.txt");
+        for (int i = 0; i < 10; i++) {
+            iSecsHost.executeCommand("playback sel" + i + ".txt");
+        }
+        iSecsHost.executeCommand("playback selok.txt");
         return ppExecName;
     }
 
@@ -119,7 +119,24 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String getEquipStatus() {
-        return null;
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            String screen = this.iSecsHost.executeCommand("curscreen").get(0);
+            if (screen.equals("main")) {
+                List<String> hrunColors = this.iSecsHost.executeCommand("read equipstatus");
+                for (String startColorTemp : hrunColors) {
+                    if (startColorTemp.equals("idle")) {
+                        equipStatus = "Idle";
+                    }
+                    if (startColorTemp.equals("run")) {
+                        equipStatus = "Run";
+                    }
+                }
+            } else {
+                equipStatus = "Idle";
+            }
+
+        }
+        return equipStatus;
     }
 
     @Override
