@@ -59,7 +59,7 @@
       <TextField fx:id="deviceCodeField" layoutX="321.0" layoutY="122.0" prefHeight="23.0" prefWidth="151.0" />
       <TextField fx:id="equipStatus" layoutX="321.0" layoutY="160.0" prefHeight="23.0" prefWidth="151.0" />
       <TextField fx:id="deviceType" layoutX="321.0" layoutY="198.0" prefHeight="23.0" prefWidth="151.0" />
-      <RadioButton fx:id="JRB_EngineerMode" layoutX="82.0" layoutY="241.0" mnemonicParsing="false" text="%engineerMode">
+      <RadioButton fx:id="JRB_EngineerMode" visible="false" layoutX="82.0" layoutY="241.0" mnemonicParsing="false" text="%engineerMode">
          <font>
             <Font size="14.0" />
          </font></RadioButton>
