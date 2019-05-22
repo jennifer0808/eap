@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="cn.tzinfo.htauto.octopus.biz.recipe.dao.RecipeNameMappingMapper" >
+<mapper namespace="cn.tzauto.octopus.biz.recipe.dao.RecipeNameMappingMapper" >
     <resultMap id="BaseResultMap" type="cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping" >
         <id column="ID" property="id" jdbcType="VARCHAR" />
         <result column="DEVICE_CODE" property="deviceCode" jdbcType="VARCHAR" />
