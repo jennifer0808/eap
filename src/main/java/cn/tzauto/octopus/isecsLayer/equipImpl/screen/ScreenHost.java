@@ -1,8 +1,13 @@
 package cn.tzauto.octopus.isecsLayer.equipImpl.screen;
 
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
@@ -33,7 +38,6 @@ public class ScreenHost extends EquipModel {
                     if ("main".equals(result.get(0))) {
                         String recipeNameTemp = iSecsHost.executeCommand("read recipename").get(0);
                         ppExecName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("/") + 1);
-//                        String lotIdtemp = iSecsHost.executeCommand("read lotno").get(0);
                         if ("done".equals(ppExecName)) {
                             ppExecName = prerecipeName;
                         }
@@ -50,11 +54,6 @@ public class ScreenHost extends EquipModel {
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
         changeEquipPanel(map);
-        iSecsHost.executeCommand("playback writenumber.txt");
-        for (int i = 0; i < 10; i++) {
-            iSecsHost.executeCommand("playback sel" + i + ".txt");
-        }
-        iSecsHost.executeCommand("playback selok.txt");
         return ppExecName;
     }
 
@@ -70,7 +69,33 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String stopEquip() {
-        return null;
+        String stopResult = "";
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            DeviceService deviceService = new DeviceService(sqlSession);
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+            sqlSession.close();
+            if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
+                List<String> result = null;
+                try {
+                    String equipStatusTemp = this.getEquipStatus();
+                    if (equipStatusTemp.equals("Idle")) {
+                        return "0";
+                    }
+                    result = iSecsHost.executeCommand("playback stop.txt");
+                    for (String start : result) {
+                        if ("done".equals(start)) {
+                            return "0";
+                        }
+                    }
+                } catch (Exception e) {
+                }
+            } else {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+                stopResult = "未设置锁机！";
+            }
+        }
+        return stopResult;
     }
 
     @Override
@@ -97,9 +122,24 @@ public class ScreenHost extends EquipModel {
     public String selectRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
+                String screen = iSecsHost.executeCommand("curscreen").get(0);
+                if (!screen.equals("recipe")) {
+                    iSecsHost.executeCommand("playback gotoRcp.txt");
+                }
+                screen = iSecsHost.executeCommand("curscreen").get(0);
+                if (!screen.equals("recipe")) {
+                    return "选中失败";
+                }
+                iSecsHost.executeCommand("playback add.txt");
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
-
-                return "选中失败";
+                //todo 调用接口获取到批次数量
+                String lotNum = "123";
+                for (int i = 1; i < lotNum.length(); i++) {
+                    iSecsHost.executeCommand("playback sel" + lotNum.charAt(i) + ".txt");
+                }
+                iSecsHost.executeCommand("playback selok.txt");
+                iSecsHost.executeCommand("playback addjob.txt");
+                return "0";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
                 return "选中失败";
