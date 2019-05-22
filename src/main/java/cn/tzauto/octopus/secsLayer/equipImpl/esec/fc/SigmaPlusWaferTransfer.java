@@ -164,7 +164,7 @@ public class SigmaPlusWaferTransfer {
 
         //transferArgs1(transferArgs1((long[]) map.get("BinList"), 53, 58), 58, 53);
 //        transferAngle((long[]) map.get("BinList"), "90");
-        System.out.println("cn.tzinfo.htauto.octopus.secsLayer.equipImpl.esec.SigmaPlusWaferTransfer.main()" + getPath("T19M35.00-03.TXT"));
+        System.out.println("cn.tzauto.octopus.secsLayer.equipImpl.esec.SigmaPlusWaferTransfer.main()" + getPath("T19M35.00-03.TXT"));
     }
 
     private static long[] transferAngle(long[] src, String angle, int row, int col) {

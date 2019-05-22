@@ -1,4 +1,4 @@
-package cn.tzauto.octopus.common.mq;
+package cn.tzauto.octopus.common.rabbit;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 
