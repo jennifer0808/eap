@@ -6,15 +6,16 @@
 package cn.tzauto.octopus.common.resolver;
 
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import org.apache.ibatis.session.SqlSession;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
-import org.apache.ibatis.session.SqlSession;
 
 /**
  *
@@ -31,7 +32,7 @@ public class RecipeTransfer implements IRecipeTransfer {
     public void edit(Recipe recipe, String deviceType, String localRecipeFilePath) {
         try {
             //创建类
-            Class<?> class1 = Class.forName("cn.tzinfo.htauto.octopus.secsLayer.resolver." + deviceType + "RecipeEdit");
+            Class<?> class1 = Class.forName("cn.tzauto.octopus.secsLayer.resolver." + deviceType + "RecipeEdit");
 
             //创建实例化：相当于 new 了一个对象
             Object object = class1.newInstance();
@@ -39,7 +40,7 @@ public class RecipeTransfer implements IRecipeTransfer {
             IRecipeTransfer recipeTransfer = (RecipeTransfer) object;
             recipeTransfer.editRecipeFile(recipe, deviceType, localRecipeFilePath);
         } catch (Exception e) {
-            System.out.println("cn.tzinfo.htauto.octopus.secsLayer.resolver.RecipeTransfer.edit()");
+            System.out.println("cn.tzauto.octopus.secsLayer.resolver.RecipeTransfer.edit()");
         }
 
     }
