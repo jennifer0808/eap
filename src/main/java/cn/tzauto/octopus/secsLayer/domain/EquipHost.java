@@ -637,9 +637,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     listsvValue.add(svValue);
                 }
                 resultMap.put("Value", listsvValue);
-                logger.info("SV查询得值svValue:"+resultMap);
-            }else{
-                String s= getSpecificSVEC(obj, 0);
+                logger.info("SV查询得值svValue:" + resultMap);
+            } else {
+                String s = getSpecificSVEC(obj, 0);
                 resultMap.put("Value", s);
             }
         }
@@ -1864,10 +1864,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List recipeParaCodeList = new ArrayList();
         for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
             if ("SV".equalsIgnoreCase(entry.getValue())) {
-                svIdList.add(entry.getKey());
+                svIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("EC".equalsIgnoreCase(entry.getValue())) {
-                ecIdList.add(entry.getKey());
+                ecIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("RecipePara".equalsIgnoreCase(entry.getValue())) {
                 recipeParaCodeList.add(entry.getKey());
@@ -1903,9 +1903,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
                     for (int i = 0; i < svValueList.size(); i++) {
-                      String sv=  getSpecificSVEC(svValueList.get(i),i);
+                        String sv = getSpecificSVEC(svValueList.get(i), i);
                         resultMap.put(svidList.get(i), sv);
-                        logger.info("resultMap:"+resultMap);
+                        logger.info("resultMap:" + resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -1920,20 +1920,21 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         return resultMap;
     }
-    public String  getSpecificSVEC(Object object,int i) {
 
-            if (object instanceof long[]) {
-                long[] longs = ((long[]) object);
-                if (longs.length == 0) {
-                    return "";
+    public String getSpecificSVEC(Object object, int i) {
 
-                } else {
-                   return String.valueOf(longs[0]);
-                }
+        if (object instanceof long[]) {
+            long[] longs = ((long[]) object);
+            if (longs.length == 0) {
+                return "";
 
+            } else {
+                return String.valueOf(longs[0]);
             }
-        if (object instanceof  int[]) {
-            int[] ints = (( int[]) object);
+
+        }
+        if (object instanceof int[]) {
+            int[] ints = ((int[]) object);
             if (ints.length == 0) {
                 return "";
 
@@ -1943,13 +1944,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         }
 
-        if (object instanceof  String) {
+        if (object instanceof String) {
             String s = (String) object;
-           return s;
+            return s;
 
         }
-        if (object instanceof  String[]) {
-            String[] strings = (( String[]) object);
+        if (object instanceof String[]) {
+            String[] strings = ((String[]) object);
             if (strings.length == 0) {
                 return "";
 
@@ -1958,8 +1959,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  float[]) {
-            float[] floats = (( float[]) object);
+        if (object instanceof float[]) {
+            float[] floats = ((float[]) object);
             if (floats.length == 0) {
                 return "";
 
@@ -1968,8 +1969,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  byte[]) {
-            byte[] bytes = (( byte[]) object);
+        if (object instanceof byte[]) {
+            byte[] bytes = ((byte[]) object);
             if (bytes.length == 0) {
                 return "";
 
@@ -1978,8 +1979,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  boolean[]) {
-            boolean[] booleans = (( boolean[]) object);
+        if (object instanceof boolean[]) {
+            boolean[] booleans = ((boolean[]) object);
             if (booleans.length == 0) {
                 return "";
 
@@ -1988,8 +1989,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  double[]) {
-            double[] doubles = (( double[]) object);
+        if (object instanceof double[]) {
+            double[] doubles = ((double[]) object);
             if (doubles.length == 0) {
                 return "";
 
@@ -1998,8 +1999,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  char[]) {
-            char[] chars = (( char[]) object);
+        if (object instanceof char[]) {
+            char[] chars = ((char[]) object);
             if (chars.length == 0) {
                 return "";
 
@@ -2020,9 +2021,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 return String.valueOf(tmp.get(0));
             }
 
-            }
+        }
 
-          return String.valueOf(object);
+        return String.valueOf(object);
     }
 
     /**
