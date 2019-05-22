@@ -1211,7 +1211,7 @@ public class RecipeService extends BaseService {
             } else if ("ENGINEER".equalsIgnoreCase(recipe.getVersionType())) {
                 returnPath = returnPath + "/" + deviceInfo.getDeviceCode() + "/" + recipeNamePath + "/" + recipeNamePath + "_V" + recipe.getVersionNo() + ".txt";
             }
-            logger.debug("Recipe:" + recipe.getRecipeName() + "使用自动拼接的下载路径：" + returnPath);
+            logger.info("Recipe:" + recipe.getRecipeName() + "使用自动拼接的下载路径：" + returnPath);
         }
         sqlSession.close();
         return returnPath;

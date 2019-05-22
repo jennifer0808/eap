@@ -48,6 +48,7 @@ public class EsecDB2100Host extends EquipHost {
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 15339L;
+        EquipStateChangeCeid = 40L;
         CPN_PPID = "PPNAME";
     }
 
@@ -186,6 +187,8 @@ public class EsecDB2100Host extends EquipHost {
     }
 
 
+
+
     public String initRptPara() {
         try {
             logger.debug("initRptPara+++++++++++++++++++");
@@ -242,6 +245,43 @@ public class EsecDB2100Host extends EquipHost {
             return "0";
         }
     }
+
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = -12345679;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = Long.parseLong(data.get("CEID").toString());
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+//            if (equipSecsBean.collectionReports.get(ceid) != null) {
+//                Process process = equipSecsBean.collectionReports.get(ceid);
+            //todo 这里看是重定义事件报告，还是查一遍sv数据把数据放到data里方便后面使用
+            //
+//                if (process.getProcessKey().equals("STATE_CHANGE")) {
+//
+//                }
+//                EventDealer.deal(data, deviceCode, process, activeWrapper);
+
+//            }
+            //TODO 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     @SuppressWarnings("unchecked")
@@ -326,23 +366,13 @@ public class EsecDB2100Host extends EquipHost {
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            preEquipStatus = equipStatus;
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-            controlState = ACKDescription.describeControlState(data.getSingleNumber("ControlState"), deviceType);
+            ceid = (long) data.get("CEID");
             ppExecName = ppExecName.replace(".dbrcp", "");
-
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        map.put("ControlState", controlState);
-        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -555,45 +585,55 @@ public class EsecDB2100Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
-        long length = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
-        s7f1out.put("Length", length);
-        DataMsgMap data = null;
-        byte ppgnt = 0;
-        try {
-            data = activeWrapper.sendS7F1out(targetRecipeName + ".dbrcp", length, lengthFormat);
-            ppgnt = (byte) data.get("PPGNT");
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt);
-        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+
+        long length = TransferUtil.getPPLength(localFilePath);
+        if (length == 0) {
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
+            return resultMap;
+        }
+
+        DataMsgMap data = null;
+
+        try {
+            data = activeWrapper.sendS7F1out(targetRecipeName+ ".dbrcp", length, lengthFormat);
+            byte ppgnt = (byte) data.get("PPGNT");
+            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+            resultMap.put("ppgnt", ppgnt);
+            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ppgnt", 9);
+            resultMap.put("Description", e.getMessage());
+        }
         return resultMap;
+
+
     }
 
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName + ".dbrcp", ppbody, FormatCode.SECS_BINARY);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte ackc7 = (byte) data.get("ACKC7");
+        targetRecipeName = targetRecipeName.replace("@", "/");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        try {
+            data = activeWrapper.sendS7F3out(targetRecipeName+ ".dbrcp", ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
         return resultMap;
     }
 
@@ -611,7 +651,7 @@ public class EsecDB2100Host extends EquipHost {
         //Recipe解析
         recipeParaList = getRecipeParasByECSV();
         //设备发过来的参数部分为科学计数法，这里转为一般的
-        recipeParaList = recipeParaBD2Str(recipeParaList);
+        recipeParaList = this.recipeParaBD2Str(recipeParaList);
 
         } catch (UploadRecipeErrorException e) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
@@ -621,7 +661,7 @@ public class EsecDB2100Host extends EquipHost {
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
-        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeNameMapping", (Object)null);
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
@@ -634,44 +674,50 @@ public class EsecDB2100Host extends EquipHost {
      * @param recipeName
      * @return
      */
-    @SuppressWarnings("unchecked")
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public Map sendS7F17out(String recipeName) {
+//        Map resultMap = new HashMap();
+//        try {
+//            //先检查是否成功执行切换recipe，
+//            if (ppselectFlag) {
+////                int i = 0;
+////                //超过四次直接执行，不管成功与否
+////                while (i < 4) {
+////                    //切换recipe完成,执行删除命令，，另建线程删除recipe文件
+////                    if (ppselectDoneFlag) {
+////
+////                        break;
+////                    }
+////                    Thread.sleep(1000);
+////                    i++;
+////                }
+//                //todo切换之前recipe时
+//                logger.info(deviceCode + "=====正执行切换recipe动作！现延迟删除[" + recipeName + "]");
+//                Thread thread = new Thread(new RunnableImpl(recipeName));
+//                thread.start();
+//                //造假的回复信息
+//                resultMap.put("msgType", "s7f18");
+//                resultMap.put("deviceCode", deviceCode);
+//                resultMap.put("recipeName", recipeName);
+//                resultMap.put("ACKC7", 0);
+//                resultMap.put("Description", "Delete Later!");
+//            } else {
+//                //没有执行选中程序的删除recipe不需要延迟执行，不行
+//                resultMap = sendS7F17outReal(recipeName);
+//            }
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        } finally {
+//            return resultMap;
+//        }
+//    }
+
     @Override
     public Map sendS7F17out(String recipeName) {
-        Map resultMap = new HashMap();
-        try {
-            //先检查是否成功执行切换recipe，
-            if (ppselectFlag) {
-//                int i = 0;
-//                //超过四次直接执行，不管成功与否
-//                while (i < 4) {
-//                    //切换recipe完成,执行删除命令，，另建线程删除recipe文件
-//                    if (ppselectDoneFlag) {
-//                        
-//                        break;
-//                    }
-//                    Thread.sleep(1000);
-//                    i++;
-//                }
-                //todo切换之前recipe时
-                logger.info(deviceCode + "=====正执行切换recipe动作！现延迟删除[" + recipeName + "]");
-                Thread thread = new Thread(new RunnableImpl(recipeName));
-                thread.start();
-                //造假的回复信息
-                resultMap.put("msgType", "s7f18");
-                resultMap.put("deviceCode", deviceCode);
-                resultMap.put("recipeName", recipeName);
-                resultMap.put("ACKC7", 0);
-                resultMap.put("Description", "Delete Later!");
-            } else {
-                //没有执行选中程序的删除recipe不需要延迟执行，不行
-                resultMap = sendS7F17outReal(recipeName);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        } finally {
-            return resultMap;
-        }
+        return sendS7F17outReal(recipeName);
     }
+
 
     class RunnableImpl implements Runnable {
 
