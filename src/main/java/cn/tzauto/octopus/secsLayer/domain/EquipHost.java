@@ -581,7 +581,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
+        panelMap.put("PPExecName",ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
@@ -638,7 +638,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 resultMap.put("Value", listsvValue);
                 logger.info("SV查询得值svValue:"+resultMap);
             }else{
-                    resultMap.put("Value", obj);
+                String s= getSpecificSVEC(obj, 0);
+                resultMap.put("Value", s);
             }
         }
 
@@ -1898,99 +1899,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 if (data != null && data.get("SV") != null) {
                     //todo 取值的問題，有可能是String
                     svValueList = (ArrayList) (data.get("SV"));
-
                     for (int i = 0; i < svValueList.size(); i++) {
-                        if (svValueList.get(i) instanceof long[]) {
-                            long[] longs = ((long[]) svValueList.get(i));
-                            if (longs.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(longs[0]));
-                            }
-                            continue;
-                        }
-
-                        if (svValueList.get(i) instanceof int[]) {
-                            int[] ints = ((int[]) svValueList.get(i));
-                            if (ints.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(ints[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof String) {
-                            String s = (String) svValueList.get(i);
-                            resultMap.put(svidList.get(i), s);
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof String[]) {
-                            String[] s = (String[]) svValueList.get(i);
-                            if (s.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(s[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  float[]) {
-                            float[] floats = ( float[]) svValueList.get(i);
-                            if (floats.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(floats[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  byte[]) {
-                            byte[] bytes = ( byte[]) svValueList.get(i);
-                            if (bytes.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(bytes[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  boolean[]) {
-                            boolean[] booleans = (boolean[]) svValueList.get(i);
-                            if (booleans.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(booleans[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  double[]) {
-                            double[] doubles = (double[]) svValueList.get(i);
-                            if (doubles.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(doubles[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  char[]) {
-                            char[] chars = (char[]) svValueList.get(i);
-                            if (chars.length == 0) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                resultMap.put(svidList.get(i), String.valueOf(chars[0]));
-                            }
-                            continue;
-                        }
-                        if (svValueList.get(i) instanceof  List) {
-                            List list = (List) svValueList.get(i);
-                            if (((List) list.get(i)).isEmpty()) {
-                                resultMap.put(svidList.get(i), "");
-                            } else {
-                                ArrayList obj = new ArrayList<>();
-                                ArrayList tmp = getIDValue((ArrayList) list.get(i));
-                                resultMap.put(svidList.get(i), String.valueOf(tmp.get(0)));
-                            }
-                            continue;
-
-                        }
-                        resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
+                      String sv=  getSpecificSVEC(svValueList.get(i),i);
+                        resultMap.put(svidList.get(i), sv);
                         logger.info("resultMap:"+resultMap);
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
@@ -2005,6 +1916,110 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
         }
         return resultMap;
+    }
+    public String  getSpecificSVEC(Object object,int i) {
+
+            if (object instanceof long[]) {
+                long[] longs = ((long[]) object);
+                if (longs.length == 0) {
+                    return "";
+
+                } else {
+                   return String.valueOf(longs[0]);
+                }
+
+            }
+        if (object instanceof  int[]) {
+            int[] ints = (( int[]) object);
+            if (ints.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(ints[0]);
+            }
+
+        }
+
+        if (object instanceof  String) {
+            String s = (String) object;
+           return s;
+
+        }
+        if (object instanceof  String[]) {
+            String[] strings = (( String[]) object);
+            if (strings.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(strings[0]);
+            }
+
+        }
+        if (object instanceof  float[]) {
+            float[] floats = (( float[]) object);
+            if (floats.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(floats[0]);
+            }
+
+        }
+        if (object instanceof  byte[]) {
+            byte[] bytes = (( byte[]) object);
+            if (bytes.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(bytes[0]);
+            }
+
+        }
+        if (object instanceof  boolean[]) {
+            boolean[] booleans = (( boolean[]) object);
+            if (booleans.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(booleans[0]);
+            }
+
+        }
+        if (object instanceof  double[]) {
+            double[] doubles = (( double[]) object);
+            if (doubles.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(doubles[0]);
+            }
+
+        }
+        if (object instanceof  char[]) {
+            char[] chars = (( char[]) object);
+            if (chars.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(chars[0]);
+            }
+
+        }
+
+        if (object instanceof List) {
+            List list = (List) object;
+            if (((List) object).isEmpty()) {
+                return "";
+
+            } else {
+                ArrayList obj = new ArrayList<>();
+                ArrayList tmp = getIDValue((ArrayList) list.get(i));
+                return String.valueOf(tmp.get(0));
+            }
+
+            }
+
+          return String.valueOf(object);
     }
 
     /**
