@@ -1861,10 +1861,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List recipeParaCodeList = new ArrayList();
         for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
             if ("SV".equalsIgnoreCase(entry.getValue())) {
-                svIdList.add(entry.getKey());
+                svIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("EC".equalsIgnoreCase(entry.getValue())) {
-                ecIdList.add(entry.getKey());
+                ecIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("RecipePara".equalsIgnoreCase(entry.getValue())) {
                 recipeParaCodeList.add(entry.getKey());
