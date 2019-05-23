@@ -636,7 +636,6 @@ public class RecipeService extends BaseService {
 //            if (!existFlag) {
 //                return false;
 //            }
-            System.out.println("开始上传至ftp啦。。。。");
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }

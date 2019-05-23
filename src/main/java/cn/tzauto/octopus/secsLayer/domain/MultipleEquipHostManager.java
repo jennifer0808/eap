@@ -642,11 +642,11 @@ public class MultipleEquipHostManager {
             }
         }
         if (equipModels.get(deviceInfo.getDeviceCode()) != null) {
-            if (equipModels.get(deviceInfo.getDeviceCode()).getPassport(0)) {
-                String downloadResult = equipModels.get(deviceInfo.getDeviceCode()).downloadRecipe(recipe);
-                equipModels.get(deviceInfo.getDeviceCode()).returnPassport();
-                return downloadResult;
-            }
+
+            String downloadResult = equipModels.get(deviceInfo.getDeviceCode()).downloadRecipe(recipe);
+            equipModels.get(deviceInfo.getDeviceCode()).returnPassport();
+            return downloadResult;
+
         }
         return "0";
     }
@@ -1438,6 +1438,8 @@ public class MultipleEquipHostManager {
             return null;
         }
         GlobalConstants.deviceInfos = deviceInfoList;
+        this.deviceInfos = deviceInfoList;
+        GlobalConstants.stage.hostManager.deviceInfos = deviceInfoList;
         List<DeviceInfo> deviceInfoSecs = new ArrayList<>();
         List<DeviceInfo> deviceInfoIsecs = new ArrayList<>();
         for (DeviceInfo deviceInfo : deviceInfoList) {

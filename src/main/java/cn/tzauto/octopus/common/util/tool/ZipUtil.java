@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ZipUtil {
 
-    public static String pathOf7Z = "C:/7-Zip/7z.exe";
+    public static String pathOf7Z = "D://Program Files/7-Zip/7z.exe";
 
     public static String remoteUrl = "//192.168.1.232/recipe/";
 

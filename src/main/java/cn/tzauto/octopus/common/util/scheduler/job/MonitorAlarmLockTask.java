@@ -15,7 +15,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 /**
- *
  * @author luosy
  */
 public class MonitorAlarmLockTask implements Job {
@@ -25,7 +24,7 @@ public class MonitorAlarmLockTask implements Job {
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
         logger.info("MonitorAlarmLockTask start...");
-        if ( GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
+        if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
                 MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (!equipModel.iSecsHost.isConnect) {
@@ -33,9 +32,9 @@ public class MonitorAlarmLockTask implements Job {
                 }
                 try {
                     Thread.sleep(300);
-                    if (equipModel.checkLockFlagFromServerByWS(equipModel.deviceCode)) {
-                        equipModel.stopEquip();
-                    }
+//                    if (equipModel.checkLockFlagFromServerByWS(equipModel.deviceCode)) {
+//                        equipModel.stopEquip();
+//                    }
                 } catch (Exception e) {
                     logger.error("设备:" + equipModel.deviceCode + "定时检查AlarmLock时触发异常." + e.getMessage());
                 }

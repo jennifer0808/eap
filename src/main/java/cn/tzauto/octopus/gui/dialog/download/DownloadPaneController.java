@@ -9,7 +9,6 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.dialog.uploadpane.UploadPaneController;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -35,7 +34,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -110,7 +110,7 @@ public class DownloadPaneController implements Initializable {
         String deviceTypeId = recipe.getDeviceTypeId();
 
         List<DeviceInfo> deviceInfostmp = new ArrayList<>();
-        for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
+        for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
 //            if (equipHost != null && AxisUtility.isEngineerMode(deviceInfo.getDeviceCode()) && equipHost.getEquipState().isCommOn()) {
             if (equipHost != null  && equipHost.getEquipState().isCommOn()) {

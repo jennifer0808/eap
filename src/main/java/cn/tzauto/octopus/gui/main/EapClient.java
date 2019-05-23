@@ -178,7 +178,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
                     @Override
                     public void handle(ActionEvent event) {
-                        if(flag){
+                        if (flag) {
                             stage.setMaximized(flag);
                             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
                             stage.setX(primaryScreenBounds.getMinX());
@@ -188,11 +188,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
                             double height = primaryScreenBounds.getHeight();
                             stage.setHeight(height);
                             root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
-                        }else{
+                            flag = !flag;
+                        } else {
                             stage.setMaximized(flag);
                             root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
+                            flag = !flag;
                         }
 
                     }
