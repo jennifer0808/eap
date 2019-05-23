@@ -308,20 +308,20 @@ public class HTDB730Host extends EquipHost {
                 ・CEID(33)：Pickup Height Offset Teach
              */
             //解锁绑定
-            sendS2f33outDelete(10003L);
-            sendS2F35outDelete(26L, 26L);
-            sendS2F35outDelete(27L, 27L);
-            //开启特殊事件报告
-
-            List list1 = new ArrayList();
-            list1.add(50062L);
-            list1.add(50070L);
-            list1.add(50063L);
+//            sendS2f33outDelete(10003L);
+//            sendS2F35outDelete(26L, 26L);
+//            sendS2F35outDelete(27L, 27L);
+//            //开启特殊事件报告
+//
+//            List list1 = new ArrayList();
+//            list1.add(50062L);
+//            list1.add(50070L);
+//            list1.add(50063L);
 //            sendS2F33out(10003L, 50062L, 50070L, 50063L);
-            sendS2F33out(10003L, 50062L, list1);
-            sendS2F35out(26L, 10003L);
+//            sendS2F33out(10003L, 50062L, list1);
+//            sendS2F35out(26L, 10003L);
             sendS2F37out(26L);
-            sendS2F35out(27L, 10003L);
+//            sendS2F35out(27L, 10003L);
             sendS2F37out(27L);
             //全部开始时
 //            long[] ceidsSpecial = new long[8];
