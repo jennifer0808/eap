@@ -363,22 +363,43 @@ public class AsmTwin832Host extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F5out(recipeName);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = new ArrayList();
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[])  data.get("PPBODY");
-            TransferUtil.setPPBody(ppbody, 1, recipePath);
-            logger.info("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-            //Recipe解析，暂无
-            recipeParaList = getRecipeParasByECSV();
-        }
-
+        Map map = new HashMap();
         Map resultMap = new HashMap();
+        map = sendS1F3Check();
+        String rcpName = (String) map.get("PPExecName");
+        logger.info("===================rcpName:" + rcpName);
+        logger.info("===================recipeName:" + recipeName);
+        if (!recipeName.contains(rcpName)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
+            resultMap.put("checkResult", "Y");
+            return resultMap;
+        }
+//        DataMsgMap data = null;
+//        try {
+//            data = activeWrapper.sendS7F5out(recipeName);
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
+        logger.info("上传");
+        List<RecipePara> recipeParaList = new ArrayList();
+        byte[] ppbody = new byte[0];
+//        if (data != null && !data.isEmpty()) {
+            try {
+                ppbody = (byte[]) getPPBODY(recipeName);
+            } catch (UploadRecipeErrorException e) {
+                e.printStackTrace();
+            }
+
+        if (ppbody == null && ppbody.length == 0) {
+            resultMap.put("checkResult", "ppbody为空，请检查程序！");
+            return resultMap;
+        }
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.info("Receive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        //Recipe解析，暂无
+        logger.info("开始解析");
+        recipeParaList = getRecipeParasByECSV();
+        logger.info("解析结束");
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
