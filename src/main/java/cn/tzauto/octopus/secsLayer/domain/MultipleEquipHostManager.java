@@ -1652,7 +1652,7 @@ public class MultipleEquipHostManager {
     public DeviceInfo getDeviceInfo(String deviceId, String deviceCode) {
         if (deviceId != null) {
             for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
-                if (deviceId.equals(deviceInfo.getDeviceCode())) {
+                if (deviceId.equals(deviceInfo.getDeviceId())) {
                     return deviceInfo;
                 }
             }

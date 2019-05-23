@@ -1,10 +1,17 @@
 package cn.tzauto.octopus.common.resolver;
 
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author njtz
@@ -187,13 +194,38 @@ public class TransferUtil {
                 out.close();
             }
         } catch (Exception e) {
-            logger.error(ppbody.toString()+","+rcptype+",存储路径：["+recipePath+"]",e);
+            logger.error(ppbody.toString() + "," + rcptype + ",存储路径：[" + recipePath + "]", e);
             e.printStackTrace();
         }
     }
 
-
-
+    public static List transferFromDB(Map paraMap, String deviceType) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+        sqlSession.close();
+        List<String> paraNameList = new ArrayList<>();
+        for (int i = 0; i < recipeTemplates.size(); i++) {
+            paraNameList.add(recipeTemplates.get(i).getParaName());
+        }
+        List<RecipePara> recipeParaList = new ArrayList<>();
+        Set<Map.Entry<String, String>> entry = paraMap.entrySet();
+        for (Map.Entry<String, String> e : entry) {
+            if (paraNameList.contains(e.getKey())) {
+                RecipePara recipePara = new RecipePara();
+                recipePara.setParaCode(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaCode());
+                recipePara.setParaName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaName());
+                recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
+                recipePara.setSetValue(e.getValue());
+                recipePara.setMinValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMinValue());
+                recipePara.setMaxValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMaxValue());
+                recipePara.setParaMeasure(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaUnit());
+                recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
+                recipeParaList.add(recipePara);
+            }
+        }
+        return recipeParaList;
+    }
 
 
 }

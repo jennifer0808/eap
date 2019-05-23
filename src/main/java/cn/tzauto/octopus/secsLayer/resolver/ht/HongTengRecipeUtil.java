@@ -2,7 +2,7 @@ package cn.tzauto.octopus.secsLayer.resolver.ht;
 
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.common.resolver.TransferUtil;
 
 import java.io.*;
 import java.util.ArrayList;

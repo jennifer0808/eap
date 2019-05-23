@@ -6,7 +6,7 @@
 //
 //import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 //import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-//import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+//import cn.tzauto.octopus.common.resolver.TransferUtil;
 //import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 //import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 //
