@@ -160,7 +160,10 @@ public class EquipStatusPane {
     }
 
     public void setRunningRcp(String runningRcp) {
-        this.L_RecipeName.setTooltip(new Tooltip(runningRcp));
+        Platform.runLater(()
+                -> this.L_RecipeName.setTooltip(new Tooltip(runningRcp))
+        );
+
         if (runningRcp != null && runningRcp.length() > 15) {
             Platform.runLater(()
                     -> this.L_RecipeName.setText(runningRcp.substring(0, 12) + "...")
