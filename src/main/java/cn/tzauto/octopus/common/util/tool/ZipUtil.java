@@ -9,10 +9,10 @@ public class ZipUtil {
 
     public static String pathOf7Z = "D://Program Files/7-Zip/7z.exe";
 
-    public static String remoteUrl = "//192.168.1.232/recipe/";
 
     /**
      * 使用7z压缩文件
+     *
      * @param originalFile
      * @param targetFile
      * @return
@@ -30,20 +30,21 @@ public class ZipUtil {
         String command = pathOf7Z + " a " + targetFile + " " + originalFile;
         Process exec = Runtime.getRuntime().exec(command);
 
-        return  exec.waitFor(20, TimeUnit.MINUTES);
+        return exec.waitFor(20, TimeUnit.MINUTES);
     }
 
     /**
      * 解压文件
+     *
      * @param zipName
      * @return
      * @throws InterruptedException
      * @throws IOException
      */
-    public static boolean unzipBy7Z(String zipName) throws InterruptedException, IOException {
+    public static boolean unzipBy7Z(String zipName, String scrFilePath, String tgaFilePath) throws InterruptedException, IOException {
 
-        String command = pathOf7Z+ " x "+remoteUrl+zipName+"  -o"+remoteUrl+" -aoa ";
+        String command = pathOf7Z + " x " + scrFilePath + zipName + "  -o" + tgaFilePath + " -aoa ";
         Process exec = Runtime.getRuntime().exec(command);
-        return  exec.waitFor(20, TimeUnit.MINUTES);
+        return exec.waitFor(20, TimeUnit.MINUTES);
     }
 }
