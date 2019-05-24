@@ -85,30 +85,39 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                 if ("pause".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) {
                     boolean businessmode = false;
                     if ("1".equals(GlobalConstants.getProperty("START_CHECK_BUSINESSMODE"))) {
-                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
+//                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
+                        businessmode = true;
                     }
                     if (!businessmode) {
                         if ("1".equals(GlobalConstants.getProperty("START_CHECK_LOCKFLAG"))) {
                             if (equipModel.checkLockFlagFromServerByWS(deviceCode)) {
                                 String stopResult = equipModel.pauseEquip();
-                               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+                                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
                             }
                         }
                     }
 
                 }
+                if ("run".equalsIgnoreCase(preEquipstatus) && "RUN1".equalsIgnoreCase(equipstatus)) {
+                    if (equipModel.deviceType.equals("SCREEN-LEDIS")) {
+                        equipModel.getSpecificData(null);
+                    }
+                }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {
                     logger.info("设备:" + deviceCode + "开机作业.");
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
                     boolean businessmode = false;
                     if ("1".equals(GlobalConstants.getProperty("START_CHECK_BUSINESSMODE"))) {
-                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
+//                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
+                        businessmode = false;
+                        GlobalConstants.stage.equipModels.get(deviceCode).startCheck();
+                        return;
                     }
                     if (!businessmode) {
                         if ("1".equals(GlobalConstants.getProperty("START_CHECK"))) {
                             if (!GlobalConstants.stage.equipModels.get(deviceCode).startCheck()) {
                                 String stopResult = GlobalConstants.stage.equipModels.get(deviceCode).stopEquip();
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将被锁机...");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将被锁机...");
                                 String holdDesc = "";
                                 Map mqMap = new HashMap();
                                 if ("0".equals(stopResult)) {
@@ -116,7 +125,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                                     Map mapTmp = new HashMap();
                                     mapTmp.put("EquipStatus", "Idle");
                                     equipModel.changeEquipPanel(mapTmp);
-                                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "锁机成功...");
+                                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "锁机成功...");
                                     mqMap.put("holdResult", "锁机成功");
                                 } else {
                                     mqMap.put("holdResult", "锁机失败");

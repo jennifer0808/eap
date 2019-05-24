@@ -1,13 +1,15 @@
 package cn.tzauto.octopus.common.util.tool;
 
 
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class ZipUtil {
 
-    public static String pathOf7Z = "D://Program Files/7-Zip/7z.exe";
+    public static String pathOf7Z = GlobalConstants.getProperty("PATH_7ZEXE");
 
 
     /**

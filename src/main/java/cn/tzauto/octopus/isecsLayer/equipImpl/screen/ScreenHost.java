@@ -50,7 +50,8 @@ public class ScreenHost extends EquipModel {
                     if ("main".equals(result.get(0))) {
                         String recipeNameTemp = iSecsHost.executeCommand("read recipename").get(0);
                         if (recipeNameTemp.contains("/")) {
-                            ppExecName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("/") + 1);
+//                            ppExecName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("/") + 1);
+                            ppExecName = recipeNameTemp;
                         }
                         if ("done".equals(ppExecName)) {
                             ppExecName = prerecipeName;
@@ -121,7 +122,7 @@ public class ScreenHost extends EquipModel {
     public Map uploadRecipe(String recipeName) {
 
         //todo 从共享盘取来EXPOSE.JOB用来解析
-        String[] recipeNames = recipeName.split("--");
+        String[] recipeNames = recipeName.split("/");
         List<RecipePara> recipeParas = ScreenRecipeUtil.transferFromDB(ScreenRecipeUtil.transferFromFile("//" + recipeServerPath + "//"
                 + recipeNames[0] + "//Img//" + recipeNames[1] + "//EXPOSE.JOB"), deviceType);
         //todo 将文件从共享盘压缩，转到ftp
@@ -150,8 +151,8 @@ public class ScreenHost extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         //todo 将文件从ftp转到共享盘
-        String partNo = recipe.getRecipeName().split("--")[0];
-        String pnlName = recipe.getRecipeName().split("--")[1];
+        String partNo = recipe.getRecipeName().split("/")[0];
+        String pnlName = recipe.getRecipeName().split("/")[1];
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         String ftpPath = new RecipeService(sqlSession).organizeRecipeDownloadFullFilePath(recipe);
         String ftpPathTmp = ftpPath.substring(0, ftpPath.lastIndexOf("/") + 1);
@@ -160,7 +161,7 @@ public class ScreenHost extends EquipModel {
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
                 //todo 下载之后再解压
                 try {
-                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z");
+                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -173,7 +174,7 @@ public class ScreenHost extends EquipModel {
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z", ftpip, ftpPort, ftpUser, ftpPwd)) {
                 //todo 下载之后再解压
                 try {
-                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z");
+                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -189,7 +190,7 @@ public class ScreenHost extends EquipModel {
     @Override
     public String deleteRecipe(String recipeName) {
         //todo 将文件从共享盘转删除
-        FileUtil.delAllFile("//" + recipeServerPath + "//" + recipeName.split("--")[0]);
+        FileUtil.delAllFile("//" + recipeServerPath + "//" + recipeName.split("/")[0]);
         return "0";
     }
 
@@ -238,7 +239,7 @@ public class ScreenHost extends EquipModel {
             if (fileTemp.exists() && fileTemp.isDirectory()) {
                 String[] filenamesTemp = fileTemp.list();
                 for (int j = 0; j < filenamesTemp.length; j++) {
-                    recipeName.add(files[i].getName() + "--" + filenamesTemp[j]);
+                    recipeName.add(files[i].getName() + "/" + filenamesTemp[j]);
                 }
 
             }
@@ -256,10 +257,10 @@ public class ScreenHost extends EquipModel {
             if (screen.equals("main")) {
                 List<String> hrunColors = this.iSecsHost.executeCommand("read equipstatus");
                 for (String startColorTemp : hrunColors) {
-                    if (startColorTemp.equals("idle")) {
+                    if (startColorTemp.contains("idle")) {
                         equipStatus = "Idle";
                     }
-                    if (startColorTemp.equals("run")) {
+                    if (startColorTemp.contains("run")) {
                         equipStatus = "Run";
                     }
                 }
@@ -278,6 +279,7 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public List<String> getEquipAlarm() {
+//        iSecsHost.readAllParaByScreen("main");
         return null;
     }
 
@@ -297,4 +299,15 @@ public class ScreenHost extends EquipModel {
         return true;
     }
 
+    protected boolean specialCheck() {
+        //TODO 此设备只需要检查 程序名，能量，厚度
+        iSecsHost.readAllParaByScreen("main");
+        return false;
+    }
+
+    public Map getSpecificData(Map<String, String> dataIdMap) {
+        //todo 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
+        iSecsHost.readAllParaByScreen("main");
+        return null;
+    }
 }
