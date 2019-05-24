@@ -58,7 +58,7 @@ public class EquipStatusPane {
     Background bgRed = new Background(new BackgroundFill(Paint.valueOf("#ff4500"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgBlue = new Background(new BackgroundFill(Paint.valueOf("#472EF5"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgGreen = new Background(new BackgroundFill(Paint.valueOf("#009a44"), CornerRadii.EMPTY, Insets.EMPTY));
-    Background bgGray = new Background(new BackgroundFill(Paint.valueOf("#494c53"), CornerRadii.EMPTY, Insets.EMPTY));
+  public static   Background bgGray = new Background(new BackgroundFill(Paint.valueOf("#494c53"), CornerRadii.EMPTY, Insets.EMPTY));
     Border borderWhite = new Border(new BorderStroke(Paint.valueOf("#ffffff"), BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths.EMPTY));
     Border borderBlue = new Border(new BorderStroke(Paint.valueOf("#472EF5"), BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths.EMPTY));
 
