@@ -144,7 +144,6 @@ public class ScreenHost extends EquipModel {
     @Override
     public String downloadRecipe(Recipe recipe) {
 
-        String localftpip = GlobalConstants.ftpIP;
         String ftpip = GlobalConstants.ftpIP;
         String ftpUser = GlobalConstants.ftpUser;
         String ftpPwd = GlobalConstants.ftpPwd;
@@ -160,7 +159,7 @@ public class ScreenHost extends EquipModel {
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
                 //todo 下载之后再解压
                 try {
-                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z");
+                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -173,7 +172,7 @@ public class ScreenHost extends EquipModel {
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z", ftpip, ftpPort, ftpUser, ftpPwd)) {
                 //todo 下载之后再解压
                 try {
-                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z");
+                    ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -266,7 +265,6 @@ public class ScreenHost extends EquipModel {
             } else {
                 equipStatus = "Idle";
             }
-
         }
         return equipStatus;
     }

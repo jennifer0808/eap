@@ -7,7 +7,6 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.isecsLayer.resolver.vision.RecipeFileHandler;
 import cn.tzauto.octopus.isecsLayer.resolver.vision.RecipeUtil;
-import cn.tzauto.octopus.secsLayer.equipImpl.cctech.C6800SECSHost;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -18,7 +17,7 @@ import java.util.Map;
 
 public class C6800Util {
 
-    private static Logger logger = Logger.getLogger(C6800SECSHost.class);
+    private static Logger logger = Logger.getLogger(C6800Util.class);
 
     public static List<RecipePara> getRecipePara(String recipePath, String deviceType) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
