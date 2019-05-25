@@ -98,8 +98,8 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     }
 
                 }
-                if ("run".equalsIgnoreCase(preEquipstatus) && "RUN1".equalsIgnoreCase(equipstatus)) {
-                    if (equipModel.deviceType.equals("SCREEN-LEDIS")) {
+                if ("run".equalsIgnoreCase(preEquipstatus) && "ARUN".equalsIgnoreCase(equipstatus)) {
+                    if (equipModel.deviceType.equals("SCREEN-LEDIA")) {
                         equipModel.getSpecificData(null);
                     }
                 }
