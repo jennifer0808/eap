@@ -1861,10 +1861,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List recipeParaCodeList = new ArrayList();
         for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
             if ("SV".equalsIgnoreCase(entry.getValue())) {
-                svIdList.add(entry.getKey());
+                svIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("EC".equalsIgnoreCase(entry.getValue())) {
-                ecIdList.add(entry.getKey());
+                ecIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("RecipePara".equalsIgnoreCase(entry.getValue())) {
                 recipeParaCodeList.add(entry.getKey());
@@ -1898,11 +1898,18 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("SV") != null) {
                     //todo 取值的問題，有可能是String
-                    svValueList = (ArrayList) (data.get("SV"));
-                    for (int i = 0; i < svValueList.size(); i++) {
-                      String sv=  getSpecificSVEC(svValueList.get(i),i);
-                        resultMap.put(svidList.get(i), sv);
-                        logger.info("resultMap:"+resultMap);
+                    Object obj = data.get("SV");
+                    if (obj != null) {
+                        if (obj instanceof ArrayList) {
+                            svValueList = (ArrayList) (data.get("SV"));
+                            for (int i = 0; i < svValueList.size(); i++) {
+                                String sv = getSpecificSVEC(svValueList.get(i), i);
+                                resultMap.put(svidList.get(i), sv);
+                            }
+                        } else {
+                            String s = getSpecificSVEC(obj, 0);
+                            resultMap.put(svidList.get(0), s);
+                        }
                     }
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -2039,10 +2046,19 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("EC") != null) {
                     //判断返回值String/ArrayList
-                        ecValueList = (ArrayList) data.get("EC");
-                        for (int i = 0; i < ecValueList.size(); i++) {
-                            resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+
+                    Object obj = data.get("EC");
+                    if (obj != null) {
+                        if (obj instanceof ArrayList) {
+                            ecValueList = (ArrayList) (data.get("EC"));
+                            for (int i = 0; i < ecValueList.size(); i++) {
+                                resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                            }
+                        } else {
+                            resultMap.put(ecidList.get(0), String.valueOf(obj));
                         }
+                    }
+
 
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
