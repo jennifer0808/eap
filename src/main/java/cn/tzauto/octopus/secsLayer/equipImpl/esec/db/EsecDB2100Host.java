@@ -47,6 +47,7 @@ public class EsecDB2100Host extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+       lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 15339L;
         EquipStateChangeCeid = 40L;
         CPN_PPID = "PPNAME";
@@ -306,10 +307,7 @@ public class EsecDB2100Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName + ".dbrcp");
-        byte[] hcack = new byte[1];
+        byte hcack = -1;
         try {
             Map cp = new HashMap();
             cp.put(CPN_PPID, recipeName + ".dbrcp");
@@ -320,21 +318,19 @@ public class EsecDB2100Host extends EquipHost {
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cp, cpName, cpValue);
-            //选中成功标识
-            if (data != null) {
-                ppselectFlag = true;
-            }
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
+
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
 
@@ -599,11 +595,13 @@ public class EsecDB2100Host extends EquipHost {
         }
 
         DataMsgMap data = null;
-
+        logger.info("length= " + length );
         try {
             data = activeWrapper.sendS7F1out(targetRecipeName+ ".dbrcp", length, lengthFormat);
             byte ppgnt = (byte) data.get("PPGNT");
-            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+
+            logger.info("Request send ppid= " + targetRecipeName +";data:"+ data +";ppgnt:"+ ppgnt + " to Device " + deviceCode);
+
             resultMap.put("ppgnt", ppgnt);
             resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         } catch (Exception e) {
@@ -611,6 +609,7 @@ public class EsecDB2100Host extends EquipHost {
             resultMap.put("ppgnt", 9);
             resultMap.put("Description", e.getMessage());
         }
+        logger.info("result: " + resultMap);
         return resultMap;
 
 
@@ -753,38 +752,9 @@ public class EsecDB2100Host extends EquipHost {
 
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f20");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F19out();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
-            logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
-            return null;
-        }
-        ArrayList listtmp = (ArrayList)  data.get("EPPD");
-        if (listtmp == null || listtmp.isEmpty()) {
-            resultMap.put("eppd", new ArrayList<>());
-        } else {
-            ;
-            ArrayList list1 = new ArrayList();
-            for (int i = 0; i < listtmp.size(); i++) {
-                list1.add(listtmp.get(i).toString().replace(".dbrcp", ""));
-            }
-            resultMap.put("eppd", list1);
-        }
-        return resultMap;
+        logger.info("Request sends7f19: " + sendS7F19out() + " to Device " + deviceCode);
+       return  super.sendS7F19out();
+
     }
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 

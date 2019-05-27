@@ -424,10 +424,11 @@ public class AsmAD8312Host extends EquipHost {
 
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
-            recipeName = recipeName + ".rcp";
-        }
-        byte hcack = (byte) 9;
+//        if (!"ASMAD8312PLUS".equals(deviceType)) {
+//            recipeName = recipeName + ".rcp";
+//        }
+        recipeName = recipeName + ".rcp";
+        byte hcack = -1;
         try {
 
             Map data = super.sendS2F41outPPselect(recipeName);

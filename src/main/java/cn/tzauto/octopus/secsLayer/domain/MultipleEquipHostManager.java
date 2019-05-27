@@ -615,8 +615,9 @@ public class MultipleEquipHostManager {
             }
 
             //获取设备下载许可
-            logger.info("准备进入： " + recipe.getRecipeName() + " 下载许可！" );
+            logger.info("准备进入recipeName： " + recipe.getRecipeName() + " 下载许可！" );
             Map resultMap = equipHost.sendS7F1out(localRecipeFilePath, recipe.getRecipeName());
+            logger.info("准备进入resultMap： " + resultMap+";" +resultMap.get("ppgnt")+ " 下载结果！" );
             if ("0".equals(String.valueOf(resultMap.get("ppgnt")))) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());
             } else {
@@ -630,6 +631,7 @@ public class MultipleEquipHostManager {
                 return "获取设备下载许可失败，PPID=" + recipe.getRecipeName() + "，原因：" + failReason;
             }
             //下载将recipe下载到机台
+            logger.info("准备进入s7f3： " + recipe.getRecipeName() + " 下载许可！" );
             resultMap = equipHost.sendS7F3out(localRecipeFilePath, recipe.getRecipeName());
             if (resultMap != null) {
                 if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
