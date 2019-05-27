@@ -615,6 +615,7 @@ public class MultipleEquipHostManager {
             }
 
             //获取设备下载许可
+            logger.info("准备进入： " + recipe.getRecipeName() + " 下载许可！" );
             Map resultMap = equipHost.sendS7F1out(localRecipeFilePath, recipe.getRecipeName());
             if ("0".equals(String.valueOf(resultMap.get("ppgnt")))) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "获取设备下载许可成功，开始下载.....PPID=" + recipe.getRecipeName());

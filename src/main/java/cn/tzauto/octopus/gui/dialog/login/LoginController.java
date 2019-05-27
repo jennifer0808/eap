@@ -28,7 +28,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 import org.apache.ibatis.session.SqlSession;
 
 import java.net.URL;
@@ -164,7 +163,6 @@ public class LoginController implements Initializable {
 //                    return true;
 //                }
             for (SysUser user : userList) {
-                String dbPasswords = DigestUtil.passwordDeEncrypt(user.getPassword());
                if(DigestUtil.validatePassword(passwordStr, user.getPassword())){
                     GlobalConstants.sysUser = user;
 

@@ -585,6 +585,7 @@ public class EsecDB2100Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
+        logger.info("Request send " + targetRecipeName + " to Device " + deviceCode);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
