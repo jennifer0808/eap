@@ -654,47 +654,7 @@ public class AxisUtility {
         return lockFlag;
     }
 
-    /**
-     * 上岗证方法
-     * @return
-     * @throws RemoteException
-     * @throws ServiceException
-     * @throws MalformedURLException
-     */
-    public String gotoWorkParse() throws RemoteException, ServiceException, MalformedURLException {
 
-        Service service = new Service();
-        String url = "szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
-        String namespace = "http://tempuri.org/";
-        String actionUri = "getDataFromSer"; //Action路径
-        String op = "getDataFromSer"; //要调用的方法名
-
-        Call call = (Call) service.createCall();
-        call.setTargetEndpointAddress(new java.net.URL(url));
-        call.setUseSOAPAction(true);
-        call.setSOAPActionURI(namespace + actionUri); // action uri
-        call.setOperationName(new QName(namespace, op));// 设置要调用哪个方法
-// 设置参数名称，具体参照从浏览器中看到的
-        call.addParameter(new QName(namespace, "username"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "password"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "equid"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "groupid"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "funid"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "pValue"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-        call.addParameter(new QName(namespace, "createDate"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
-
-
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-
-//call.setReturnType(new QName(namespace,"getinfo"),Model.class); //设置返回结果为是某个类
-//        call.setReturnType(org.apache.axis.encoding.XMLType.XSD_STRING);//设置结果返回类型
-        call.setReturnType(XMLType.XSD_SCHEMA);//设置结果返回类型
-
-        Object[] params = new Object[] {"F0716614", "6614", "設備編號", "0010", "HR001", "設備編號|工號", LocalDateTime.now().format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        System.out.println(result);
-        return result.toString();
-    }
 
 
 }
