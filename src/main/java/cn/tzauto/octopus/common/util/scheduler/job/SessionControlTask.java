@@ -5,13 +5,26 @@
 package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 
 import java.util.Date;
+import java.util.ResourceBundle;
+
+import cn.tzauto.octopus.gui.main.EapClient;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import cn.tzauto.octopus.gui.main.EapMainController;
+
+import static cn.tzauto.octopus.gui.main.EapMainController.rcpMngtTab;
 
 /**
  *
@@ -32,6 +45,29 @@ public class SessionControlTask implements Job {
                 if (GlobalConstants.sysUser != null) {
                     String userName = GlobalConstants.sysUser.getLoginName();
                     GlobalConstants.sysUser = null;
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
+                            Button JB_RcpMng = (Button) EapClient.root.lookup("#JB_RcpMng");
+                            Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
+                            Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
+                            Button localMode = (Button) EapClient.root.lookup("#localMode");
+                            JB_MainPage.setVisible(false);
+                            JB_RcpMng.setVisible(false);
+                            JB_Login.setVisible(true);
+                            JB_SignOut.setVisible(false);
+                            localMode.setVisible(false);
+                            GlobalConstants.sysUser = null;
+                            GlobalConstants.userFlag = true;
+                            GlobalConstants.isUpload = false;
+                            GlobalConstants.isDownload = false;
+                            GlobalConstants.isSvQuery = false;
+                            EapMainController.loginmark=0;
+                            TabPane TBP_Main = (TabPane) GlobalConstants.stage.root.lookup("#TBP_Main");
+                            TBP_Main.getTabs().remove(EapMainController.rcpMngtTab);
+                        }
+                    });
                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
                 }
 //                GlobalConstants.stage.setPartsInvisible();//超过设定时间系统自动注销

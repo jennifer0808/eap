@@ -163,7 +163,7 @@ public class EapMainController implements Initializable {
         }
     }
 
-    Tab rcpMngtTab = new Tab("Recipe管理");
+   public static Tab rcpMngtTab = new Tab("Recipe管理");
     @FXML
     private void rcpMngClick() {
 //        TBP_Main.getTabs().add(TB_RcpMng);
