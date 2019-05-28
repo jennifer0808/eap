@@ -57,11 +57,11 @@ public class RabbitConsumer {
         }
     }
 
-    public void subscribeMessage() {
-        listenTopicName(exchangeName, queueName, "");
+    public void subscribeMessage(String routingKey) {
+        listenTopicName(exchangeName, queueName, routingKey);
     }
 
-    public void listenTopicName(String exchangeName, String queueName, String topicName) {
+    public void listenTopicName(String exchangeName, String queueName, String routingKey) {
         Connection connection = MessageUtils.getConnection();
         try {
             Channel channel = connection.createChannel();
@@ -74,21 +74,37 @@ public class RabbitConsumer {
             参数2：交换机名
             参数3：Routing key 路由键
          */
-            channel.queueBind(queueName, exchangeName, "");
+            channel.queueBind(queueName, exchangeName, routingKey);
+
+            channel.addShutdownListener(new ShutdownListener() {
+                @Override
+                public void shutdownCompleted(ShutdownSignalException cause) {
+                    mqLogger.info("Channel shutdown due to following:");
+                    cause.printStackTrace();
+                }
+            });
 
             Consumer consumer = new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
                         throws IOException {
                     super.handleDelivery(consumerTag, envelope, properties, body);
+                    channel.basicAck(envelope.getDeliveryTag(), false);
                     String message = new String(body, "UTF-8");
                     System.out.println("receive topic msg：" + message);
                     HashMap<String, String> msgMap = (HashMap<String, String>) JsonMapper.fromJsonString(message, HashMap.class);
-                    channel.basicAck(envelope.getDeliveryTag(), false);
+                    if(msgMap==null){
+                        mqLogger.warn("receice non-json map message");
+                        return;
+                    }
                     String deviceTypeId = msgMap.get("deviceTypeId");
                     String deviceCode = msgMap.get("deviceCode");
                     String msgName = msgMap.get("msgName");
-                    mqLogger.info("接收到mq==================================,deviceCode：" + deviceCode + "，msgName:" + msgName + "，deviceTypeId:" + deviceTypeId);
+                    if(msgName == null){
+                        mqLogger.warn("receice non-msgName message");
+                        return;
+                    }
+                    mqLogger.info("接收到mq消息,deviceCode：" + deviceCode + "，msgName:" + msgName + "，deviceTypeId:" + deviceTypeId);
                     if (isInvoke(deviceCode, deviceTypeId)) {
 
                         mqLogger.info("开始处理MQ请求...");
@@ -126,8 +142,6 @@ public class RabbitConsumer {
                         mqLogger.info("MQ请求处理结束...");
                     }
 
-
-//                    channel.basicAck(envelope.getDeliveryTag(), false);
                 }
             };
             channel.basicConsume(queueName, false, consumer);
@@ -168,7 +182,7 @@ public class RabbitConsumer {
         String exchangeName = "S2C.T.EXCHANGE1";
         RabbitConsumer consumer = new RabbitConsumer( queueName,exchangeName);
 //        consumer.listenQueueMsg(queueName);
-        consumer.subscribeMessage();
+        consumer.subscribeMessage("");
     }
 
 }

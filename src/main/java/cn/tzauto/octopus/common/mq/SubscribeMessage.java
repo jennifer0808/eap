@@ -11,7 +11,7 @@ public class SubscribeMessage {
 
 //        GlobalConstants.S2CDataTopic.setMessageHandler(new MessageProcess());
         try {
-            GlobalConstants.S2CDataTopic.subscribeMessage();
+            GlobalConstants.S2CDataTopic.subscribeMessage("");
             GlobalConstants.sysLogger.info("开启MQ S2C.T.DATA_TRANSFER Topic监听");
         } catch (Exception e) {
             e.printStackTrace();
@@ -19,14 +19,14 @@ public class SubscribeMessage {
 
 //        GlobalConstants.S2CEQPT_PARATopic.setMessageHandler(new MessageProcess());
         try {
-            GlobalConstants.S2CEQPT_PARATopic.subscribeMessage();
+            GlobalConstants.S2CEQPT_PARATopic.subscribeMessage("");
             GlobalConstants.sysLogger.info("开启MQ S2C.T.EQPT_PARAMETER Topic监听");
         } catch (Exception e) {
             e.printStackTrace();
         }
 //        GlobalConstants.S2CRcpTopic.setMessageHandler(new MessageProcess());
         try {
-            GlobalConstants.S2CRcpTopic.subscribeMessage();
+            GlobalConstants.S2CRcpTopic.subscribeMessage("");
             GlobalConstants.sysLogger.info("开启MQ S2C.T.RECIPE_C Topic监听");
         } catch (Exception e) {
             e.printStackTrace();

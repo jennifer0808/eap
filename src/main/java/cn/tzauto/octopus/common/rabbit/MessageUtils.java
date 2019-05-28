@@ -49,6 +49,7 @@ public class MessageUtils {
         userPwd = prop.getProperty("userPwd");
 
         connectionFactory = new ConnectionFactory();
+
         connectionFactory.setUsername(userName);
         connectionFactory.setPassword(userPwd);
         connectionFactory.setAutomaticRecoveryEnabled(true);
@@ -112,8 +113,8 @@ public class MessageUtils {
      *
      * @throws Exception 如果处理器没有初始化，则抛出异常
      */
-    public void subscribeMessage() throws Exception {
-        consumer.subscribeMessage();
+    public void subscribeMessage(String routingKey) throws Exception {
+        consumer.subscribeMessage(routingKey);
     }
 
 }
