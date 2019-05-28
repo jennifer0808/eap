@@ -353,7 +353,12 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
-
+    @Override
+    public Map sendS7F3out(String localFilePath, String targetRecipeName) {
+        Map resultMap = super.sendS7F1out(localFilePath, targetRecipeName + ".rcp");
+        resultMap.put("ppid", targetRecipeName);
+        return resultMap;
+    }
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
@@ -423,7 +428,23 @@ public class AsmAD8312FCHost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        return super.sendS2F41outPPselect(recipeName + ".rcp");
+        recipeName = recipeName + ".rcp";
+        byte hcack = -1;
+        try {
+
+            Map data = super.sendS2F41outPPselect(recipeName);
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        return resultMap;
     }
 
     // </editor-fold>
