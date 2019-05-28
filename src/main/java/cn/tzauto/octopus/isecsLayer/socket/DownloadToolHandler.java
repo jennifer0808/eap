@@ -8,6 +8,9 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,20 +21,24 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = Logger.getLogger(DownloadToolHandler.class);
 
-     @Override
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws UnsupportedEncodingException {
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         String message = new String(req, "UTF-8");
         logger.info("DownloadTool message =====> " + message);
-        if (message.contains("download")) {
+        LinkedHashMap downloadMessageMap = (LinkedHashMap) JsonMapper.fromJsonString(message, Map.class);
+        String command = String.valueOf(downloadMessageMap.get("command"));
+        if (command.equals("download")) {
             SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             DeviceService deviceService = new DeviceService(sqlSession);
@@ -39,28 +46,39 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             String downloadresult = "";
             message = message.replaceAll("download", "");
             String[] temps = message.split(";");
-            String deviceCode = temps[1];
-            String userId = temps[2];
-            String partNo = temps[3];
-            String lotNo = temps[4];
+            String deviceCode = String.valueOf(downloadMessageMap.get("machineno"));
+            String userId = String.valueOf(downloadMessageMap.get("userid"));
+            String partNo = String.valueOf(downloadMessageMap.get("partno"));
+            String lotNo = String.valueOf(downloadMessageMap.get("lotno"));
+
             String recipeName = "";
+            // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
             logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " partNo:" + partNo + " lotNo:" + lotNo);
             List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByDeviceCode(deviceCode);
             if (deviceInfos != null && !deviceInfos.isEmpty()) {
                 DeviceInfo deviceInfo = deviceInfos.get(0);
-
-                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo);
-
-                //      String downloadresult = GlobalConstants.eapView.hostManager.downLoadRcp2Device(deviceCode, recipeName) + "" + "";
+                if (!"0".equals(AvaryAxisUtil.workLicense(deviceCode, userId))) {
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
+                    return;
+                }
+                recipeName = AvaryAxisUtil.getRecipeNameByPartNum(deviceCode, partNo);
+                //todo 调用cim下载程序接口
+                //String downloadresult = GlobalConstants.eapView.hostManager.downLoadRcp2Device(deviceCode, recipeName) + "" + "";
                 Recipe recipe = new Recipe();
                 if (!recipeName.equals("null") && !recipeName.contains("Can not") && !recipeName.equals("")) {
                     if (GlobalConstants.getProperty("EQUIP_NO_RECIPE").contains(deviceInfo.getDeviceType())) {
                         recipe.setRecipeName(recipeName);
                         recipe.setId(recipeName);
                     } else {
-                        List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer");
-                        if (recipes == null || !recipes.isEmpty()) {
-                            recipe = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer").get(0);
+                        List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Unique");
+                        if (recipes == null || recipes.isEmpty()) {
+                            recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "GOLD");
+                            if (recipes == null || recipes.isEmpty()) {
+                                recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer");
+                            }
+                        }
+                        if (recipes != null && !recipes.isEmpty()) {
+                            recipe = recipes.get(0);
                             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                             downloadresult = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
                             if (downloadresult.contains("下载Recipe失败,设备通讯异常,请稍后重试")) {
@@ -74,7 +92,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                                 deviceInfoExt.setRecipeName(recipeName);
                                 deviceInfoExt.setRecipeId(recipe.getId());
                                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                                sqlSession.commit();                         
+                                sqlSession.commit();
                             }
                         } else {
                             downloadresult = "Can not find any recipe,please upload recipe" + recipeName;
@@ -102,7 +120,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             channel.writeAndFlush(buf);
 
         }
-        if (message.contains("getRecipeName")) {
+        if (command.equals("getRecipeName")) {
             message = message.replaceAll("getRecipeName", "");
             String deviceCode = message.trim();
             String CurrentRecipeName = GlobalConstants.stage.hostManager.getEquipCurrentRecipeName(deviceCode) + "getRecipeName" + "done";
@@ -111,7 +129,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             buf.writeBytes(CurrentRecipeName.getBytes());
             channel.writeAndFlush(buf);
         }
-        if (message.contains("getEquipStatus")) {
+        if (command.equals("getEquipStatus")) {
             message = message.replaceAll("getEquipStatus", "");
             String deviceCode = message.trim();
             String EquipStatus = GlobalConstants.stage.hostManager.getEquipStatus(deviceCode) + "getEquipStatus" + "done";

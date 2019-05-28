@@ -1,5 +1,6 @@
 package cn.tzauto.octopus.common.ws;
 
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
 import org.apache.axis.encoding.XMLType;
@@ -23,10 +24,12 @@ public class AvaryAxisUtil {
 
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
 
-    private static final String url = "szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
-    private static final String namespace = "http://tempuri.org/";
+    //    private static final String url = "szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
+    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
+    //    private static final String namespace = "http://tempuri.org/";
+    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
 
-    public static String webServicesToCRM(String method, Object[] parms) {
+    public static String webServicesToCIM(String method, Object[] parms) {
 
 //        String endPoint ="szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";
         String endPoint = "http://localhost:9999/test/hello?wsdl";
@@ -36,10 +39,10 @@ public class AvaryAxisUtil {
             call.setTargetEndpointAddress(new java.net.URL(endPoint));
             call.setOperationName(method);
             String jsonResult = String.valueOf(call.invoke(parms));
-            logger.info("调用CRM的接口中方法--》" + method + "：的结果：" + jsonResult);
+            logger.info("调用CIM的接口中方法--》" + method + "：的结果：" + jsonResult);
             return jsonResult;
         } catch (Exception e) {
-            logger.error("调用CRM的接口中方法--》" + method + "：方法异常：", e);
+            logger.error("调用CIM的接口中方法--》" + method + "：方法异常：", e);
             return "Error";
         }
     }
@@ -51,15 +54,22 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0010", "HR001", para1, uploadTime);
      */
-    public static List workLicense(String equipID, String workID) throws RemoteException, ServiceException, MalformedURLException {
+    public static String workLicense(String equipID, String workID) {
 
-        Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Call call = null;
+        Schema result = null;
+        try {
+            call = getCallForGetDataFromSer();
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+            Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
+            result = (Schema) call.invoke(params); //方法执行后的返回值
+        } catch (Exception e) {
+            return "";
+        }
         List list = parseXml(result);
-        return list;
+
+        return "0";
     }
 
 
@@ -72,7 +82,7 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0005", "PA001", para1, uploadTime);
      */
-    public static List getProductionCondition(String equipID, String partNum) throws RemoteException, ServiceException, MalformedURLException {
+    private static List getProductionCondition(String equipID, String partNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -81,6 +91,20 @@ public class AvaryAxisUtil {
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
+    }
+
+    public static String getRecipeNameByPartNum(String equipID, String partNum) {
+        try {
+            List list = getProductionCondition(equipID, partNum);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return "";
     }
 
     /**
@@ -129,15 +153,20 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0004", "0009", para1, uploadTime);
      */
-    public static List firstProductionIsOK(String equipID, String lotNum, String partNum, String tableNum) throws RemoteException, ServiceException, MalformedURLException {
+    public static boolean firstProductionIsOK(String equipID, String lotNum, String partNum, String tableNum) {
+        Call call = null;
+        Schema result = null;
+        try {
+            call = getCallForGetDataFromSer();
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-
-        Object[] params = new Object[]{"F0716614", "6614", equipID, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+            Object[] params = new Object[]{"F0716614", "6614", equipID, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
+            result = (Schema) call.invoke(params); //方法执行后的返回值
+            List list = parseXml(result);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -149,13 +178,18 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ret = webServiceSZ.ws.wsFun("F0716614", "6614", "設備編號",para1,para2,uploadTime);
      */
-    public static List uploadMessageEveryPNL(String equipID, String mesName1, String mesName2, String mesName3, String mesValue1, String mesValue2, String mesValue3) throws RemoteException, ServiceException, MalformedURLException {
+    public static List uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
 
-        Call call = getCallForSendDataToSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Call call = null;
+        Schema result = null;
+        try {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Object[] params = new Object[]{"F0716614", "6614", equipID, createParm(mesName1, mesName2, mesName3), createParm(mesValue1, mesValue2, mesValue3), LocalDateTime.now().format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+            Object[] params = new Object[]{"F0716614", "6614", equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
+            result = (Schema) call.invoke(params); //方法执行后的返回值
+
+        } catch (Exception e) {
+        }
         List list = parseXml(result);
         return list;
     }
@@ -363,6 +397,16 @@ public class AvaryAxisUtil {
             sb.append(parms[i]).append("|");
         }
         sb.append(parms[length - 1]);
+        return sb.toString();
+    }
+
+    private static String createParm(List parms) {
+        StringBuilder sb = new StringBuilder();
+        int length = parms.size();
+        for (int i = 0; i < length - 1; i++) {
+            sb.append(parms.get(i)).append("|");
+        }
+        sb.append(parms.size() - 1);
         return sb.toString();
     }
 

@@ -5,33 +5,17 @@
 package test;
 
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
-import cn.tzauto.octopus.common.mq.MessageUtils;
-import cn.tzauto.octopus.common.mq.common.MQConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
+import java.util.*;
 
 public class MainTest {
 
     public static void main(String[] args) {
+        // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
+        String s = "{\"command\":\"download\",\"lotno\":\"PH22\",\"machineno\":\"JTH44\",\"partno\":\"LH11\",\"userid\":\"YGH33\"}";
+        HashMap hashMap = (HashMap) JsonMapper.fromJsonString(s, Map.class);
 
-        //{FINTHICK=354661, WAFERID=A-10, deviceCode=BG-002, finishDate=Sat Jul 21 16:03:03 GMT+08:00 2018, msgName=FinishThick, Z=Z2}
-        MQConstants.initConenction();
-
-        Map alarmRecordMap = new HashMap();
-        alarmRecordMap.put("msgName", "ArAlarmRecord");
-        alarmRecordMap.put("deviceCode", "BWM-027");
-        alarmRecordMap.put("alarmRecord", JsonMapper.toJsonString(setAlarmRecord()));
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        alarmRecordMap.put("alarmDate", dateFormat.format(new Date()));
-        MessageUtils C2SAlarmQueue = new MessageUtils("C2S.Q.ALARM_D_LZX");
-        C2SAlarmQueue.sendMessage(alarmRecordMap);
     }
 
     private static List<AlarmRecord> setAlarmRecord() {

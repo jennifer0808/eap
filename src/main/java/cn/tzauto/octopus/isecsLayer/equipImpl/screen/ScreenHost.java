@@ -298,14 +298,21 @@ public class ScreenHost extends EquipModel {
     }
 
     protected boolean specialCheck() {
-        //TODO 此设备只需要检查 程序名，能量，厚度
+        //TODO 此设备只需要检查 程序名recipename，能量，厚度jbhd
         iSecsHost.readAllParaByScreen("main");
         return false;
     }
 
     public Map getSpecificData(Map<String, String> dataIdMap) {
         //todo 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
-        iSecsHost.readAllParaByScreen("main");
-        return null;
+        Map resultMap = iSecsHost.readAllParaByScreen("main");
+        Map exposure = new HashMap();
+        exposure.put("zx", resultMap.get("zx"));
+        exposure.put("zy", resultMap.get("zy"));
+        exposure.put("yx", resultMap.get("yx"));
+        exposure.put("yy", resultMap.get("yx"));
+        exposure.put("x", resultMap.get("x"));
+        exposure.put("y", resultMap.get("y"));
+        return exposure;
     }
 }
