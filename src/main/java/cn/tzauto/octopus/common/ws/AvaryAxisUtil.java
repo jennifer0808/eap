@@ -51,15 +51,34 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0010", "HR001", para1, uploadTime);
      */
-    public static List workLicense(String equipID, String workID) throws RemoteException, ServiceException, MalformedURLException {
+    public static boolean workLicense(String equipID, String workID) {
 
-        Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        try {
+            Call call = getCallForGetDataFromSer();
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+            Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
+            Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+            List<Map<String,String>> list = parseXml(result);
+            if(list.size()>0){
+                Map<String,String> map = list.get(0);
+                String yzResult = map.get("YZResult");
+                if(yzResult!=null  && yzResult.equals("1")){
+                    return true;
+                }
+            }
+        } catch (ServiceException e) {
+            logger.error("上岗证校验失败",e);
+            return false;
+        } catch (MalformedURLException e) {
+            logger.error("上岗证校验失败",e);
+            return false;
+        } catch (RemoteException e) {
+            logger.error("上岗证校验失败",e);
+            return false;
+        } finally {
+        }
+        return false;
     }
 
 
@@ -94,15 +113,22 @@ public class AvaryAxisUtil {
      * //第六個參數:料號|機台號|管制頻率|管制時機
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0003", "FSAPJ60C2G|PNLFH001#|3|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List isInitialPart(String partNum, String equipID, String frequency, String opportunity) throws RemoteException, ServiceException, MalformedURLException {
+    public static boolean isInitialPart(String partNum, String equipID, String frequency, String opportunity) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         Object[] params = new Object[]{"test", "test", equipID, "0004", "G0003", createParm(partNum, equipID, frequency, opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        List<Map<String,String>> list = parseXml(result);
+        if(list.size()>0){
+            Map<String,String> map = list.get(0);
+            String yzResult = map.get("returns");
+            if(yzResult!=null  && yzResult.equals("1")){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -129,15 +155,22 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0004", "0009", para1, uploadTime);
      */
-    public static List firstProductionIsOK(String equipID, String lotNum, String partNum, String tableNum) throws RemoteException, ServiceException, MalformedURLException {
+    public static boolean firstProductionIsOK(String equipID, String lotNum, String partNum, String tableNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         Object[] params = new Object[]{"F0716614", "6614", equipID, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        List<Map<String,String>> list = parseXml(result);
+        if(list.size()>0){
+            Map<String,String> map = list.get(0);
+            String yzResult = map.get("lastvalue");
+            if(yzResult!=null  && yzResult.equals("OK")){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
