@@ -33,7 +33,7 @@ import static cn.tzauto.octopus.gui.main.EapMainController.rcpMngtTab;
 public class SessionControlTask implements Job {
 
     private static final Logger logger = Logger.getLogger(SessionControlTask.class);
-    private static final long timeDiff = Long.parseLong(GlobalConstants.sessionCtrlCycle);//5分钟
+    private static final long timeDiff = Long.parseLong(GlobalConstants.sessionCtrlCycle);//10分钟
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
