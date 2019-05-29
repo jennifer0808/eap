@@ -90,17 +90,28 @@ public class RabbitConsumer {
                         throws IOException {
                     super.handleDelivery(consumerTag, envelope, properties, body);
                     channel.basicAck(envelope.getDeliveryTag(), false);
+
                     String message = new String(body, "UTF-8");
                     System.out.println("receive topic msg：" + message);
                     HashMap<String, String> msgMap = (HashMap<String, String>) JsonMapper.fromJsonString(message, HashMap.class);
-                    if(msgMap==null){
+                    if (msgMap == null) {
                         mqLogger.warn("receice non-json map message");
                         return;
                     }
+                    //for RPC
+                    String correlationId = properties.getCorrelationId();
+                    String replyQ = properties.getReplyTo();
+                    if (correlationId != null) {
+                        msgMap.put("correlationId", correlationId);
+                    }
+                    if (replyQ != null) {
+                        msgMap.put("replyQ", replyQ);
+                    }
+
                     String deviceTypeId = msgMap.get("deviceTypeId");
                     String deviceCode = msgMap.get("deviceCode");
                     String msgName = msgMap.get("msgName");
-                    if(msgName == null){
+                    if (msgName == null) {
                         mqLogger.warn("receice non-msgName message");
                         return;
                     }
@@ -180,7 +191,7 @@ public class RabbitConsumer {
     public static void main(String[] args) throws IOException, TimeoutException, InterruptedException {
         String queueName = "S2C.T.RECIPE_C";
         String exchangeName = "S2C.T.EXCHANGE1";
-        RabbitConsumer consumer = new RabbitConsumer( queueName,exchangeName);
+        RabbitConsumer consumer = new RabbitConsumer(queueName, exchangeName);
 //        consumer.listenQueueMsg(queueName);
         consumer.subscribeMessage("");
     }

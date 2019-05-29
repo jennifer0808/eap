@@ -626,17 +626,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Object obj = data.get("SV");
         Map resultMap = new HashMap();
         ArrayList listsvValue = new ArrayList();
-        if(obj != null){
-            if(obj  instanceof String ){
-                resultMap.put("Value", (String)obj);
-            }else if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
+        if (obj != null) {
+            if (obj instanceof String) {
+                resultMap.put("Value", (String) obj);
+            } else if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
                     String svValue = String.valueOf(listtmp.get(i));
                     listsvValue.add(svValue);
                 }
                 resultMap.put("Value", listsvValue);
-                logger.info("SV查询得值svValue:"+resultMap);
+                logger.info("SV查询得值svValue:" + resultMap);
             }
         }
 
@@ -800,27 +800,27 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         String ecValue = null;
 
-       // ArrayList listtmp = (ArrayList) data.get("EC");
+        // ArrayList listtmp = (ArrayList) data.get("EC");
         //  ecValue = String.valueOf(listtmp.get(0));
         //EC
         ArrayList listecValue = new ArrayList();
         Object obj = data.get("EC");
-        if(obj != null){
-            if(obj  instanceof String ){
-                resultMap.put("Value", (String)obj);
-            }else if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
-                     ecValue = String.valueOf(listtmp.get(i));
+        if (obj != null) {
+            if (obj instanceof String) {
+                resultMap.put("Value", (String) obj);
+            } else if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
+                    ecValue = String.valueOf(listtmp.get(i));
                     listecValue.add(ecValue);
                 }
                 resultMap.put("Value", listecValue);
-                logger.info("EC查询得值ecValue:"+listecValue);
+                logger.info("EC查询得值ecValue:" + listecValue);
             }
         }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-       // resultMap.put("Value", ecValue);
+        // resultMap.put("Value", ecValue);
         return resultMap;
     }
 
@@ -1224,7 +1224,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
 
-        //    byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
+            //    byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
             byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
             if (ack == '0') {//上传成功
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
@@ -1858,10 +1858,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List recipeParaCodeList = new ArrayList();
         for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
             if ("SV".equalsIgnoreCase(entry.getValue())) {
-                svIdList.add(entry.getKey());
+                svIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("EC".equalsIgnoreCase(entry.getValue())) {
-                ecIdList.add(entry.getKey());
+                ecIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("RecipePara".equalsIgnoreCase(entry.getValue())) {
                 recipeParaCodeList.add(entry.getKey());
@@ -1870,9 +1870,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map svValue = this.getSpecificSVData(svIdList);
         Map ecValue = this.getSpecificECData(ecIdList);
         Map recipeParaValue = this.getSpecificRcpParaData(recipeParaCodeList);
-        resultMap = svValue;
-        resultMap.putAll(ecValue);
-        resultMap.putAll(recipeParaValue);
+        if (svValue.size() > 0) {
+            resultMap.putAll(svValue);
+        }
+        if (ecValue.size() > 0) {
+            resultMap.putAll(ecValue);
+        }
+        if (recipeParaValue.size() > 0) {
+            resultMap.putAll(recipeParaValue);
+        }
         return resultMap;
     }
 
@@ -1895,11 +1901,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("SV") != null) {
                     svValueList = (ArrayList) (data.get("SV"));
-                    for (int i = 0; i < svValueList.size(); i++) {
+                    for (int i = 0; i < svidList.size(); i++) {
                         resultMap.put(svidList.get(i), String.valueOf(svValueList.get(i)));
-                        logger.info("resultMap:"+resultMap);
+//
                     }
-                    logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
+                    logger.info("resultMap:" + resultMap);
+//                    logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
                 if (data == null || data.isEmpty()) {
                     logger.error("Query SV List error[" + JsonMapper.toJsonString(data) + "]");
@@ -1930,10 +1937,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("EC") != null) {
                     //判断返回值String/ArrayList
-                        ecValueList = (ArrayList) data.get("EC");
-                        for (int i = 0; i < ecValueList.size(); i++) {
-                            resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
-                        }
+                    ecValueList = (ArrayList) data.get("EC");
+                    for (int i = 0; i < ecValueList.size(); i++) {
+                        resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                    }
 
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
@@ -2613,7 +2620,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         return ecsvIdList;
     }
-
 
 
     protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {

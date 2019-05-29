@@ -38,6 +38,9 @@ public class MqTestHandler implements MessageHandler {
         mqMap.put("deviceCode", deviceCode);
         mqMap.put("sendMessage", sendMessage);
         mqMap.put("getMessage", getMessage);
-        GlobalConstants.C2SRcpQueue.sendMessage(mqMap);
+
+        if (msgMap.containsKey("replyQ")) {
+            GlobalConstants.C2SRcpQueue.replyMessage(msgMap.get("replyQ"), msgMap.get("correlationId"), mqMap);
+        }
     }
 }

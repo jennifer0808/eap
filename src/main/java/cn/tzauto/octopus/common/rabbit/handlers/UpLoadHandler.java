@@ -68,7 +68,10 @@ public class UpLoadHandler implements MessageHandler {
             }
             mqMap.put("attach", JSONArray.toJSONString(attList));
 
-            GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
+//            GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
+            if (msgMap.containsKey("replyQ")) {
+                GlobalConstants.C2SRcpUpLoadQueue.replyMessage(msgMap.get("replyQ"), msgMap.get("correlationId"), mqMap);
+            }
             logger.info("向服务端[C2S.Q.RCPUPLOAD]回复获取到的Recipe信息" + JSONArray.toJSONString(mqMap));
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (UploadRecipeErrorException e) {
