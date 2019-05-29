@@ -117,4 +117,9 @@ public class MessageUtils {
         consumer.subscribeMessage(routingKey);
     }
 
+    public void replyMessage(String queueName,String corId, Map<String, String> map){
+        String msg = JsonMapper.toJsonString(map);
+        producer.replyMessage(queueName,corId, msg);
+    }
+
 }

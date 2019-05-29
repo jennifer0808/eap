@@ -61,6 +61,12 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
                     return;
                 }
+                if (deviceInfo.getDeviceType().contains("SCREEN")) {
+                    if (!AvaryAxisUtil.get21Exposure(deviceCode)) {
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!");
+                        return;
+                    }
+                }
                 recipeName = AvaryAxisUtil.getRecipeNameByPartNum(deviceCode, partNo);
                 //todo 调用cim下载程序接口
                 //String downloadresult = GlobalConstants.eapView.hostManager.downLoadRcp2Device(deviceCode, recipeName) + "" + "";

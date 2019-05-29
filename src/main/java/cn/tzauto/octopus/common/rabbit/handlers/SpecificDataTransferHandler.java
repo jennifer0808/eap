@@ -33,7 +33,8 @@ public class SpecificDataTransferHandler implements MessageHandler {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
             deviceCode = msgMap.get("deviceCode");
-            dataIdMap = (HashMap<String, String>) JsonMapper.fromJsonString(msgMap.get("dataIdList"), HashMap.class);
+            String idList = msgMap.get("dataIdList");
+            dataIdMap = (HashMap<String, String>) JsonMapper.fromJsonString(idList, HashMap.class);
             logger.info("服务端请求获取设备[" + deviceCode + "]的指定数据，数据ID:" + JsonMapper.toJsonString(dataIdMap));
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
@@ -52,8 +53,11 @@ public class SpecificDataTransferHandler implements MessageHandler {
                 mqMap.put("eventDesc", "从设备数据失败，请重试！");
             }
             mqMap.put("SpecificData", resultMapString);
-//TODO 原队列JMSReplyTo获得，待验证
-            GlobalConstants.C2SSpecificDataQueue.sendMessage(mqMap);
+
+//            GlobalConstants.C2SSpecificDataQueue.sendMessage(mqMap);
+            if (msgMap.containsKey("replyQ")) {
+                GlobalConstants.C2SSpecificDataQueue.replyMessage(msgMap.get("replyQ"), msgMap.get("correlationId"), mqMap);
+            }
             logger.info("向服务端发送获取到的数据:[" + resultMapString + "]");
         } catch (UploadRecipeErrorException e) {
             e.printStackTrace();

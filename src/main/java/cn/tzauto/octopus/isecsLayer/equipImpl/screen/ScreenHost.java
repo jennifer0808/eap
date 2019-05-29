@@ -11,6 +11,7 @@ import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.ZipUtil;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.screen.ScreenRecipeUtil;
@@ -298,6 +299,12 @@ public class ScreenHost extends EquipModel {
     }
 
     protected boolean specialCheck() {
+
+        if (!AvaryAxisUtil.firstProductionIsOK(deviceName, lotId, partNo, "SFCZ4_ZD_DIExposure")) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
+            return false;
+        }
+
         //TODO 此设备只需要检查 程序名recipename，能量，厚度jbhd
         iSecsHost.readAllParaByScreen("main");
         return false;

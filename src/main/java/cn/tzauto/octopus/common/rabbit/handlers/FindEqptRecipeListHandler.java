@@ -50,8 +50,11 @@ public class FindEqptRecipeListHandler implements MessageHandler {
             Map mqMap = new HashMap();
             mqMap.put("msgName", "FindEqptRecipeList");
             mqMap.put("EqptRecipeList", JSONArray.toJSONString(equipRecipeList));
-//TODO 原队列JMSReplyTo获得，待验证
-            GlobalConstants.C2SRcpUpLoadQueue.sendMessage( mqMap);
+
+//            GlobalConstants.C2SRcpUpLoadQueue.sendMessage( mqMap);
+            if (msgMap.containsKey("replyQ")) {
+                GlobalConstants.C2SRcpUpLoadQueue.replyMessage(msgMap.get("replyQ"), msgMap.get("correlationId"), mqMap);
+            }
             logger.info("向服务端[ C2S.Q.RCPUPLOAD ]回复设备的当前Recipe列表" + JSONArray.toJSONString(mqMap));
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前Recipe列表:" + equipRecipeList);
         } catch (Exception ex) {

@@ -1385,6 +1385,7 @@ public class MultipleEquipHostManager {
                             deviceCode, remoteIp, remoteTcpPort, hostJavaClass, deviceType, iconPath, equipRecipePath);
                     equip.setStartUp(isStart);
                     equip.setDaemon(true);
+                    equip.deviceName = deviceName;
                     equipModels.put(deviceCode, equip);
                 } catch (ClassNotFoundException cnfe) {
                     logger.error("Device " + deviceCode + " config error,(ClassNotFoundException) can't be initialized ");

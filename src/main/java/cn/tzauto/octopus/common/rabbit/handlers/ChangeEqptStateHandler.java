@@ -29,9 +29,12 @@ public class ChangeEqptStateHandler implements MessageHandler {
     private String state = "";
     private String type = "";
 
-    public void sendMsg2Server(Map mqMap) {
-        //TODO 原队列JMSReplyTo获得，待验证
-        GlobalConstants.C2SEqptRemoteCommand.sendMessage(mqMap);
+    public void sendMsg2Server(HashMap<String, String> msgMap,Map mqMap) {
+//        GlobalConstants.C2SEqptRemoteCommand.sendMessage(mqMap);
+        if (msgMap.containsKey("replyQ")) {
+            GlobalConstants.C2SEqptRemoteCommand.replyMessage(msgMap.get("replyQ"), msgMap.get("correlationId"), mqMap);
+        }
+
         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送改变机台状态的操作结果:" + mqMap.get("eventStatus"));
 
     }
@@ -111,14 +114,14 @@ public class ChangeEqptStateHandler implements MessageHandler {
                 mqMap.put("eventDesc", "获取设备当前信息失败!无法执行控制命令!请重试！");
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 获取设备当前信息失败!");
             }
-            sendMsg2Server(mqMap);
+            sendMsg2Server(msgMap,mqMap);
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
             mqMap.put("eventStatus", "N");
             mqMap.put("eventDesc", "改变设备" + deviceCode + "状态为" + state + "操作失败");
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "改变设备状态为" + state + "，操作失败, 出现异常消息 " + e.getMessage());
-            sendMsg2Server(mqMap);
+            sendMsg2Server(msgMap,mqMap);
         } finally {
             sqlSession.close();
         }
