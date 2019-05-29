@@ -15,10 +15,7 @@ import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AvaryAxisUtil {
 
@@ -259,11 +256,13 @@ public class AvaryAxisUtil {
      * //第六個參數:料號|機台號|管制頻率|管制時機
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0003", "FSAPJ60C2G|PNLFH001#|3|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static boolean isInitialPart(String equipID, String partNum, String machineNo, String frequency, String opportunity) throws RemoteException, ServiceException, MalformedURLException {
+
+    public static boolean isInitialPart(String partNum, String machineNo, String frequency, String opportunity) throws
+            RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "G0003", createParm(partNum, machineNo, frequency, opportunity), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, machineNo, frequency, opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         if (list.size() > 0) {
@@ -282,6 +281,7 @@ public class AvaryAxisUtil {
      * //第六個參數:表單名稱|機台號|天數
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0018", "防焊曝光21節記錄表|TEST|3", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
+
     public static boolean get21Exposure(String deviceCode) {
         Call call = null;
         Schema result = null;
@@ -385,15 +385,24 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0002", "20180926|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
 
-    public static List getOrderNum(String classInfo) throws RemoteException, ServiceException, MalformedURLException {
+
+    public static String getOrderNum(String classInfo) throws RemoteException, ServiceException, MalformedURLException {
+
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0002", createParm(time.format(dtf1), classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        List<Map<String, String>> list = parseXml(result);
+        if (list.size() > 0) {
+            Map<String, String> map = list.get(0);
+            Set<String> strings = map.keySet();
+            for (String string : strings) {
+                return map.get(string);
+            }
+        }
+        return null;
     }
 
     /**
