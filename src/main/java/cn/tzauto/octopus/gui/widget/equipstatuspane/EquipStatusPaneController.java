@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import static cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane.bgGray;
+
 /**
  * FXML Controller class
  *
@@ -66,8 +68,8 @@ public class EquipStatusPaneController implements Initializable {
                     break;
                 }
             }
-
-            if (equipNodeBean.getEquipStateProperty().isCommOn()) {
+            //P_EquipPane.getBackground().getFills().get(0)获取背景颜色，判断是否为灰色
+            if (equipNodeBean.getEquipStateProperty().isCommOn()&&  !P_EquipPane.getBackground().getFills().get(0).equals(bgGray.getFills().get(0))) {
                 contextMenu.hide();
                 MenuItem menuItem = new MenuItem("设备详情");
 
