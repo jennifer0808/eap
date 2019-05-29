@@ -175,7 +175,7 @@ public class DownLoadHandler implements MessageHandler {
                 //保存下载结果至数据库并发送至服务端
                 recipeService.saveRecipeOperationLog(recipeOperationLog);
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
-                new ISecsHost(deviceInfo.getDeviceIp(), "12000", "", "").executeCommand(downLoadResultString);
+                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand(downLoadResultString);
             } else {
                 logger.error("设备模型表中没有配置设备" + deviceCode + "的Recipe下载方式");
                 mqMap.put("eventDesc", "下载失败");

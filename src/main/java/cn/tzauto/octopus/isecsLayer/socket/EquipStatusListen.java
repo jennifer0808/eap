@@ -55,6 +55,11 @@ public class EquipStatusListen {
         logger.info("开启log报警监听...");
     }
 
+    public static void startDownloadListen() {
+        new EquipStatusListen().startDownload();
+        logger.info("startDownloadListen...");
+    }
+
     public static void main(String[] args) {
         monitorEquipStatus();
 //        new EquipStatusListen().start();
@@ -306,7 +311,7 @@ public class EquipStatusListen {
                             .option(ChannelOption.SO_BACKLOG, 1024)
                             .childOption(ChannelOption.SO_KEEPALIVE, true);
                     //绑定端口、同步等待  
-                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN_PORT"))).sync();
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("EQUIPSTATUS_LISTEN_PORT"))).sync();
 
                     //等待服务监听端口关闭  
                     futrue.channel().closeFuture().sync();
@@ -333,8 +338,32 @@ public class EquipStatusListen {
                             .option(ChannelOption.SO_BACKLOG, 1024)
                             .childOption(ChannelOption.SO_KEEPALIVE, true);
                     //绑定端口、同步等待  
-                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN_PORT"))).sync();
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("AUTOLOG_LISTEN_PORT"))).sync();
                     //等待服务监听端口关闭  
+                    futrue.channel().closeFuture().sync();
+                } catch (Exception e) {
+                    bossGroup.shutdownGracefully();
+                    workerGroup.shutdownGracefully();
+                }
+            }
+        }).start();
+
+    }
+
+    public void startDownload() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                EventLoopGroup workerGroup = new NioEventLoopGroup();
+                try {
+                    ServerBootstrap bootstrap = new ServerBootstrap();
+                    bootstrap.group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel.class)
+                            .childHandler(new DownloadChannelHandler())
+                            .option(ChannelOption.SO_BACKLOG, 1024)
+                            .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("DOWNLOAD_TOOL_LISTEN_PORT"))).sync();
                     futrue.channel().closeFuture().sync();
                 } catch (Exception e) {
                     bossGroup.shutdownGracefully();
@@ -356,6 +385,14 @@ public class EquipStatusListen {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
             ch.pipeline().addLast(new EquipAlarmHandler());
+        }
+    }
+
+    private class DownloadChannelHandler extends ChannelInitializer<SocketChannel> {
+
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            ch.pipeline().addLast(new DownloadToolHandler());
         }
     }
 }

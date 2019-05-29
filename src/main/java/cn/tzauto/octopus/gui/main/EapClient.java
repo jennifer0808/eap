@@ -286,32 +286,28 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 if ("1".equals(GlobalConstants.getProperty("MONITOR_PARA"))) {
                     CommonUtil.startMonitorJob(this);
                 }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_ALARM"))) {
+                if ("1".equals(GlobalConstants.getProperty("MONITOR_ALARM"))) {
                     CommonUtil.startMonitorAlarmJob(this);
                 }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_EQUIPSTATUS"))) {
-                    CommonUtil.startRefreshEquipStateJob(this);
-                }
-                if ("1".equals(GlobalConstants.getProperty("NETCHECK"))) {
-                    CommonUtil.startNetCheckJob(this);
-                }
+
                 if ("1".equals(GlobalConstants.getProperty("COMMCHECK"))) {
                     CommonUtil.startCommuCheckJob(this);
                 }
-                if ("1".equals(GlobalConstants.getProperty("DATACLEAN"))) {
-                    CommonUtil.startCleanDataJob(this);
-                }
 
                 //netty监控
-                if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN"))) {
+                if ("1".equals(GlobalConstants.getProperty("EQUIPSTATUS_LISTEN"))) {
                     EquipStatusListen.startListen();
                 }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN"))) {
+                if ("1".equals(GlobalConstants.getProperty("EQUIPALARM_LISTEN"))) {
                     EquipStatusListen.startAlarmListen();
                 }
-
-                //开启MQ监听
-                startMq();
+                if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_TOOL_LISTEN"))) {
+                    EquipStatusListen.startDownloadListen();
+                }
+                if ("1".equals(GlobalConstants.getProperty("MQ_LISTEN"))) {
+                    //开启MQ监听
+                    startMq();
+                }
 
             } catch (Exception ex) {
                 logger.error("Exception:", ex);

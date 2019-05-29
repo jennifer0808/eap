@@ -74,9 +74,7 @@ public class BackUpRecipeWebservice implements BaseWebservice {
                         String recipeFilePath = recipeService.organizeRecipeDownloadFullFilePath(recipe1);
                         //直接从FTP下载，如果本地有就覆盖，如果FTP不存在，那么下载失败
                         String localRecipeFilePath = GlobalConstants.localRecipePath + recipeFilePath;
-                        if (recipe1.getDeviceTypeCode().contains("DB-800HSD")) {
-                            localRecipeFilePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-                        }
+
                         //从Ftp 下载到本地
                         String downLoadFileResult = FtpUtil.connectServerAndDownloadFile(localRecipeFilePath, recipeFilePath, GlobalConstants.ftpIP,
                                 GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);

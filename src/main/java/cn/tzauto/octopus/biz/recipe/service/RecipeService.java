@@ -716,12 +716,7 @@ public class RecipeService extends BaseService {
         String recipeLocalPath = GlobalConstants.localRecipePath + organizeRecipePath(recipe) + recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt";
         //ftp路径需要到目录
         String recipeRemotePath = organizeUploadRecipePath(recipe);
-        //DB800从ftp上传recipe
-        if (recipe.getDeviceTypeCode().contains("DB810")) {
-            recipeLocalPath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
-        }
+
         RecipeOperationLog recipeOperationLog = setRcpOperationLog(recipe, "upload");
         this.saveRecipeOperationLog(recipeOperationLog);
         if (recipeParas != null && !recipeParas.isEmpty()) {
