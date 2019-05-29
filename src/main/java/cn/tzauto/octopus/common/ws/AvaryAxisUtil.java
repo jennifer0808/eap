@@ -487,4 +487,63 @@ public class AvaryAxisUtil {
             createMap(map, sub2);
         }
     }
+
+    public static String unicode2String(String unicode) {
+        StringBuffer string = new StringBuffer();
+        String pre = "";
+        if (unicode.contains("&#x")) {
+            int index = unicode.indexOf("&#x");
+            if (index > 0) {
+                pre = unicode.substring(0, index);
+                unicode = unicode.substring(index);
+            }
+            String[] split = unicode.split(";");
+            for (int i = 0; i < split.length; i++) {
+                String temp = split[i];
+                if (temp.startsWith("&#x")) {
+                    String replace = temp.replace("&#x", "");
+                    int data = Integer.parseInt(replace, 16);
+                    string.append((char) data);
+                } else {
+                    String[] split1 = temp.split("&#x");
+                    string.append(split1[0]);
+                    int data = Integer.parseInt(split1[1], 16);
+                    string.append((char) data);
+                }
+            }
+        } else if (unicode.contains("&#")) {
+            int index = unicode.indexOf("&#");
+            if (index > 0) {
+                pre = unicode.substring(0, index);
+                unicode = unicode.substring(index);
+            }
+            String[] split = unicode.split(";");
+            for (int i = 0; i < split.length; i++) {
+                String temp = split[i];
+                if (temp.startsWith("&#")) {
+                    String replace = temp.replace("&#", "");
+                    int data = Integer.parseInt(replace, 10);
+                    string.append((char) data);
+                } else {
+                    String[] split1 = temp.split("&#");
+                    string.append(split1[0]);
+                    int data = Integer.parseInt(split1[1], 10);
+                    string.append((char) data);
+                }
+            }
+        } else if (unicode.startsWith("\\u")) {
+            String[] strs = unicode.split("\\\\u");
+            for (int i = 0; i < strs.length; i++) {
+                String temp = strs[i];
+                if ("".equals(temp)) {
+                    continue;
+                }
+                int data = Integer.parseInt(strs[i], 16);
+                string.append((char) data);
+            }
+        } else {
+            return unicode;
+        }
+        return pre + string.toString();
+    }
 }
