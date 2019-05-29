@@ -24,10 +24,10 @@ public class AvaryAxisUtil {
 
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
 
-    //    private static final String url = "szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
-    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
-    //    private static final String namespace = "http://tempuri.org/";
-    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
+        private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
+//    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
+        private static final String namespace = "http://tempuri.org/";
+//    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
 
     public static String webServicesToCIM(String method, Object[] parms) {
 
@@ -47,6 +47,21 @@ public class AvaryAxisUtil {
         }
     }
 
+    public static void main(String[] args) {
+//    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
+
+//        System.out.println(workLicense("DEXP03000100", "G1483684"));
+        try {
+            List list = getProductionCondition("DEXP03000100","FSAPMN7A2A135");
+            System.out.println(list);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * //1.員工上崗證信息查詢（端口）
      * //回傳資料表欄位名：YZResult
@@ -65,11 +80,17 @@ public class AvaryAxisUtil {
             Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
-            return "";
+            return "上岗证验证失败";
         }
-        List list = parseXml(result);
-
-        return "0";
+        List<Map<String,String>> list = parseXml(result);
+        String ok = null;
+        if(list.size()>0){
+            ok = list.get(0).get("YZRESULT");
+            if("OK".equals(ok)){
+                return "0";
+            }
+        }
+        return "上岗证验证失败";
     }
 
 
@@ -426,8 +447,7 @@ public class AvaryAxisUtil {
         MessageElement[] elements = schema.get_any();
 //        List elementHead = elements[0].getChildren();//消息头
         List elementBody = elements[1].getChildren();//消息体信息,DataSet对象
-        if (elementBody.size() <= 0) {
-            //无返回记录，则无输出
+        if(elementBody == null || elementBody.size() == 0){
             return null;
         }
         String text = elementBody.get(0).toString();//消息体的字符串形式
@@ -438,10 +458,12 @@ public class AvaryAxisUtil {
     }
 
     public static void createList(List list, String text) {
-        if (text.contains("<Table>")) {
-            int i = text.indexOf("<Table>");
+        if (text.contains("<Table")) {
+            int i = text.indexOf("<Table");
             int j = text.indexOf("</Table>");
-            String sub1 = text.substring(i + 7, j);
+            String sub1 = text.substring(i + 6, j);
+            i = sub1.indexOf(">");
+            sub1 = sub1.substring(i+1);
             String sub2 = text.substring(j + 8);
 
             Map<String, String> map = new HashMap<>();
@@ -458,10 +480,11 @@ public class AvaryAxisUtil {
             String key = text.substring(i + 1, j);
             String sub1 = text.substring(j + 1);
             i = sub1.indexOf("<");
-            j = text.indexOf(">");
+            j = sub1.indexOf(">");
             String value = sub1.substring(0, i);
             map.put(key, value);
-            createMap(map, sub1.substring(j + 1));
+            String sub2 = sub1.substring(j + 1);
+            createMap(map, sub2);
         }
     }
 }
