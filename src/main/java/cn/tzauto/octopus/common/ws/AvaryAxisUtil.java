@@ -15,14 +15,13 @@ import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AvaryAxisUtil {
 
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
+    private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    private static  DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
 //    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
@@ -49,18 +48,132 @@ public class AvaryAxisUtil {
 
     public static void main(String[] args) {
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
+        //1-1
+//        System.out.println(workLicense("DEXP03000100", "G1483684www"));
 
-//        System.out.println(workLicense("DEXP03000100", "G1483684"));
-        try {
-            List list = getProductionCondition("DEXP03000100","FSAPMN7A2A135");
-            System.out.println(list);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        //1-2
+//        try {
+//            List list = getProductionCondition("DEXP03000100","FSAPMN7A2A135");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+        //1-3
+//        try {
+//            boolean b = isInitialPart("FSAPMN7A2A135","DEXP03000100","3","0");
+//            System.out.println(b);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+        //1-4
+//        try {
+//            List list = get21Exposure("qwe","DEXP03000100","DI#12","2");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+        //1-5
+//        try {
+//           boolean b =  firstProductionIsOK("DEXP03000100","124","qwe24","er34");
+//            System.out.println(b);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+
+//  1-6
+//       String temp =  uploadMessageEveryPNL("DEXP03000100",Arrays.asList("1","1","1"),Arrays.asList("1","1","1"));
+//        System.out.println(temp);
+
+        //2-1
+//        try {
+//           List list = tableQuery("SFCZ4_ZD_DIExposure","PNLPG012#","0");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+        //2-2
+//        try {
+//            List list = getOrderNum("0");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+        //2-3
+//        try {
+//            String temp =  insertMasterTable("1","1","1","1","1","1","1","1");
+//            System.out.println(temp);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+//2-4
+//        try {
+//            List list = getParmByLotNum("123");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+//        2-5
+//        try {
+//            List list = getParmByLotNumAndLayer("123","234","456");
+//            System.out.println(list);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
+//2-6
+//        try {
+//            String tep = insertTable("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1");
+//            System.out.println(tep);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+
     }
     /**
      * //1.員工上崗證信息查詢（端口）
@@ -75,11 +188,11 @@ public class AvaryAxisUtil {
         Schema result = null;
         try {
             call = getCallForGetDataFromSer();
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
             Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
+            logger.error("上岗证验证发生错误",e);
             return "上岗证验证失败";
         }
         List<Map<String,String>> list = parseXml(result);
@@ -89,6 +202,7 @@ public class AvaryAxisUtil {
             if("OK".equals(ok)){
                 return "0";
             }
+            return unicode2String(ok);
         }
         return "上岗证验证失败";
     }
@@ -106,7 +220,6 @@ public class AvaryAxisUtil {
     private static List getProductionCondition(String equipID, String partNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         Object[] params = new Object[]{"F0716614", "6614", equipID, "0005", "PA001", createParm(equipID, partNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
@@ -118,11 +231,14 @@ public class AvaryAxisUtil {
         try {
             List list = getProductionCondition(equipID, partNum);
         } catch (RemoteException e) {
-            e.printStackTrace();
+            logger.error("Exception:",e);
+
         } catch (ServiceException e) {
-            e.printStackTrace();
+            logger.error("Exception:",e);
+
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            logger.error("Exception:",e);
+
         }
 
         return "";
@@ -131,7 +247,7 @@ public class AvaryAxisUtil {
     /**
      * 1.判定是否要開初件方法:
      * /// <param name="partnum">料號</param>
-     * /// <param name="equipID">機台號</param>
+     * /// <param name="equipID">機台號</param>   现场确认机台号和设备编号不一样 为machineNo
      * /// <param name="frequency">管制頻率,連續生產4張后第五張開初件,即 1,5,9模式</param>
      * /// <param name="opportunity">管制時機:0:開始前,1:完成前,2:完成后</param>
      * /// <returns>不需要選初件時返回0, 需要開初件時返回1</returns>
@@ -139,18 +255,17 @@ public class AvaryAxisUtil {
      * //第六個參數:料號|機台號|管制頻率|管制時機
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0003", "FSAPJ60C2G|PNLFH001#|3|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static boolean isInitialPart(String partNum, String equipID, String frequency, String opportunity) throws RemoteException, ServiceException, MalformedURLException {
+    public static boolean isInitialPart(String equipID,String partNum,String machineNo,  String frequency, String opportunity) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "G0003", createParm(partNum, equipID, frequency, opportunity), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", equipID, "0004", "G0003", createParm(partNum, machineNo, frequency, opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
-            String yzResult = map.get("returns");
-            if (yzResult != null && yzResult.equals("1")) {
+            String yzResult = map.get("LASTVALUE");//实际测试返回值不是returns
+            if ("1".equals(yzResult)) {
                 return true;
             }
         }
@@ -163,12 +278,11 @@ public class AvaryAxisUtil {
      * //第六個參數:表單名稱|機台號|天數
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0018", "防焊曝光21節記錄表|TEST|3", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List get21Exposure(String tableName, String equipID, String days) throws RemoteException, ServiceException, MalformedURLException {
+    public static List get21Exposure(String tableName, String equipID,String machineNo, String days) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "0018", createParm(tableName, equipID, days), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", equipID, "0004", "0018", createParm(tableName, machineNo, days), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
@@ -186,15 +300,14 @@ public class AvaryAxisUtil {
             RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         Object[] params = new Object[]{"F0716614", "6614", equipID, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
-            String yzResult = map.get("lastvalue");
-            if (yzResult != null && yzResult.equals("OK")) {
+            String value = map.get("LASTVALUE");
+            if ("OK".equals(value)) {
                 return true;
             }
         }
@@ -211,20 +324,22 @@ public class AvaryAxisUtil {
      * ret = webServiceSZ.ws.wsFun("F0716614", "6614", "設備編號",para1,para2,uploadTime);
      */
 
-    public static List uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
+    public static String uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
 
         Call call = null;
-        Schema result = null;
+        String result = null;
         try {
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-
+            call = getCallForSendDataToSer();
             Object[] params = new Object[]{"F0716614", "6614", equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
-            result = (Schema) call.invoke(params); //方法执行后的返回值
+            result = (String) call.invoke(params); //方法执行后的返回值
+            if("OK".equals(result)){
+                return "";
+            }
 
         } catch (Exception e) {
+            logger.error("Exception:",e);
         }
-        List list = parseXml(result);
-        return list;
+        return result;
     }
 
     /**
@@ -232,14 +347,13 @@ public class AvaryAxisUtil {
      * //第六個參數:表單編號|日期(系統日期-8小時)|機台號|班別(0:白班 ,1:夜班)
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0001", "SFCZ4_ZDCVL|20181121|PNLAVI002#(E)|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List tableQuery(String equipID, String tableNum, String classInfo) throws RemoteException, ServiceException, MalformedURLException {
+    public static List tableQuery( String tableNum, String machineNo,String classInfo) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "G0001", createParm(tableNum, time.format(dtf), equipID, classInfo), now.format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0001", createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
@@ -252,13 +366,12 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0002", "20180926|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
 
-    public static List getOrderNum(String equipID, String classInfo) throws RemoteException, ServiceException, MalformedURLException {
+    public static List getOrderNum( String classInfo) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "0002", createParm(time.format(dtf), classInfo), now.format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "0002", createParm(time.format(dtf1), classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
@@ -274,19 +387,20 @@ public class AvaryAxisUtil {
      * "test2018030200343|1|20180302|TEST|SFCZ4_ZDCVL|0|001|" + System.DateTime.Now.ToString("yyyyMMddHHmmss") + "|G1479462",
      * System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List insertMasterTable(String equipID, String paperNo, String status, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
+    public static String insertMasterTable( String paperNo, String status,String machineNo, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
-                , createParm(paperNo, status, time.format(dtf), equipID, report, classInfo, factory, createTime), createEmpid, now.format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
+                , createParm(paperNo, status, time.format(dtf1), machineNo, report, classInfo, factory, createTime,createEmpid), now.format(dtf)};
+        String result = (String) call.invoke(params); //方法执行后的返回值
+        if("OK".equals(report)){
+            return "";
+        }
+        return result;
     }
 
     /**
@@ -295,12 +409,11 @@ public class AvaryAxisUtil {
      * para1 = "MF87273521";
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0001", "0002", para1, System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List getParmByLotNum(String equipID, String lotNum) throws RemoteException, ServiceException, MalformedURLException {
+    public static List getParmByLotNum( String lotNum) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
 
-        Object[] params = new Object[]{"test", "test", equipID, "0001", "0002", lotNum, now.format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
@@ -312,12 +425,11 @@ public class AvaryAxisUtil {
      * para1 = "MF88020361|SFCZ4_ZDCVL |0";
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0001", "0009", para1, System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List getParmByLotNumAndLevel(String equipID, String lotNum, String paperNum, String level) throws RemoteException, ServiceException, MalformedURLException {
+    public static List getParmByLotNumAndLayer( String lotNum, String paperNum, String layer) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
 
-        Object[] params = new Object[]{"test", "test", equipID, "0001", "0009", createParm(lotNum, paperNum, level), now.format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
         return list;
@@ -331,21 +443,22 @@ public class AvaryAxisUtil {
      * "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List insertTable(String equipID, String paperNo, String startTime, String lLot, String lotnum, String layer, String sfclayer, String layerName, String mainserial, String serial
+    public static String insertTable( String paperNo, String startTime, String lLot, String lotnum, String layer, String sfclayer, String layerName, String mainserial, String serial
             , String workno, String firstAcess, String item2, String item3, String item4, String item5, String item6, String item7, String item8, String item9, String item10
             , String qty, String item11, String item12, String item13, String item14, String item15, String item16, String item17, String item18) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
 
-        Object[] params = new Object[]{"test", "test", equipID, "0004", "0006",
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
                 "PaperNo|StartTime|lLot|Lotnum|Layer|sfclayer|LayerName|mainserial|serial|workno|FirstAcess|Item2|Item3|Item4|Item5|Item6|Item7|Item8|Item9|Item10|Qty|Item11|Item12|Item13|Item14|Item15|Item16|Item17|Item18"
                 , createParm(paperNo, startTime, lLot, lotnum, layer, sfclayer, layerName, mainserial, serial, workno, firstAcess, item2, item3, item4, item5, item6, item7, item8, item9, item10, qty, item11, item12, item13, item14, item15, item16, item17, item18)
                 , now.format(dtf)};
-        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        String result = (String) call.invoke(params); //方法执行后的返回值
+        if("OK".equals(result)){
+            return "";
+        }
+        return result;
     }
 
     private static Call getCallForSendDataToSer() throws ServiceException, MalformedURLException {
@@ -367,7 +480,7 @@ public class AvaryAxisUtil {
 
         //call.setReturnType(new QName(namespace,"getinfo"),Model.class); //设置返回结果为是某个类
 //        call.setReturnType(org.apache.axis.encoding.XMLType.XSD_STRING);//设置结果返回类型
-        call.setReturnType(XMLType.XSD_SCHEMA);//设置结果返回类型
+        call.setReturnType(XMLType.XSD_STRING);//设置结果返回类型
         return call;
     }
 
@@ -417,7 +530,7 @@ public class AvaryAxisUtil {
 
         //call.setReturnType(new QName(namespace,"getinfo"),Model.class); //设置返回结果为是某个类
 //        call.setReturnType(org.apache.axis.encoding.XMLType.XSD_STRING);//设置结果返回类型
-        call.setReturnType(XMLType.XSD_SCHEMA);//设置结果返回类型
+        call.setReturnType(XMLType.XSD_STRING);//设置结果返回类型
 //        call.setReturnType(QName.valueOf(XMLType.NS_PREFIX_XML));//设置结果返回类型
         return call;
     }
@@ -443,15 +556,15 @@ public class AvaryAxisUtil {
         return sb.toString();
     }
 
-    private static List parseXml(Schema schema) {
+    private static List<Map<String,String>> parseXml(Schema schema) {
+        List<Map<String, String>> list = new ArrayList<>();
         MessageElement[] elements = schema.get_any();
 //        List elementHead = elements[0].getChildren();//消息头
         List elementBody = elements[1].getChildren();//消息体信息,DataSet对象
         if(elementBody == null || elementBody.size() == 0){
-            return null;
+            return list;
         }
         String text = elementBody.get(0).toString();//消息体的字符串形式
-        List<Map<String, String>> list = new ArrayList<>();
         createList(list, text);
         return list;
 
@@ -461,6 +574,9 @@ public class AvaryAxisUtil {
         if (text.contains("<Table")) {
             int i = text.indexOf("<Table");
             int j = text.indexOf("</Table>");
+            if(j<0){
+                return;
+            }
             String sub1 = text.substring(i + 6, j);
             i = sub1.indexOf(">");
             sub1 = sub1.substring(i+1);
