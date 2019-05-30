@@ -528,7 +528,7 @@ public abstract class EquipModel extends Thread {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
         }
         mqMap.put("eventDesc", checkRecultDesc);
-        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+//        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
         return pass;
     }
 

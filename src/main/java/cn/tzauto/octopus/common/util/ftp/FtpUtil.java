@@ -3,6 +3,7 @@
 // (powered by Fernflower decompiler)
 //
 package cn.tzauto.octopus.common.util.ftp;
+
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -26,7 +27,7 @@ public class FtpUtil {
             ftp.connect(InetAddress.getByName(serverIp), Integer.parseInt(serverPort));
             ftp.login(userName, password);
             int e = ftp.getReplyCode();
-            if(!FTPReply.isPositiveCompletion(e)) {
+            if (!FTPReply.isPositiveCompletion(e)) {
                 ftp.disconnect();
                 return false;
             } else {
@@ -39,16 +40,16 @@ public class FtpUtil {
     }
 
     public static boolean uploadFile(String localFilePath, String remoteFilePath, String fileName, String serverIp, String serverPort, String userName, String password) {
-        if(GlobalConstants.isLocalMode) {
+        if (GlobalConstants.isLocalMode) {
             ;
         }
 
-        if(!connectFtp(serverIp, serverPort, userName, password)) {
+        if (!connectFtp(serverIp, serverPort, userName, password)) {
             logger.debug("FTP连接失败!");
             return false;
         } else {
             File file = new File(localFilePath);
-            if(!file.exists() && !file.isFile()) {
+            if (!file.exists() && !file.isFile()) {
                 logger.debug("本地文件不存在！>>" + localFilePath);
                 return false;
             } else {
@@ -70,7 +71,7 @@ public class FtpUtil {
                 } catch (Exception var20) {
                     logger.error(var20.getMessage());
                 } finally {
-                    if(ftp.isConnected()) {
+                    if (ftp.isConnected()) {
                         try {
                             ftp.logout();
                             ftp.disconnect();
@@ -87,7 +88,7 @@ public class FtpUtil {
     }
 
     public static String connectServerAndDownloadFile(String localFilePath, String remoteFilePath, String serverIp, String serverPort, String userName, String password) {
-        if(!connectFtp(serverIp, serverPort, userName, password)) {
+        if (!connectFtp(serverIp, serverPort, userName, password)) {
             logger.debug("FTP服务器" + serverIp + "无法连接，请检查网络连接状况!");
             return "FTP服务器" + serverIp + "无法连接，请检查网络连接状况!";
         } else {
@@ -99,8 +100,8 @@ public class FtpUtil {
 
             try {
                 File e = new File(localFilePath);
-                if(!e.exists()) {
-                    if(!e.getParentFile().exists()) {
+                if (!e.exists()) {
+                    if (!e.getParentFile().exists()) {
                         e.getParentFile().mkdirs();
                     }
 
@@ -113,15 +114,15 @@ public class FtpUtil {
                 ftpfiles = ftp.listFiles();
                 boolean checkflag = false;
 
-                for(int i = 0; i < ftpfiles.length; ++i) {
-                    if(ftpfiles[i].getName().equals(remoteFileName)) {
+                for (int i = 0; i < ftpfiles.length; ++i) {
+                    if (ftpfiles[i].getName().equals(remoteFileName)) {
                         downloadFTPFile(ftpfiles[i], localFilePath);
                         checkflag = true;
                         break;
                     }
                 }
 
-                if(!checkflag) {
+                if (!checkflag) {
                     logger.debug("需要下载的文件FTP服务器上不存在！");
                     String var24 = "需要下载的文件FTP服务器上不存在！";
                     return var24;
@@ -129,7 +130,7 @@ public class FtpUtil {
             } catch (Exception var22) {
                 logger.error("Exception:", var22);
             } finally {
-                if(ftp.isConnected()) {
+                if (ftp.isConnected()) {
                     try {
                         ftp.logout();
                         ftp.disconnect();
@@ -145,7 +146,7 @@ public class FtpUtil {
     }
 
     public static boolean downloadFile(String localFilePath, String remoteFilePath, String serverIp, String serverPort, String userName, String password) {
-        if(!connectFtp(serverIp, serverPort, userName, password)) {
+        if (!connectFtp(serverIp, serverPort, userName, password)) {
             logger.debug("FTP连接失败!");
             return false;
         } else {
@@ -159,8 +160,8 @@ public class FtpUtil {
             boolean var26;
             try {
                 File e = new File(localFilePath);
-                if(!e.exists()) {
-                    if(!e.getParentFile().exists()) {
+                if (!e.exists()) {
+                    if (!e.getParentFile().exists()) {
                         e.getParentFile().mkdirs();
                     }
 
@@ -171,7 +172,7 @@ public class FtpUtil {
                 ftp.changeWorkingDirectory(remoteDirectory);
                 FTPFile[] ftpfiles = null;
                 String LOCAL_CHARSET = "GBK";
-                if(FTPReply.isPositiveCompletion(ftp.sendCommand("OPTS UTF8", "ON"))) {
+                if (FTPReply.isPositiveCompletion(ftp.sendCommand("OPTS UTF8", "ON"))) {
                     LOCAL_CHARSET = "UTF-8";
                 }
 
@@ -179,15 +180,15 @@ public class FtpUtil {
                 ftpfiles = ftp.listFiles();
                 boolean checkflag = false;
 
-                for(int i = 0; i < ftpfiles.length; ++i) {
-                    if(ftpfiles[i].getName().equals(remoteFileName)) {
+                for (int i = 0; i < ftpfiles.length; ++i) {
+                    if (ftpfiles[i].getName().equals(remoteFileName)) {
                         downloadflag = downloadFTPFile(ftpfiles[i], localFilePath);
                         checkflag = true;
                         break;
                     }
                 }
 
-                if(checkflag) {
+                if (checkflag) {
                     return downloadflag;
                 }
 
@@ -197,7 +198,7 @@ public class FtpUtil {
                 logger.error("Exception:", var24);
                 return downloadflag;
             } finally {
-                if(ftp.isConnected()) {
+                if (ftp.isConnected()) {
                     try {
                         ftp.logout();
                         ftp.disconnect();
@@ -214,11 +215,11 @@ public class FtpUtil {
 
     private static String downloadFTPFileAndFeedBack(FTPFile ftpFile, String localPath) {
         String returnMsg = "0";
-        if(ftpFile.isFile()) {
-            if(ftpFile.getName().indexOf("?") == -1) {
+        if (ftpFile.isFile()) {
+            if (ftpFile.getName().indexOf("?") == -1) {
                 try {
                     File e = new File(localPath);
-                    if(e.exists()) {
+                    if (e.exists()) {
                         e.delete();
                     }
 
@@ -227,7 +228,7 @@ public class FtpUtil {
                     boolean writeFileResult = ftp.retrieveFile(ftpFile.getName(), outputStream);
                     outputStream.flush();
                     outputStream.close();
-                    if(!writeFileResult) {
+                    if (!writeFileResult) {
                         returnMsg = "写文件到本地失败";
                     }
                 } catch (Exception var6) {
@@ -245,11 +246,11 @@ public class FtpUtil {
 
     private static boolean downloadFTPFile(FTPFile ftpFile, String localPath) {
         boolean flag = false;
-        if(ftpFile.isFile()) {
-            if(ftpFile.getName().indexOf("?") == -1) {
+        if (ftpFile.isFile()) {
+            if (ftpFile.getName().indexOf("?") == -1) {
                 try {
                     File e = new File(localPath);
-                    if(e.exists()) {
+                    if (e.exists()) {
                         e.delete();
                     }
 
@@ -271,7 +272,7 @@ public class FtpUtil {
     }
 
     public static boolean delFile(String remoteFilePath, String serverIp, String serverPort, String userName, String password) {
-        if(!connectFtp(serverIp, serverPort, userName, password)) {
+        if (!connectFtp(serverIp, serverPort, userName, password)) {
             logger.debug("FTP连接失败");
             return false;
         } else {
@@ -288,15 +289,15 @@ public class FtpUtil {
                 e = ftp.listFiles();
                 boolean deleteflag = false;
 
-                for(int i = 0; i < e.length; ++i) {
-                    if(e[i].getName().equals(remoteFileName)) {
+                for (int i = 0; i < e.length; ++i) {
+                    if (e[i].getName().equals(remoteFileName)) {
                         deteteflag = ftp.deleteFile(remoteFilePath);
                         deleteflag = true;
                         break;
                     }
                 }
 
-                if(!deleteflag) {
+                if (!deleteflag) {
                     logger.debug("需要删除的文件FTP服务器上不存在！");
                 }
             } catch (IOException var19) {
@@ -330,7 +331,7 @@ public class FtpUtil {
     }
 
     public static boolean mkDirs(String path, FTPClient client) {
-        if(null == path) {
+        if (null == path) {
             return false;
         } else {
             path = path.substring(0, path.lastIndexOf("/"));
@@ -341,10 +342,10 @@ public class FtpUtil {
                 String temp = null;
                 boolean flag = false;
 
-                while(e.hasMoreElements()) {
+                while (e.hasMoreElements()) {
                     temp = e.nextElement().toString();
                     logger.info("开始校验是否存在>>" + temp);
-                    if(!isDirExist(temp, client)) {
+                    if (!isDirExist(temp, client)) {
                         flag = true;
                     }
 
@@ -352,7 +353,7 @@ public class FtpUtil {
                     client.changeWorkingDirectory(temp);
                 }
 
-                if(flag) {
+                if (flag) {
                     logger.debug(">>>>>create directory:[" + path + "]成功");
                 }
 
@@ -367,7 +368,7 @@ public class FtpUtil {
 
     public static boolean copyFile(String sourceDir, String sourceFileName, String targetDir, String targetFileName) {
         boolean flag = false;
-        if(!connectFtp("")) {
+        if (!connectFtp("")) {
             return false;
         } else {
             try {
@@ -396,7 +397,7 @@ public class FtpUtil {
     }
 
     public static void close() {
-        if(ftp.isConnected()) {
+        if (ftp.isConnected()) {
             try {
                 ftp.logout();
                 ftp.disconnect();
@@ -425,7 +426,7 @@ public class FtpUtil {
             return false;
         }
         try {
-            ftp.changeWorkingDirectory(new String(dir.getBytes("GBK"), "iso-8859-1"));
+            ftp.changeWorkingDirectory(dir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -446,7 +447,7 @@ public class FtpUtil {
     public static InputStream findInput(String ftpName) {
 
         try {
-            return ftp.retrieveFileStream(new String(ftpName.getBytes("GBK"), "iso-8859-1"));
+            return ftp.retrieveFileStream(ftpName);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -455,15 +456,41 @@ public class FtpUtil {
 
 
     public static void main(String[] args) {
-        String localFilePath = "D://RECIPE/12-210-145-6K-NP-8SR-12.txt";
-        String remoteFilePath = "/RECIPE/Z2/BGWS/DISCODGP8761/Unique/BG-008/12-210-145-6K-NP-8SR/12-210-145-6K-NP-8SR.txt";
-        String serverIp = "192.168.98.12";
-        String serverPort = "21";
-        String userName = "rms";
-        String password = "rms123!";
-        downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
-        String localFilePath1 = "D://RECIPE/12-210-145-6K-NP-8SR-137.txt";
-        String serverIp1 = "192.168.99.137";
-        downloadFile(localFilePath1, remoteFilePath, serverIp1, serverPort, userName, password);
+//        boolean uploadflag = false;
+//        if (!connectFtp("10.182.45.182", "21", "eap", "ftp123456")) {
+//            logger.debug("FTP连接失败!");
+//
+//        } else {
+//            File file = new File("D:/ftptest.txt");
+//            if (!file.exists() && !file.isFile()) {
+//                logger.debug("本地文件不存在！>>" + "");
+//
+//            } else {
+//                logger.debug("FTP连接成功!");
+//                try {
+//                    FileInputStream e = new FileInputStream(file);
+//                    uploadflag = ftp.storeFile("/usr/local/eap/RECIPE/",e);
+//                } catch (IOException e1) {
+//                    e1.printStackTrace();
+//                }
+//
+//            }
+//        }
+//        System.out.println(uploadflag);
+        uploadFile("D:\\RECIPE\\PNLPG012#TZ-TEST@TTM2FQAPKL1A4A-2PNLtemp\\TZ-TEST@TTM2FQAPKL1A4A-2PNL.7z","/usr/local/eap/RECIPE/","test.txt",
+                "10.182.45.182", "21", "eap", "ftp123456");
+//        uploadFile("D:\\RECIPE\\test.txt","/","test.txt",
+//                "10.182.45.182", "21", "eap", "ftp123456");
+//        boolean a = checkFileExist("/VNC/", "nginx.conf", "10.182.45.182", "21", "eap", "ftp123456");
+//        System.out.print(a);
+//        String localFilePath = "D://RECIPE/12-210-145-6K-NP-8SR-12.txt";
+//        String remoteFilePath = "VNC.url";
+//        String serverIp = "10.182.45.182";
+//        String serverPort = "21";
+//        String userName = "eap";
+//        String password = "ftp123456";
+//        a = downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
+//        System.out.print(a);
+
     }
 }

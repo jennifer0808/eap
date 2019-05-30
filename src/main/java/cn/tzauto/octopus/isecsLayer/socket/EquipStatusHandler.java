@@ -85,8 +85,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                 if ("pause".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) {
                     boolean businessmode = false;
                     if ("1".equals(GlobalConstants.getProperty("START_CHECK_BUSINESSMODE"))) {
-//                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
-                        businessmode = true;
+                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
                     }
                     if (!businessmode) {
                         if ("1".equals(GlobalConstants.getProperty("START_CHECK_LOCKFLAG"))) {
@@ -98,7 +97,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     }
 
                 }
-                if ("run".equalsIgnoreCase(preEquipstatus) && "ARUN".equalsIgnoreCase(equipstatus)) {
+                if ("run".equalsIgnoreCase(preEquipstatus) && "run".equalsIgnoreCase(equipstatus)) {
                     if (equipModel.deviceType.equals("SCREEN-LEDIA")) {
                         equipModel.getSpecificData(null);
                     }
@@ -108,10 +107,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
                     boolean businessmode = false;
                     if ("1".equals(GlobalConstants.getProperty("START_CHECK_BUSINESSMODE"))) {
-//                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
-                        businessmode = false;
-                        GlobalConstants.stage.equipModels.get(deviceCode).startCheck();
-                        return;
+                        businessmode = AxisUtility.checkBusinessMode(deviceCode);
                     }
                     if (!businessmode) {
                         if ("1".equals(GlobalConstants.getProperty("START_CHECK"))) {

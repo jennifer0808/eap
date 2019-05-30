@@ -20,7 +20,10 @@ import io.netty.util.AttributeKey;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import javax.xml.rpc.ServiceException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +65,20 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     return;
                 }
                 if (deviceInfo.getDeviceType().contains("SCREEN")) {
+                    try {
+                        if (AvaryAxisUtil.isInitialPart(partNo, deviceCode, "0")) {
+                            if (!AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNo, "SFCZ4_ZD_DIExposure")) {
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
+                                return;
+                            }
+                        }
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    } catch (ServiceException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
                     if (!AvaryAxisUtil.get21Exposure(deviceCode)) {
                         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!");
                         return;

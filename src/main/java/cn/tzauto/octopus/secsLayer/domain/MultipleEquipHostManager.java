@@ -756,6 +756,7 @@ public class MultipleEquipHostManager {
                 String selectResult = equipModels.get(deviceId).selectRecipe(recipeName);
                 UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + selectResult);
                 equipModels.get(deviceId).returnPassport();
+                return selectResult;
             } else {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]选中失败,通讯资源正在被占用,请稍后重试");
             }

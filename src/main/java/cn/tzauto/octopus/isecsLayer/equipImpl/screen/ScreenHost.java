@@ -20,8 +20,11 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import javax.xml.rpc.ServiceException;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -127,9 +130,9 @@ public class ScreenHost extends EquipModel {
         List<RecipePara> recipeParas = ScreenRecipeUtil.transferFromDB(ScreenRecipeUtil.transferFromFile("//" + recipeServerPath + "//"
                 + recipeNames[0] + "//Img//" + recipeNames[1] + "//EXPOSE.JOB"), deviceType);
         //todo 将文件从共享盘压缩，转到ftp
-        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP");
+//        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP");
         try {
-            ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".7z");
+            ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -158,7 +161,7 @@ public class ScreenHost extends EquipModel {
         String ftpPathTmp = ftpPath.substring(0, ftpPath.lastIndexOf("/") + 1);
 
         if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
-            if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+            if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName().replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
                 //todo 下载之后再解压
                 try {
                     ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
@@ -202,12 +205,15 @@ public class ScreenHost extends EquipModel {
                 if (!screen.equals("recipe")) {
                     iSecsHost.executeCommand("playback gotoRcp.txt");
                 }
+                Thread.sleep(500);
                 screen = iSecsHost.executeCommand("curscreen").get(0);
                 if (!screen.equals("recipe")) {
                     return "选中失败";
                 }
                 iSecsHost.executeCommand("playback add.txt");
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
+                iSecsHost.executeCommand("playback writenumber.txt");
+                Thread.sleep(500);
                 //todo 调用接口获取到批次数量
                 String lotNum = "123";
                 for (int i = 0; i < lotNum.length(); i++) {
@@ -215,6 +221,7 @@ public class ScreenHost extends EquipModel {
                 }
                 iSecsHost.executeCommand("playback selok.txt");
                 iSecsHost.executeCommand("playback addjob.txt");
+                iSecsHost.executeCommand("playback gotoMain.txt");
                 return "0";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
@@ -225,7 +232,7 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public Map getEquipMonitorPara() {
-        return null;
+        return this.iSecsHost.readAllParaByScreen("main");
     }
 
     @Override
@@ -257,7 +264,7 @@ public class ScreenHost extends EquipModel {
             if (screen.equals("main")) {
                 List<String> hrunColors = this.iSecsHost.executeCommand("read equipstatus");
                 for (String startColorTemp : hrunColors) {
-                    if (startColorTemp.contains("idle")) {
+                    if (startColorTemp.contains("idle") || startColorTemp.contains("Error")) {
                         equipStatus = "Idle";
                     }
                     if (startColorTemp.contains("run")) {
@@ -289,7 +296,7 @@ public class ScreenHost extends EquipModel {
         String ftpUser = GlobalConstants.ftpUser;
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
-        if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".7z", remoteRcpPath, recipeName + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+        if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z", remoteRcpPath, recipeName.replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + recipeName + " 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
@@ -300,19 +307,13 @@ public class ScreenHost extends EquipModel {
 
     protected boolean specialCheck() {
 
-        if (!AvaryAxisUtil.firstProductionIsOK(deviceName, lotId, partNo, "SFCZ4_ZD_DIExposure")) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
-            return false;
-        }
 
-        //TODO 此设备只需要检查 程序名recipename，能量，厚度jbhd
-        iSecsHost.readAllParaByScreen("main");
-        return false;
+        return true;
     }
 
     public Map getSpecificData(Map<String, String> dataIdMap) {
         //todo 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
-        Map resultMap = iSecsHost.readAllParaByScreen("main");
+        Map<String,String> resultMap = iSecsHost.readAllParaByScreen("main");
         Map exposure = new HashMap();
         exposure.put("zx", resultMap.get("zx"));
         exposure.put("zy", resultMap.get("zy"));
@@ -320,6 +321,20 @@ public class ScreenHost extends EquipModel {
         exposure.put("yy", resultMap.get("yx"));
         exposure.put("x", resultMap.get("x"));
         exposure.put("y", resultMap.get("y"));
+
+        List<String> parms1 = new ArrayList<>();
+        parms1.add("Item3");
+        parms1.add("Item4");
+        parms1.add("Item5");
+        parms1.add("Item6");
+
+        List<String> parms2 = new ArrayList<>();
+        parms2.add(resultMap.get("zx"));
+        parms2.add(resultMap.get("zy"));
+        parms2.add(resultMap.get("yx"));
+        parms2.add(resultMap.get("yx"));
+
+        AvaryAxisUtil.uploadMessageEveryPNL(deviceName,parms1,parms2);
         return exposure;
     }
 }

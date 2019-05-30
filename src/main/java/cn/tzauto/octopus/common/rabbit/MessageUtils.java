@@ -1,5 +1,6 @@
 package cn.tzauto.octopus.common.rabbit;
 
+import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
@@ -85,7 +86,9 @@ public class MessageUtils {
      */
     public boolean sendMessage(Map<String, String> map) {
         String msg = JsonMapper.toJsonString(map);
-        producer.sendMessage(msg);
+        if ("1".equals(GlobalConstants.getProperty("MQ_LISTEN"))) {
+            producer.sendMessage(msg);
+        }
         return true;
     }
 
@@ -97,7 +100,9 @@ public class MessageUtils {
      */
     public boolean sendMessage(String destination, Map<String, String> map) {
         String msg = JsonMapper.toJsonString(map);
-        producer.sendQueueMessage(destination, msg);
+        if ("1".equals(GlobalConstants.getProperty("MQ_LISTEN"))) {
+            producer.sendQueueMessage(destination, msg);
+        }
         return true;
     }
 
@@ -117,9 +122,9 @@ public class MessageUtils {
         consumer.subscribeMessage(routingKey);
     }
 
-    public void replyMessage(String queueName,String corId, Map<String, String> map){
+    public void replyMessage(String queueName, String corId, Map<String, String> map) {
         String msg = JsonMapper.toJsonString(map);
-        producer.replyMessage(queueName,corId, msg);
+        producer.replyMessage(queueName, corId, msg);
     }
 
 }

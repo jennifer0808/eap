@@ -427,9 +427,6 @@ public class RecipeService extends BaseService {
         if (type.contains("Select")) {
             //选中Recipe
             String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
-            if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")) {
-                ppselectResult = "0";
-            }
             if (!"0".equals(ppselectResult)) {
                 result = result + " " + ppselectResult;
                 if (type.contains("DeleteAll")) {
@@ -620,7 +617,7 @@ public class RecipeService extends BaseService {
         this.saveRecipeOperationLog(recipeOperationLog);
         if (recipeParas != null && !recipeParas.isEmpty()) {
             recipeParas = setParasRCProwId(recipeParas, recipe.getId());
-//            this.saveRcpParaBatch(recipeParas);
+            this.saveRcpParaBatch(recipeParas);
             //存储之后查询，得到id
             //  recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
         }
@@ -637,7 +634,9 @@ public class RecipeService extends BaseService {
 //                return false;
 //            }
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
-            sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
+            if ("1".equals(GlobalConstants.getProperty("MQ_LISTEN"))) {
+                sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
+            }
         }
         return true;
     }
@@ -648,20 +647,20 @@ public class RecipeService extends BaseService {
 
     private void sendUploadInfo2Server(String deviceCode, List<Recipe> recipes, List<RecipePara> recipeParas, List<RecipeOperationLog> recipeOperationLogs, List<Attach> attachs) {
         Map mqMap = new HashMap();
-            mqMap.put("msgName", "Upload");
-            mqMap.put("deviceCode", deviceCode);
-            mqMap.put("recipe", JSON.toJSONString(recipes));
-            mqMap.put("recipePara", JSON.toJSONString(recipeParas));
-            mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
-            mqMap.put("attach", JSON.toJSONString(attachs));
-            String eventId = "";
-            try {
-                eventId = AxisUtility.getReplyMessage();
-            }catch (Exception e){
+        mqMap.put("msgName", "Upload");
+        mqMap.put("deviceCode", deviceCode);
+        mqMap.put("recipe", JSON.toJSONString(recipes));
+        mqMap.put("recipePara", JSON.toJSONString(recipeParas));
+        mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
+        mqMap.put("attach", JSON.toJSONString(attachs));
+        String eventId = "";
+        try {
+            eventId = AxisUtility.getReplyMessage();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        mqMap.put("eventId", eventId==null?"":eventId);
+        mqMap.put("eventId", eventId == null ? "" : eventId);
         GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
         GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipes) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLogs));
     }
@@ -748,10 +747,10 @@ public class RecipeService extends BaseService {
             String eventId = "";
             try {
                 eventId = AxisUtility.getReplyMessage();
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            mqMap.put("eventId", eventId == null?"":eventId);
+            mqMap.put("eventId", eventId == null ? "" : eventId);
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
 
@@ -792,7 +791,7 @@ public class RecipeService extends BaseService {
         this.saveRecipeOperationLog(recipeOperationLog);
         recipeParas = setParasRCProwId(recipeParas, recipe.getId());
         //  new RecipeParaDao().saveRecipeParaBatch(recipeParaList);
-//        this.saveRcpParaBatch(recipeParas);
+        this.saveRcpParaBatch(recipeParas);
         //存储之后查询，得到id
         //这里太慢，于是在setParasRCProwId给赋值了
         //recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
@@ -1123,13 +1122,17 @@ public class RecipeService extends BaseService {
                                 }
                             } else {
                                 if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                                    logger.info("Para:Name[" + recipeTemplate.getParaName() + "],Code[" + recipeTemplate.getParaCode() + "]has not set range! Pass");
-                                    continue;
-                                }
-                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
-                                    equipRecipePara.setMinValue(minValue);
-                                    equipRecipePara.setMaxValue(maxValue);
-                                    wirecipeParaDiff.add(equipRecipePara);
+                                    if (!equipRecipePara.getSetValue().equals(setValue)) {
+                                        equipRecipePara.setMinValue(minValue);
+                                        equipRecipePara.setMaxValue(maxValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
+                                } else {
+                                    if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                        equipRecipePara.setMinValue(minValue);
+                                        equipRecipePara.setMaxValue(maxValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
                                 }
                             }
                         }
@@ -1197,7 +1200,7 @@ public class RecipeService extends BaseService {
         } else {
             SysService sysService = new SysService(sqlSession);
             SysOffice sysOffice = sysService.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
-            returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType();
+            returnPath = GlobalConstants.ftpPath + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType();
             if ("GOLD".equalsIgnoreCase(recipe.getVersionType())) {
                 returnPath = returnPath + "/" + recipeNamePath + "/" + recipeNamePath + ".txt";
             } else if ("UNIQUE".equalsIgnoreCase(recipe.getVersionType())) {
@@ -1220,7 +1223,7 @@ public class RecipeService extends BaseService {
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
         SysOffice sysOffice = sysOfficeMapper.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
         String returnPath = "";
-        returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType();
+        returnPath = GlobalConstants.ftpPath + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType();
         String recipeName = recipe.getRecipeName().replace("\\", "@").replaceAll("/", "@");
 //        if (deviceInfo.getDeviceType().contains("DF")) {
 //            recipeName = recipe.getRecipeName().replace("\\", "@");
@@ -1254,8 +1257,8 @@ public class RecipeService extends BaseService {
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
         SysOffice sysOffice = sysOfficeMapper.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
         String returnPath = "";
-        returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType() + "/" + deviceInfo.getDeviceCode() + "/" + recipe.getRecipeName().replace("/", "@").replace("\\", "@") + "/";
-        logger.info("recipe上传时的存储路径:"+returnPath);
+        returnPath = GlobalConstants.ftpPath + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType() + "/" + deviceInfo.getDeviceCode() + "/" + recipe.getRecipeName().replace("/", "@").replace("\\", "@") + "/";
+        logger.info("recipe上传时的存储路径:" + returnPath);
         return returnPath;
     }
 

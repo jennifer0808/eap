@@ -29,7 +29,7 @@ public class AvaryAxisUtil {
 //    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
 
     public static String webServicesToCIM(String method, Object[] parms) {
-
+//        downLoadRecipe
 //        String endPoint ="szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";
         String endPoint = "http://localhost:9999/test/hello?wsdl";
         try {
@@ -257,12 +257,12 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0003", "FSAPJ60C2G|PNLFH001#|3|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
 
-    public static boolean isInitialPart(String partNum, String machineNo, String frequency, String opportunity) throws
+    public static boolean isInitialPart(String partNum, String deviceCode, String opportunity) throws
             RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, machineNo, frequency, opportunity), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         if (list.size() > 0) {
