@@ -7,7 +7,6 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.ZipUtil;
@@ -20,11 +19,8 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import javax.xml.rpc.ServiceException;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -215,7 +211,7 @@ public class ScreenHost extends EquipModel {
                 iSecsHost.executeCommand("playback writenumber.txt");
                 Thread.sleep(500);
                 //todo 调用接口获取到批次数量
-                String lotNum = "123";
+                String lotNum = AvaryAxisUtil.getLotQty(lotId);
                 for (int i = 0; i < lotNum.length(); i++) {
                     iSecsHost.executeCommand("playback sel" + lotNum.charAt(i) + ".txt");
                 }
@@ -313,7 +309,7 @@ public class ScreenHost extends EquipModel {
 
     public Map getSpecificData(Map<String, String> dataIdMap) {
         //todo 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
-        Map<String,String> resultMap = iSecsHost.readAllParaByScreen("main");
+        Map<String, String> resultMap = iSecsHost.readAllParaByScreen("main");
         Map exposure = new HashMap();
         exposure.put("zx", resultMap.get("zx"));
         exposure.put("zy", resultMap.get("zy"));
@@ -329,12 +325,12 @@ public class ScreenHost extends EquipModel {
         parms1.add("Item6");
 
         List<String> parms2 = new ArrayList<>();
-        parms2.add(resultMap.get("zx"));
-        parms2.add(resultMap.get("zy"));
+        parms2.add(resultMap.get("zx").equals("") ? resultMap.get("x") : resultMap.get("zx"));
+        parms2.add(resultMap.get("zy").equals("") ? resultMap.get("y") : resultMap.get("zy"));
         parms2.add(resultMap.get("yx"));
         parms2.add(resultMap.get("yx"));
 
-        AvaryAxisUtil.uploadMessageEveryPNL(deviceName,parms1,parms2);
+        AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
         return exposure;
     }
 }

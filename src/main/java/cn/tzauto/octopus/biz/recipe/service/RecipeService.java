@@ -634,9 +634,8 @@ public class RecipeService extends BaseService {
 //                return false;
 //            }
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
-            if ("1".equals(GlobalConstants.getProperty("MQ_LISTEN"))) {
-                sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
-            }
+            sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
+
         }
         return true;
     }

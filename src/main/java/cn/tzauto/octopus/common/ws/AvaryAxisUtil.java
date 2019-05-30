@@ -437,14 +437,31 @@ public class AvaryAxisUtil {
      * para1 = "MF87273521";
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0001", "0002", para1, System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List getParmByLotNum(String lotNum) throws RemoteException, ServiceException, MalformedURLException {
+    public static Map getParmByLotNum(String lotNum) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
 
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
-        return list;
+        Map paraMap = new HashMap();
+        paraMap.put("PartNum", "");
+        paraMap.put("Layer", "");
+        paraMap.put("Qty", "");
+        return paraMap;
+    }
+
+    public static String getLotQty(String lotNum) {
+        try {
+            return String.valueOf(getParmByLotNum(lotNum).get("Qty"));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return "0";
     }
 
     /**
@@ -453,14 +470,25 @@ public class AvaryAxisUtil {
      * para1 = "MF88020361|SFCZ4_ZDCVL |0";
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0001", "0009", para1, System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List getParmByLotNumAndLayer(String lotNum, String paperNum, String layer) throws RemoteException, ServiceException, MalformedURLException {
+    public static Map getParmByLotNumAndLayer(String lotNum, String paperNum, String layer) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
 
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
-        return list;
+        Map paraMap = new HashMap();
+        paraMap.put("PartNum", "");
+        paraMap.put("partNum", "");
+        paraMap.put("Serial", "");
+        paraMap.put("MainSerial", "");
+        paraMap.put("PE", "");
+        paraMap.put("partNum", "");
+        paraMap.put("LayerName", "");
+        paraMap.put("OrderId", "");
+        paraMap.put("WorkNo", "");
+        paraMap.put("BOM", "");
+        return paraMap;
     }
 
     /**
