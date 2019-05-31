@@ -970,7 +970,7 @@ public abstract class EquipModel extends Thread {
         }
     }
 
-    public String organizeRecipe(String organizeRecipe) {
+    public String organizeRecipe(String partNum) {
         return "";
     }
 

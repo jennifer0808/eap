@@ -84,11 +84,12 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         return;
                     }
                 }
-                recipeName = AvaryAxisUtil.getRecipeNameByPartNum(deviceCode, partNo);
-                //todo 调用cim下载程序接口
-                //String downloadresult = GlobalConstants.eapView.hostManager.downLoadRcp2Device(deviceCode, recipeName) + "" + "";
+                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo);
                 Recipe recipe = new Recipe();
-                if (!recipeName.equals("null") && !recipeName.contains("Can not") && !recipeName.equals("")) {
+                DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+                if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_RCP_FROM_CIM"))) {
+                    downloadresult = AvaryAxisUtil.downLoadRecipeFormCIM(deviceCode, recipeName);
+                } else {
                     if (GlobalConstants.getProperty("EQUIP_NO_RECIPE").contains(deviceInfo.getDeviceType())) {
                         recipe.setRecipeName(recipeName);
                         recipe.setId(recipeName);
@@ -102,32 +103,24 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         }
                         if (recipes != null && !recipes.isEmpty()) {
                             recipe = recipes.get(0);
-                            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                             downloadresult = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
                             if (downloadresult.contains("下载Recipe失败,设备通讯异常,请稍后重试")) {
                                 downloadresult = "Connect error,please check it and try later.";
-                            }
-                            logger.info("downloadresult:" + downloadresult);
-                            if ("0".equals(downloadresult)) {
-                                GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNo;
-                                GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
-                                deviceInfoExt.setLotId(lotNo);
-                                deviceInfoExt.setRecipeName(recipeName);
-                                deviceInfoExt.setRecipeId(recipe.getId());
-                                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                                sqlSession.commit();
                             }
                         } else {
                             downloadresult = "Can not find any recipe,please upload recipe" + recipeName;
                         }
                     }
-                } else {
-                    if (recipeName.contains("Can not")) {
-                        downloadresult = recipeName;
-                    }
-                    if (downloadresult.equals("")) {
-                        downloadresult = "Can not find any recipe by PartNo " + partNo;
-                    }
+                }
+                logger.info("downloadresult:" + downloadresult);
+                if ("0".equals(downloadresult)) {
+                    GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNo;
+                    GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
+                    deviceInfoExt.setLotId(lotNo);
+                    deviceInfoExt.setRecipeName(recipeName);
+                    deviceInfoExt.setRecipeId(recipe.getId());
+                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                    sqlSession.commit();
                 }
             } else {
                 downloadresult = "Can not find any device by MachineNo " + deviceCode;

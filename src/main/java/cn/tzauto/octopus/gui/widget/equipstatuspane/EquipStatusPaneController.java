@@ -6,6 +6,7 @@
 package cn.tzauto.octopus.gui.widget.equipstatuspane;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
@@ -40,6 +41,7 @@ public class EquipStatusPaneController implements Initializable {
     private ImageView equipImg;
     ContextMenu contextMenu = new ContextMenu();
 
+    private boolean isOnPM = false;
 
     /**
      * Initializes the controller class.
@@ -79,7 +81,7 @@ public class EquipStatusPaneController implements Initializable {
                 //                    System.out.println("cn.tzinfo.htauto.octopus.gui.widget.equipstatu******************************menuItem2");
                 //                });
                 MenuItem menuItem1 = new MenuItem("保养");
-                menuItem1.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
+                menuItem1.setOnAction(actionEvent -> showPMInfo(deviceCodeTemp));
                 contextMenu = new ContextMenu(menuItem, menuItem1);
 
                 contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
@@ -118,8 +120,6 @@ public class EquipStatusPaneController implements Initializable {
             DeviceInfoPaneController.flag.put(deviceCode, false);
             e.printStackTrace();
         }
-
-
     }
 
     public void showSVQuery(String deviceCode) {
@@ -143,5 +143,17 @@ public class EquipStatusPaneController implements Initializable {
 //            e.printStackTrace();
 //        }
 
+    }
+
+    private void showPMInfo(String deviceCode) {
+        if (isOnPM) {
+            isOnPM = false;
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保养结束.");
+            //todo 执行ocr解锁屏命令
+        } else {
+            isOnPM = true;
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
+            //todo 执行ocr锁屏命令
+        }
     }
 }
