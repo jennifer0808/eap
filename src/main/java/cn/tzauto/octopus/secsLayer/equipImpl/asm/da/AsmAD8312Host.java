@@ -285,7 +285,7 @@ public class AsmAD8312Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
+        if (!deviceType.contains("PLUS")) {
             targetRecipeName = targetRecipeName + ".rcp";
         }
         DataMsgMap data = null;
@@ -310,7 +310,8 @@ public class AsmAD8312Host extends EquipHost {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
+//        if (!"ASMAD8312PLUS".equals(deviceType)) {
+        if (!deviceType.contains("PLUS")) {
             targetRecipeName = targetRecipeName + ".rcp";
         }
         try {
@@ -333,7 +334,7 @@ public class AsmAD8312Host extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
 
         recipeName = recipeName.replace(".rcp", "");
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
+        if (!deviceType.contains("PLUS")) {
             recipeName = recipeName + ".rcp";
         }
         Recipe recipe = setRecipe(recipeName);
@@ -343,11 +344,11 @@ public class AsmAD8312Host extends EquipHost {
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-//            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
+        recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
         //Recipe解析
-        if (deviceType.equals("ASMAD8312PLUS")) {
+        if (deviceType.contains("PLUS")) {//equals("ASMAD8312PLUS")
             recipeParaList = new ArrayList<>();
-            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDBForPlus(recipePath, deviceType);
+            recipeParaList = AsmAD8312RecipeUtil.transfer8312PlusRecipeParaFromDB(recipePath, deviceType);
         } else {
             recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
             recipeParaListExtra = getRecipeParasByECSV();

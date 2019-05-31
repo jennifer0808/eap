@@ -34,6 +34,7 @@ public class AsmAD8312FCHost extends EquipHost {
 
     public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
         EquipStateChangeCeid = 4L;
         StripMapUpCeid = 237L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -353,12 +354,16 @@ public class AsmAD8312FCHost extends EquipHost {
         resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
+
+
     @Override
     public Map sendS7F3out(String localFilePath, String targetRecipeName) {
-        Map resultMap = super.sendS7F1out(localFilePath, targetRecipeName + ".rcp");
+        Map resultMap = super.sendS7F3out(localFilePath, targetRecipeName + ".rcp");
         resultMap.put("ppid", targetRecipeName);
         return resultMap;
     }
+
+
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
@@ -377,6 +382,7 @@ public class AsmAD8312FCHost extends EquipHost {
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
             recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
+            logger.debug("Recive S7F6 解析 recipe " + recipeParaList );
         }
         //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();

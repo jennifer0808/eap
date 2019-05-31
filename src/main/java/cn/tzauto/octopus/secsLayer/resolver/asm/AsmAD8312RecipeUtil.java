@@ -37,7 +37,11 @@ public class AsmAD8312RecipeUtil {
      * @param deviceType
      * @return List<RecipePara>
      */
-    public static List<RecipePara> transferRcpFromDB(String filePath, String deviceType) {
+    public static List<RecipePara>  transferRcpFromDB(String filePath, String deviceType) {
+        if (deviceType.contains("PLUS")) {
+            return transfer8312PlusRecipeParaFromDB(filePath, deviceType);
+        }
+
         ZipInputStream zis = null;
         List<RecipePara> recipeParas = new ArrayList<>();
 
@@ -45,8 +49,12 @@ public class AsmAD8312RecipeUtil {
         try {
             ZipFile zipFile = new ZipFile(filePath);
             zis = new ZipInputStream(new FileInputStream(filePath));
-            ZipEntry ze = null;
-            while ((ze = zis.getNextEntry()) != null) {
+
+            ZipEntry ze  = zis.getNextEntry();
+
+            logger.info("ze:"+zis.getNextEntry()+";"+ze.getName());
+
+            while (ze != null) {
                 if (ze.getName().contains("McPara_Export.txt")) {
 
                     SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -57,7 +65,7 @@ public class AsmAD8312RecipeUtil {
                     for (int i = 0; i < teamplateSize; i++) {
                         String paraName = recipeTemplates.get(i).getParaName();
                         String groupName = recipeTemplates.get(i).getGroupName();
-//                        logger.info("Template total size:" + teamplateSize + ";Current index:" + i + ";Current para:" + paraName);
+
                         RecipePara recipePara = new RecipePara();
                         String value = "";
                         int currentLineNO = 0;
@@ -78,7 +86,9 @@ public class AsmAD8312RecipeUtil {
                             }
                             paraName = paraName.replace(groupName + "-", "");
                             if (currentGroup.trim().equals(groupName) && line.contains(paraName)) {
-//                                logger.info("get paraName at line " + currentLineNO);
+
+                                logger.info("get paraName at line " + currentLineNO);
+
                                 String[] lines = line.split("\\s");
                                 int size = lines.length;
                                 for (int j = 0; j < size; j++) {
@@ -99,7 +109,21 @@ public class AsmAD8312RecipeUtil {
                                     }
                                     value = tempStr;
                                 }
-//                                logger.info(groupName + paraName + "***" + value + "****" + i + "******" + recipeTemplates.get(i).getParaCode() + "***total:" + recipeTemplates.size());
+//                                if(paraName.trim().equals("GlobalAngle")) {
+//                                    String var38 = "";
+//                                    char[] arr$ = value.toCharArray();
+//                                    int len$ = arr$.length;
+//
+//                                    for(int i$ = 0; i$ < len$; ++i$) {
+//                                        char tempChar = arr$[i$];
+//                                        if(Character.isDigit(tempChar) || 46 == tempChar || 45 == tempChar) {
+//                                            var38 = var38 + tempChar;
+//                                        }
+//                                    }
+//
+//                                    value = var38;
+//                                }
+                                logger.info(groupName + paraName + "***" + value + "****" + i + "******" + recipeTemplates.get(i).getParaCode() + "***total:" + recipeTemplates.size());
                                 recipePara.setSetValue(value);
                                 recipePara.setParaName(recipeTemplates.get(i).getParaName());
                                 recipePara.setParaCode(recipeTemplates.get(i).getParaCode());
@@ -107,9 +131,10 @@ public class AsmAD8312RecipeUtil {
                                 recipePara.setParaShotName(recipeTemplates.get(i).getParaShotName());
                                 recipeParas.add(recipePara);
                                 break;
-                            } else {
-//                                i++;s
                             }
+//                            else {
+//                                i++;s
+//                            }
                         }
                     }
                 }
@@ -126,6 +151,56 @@ public class AsmAD8312RecipeUtil {
             }
         }
         return recipeParas;
+
+    }
+
+
+
+    public static List<RecipePara> transfer8312PlusRecipeParaFromDB(String filePath, String deviceType) {
+        ZipInputStream zis = null;
+        ArrayList recipeParas = new ArrayList();
+
+        try {
+            ZipFile ex = new ZipFile(filePath);
+            zis = new ZipInputStream(new FileInputStream(filePath));
+            ZipEntry ze = null;
+            int temp = 0;
+
+            while(true) {
+                do {
+                    if((ze = zis.getNextEntry()) == null) {
+                        return recipeParas;
+                    }
+                } while(!ze.getName().contains("Parameter.txt"));
+
+                SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+                RecipeService recipeService = new RecipeService(sqlSession);
+                List recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+                InputStream is = ex.getInputStream(ze);
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                String line = "";
+                String paraName = "";
+                String paraValue = "";
+
+                while((line = br.readLine()) != null) {
+                    RecipePara recipePara = new RecipePara();
+                    if(line.contains(":")) {
+                        paraName = line.split(":")[0].replace(" ", "");
+                        paraValue = line.split(":")[1].replace(" ", "");
+                        if(temp < recipeTemplates.size() && paraName.equals(((RecipeTemplate)recipeTemplates.get(temp)).getParaDesc())) {
+                            System.out.println(paraName);
+                            recipePara.setParaCode(((RecipeTemplate)recipeTemplates.get(temp)).getParaCode());
+                            recipePara.setParaName(((RecipeTemplate)recipeTemplates.get(temp)).getParaName());
+                            recipePara.setSetValue(paraValue);
+                            recipeParas.add(recipePara);
+                            ++temp;
+                        }
+                    }
+                }
+            }
+        } catch (IOException var17) {
+            return recipeParas;
+        }
     }
 
     public static List<RecipePara> transferRcpFromDBForPlus(String filePath, String deviceType) {
