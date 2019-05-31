@@ -46,6 +46,30 @@ public class AvaryAxisUtil {
         }
     }
 
+    public static String downLoadRecipeFormCIM(String method, Object[] parms) {
+//        downLoadRecipe  http://ip:port/services/recipeService?wsdl
+//        String endPoint ="szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";
+        String endPoint = "http://localhost:9999/test/hello?wsdl";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName(method);
+            call.addParameter(new QName(namespace, "userId"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
+            call.addParameter(new QName(namespace, "eqpId"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
+            call.addParameter(new QName(namespace, "recipeName"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
+            call.addParameter(new QName(namespace, "downloadingMode"), XMLType.XSD_STRING, ParameterMode.IN);   //设置请求参数及类型
+
+            call.setReturnType(XMLType.XSD_STRING);
+            String jsonResult = String.valueOf(call.invoke(parms));
+            logger.info("调用CIM的接口中方法--》" + method + "：的结果：" + jsonResult);
+            return jsonResult;
+        } catch (Exception e) {
+            logger.error("调用CIM的接口中方法--》" + method + "：方法异常：", e);
+            return "Error";
+        }
+    }
+
     public static void main(String[] args) {
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
         //1-1
