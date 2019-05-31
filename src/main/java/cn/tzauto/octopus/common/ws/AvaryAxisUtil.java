@@ -106,7 +106,7 @@ public class AvaryAxisUtil {
 
         //2-1
 //        try {
-//           List list = tableQuery("SFCZ4_ZD_DIExposure","PNLPG012#","0");
+//           String list = tableQuery("SFCZ4_ZD_DIExposure","PNLPG007#","0");
 //            System.out.println(list);
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
@@ -115,9 +115,9 @@ public class AvaryAxisUtil {
 //        } catch (MalformedURLException e) {
 //            e.printStackTrace();
 //        }
-        //2-2
+        //2-2 S2019053100813
 //        try {
-//            List list = getOrderNum("0");
+//            String list = getOrderNum("0");
 //            System.out.println(list);
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
@@ -140,8 +140,8 @@ public class AvaryAxisUtil {
 
 //2-4
 //        try {
-//            List list = getParmByLotNum("123");
-//            System.out.println(list);
+//             getParmByLotNum("M905271721");
+//            System.out.println();
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
 //        } catch (ServiceException e) {
@@ -151,16 +151,16 @@ public class AvaryAxisUtil {
 //        }
 
 //        2-5
-//        try {
-//            List list = getParmByLotNumAndLayer("123","234","456");
-//            System.out.println(list);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Map list = getParmByLotNumAndLayer("M905271721","SFCZ4_ZD_DIExposure","0");
+            System.out.println(list);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
 //2-6
 //        try {
@@ -366,7 +366,7 @@ public class AvaryAxisUtil {
      * //第六個參數:表單編號|日期(系統日期-8小時)|機台號|班別(0:白班 ,1:夜班)
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "G0001", "SFCZ4_ZDCVL|20181121|PNLAVI002#(E)|0", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static List tableQuery(String tableNum, String machineNo, String classInfo) throws RemoteException, ServiceException, MalformedURLException {
+    public static String tableQuery(String tableNum, String machineNo, String classInfo) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
@@ -374,8 +374,15 @@ public class AvaryAxisUtil {
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "G0001", createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        return list;
+        List<Map<String, String>> list = parseXml(result);
+        if (list.size() > 0) {
+            Map<String, String> map = list.get(0);
+            Set<String> strings = map.keySet();
+            for (String string : strings) {
+                return map.get(string);
+            }
+        }
+        return null;
     }
 
 
@@ -415,15 +422,15 @@ public class AvaryAxisUtil {
      * "test2018030200343|1|20180302|TEST|SFCZ4_ZDCVL|0|001|" + System.DateTime.Now.ToString("yyyyMMddHHmmss") + "|G1479462",
      * System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static String insertMasterTable(String paperNo, String status, String machineNo, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
+    public static String insertMasterTable(String paperNo, String status, String deviceCode, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
-
+        DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
-                , createParm(paperNo, status, time.format(dtf1), machineNo, report, classInfo, factory, createTime, createEmpid), now.format(dtf)};
+                , createParm(paperNo, status, time.format(dtf1), deviceCode, "SFCZ4_ZD_DIExposure", classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         if ("OK".equals(report)) {
             return "";
@@ -443,11 +450,14 @@ public class AvaryAxisUtil {
 
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
+        List<Map<String,String>> list = parseXml(result);
         Map paraMap = new HashMap();
-        paraMap.put("PartNum", "");
-        paraMap.put("Layer", "");
-        paraMap.put("Qty", "");
+        if(list.size()==0){
+            return  paraMap;
+        }
+        paraMap.put("PartNum", list.get(0).get("料號"));
+        paraMap.put("Layer", list.get(0).get("層別"));
+        paraMap.put("Qty", list.get(0).get("數量"));
         return paraMap;
     }
 
@@ -476,17 +486,18 @@ public class AvaryAxisUtil {
 
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
+        List<Map<String,String>> list = parseXml(result);
+        Map<String,String> map = list.get(0);
         Map paraMap = new HashMap();
-        paraMap.put("PartNum", "");
-        paraMap.put("partNum", "");
-        paraMap.put("Serial", "");
-        paraMap.put("MainSerial", "");
-        paraMap.put("PE", "");
-        paraMap.put("partNum", "");
-        paraMap.put("LayerName", "");
-        paraMap.put("OrderId", "");
-        paraMap.put("WorkNo", "");
+        paraMap.put("PartNum", map.get("料號"));
+        paraMap.put("在製層", map.get("在製層"));
+        paraMap.put("Serial", map.get("途程序"));
+        paraMap.put("MainSerial", map.get("主途程序"));
+        paraMap.put("PE", map.get("制程"));
+        paraMap.put("主配件", map.get("主配件"));
+        paraMap.put("LayerName", unicode2String(map.get("層別名稱")));
+        paraMap.put("OrderId", map.get("第幾次過站"));
+        paraMap.put("WorkNo", map.get("工令"));
         paraMap.put("BOM", "");
         return paraMap;
     }

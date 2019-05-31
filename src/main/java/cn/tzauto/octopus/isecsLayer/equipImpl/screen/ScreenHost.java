@@ -331,6 +331,7 @@ public class ScreenHost extends EquipModel {
         parms2.add(resultMap.get("yx"));
 
         AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
+        logger.info("发送涨缩值数据到MES");
         return exposure;
     }
 }

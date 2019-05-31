@@ -55,10 +55,10 @@ public class EquipStatusPaneController implements Initializable {
     @FXML
     private void mouseClick(MouseEvent event) throws IOException {
 //        if (equipNodeBean.getEquipStateProperty().isCommOn()) {
-        if (event.getButton().equals(MouseButton.SECONDARY)) {
+        if (event.getButton().equals(MouseButton.PRIMARY)) {
             String deviceCodeTemp = ((Label) P_EquipPane.lookup("#L_DeviceCode")).getText();
 
-           ;
+            ;
 
             for (EquipNodeBean enb : GlobalConstants.stage.equipBeans) {
                 if (deviceCodeTemp.equalsIgnoreCase(enb.getDeviceCode())) {
@@ -73,20 +73,22 @@ public class EquipStatusPaneController implements Initializable {
 
                 menuItem.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
 
-                MenuItem menuItem1 = new MenuItem("SV数据查询");
-                menuItem1.setOnAction(actionEvent -> showSVQuery(deviceCodeTemp));
+//                MenuItem menuItem1 = new MenuItem("SV数据查询");
+//                menuItem1.setOnAction(actionEvent -> showSVQuery(deviceCodeTemp));
                 //                menuItem1.setOnAction(actionEvent -> {
                 //                    System.out.println("cn.tzinfo.htauto.octopus.gui.widget.equipstatu******************************menuItem2");
                 //                });
+                MenuItem menuItem1 = new MenuItem("保养");
+                menuItem1.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
                 contextMenu = new ContextMenu(menuItem, menuItem1);
 
                 contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
             } else {
-                contextMenu.hide();
-                MenuItem menuItem2 = new MenuItem("开启连接");
-                menuItem2.setOnAction(actionEvent -> new EapClient().startComByEqp(equipNodeBean));
-                contextMenu = new ContextMenu(menuItem2);
-                contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
+//                contextMenu.hide();
+//                MenuItem menuItem2 = new MenuItem("开启连接");
+//                menuItem2.setOnAction(actionEvent -> new EapClient().startComByEqp(equipNodeBean));
+//                contextMenu = new ContextMenu(menuItem2);
+//                contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
             }
 
         } else {
@@ -105,15 +107,15 @@ public class EquipStatusPaneController implements Initializable {
      * 设备详情
      */
     private void showDeviceInfo(String deviceCode) {
-        if(DeviceInfoPaneController.flag.get(deviceCode)==null){
-            DeviceInfoPaneController.flag.put(deviceCode,false);
-        }else if(DeviceInfoPaneController.flag.get(deviceCode)){
+        if (DeviceInfoPaneController.flag.get(deviceCode) == null) {
+            DeviceInfoPaneController.flag.put(deviceCode, false);
+        } else if (DeviceInfoPaneController.flag.get(deviceCode)) {
             return;
         }
-        try{
+        try {
             new DeviceInfoPaneController(deviceCode).init();
-        }catch (Exception e){
-            DeviceInfoPaneController.flag.put(deviceCode,false);
+        } catch (Exception e) {
+            DeviceInfoPaneController.flag.put(deviceCode, false);
             e.printStackTrace();
         }
 
@@ -122,15 +124,15 @@ public class EquipStatusPaneController implements Initializable {
 
     public void showSVQuery(String deviceCode) {
 
-        if(SVQueryPaneController.flag.get(deviceCode)==null){
-            SVQueryPaneController.flag.put(deviceCode,false);
-        }else if(SVQueryPaneController.flag.get(deviceCode)){
+        if (SVQueryPaneController.flag.get(deviceCode) == null) {
+            SVQueryPaneController.flag.put(deviceCode, false);
+        } else if (SVQueryPaneController.flag.get(deviceCode)) {
             return;
         }
-        try{
+        try {
             new SVQueryPaneController(deviceCode).init();
-        }catch (Exception e){
-            SVQueryPaneController.flag.put(deviceCode,false);
+        } catch (Exception e) {
+            SVQueryPaneController.flag.put(deviceCode, false);
             e.printStackTrace();
         }
 
