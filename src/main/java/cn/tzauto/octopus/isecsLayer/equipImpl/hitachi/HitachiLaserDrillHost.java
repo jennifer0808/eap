@@ -905,7 +905,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     }
 
     @Override
-    public String organizeRecipe(String partNo) {
+    public String organizeRecipe(String partNo,String lotNo) {
         Map recipeNameMap = RecipeMapping.loadRecipeLotMapping(GlobalConstants.getProperty("HITACHI_LASER_DRILL_RECIPE_MAPPING_PATH"));
         String recipeName = "";
         if (recipeNameMap != null) {

@@ -79,7 +79,7 @@ public class ScreenHost extends EquipModel {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
         String classInfo = "0";
         int nowTime = Integer.parseInt(now.format(timeFormatter));
-        if(start>nowTime || end<nowTime){
+        if (start > nowTime || end < nowTime) {
             classInfo = "1";
         }
         DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -93,7 +93,7 @@ public class ScreenHost extends EquipModel {
                 return false;
             }
             result1 = result2;
-            String result3 = AvaryAxisUtil.insertMasterTable(result2, "status", deviceCode, tableNum, classInfo, "001", now.format(dtf2), "system");  //system临时代替，  創建工號
+            String result3 = AvaryAxisUtil.insertMasterTable(result2, "1", deviceCode, tableNum, classInfo, "001", now.format(dtf2), "eapsystem");  //system临时代替，  創建工號
             if (!"".equals(result3)) {
                 logger.error("报表数据上传中，插入主表數據失败" + result3);
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
@@ -150,9 +150,11 @@ public class ScreenHost extends EquipModel {
          ModifyTime	最後修改時間----
          userid	作業員------
          */
-        String result = AvaryAxisUtil.insertTable(result1, "开始时间", now.format(AvaryAxisUtil.dtf), lotId, map4.get("Layer"), map5.get("MainSerial"),
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String result = AvaryAxisUtil.insertTable(result1, "开始时间", now.format(dateTimeFormatter), lotId, map4.get("Layer"), map5.get("MainSerial"),
                 map5.get("PartNum"), map5.get("WorkNo"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power, map5.get("PE")
         );
+//        String result = AvaryAxisUtil.insertTable();
         if ("".equals(result)) {
             return true;
         }
@@ -472,7 +474,7 @@ public class ScreenHost extends EquipModel {
         parms2.add(resultMap.get("yx"));
         parms2.add(resultMap.get("yy"));
         for (String s : parms2) {
-            if (s.equals("")) {
+            if (s == null || s.equals("")) {
                 return null;
             }
         }
@@ -482,12 +484,31 @@ public class ScreenHost extends EquipModel {
     }
 
     @Override
-    public String organizeRecipe(String partNo) {
+    public String organizeRecipe(String partNo, String lotNo) {
+        String layer = AvaryAxisUtil.getLayer(lotNo);
+        String mainserial = null;
+        try {
+            mainserial = String.valueOf(AvaryAxisUtil.getParmByLotNumAndLayer(lotNo, "SFCZ4_ZD_DIExposure", layer).get("MainSerial"));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
-        String bom = "";
-        String recipeName = partNo.substring(0, 7) + "/" + bom + partNo + "-2PNL";
+        String bom = AvaryAxisUtil.getBom(partNo, mainserial);
+        String recipeName = partNo.substring(0, 7) + "/" + bom + "-2PNL";
 
-
+        try {
+            uploadData();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         return recipeName;
     }
 }

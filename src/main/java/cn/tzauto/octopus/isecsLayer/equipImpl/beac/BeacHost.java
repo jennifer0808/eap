@@ -360,7 +360,7 @@ public class BeacHost extends EquipModel {
     }
 
     @Override
-    public String organizeRecipe(String partNo) {
+    public String organizeRecipe(String partNo,String lotNo) {
         Map recipeNameMap = RecipeMapping.loadRecipeLotMapping(GlobalConstants.getProperty("BEAC_LASER_EXPOSURE_RECIPE_MAPPING_PATH"));
         String recipeName = "";
         if (recipeNameMap != null) {

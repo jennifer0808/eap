@@ -71,7 +71,7 @@ public class AvaryAxisUtil {
     }
 
     public static void main(String[] args) {
-        downLoadRecipeFormCIM("deviceCode", "recipeName");
+//        downLoadRecipeFormCIM("deviceCode", "recipeName");
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
         //1-1
 //        System.out.println(workLicense("DEXP03000100", "G1483684www"));
@@ -100,17 +100,13 @@ public class AvaryAxisUtil {
 //            e.printStackTrace();
 //        }
 
-        //1-4
-//        try {
-//            List list = get21Exposure("qwe","DEXP03000100","DI#12","2");
-//            System.out.println(list);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
+//        1-4
+        try {
+            boolean list = get21Exposure("PNLPG012#");
+            System.out.println(list);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         //1-5
 //        try {
@@ -313,7 +309,7 @@ public class AvaryAxisUtil {
         try {
             call = getCallForGetDataFromSer();
 
-            Object[] params = new Object[]{"test", "test", "#01", "0004", "0018", createParm("SFCZ4_ZD_DIExposure", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"test", "test", "#01", "0004", "0018", createParm("防焊曝光21節記錄表", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
             return false;
@@ -499,6 +495,19 @@ public class AvaryAxisUtil {
         return "0";
     }
 
+    public static String getLayer(String lotNum) {
+        try {
+            return String.valueOf(getParmByLotNum(lotNum).get("Layer"));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return "0";
+    }
+
     public static String getPartNumVersion(String lotNum) {
         try {
             return String.valueOf(getParmByLotNum(lotNum).get("PartNum"));
@@ -567,7 +576,26 @@ public class AvaryAxisUtil {
         }
         return result;
     }
+    public static String insertTable() throws RemoteException, ServiceException, MalformedURLException {
 
+        Call call = getCallForSendDataToSerGrp();
+        LocalDateTime now = LocalDateTime.now();
+       String para1 = "PaperNo|StartTime|lLot|Lotnum|Layer|sfclayer|LayerName|mainserial|serial|workno|FirstAcess|Item2|Item3|Item4|Item5|Item6|Item7|Item8|Item9|" +
+                "Item10|Qty|Item11|Item12|Item13|Item14|Item15|Item16|Item17|Item18";
+
+        String   para2 = "2018082400921|开始时间|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|"+
+                "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
+
+        Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
+                para1
+                , para2
+                , now.format(dtf)};
+        String result = (String) call.invoke(params); //方法执行后的返回值
+        if ("OK".equals(result)) {
+            return "";
+        }
+        return result;
+    }
     private static Call getCallForSendDataToSer() throws ServiceException, MalformedURLException {
         String actionUri = "sendDataToSer"; //Action路径
         String op = "sendDataToSer"; //要调用的方法名
@@ -779,6 +807,6 @@ public class AvaryAxisUtil {
      */
     public static String getBom(String partNum, String mainSerial) {
         //todo 需要mes接口
-        return "";
+        return "TTM1FSAPL91";
     }
 }

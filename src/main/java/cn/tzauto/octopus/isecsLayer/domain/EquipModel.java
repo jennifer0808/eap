@@ -66,7 +66,7 @@ public abstract class EquipModel extends Thread {
     public String preAlarm = "";
     public int notGetAlarmCount = 0;
     public String partNo = "";
-    public String deviceName="";
+    public String deviceName = "";
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -970,7 +970,8 @@ public abstract class EquipModel extends Thread {
         }
     }
 
-    public String organizeRecipe(String partNum) {
+
+    public String organizeRecipe(String partNum, String lotNo) {
         return "";
     }
 

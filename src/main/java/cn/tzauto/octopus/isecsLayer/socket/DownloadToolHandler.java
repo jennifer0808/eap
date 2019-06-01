@@ -11,6 +11,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,7 +61,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByDeviceCode(deviceCode);
             if (deviceInfos != null && !deviceInfos.isEmpty()) {
                 DeviceInfo deviceInfo = deviceInfos.get(0);
-                if (!"0".equals(AvaryAxisUtil.workLicense(deviceCode, userId))) {
+                if (!"0".equals(AvaryAxisUtil.workLicense(deviceInfo.getDeviceName(), userId))) {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
                     return;
                 }
@@ -84,7 +85,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         return;
                     }
                 }
-                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo);
+                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo,lotNo);
                 Recipe recipe = new Recipe();
                 DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                 if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_RCP_FROM_CIM"))) {
@@ -128,13 +129,16 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             }
 
             sqlSession.close();
+
             Channel channel = ctx.channel();
             AttributeKey attrKey = AttributeKey.valueOf("123456789");
             Attribute<Object> attr = channel.attr(attrKey);
+            String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
             attr.set(downloadresult);
             buf = channel.alloc().buffer(downloadresult.getBytes().length);
             buf.writeBytes(downloadresult.getBytes());
             channel.writeAndFlush(buf);
+            new ISecsHost(eqpIp, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand(downloadresult);
 
         }
         if (command.equals("getRecipeName")) {

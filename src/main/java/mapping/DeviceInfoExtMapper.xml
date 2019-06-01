@@ -25,7 +25,7 @@
         <result column="lock_switch" jdbcType="CHAR" property="lockSwitch"/>
         <result column="start_check_mod" jdbcType="VARCHAR" property="startCheckMod"/>
         <result column="business_mod" property="businessMod" jdbcType="VARCHAR"/>
-        <result column="part_no" property="part_no" jdbcType="VARCHAR"/>
+        <result column="part_no" property="partNo" jdbcType="VARCHAR"/>
     </resultMap>
     <sql id="Base_Column_List">
         id, device_rowid, recipe_id, recipe_name, lock_flag, lot_id, device_status, edc_cron, 
