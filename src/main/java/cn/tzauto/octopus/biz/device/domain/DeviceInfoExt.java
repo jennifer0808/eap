@@ -27,6 +27,7 @@ public class DeviceInfoExt {
     private String lockSwitch;
     private String startCheckMod;
     private String businessMod;
+    private String partNo;
 
     public String getId() {
         return id;
@@ -210,5 +211,13 @@ public class DeviceInfoExt {
 
     public void setBusinessMod(String businessMod) {
         this.businessMod = businessMod == null ? null : businessMod.trim();
+    }
+
+    public String getPartNo() {
+        return partNo;
+    }
+
+    public void setPartNo(String partNo) {
+        this.partNo = partNo;
     }
 }

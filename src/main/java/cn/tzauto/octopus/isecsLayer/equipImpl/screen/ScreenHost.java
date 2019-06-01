@@ -384,7 +384,7 @@ public class ScreenHost extends EquipModel {
             if (screen.equals("main")) {
                 List<String> hrunColors = this.iSecsHost.executeCommand("read equipstatus");
                 for (String startColorTemp : hrunColors) {
-                    if (startColorTemp.contains("idle") || startColorTemp.contains("Error")) {
+                    if (startColorTemp.contains("idle") || startColorTemp.contains("Error") || "".equals(startColorTemp.trim())) {
                         equipStatus = "Idle";
                     }
                     if (startColorTemp.contains("run")) {
@@ -463,10 +463,14 @@ public class ScreenHost extends EquipModel {
         parms2.add(resultMap.get("zx").equals("") ? resultMap.get("x") : resultMap.get("zx"));
         parms2.add(resultMap.get("zy").equals("") ? resultMap.get("y") : resultMap.get("zy"));
         parms2.add(resultMap.get("yx"));
-        parms2.add(resultMap.get("yx"));
-
-        AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
-        logger.info("发送涨缩值数据到MES");
+        parms2.add(resultMap.get("yy"));
+        for (String s : parms2) {
+            if (s.equals("")) {
+                return null;
+            }
+        }
+        String result = AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
+        logger.info("发送涨缩值数据到MES" + result);
         return exposure;
     }
 

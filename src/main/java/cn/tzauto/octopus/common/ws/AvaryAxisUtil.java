@@ -476,7 +476,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
-        Map<String,String> paraMap = new HashMap();
+        Map<String, String> paraMap = new HashMap();
         if (list.size() == 0) {
             return paraMap;
         }
@@ -552,14 +552,14 @@ public class AvaryAxisUtil {
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
     public static String insertTable(String paperNo, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo, String layerName
-            , String serial, String orderId, String qty, String power,String Item2) throws RemoteException, ServiceException, MalformedURLException {
+            , String serial, String orderId, String qty, String power, String Item2) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
                 "PaperNo|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|LayerName|Serial|OrderId|Qty|Item1|Item2"
-                , createParm(paperNo, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, layerName, serial, orderId, qty, power,Item2)
+                , createParm(paperNo, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, layerName, serial, orderId, qty, power, Item2)
                 , now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         if ("OK".equals(result)) {
@@ -659,7 +659,7 @@ public class AvaryAxisUtil {
         for (int i = 0; i < length - 1; i++) {
             sb.append(parms.get(i)).append("|");
         }
-        sb.append(parms.size() - 1);
+        sb.append(parms.get(length - 1));
         return sb.toString();
     }
 

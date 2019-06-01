@@ -1238,7 +1238,14 @@ public class MultipleEquipHostManager {
     private boolean instanciateEquipModels(List<DeviceInfo> deviceInfos) throws ClassNotFoundException, SecurityException,
             NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
         boolean result = true;
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
         for (DeviceInfo deviceInfo : deviceInfos) {
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
+            if (deviceInfoExt == null) {
+                logger.error("未配置设备"+deviceInfo.getDeviceCode()+"对应的EXT信息");
+                return false;
+            }
             DeviceType deviceTypeObj = deviceTypeDic.get(deviceInfo.getDeviceTypeId());
             String deviceCode = deviceInfo.getDeviceCode();
             String deviceName = deviceInfo.getDeviceCode();
@@ -1387,6 +1394,8 @@ public class MultipleEquipHostManager {
                     equip.setStartUp(isStart);
                     equip.setDaemon(true);
                     equip.deviceName = deviceName;
+                    equip.partNo = deviceInfoExt.getPartNo();
+                    equip.lotId = deviceInfoExt.getLotId();
                     equipModels.put(deviceCode, equip);
                 } catch (ClassNotFoundException cnfe) {
                     logger.error("Device " + deviceCode + " config error,(ClassNotFoundException) can't be initialized ");

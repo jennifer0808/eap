@@ -1,0 +1,792 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://10.182.36.19:8080/cim/services/recipeService" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://10.182.36.19:8080/cim/services/recipeService" xmlns:intf="http://10.182.36.19:8080/cim/services/recipeService" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns1="null" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.4
+Built on Apr 22, 2006 (06:55:48 PDT)-->
+ <wsdl:types>
+  <schema targetNamespace="http://xml.apache.org/xml-soap" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="null"/>
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="mapItem">
+    <sequence>
+     <element name="key" nillable="true" type="xsd:anyType"/>
+     <element name="value" nillable="true" type="xsd:anyType"/>
+    </sequence>
+   </complexType>
+   <complexType name="Map">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="item" type="apachesoap:mapItem"/>
+    </sequence>
+   </complexType>
+  </schema>
+  <schema targetNamespace="null" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="ArrayOffString">
+    <complexContent>
+     <restriction base="soapenc:Array">
+      <attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:string[]"/>
+     </restriction>
+    </complexContent>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="findRecipebyIdRequest">
+
+      <wsdl:part name="recipeId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeNameRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeExistResponse">
+
+      <wsdl:part name="checkRecipeExistReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="beforeTrackInCheckRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="params" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeExistRequest">
+
+      <wsdl:part name="key" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeNameResponse">
+
+      <wsdl:part name="checkRecipeNameReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downloadRecipeSMTResponse">
+
+      <wsdl:part name="downloadRecipeSMTReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="findLatestRecipeResponse">
+
+      <wsdl:part name="findLatestRecipeReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadWBRecipeResponse">
+
+      <wsdl:part name="downLoadWBRecipeReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downloadRecipeSMTRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="downloadingMode" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="mainResponse">
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeNameWithkeyResponse">
+
+      <wsdl:part name="checkRecipeNameWithkeyReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downloadRecipe4LeadScanResponse">
+
+      <wsdl:part name="downloadRecipe4LeadScanReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="beforeTrackOutCheckResponse">
+
+      <wsdl:part name="beforeTrackOutCheckReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadRecipeWithkeyResponse">
+
+      <wsdl:part name="downLoadRecipeWithkeyReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadWBRecipeRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="deviceTypeId" type="xsd:string"/>
+
+      <wsdl:part name="downloadingMode" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="beforeTrackOutCheckRequest">
+
+      <wsdl:part name="step" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="Params" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadRecipeRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="downloadingMode" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="edcCheckCleaningMoldChaseResponse">
+
+      <wsdl:part name="edcCheckCleaningMoldChaseReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="findLatestRecipeRequest">
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="checkRecipeNameWithkeyRequest">
+
+      <wsdl:part name="key" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="findRecipebyIdResponse">
+
+      <wsdl:part name="findRecipebyIdReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="getRecipeInfoRequest">
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="beforeTrackInCheckResponse">
+
+      <wsdl:part name="beforeTrackInCheckReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downloadRecipe4LeadScanRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadRecipeWithkeyRequest">
+
+      <wsdl:part name="key" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="recipeName" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="findCurrentRecipeRequest">
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="findCurrentRecipeResponse">
+
+      <wsdl:part name="findCurrentRecipeReturn" type="apachesoap:Map"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="afterTrackOutCheckResponse">
+
+      <wsdl:part name="afterTrackOutCheckReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="mainRequest">
+
+      <wsdl:part name="args" type="tns1:ArrayOffString"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="afterTrackOutCheckRequest">
+
+      <wsdl:part name="key" type="xsd:string"/>
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="Params" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="edcCheckCleaningMoldChaseRequest">
+
+      <wsdl:part name="userId" type="xsd:string"/>
+
+      <wsdl:part name="eqptId" type="xsd:string"/>
+
+      <wsdl:part name="lotId" type="xsd:string"/>
+
+      <wsdl:part name="params" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="getRecipeInfoResponse">
+
+      <wsdl:part name="getRecipeInfoReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="downLoadRecipeResponse">
+
+      <wsdl:part name="downLoadRecipeReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="RecipeService">
+
+      <wsdl:operation name="beforeTrackInCheck" parameterOrder="userId eqptId recipeName lotId params">
+
+         <wsdl:input message="impl:beforeTrackInCheckRequest" name="beforeTrackInCheckRequest"/>
+
+         <wsdl:output message="impl:beforeTrackInCheckResponse" name="beforeTrackInCheckResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="beforeTrackOutCheck" parameterOrder="step userId eqptId lotId Params">
+
+         <wsdl:input message="impl:beforeTrackOutCheckRequest" name="beforeTrackOutCheckRequest"/>
+
+         <wsdl:output message="impl:beforeTrackOutCheckResponse" name="beforeTrackOutCheckResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeExist" parameterOrder="key userId eqptId recipeName">
+
+         <wsdl:input message="impl:checkRecipeExistRequest" name="checkRecipeExistRequest"/>
+
+         <wsdl:output message="impl:checkRecipeExistResponse" name="checkRecipeExistResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downloadRecipe4LeadScan" parameterOrder="userId eqptId recipeName lotId">
+
+         <wsdl:input message="impl:downloadRecipe4LeadScanRequest" name="downloadRecipe4LeadScanRequest"/>
+
+         <wsdl:output message="impl:downloadRecipe4LeadScanResponse" name="downloadRecipe4LeadScanResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadRecipe" parameterOrder="userId eqptId recipeName lotId downloadingMode">
+
+         <wsdl:input message="impl:downLoadRecipeRequest" name="downLoadRecipeRequest"/>
+
+         <wsdl:output message="impl:downLoadRecipeResponse" name="downLoadRecipeResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findCurrentRecipe" parameterOrder="eqptId">
+
+         <wsdl:input message="impl:findCurrentRecipeRequest" name="findCurrentRecipeRequest"/>
+
+         <wsdl:output message="impl:findCurrentRecipeResponse" name="findCurrentRecipeResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findRecipebyId" parameterOrder="recipeId">
+
+         <wsdl:input message="impl:findRecipebyIdRequest" name="findRecipebyIdRequest"/>
+
+         <wsdl:output message="impl:findRecipebyIdResponse" name="findRecipebyIdResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="afterTrackOutCheck" parameterOrder="key userId eqptId lotId Params">
+
+         <wsdl:input message="impl:afterTrackOutCheckRequest" name="afterTrackOutCheckRequest"/>
+
+         <wsdl:output message="impl:afterTrackOutCheckResponse" name="afterTrackOutCheckResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="edcCheckCleaningMoldChase" parameterOrder="userId eqptId lotId params">
+
+         <wsdl:input message="impl:edcCheckCleaningMoldChaseRequest" name="edcCheckCleaningMoldChaseRequest"/>
+
+         <wsdl:output message="impl:edcCheckCleaningMoldChaseResponse" name="edcCheckCleaningMoldChaseResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeName" parameterOrder="userId eqptId recipeName lotId">
+
+         <wsdl:input message="impl:checkRecipeNameRequest" name="checkRecipeNameRequest"/>
+
+         <wsdl:output message="impl:checkRecipeNameResponse" name="checkRecipeNameResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeNameWithkey" parameterOrder="key userId eqptId recipeName lotId">
+
+         <wsdl:input message="impl:checkRecipeNameWithkeyRequest" name="checkRecipeNameWithkeyRequest"/>
+
+         <wsdl:output message="impl:checkRecipeNameWithkeyResponse" name="checkRecipeNameWithkeyResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadRecipeWithkey" parameterOrder="key userId eqptId recipeName lotId">
+
+         <wsdl:input message="impl:downLoadRecipeWithkeyRequest" name="downLoadRecipeWithkeyRequest"/>
+
+         <wsdl:output message="impl:downLoadRecipeWithkeyResponse" name="downLoadRecipeWithkeyResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getRecipeInfo" parameterOrder="eqptId userId">
+
+         <wsdl:input message="impl:getRecipeInfoRequest" name="getRecipeInfoRequest"/>
+
+         <wsdl:output message="impl:getRecipeInfoResponse" name="getRecipeInfoResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downloadRecipeSMT" parameterOrder="userId eqptId recipeName lotId downloadingMode">
+
+         <wsdl:input message="impl:downloadRecipeSMTRequest" name="downloadRecipeSMTRequest"/>
+
+         <wsdl:output message="impl:downloadRecipeSMTResponse" name="downloadRecipeSMTResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadWBRecipe" parameterOrder="userId eqptId recipeName lotId deviceTypeId downloadingMode">
+
+         <wsdl:input message="impl:downLoadWBRecipeRequest" name="downLoadWBRecipeRequest"/>
+
+         <wsdl:output message="impl:downLoadWBRecipeResponse" name="downLoadWBRecipeResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findLatestRecipe" parameterOrder="eqptId recipeName">
+
+         <wsdl:input message="impl:findLatestRecipeRequest" name="findLatestRecipeRequest"/>
+
+         <wsdl:output message="impl:findLatestRecipeResponse" name="findLatestRecipeResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="main" parameterOrder="args">
+
+         <wsdl:input message="impl:mainRequest" name="mainRequest"/>
+
+         <wsdl:output message="impl:mainResponse" name="mainResponse"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="recipeServiceSoapBinding" type="impl:RecipeService">
+
+      <wsdlsoap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="beforeTrackInCheck">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="beforeTrackInCheckRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="beforeTrackInCheckResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="beforeTrackOutCheck">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="beforeTrackOutCheckRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="beforeTrackOutCheckResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeExist">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="checkRecipeExistRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="checkRecipeExistResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downloadRecipe4LeadScan">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="downloadRecipe4LeadScanRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="downloadRecipe4LeadScanResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadRecipe">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="downLoadRecipeRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="downLoadRecipeResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findCurrentRecipe">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="findCurrentRecipeRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="findCurrentRecipeResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findRecipebyId">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="findRecipebyIdRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="findRecipebyIdResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="afterTrackOutCheck">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="afterTrackOutCheckRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="afterTrackOutCheckResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="edcCheckCleaningMoldChase">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="edcCheckCleaningMoldChaseRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="edcCheckCleaningMoldChaseResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeName">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="checkRecipeNameRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="checkRecipeNameResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="checkRecipeNameWithkey">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="checkRecipeNameWithkeyRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="checkRecipeNameWithkeyResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadRecipeWithkey">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="downLoadRecipeWithkeyRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="downLoadRecipeWithkeyResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getRecipeInfo">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getRecipeInfoRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getRecipeInfoResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downloadRecipeSMT">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="downloadRecipeSMTRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="downloadRecipeSMTResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="downLoadWBRecipe">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="downLoadWBRecipeRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="downLoadWBRecipeResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="findLatestRecipe">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="findLatestRecipeRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="findLatestRecipeResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="main">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="mainRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://service.webservice.modules.cim.tfinfo.com" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="mainResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://10.182.36.19:8080/cim/services/recipeService" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="RecipeServiceService">
+
+      <wsdl:port binding="impl:recipeServiceSoapBinding" name="recipeService">
+
+         <wsdlsoap:address location="http://10.182.34.239/cim/services/recipeService"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>
