@@ -7,7 +7,6 @@ package cn.tzauto.octopus.gui.widget.equipstatuspane;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
@@ -150,10 +149,12 @@ public class EquipStatusPaneController implements Initializable {
             isOnPM = false;
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保养结束.");
             //todo 执行ocr解锁屏命令
+            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputunlock");
         } else {
             isOnPM = true;
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
             //todo 执行ocr锁屏命令
+            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputlock");
         }
     }
 }

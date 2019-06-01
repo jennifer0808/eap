@@ -44,6 +44,7 @@ public class ScreenHost extends EquipModel {
     private String recipeServerPath = GlobalConstants.stage.hostManager.getDeviceInfo(deviceCode, deviceCode).getRemarks();
     private String lotCount = "";
     private String scsl = "";
+
     public ScreenHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
@@ -57,14 +58,14 @@ public class ScreenHost extends EquipModel {
                 try {
                     this.uploadData();
                 } catch (RemoteException e) {
-                    logger.error("上传表单发生异常",e);
+                    logger.error("上传表单发生异常", e);
 
                 } catch (ServiceException e) {
-                    logger.error("上传表单发生异常",e);
+                    logger.error("上传表单发生异常", e);
 
                 } catch (MalformedURLException e) {
 
-                    logger.error("上传表单发生异常",e);
+                    logger.error("上传表单发生异常", e);
                 }
 
             }
@@ -74,36 +75,35 @@ public class ScreenHost extends EquipModel {
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
 
 
-
         DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         LocalDateTime now = LocalDateTime.now();
-        String result1 = AvaryAxisUtil.tableQuery(tableNum,deviceCode,"0"); //夜班，白班，待确认
+        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, "0"); //夜班，白班，待确认
         if (result1 == null) {
             String result2 = AvaryAxisUtil.getOrderNum("0");
-            if(result2 == null){
+            if (result2 == null) {
                 logger.error("报表数据上传中，无法获取到生產單號");
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"报表数据上传中，无法获取到生產單號");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，无法获取到生產單號");
                 return false;
             }
             result1 = result2;
-            String result3 = AvaryAxisUtil.insertMasterTable(result2,"status",deviceCode,tableNum,"0","001",now.format(dtf2),"system");  //system临时代替，  創建工號
-            if(!"".equals(result3)){
-                logger.error("报表数据上传中，插入主表數據失败"+result3);
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"报表数据上传中，插入主表數據失败");
+            String result3 = AvaryAxisUtil.insertMasterTable(result2, "status", deviceCode, tableNum, "0", "001", now.format(dtf2), "system");  //system临时代替，  創建工號
+            if (!"".equals(result3)) {
+                logger.error("报表数据上传中，插入主表數據失败" + result3);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
                 return false;
             }
 
         }
-        Map<String,String> map4 = AvaryAxisUtil.getParmByLotNum(lotId);
-        if(map4.size()==0){
+        Map<String, String> map4 = AvaryAxisUtil.getParmByLotNum(lotId);
+        if (map4.size() == 0) {
             logger.error("报表数据上传中，批號獲料號,層別,數量 为空");
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"报表数据上传中，批號獲料號,層別,數量 为空");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，批號獲料號,層別,數量 为空");
             return false;
         }
-        Map<String,String> map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId,tableNum,map4.get("Layer"));
-        if(map5.size()==0){
+        Map<String, String> map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, map4.get("Layer"));
+        if (map5.size() == 0) {
             logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
             //報錯:獲取途程信息失敗
             return false;
         }
@@ -143,16 +143,17 @@ public class ScreenHost extends EquipModel {
          ModifyTime	最後修改時間----
          userid	作業員------
          */
-        String result = AvaryAxisUtil.insertTable(result1,"开始时间",now.format(AvaryAxisUtil.dtf),lotId,map4.get("Layer"),map5.get("MainSerial"),
-                map5.get("PartNum"),map5.get("WorkNo"),map5.get("LayerName"),map5.get("Serial"),map5.get("OrderId"),scsl,power,map5.get("PE")
-                );
-        if("".equals(result)){
+        String result = AvaryAxisUtil.insertTable(result1, "开始时间", now.format(AvaryAxisUtil.dtf), lotId, map4.get("Layer"), map5.get("MainSerial"),
+                map5.get("PartNum"), map5.get("WorkNo"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power, map5.get("PE")
+        );
+        if ("".equals(result)) {
             return true;
         }
-        logger.error("报表数据上传中，明細表數據插入失败："+result);
-        UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"报表数据上传中，明細表數據插入失败："+result);
-       return  false;
+        logger.error("报表数据上传中，明細表數據插入失败：" + result);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，明細表數據插入失败：" + result);
+        return false;
     }
+
     @Override
     public String getCurrentRecipeName() {
         String prerecipeName = ppExecName;
@@ -308,6 +309,16 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
+        String[] recipeNames = recipeName.split("/");
+        File file = new File("//" + this.recipeServerPath + "//" + recipeNames[0] + "//Img//");
+        if (file.listFiles().length > 1) {
+            File[] files = file.listFiles();
+            for (File fileTemp : files) {
+                if (fileTemp.getName().equals(recipeNames[1])) {
+
+                }
+            }
+        }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 String screen = iSecsHost.executeCommand("curscreen").get(0);
@@ -429,7 +440,7 @@ public class ScreenHost extends EquipModel {
         if (temp.contains("/")) {
             scsl = temp.split("/")[0];
         }
-        power= resultMap.get("bgl");
+        power = resultMap.get("bgl");
         Map exposure = new HashMap();
         exposure.put("zx", resultMap.get("zx"));
         exposure.put("zy", resultMap.get("zy"));
