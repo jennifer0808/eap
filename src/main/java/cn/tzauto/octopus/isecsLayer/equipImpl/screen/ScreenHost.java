@@ -73,20 +73,27 @@ public class ScreenHost extends EquipModel {
     }
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
-
-
-        DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        int start = 80000;
+        int end = 203000;
         LocalDateTime now = LocalDateTime.now();
-        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, "0"); //夜班，白班，待确认
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
+        String classInfo = "0";
+        int nowTime = Integer.parseInt(now.format(timeFormatter));
+        if(start>nowTime || end<nowTime){
+            classInfo = "1";
+        }
+        DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo); //夜班，白班，待确认
         if (result1 == null) {
-            String result2 = AvaryAxisUtil.getOrderNum("0");
+            String result2 = AvaryAxisUtil.getOrderNum(classInfo);
             if (result2 == null) {
                 logger.error("报表数据上传中，无法获取到生產單號");
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，无法获取到生產單號");
                 return false;
             }
             result1 = result2;
-            String result3 = AvaryAxisUtil.insertMasterTable(result2, "status", deviceCode, tableNum, "0", "001", now.format(dtf2), "system");  //system临时代替，  創建工號
+            String result3 = AvaryAxisUtil.insertMasterTable(result2, "status", deviceCode, tableNum, classInfo, "001", now.format(dtf2), "system");  //system临时代替，  創建工號
             if (!"".equals(result3)) {
                 logger.error("报表数据上传中，插入主表數據失败" + result3);
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
