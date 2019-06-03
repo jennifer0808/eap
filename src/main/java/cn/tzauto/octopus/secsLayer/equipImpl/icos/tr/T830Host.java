@@ -34,7 +34,7 @@ import java.util.*;
 public class T830Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(T830Host.class.getName());
+    private static final Logger logger = Logger.getLogger(T830Host.class);
 
     public T830Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

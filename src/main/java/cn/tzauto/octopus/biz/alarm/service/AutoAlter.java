@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class AutoAlter {
 
-    private static Logger logger = Logger.getLogger(AutoAlter.class.getName());
+    private static Logger logger = Logger.getLogger(AutoAlter.class);
 
     public static void alter(Map alarmMap) {
         if (alarmMap == null) {

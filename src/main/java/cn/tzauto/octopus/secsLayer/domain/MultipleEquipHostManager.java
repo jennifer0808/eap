@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MultipleEquipHostManager {
 
-    private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class.getName());
+    private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class);
     private HashMap<String, EquipHost> equipHosts; //store pairs <deviceId, Equip>
     private String clientId = ""; //used for naming DB connection Cache
     private String hostXmlFilePath = null;
@@ -516,6 +516,7 @@ public class MultipleEquipHostManager {
      */
     public Map getRecipeParaFromDevice(String deviceCode, String recipeName) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceCode) != null) {
+
             EquipHost equipHost = equipHosts.get(deviceCode);
             if (equipHost.deviceType.contains("DEKHorizon03ix")) {
                 equipHost.sendS1F3Check();

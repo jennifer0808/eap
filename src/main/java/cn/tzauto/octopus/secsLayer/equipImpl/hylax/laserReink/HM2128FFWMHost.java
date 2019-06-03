@@ -42,7 +42,7 @@ import java.util.Map;
 public class HM2128FFWMHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HM2128FFWMHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HM2128FFWMHost.class);
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
     public HM2128FFWMHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

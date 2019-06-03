@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class ChangeEqptStateHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class.getName());
+    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);
     private String deviceCode = "";
     private String eventId = "";
     private String state = "";

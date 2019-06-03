@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class Au800RecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(Au800RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(Au800RecipeUtil.class);
 
     public static List transferAu800Rcp(String recipePath, String deviceType) {
         FileReader fr = null;

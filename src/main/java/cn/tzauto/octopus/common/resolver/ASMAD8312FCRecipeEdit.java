@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  */
 public class ASMAD8312FCRecipeEdit extends RecipeTransfer {
 
-    private static final Logger logger = Logger.getLogger(ASMAD8312FCRecipeEdit.class.getName());
+    private static final Logger logger = Logger.getLogger(ASMAD8312FCRecipeEdit.class);
 
     public static void main(String[] args) {
 

@@ -27,7 +27,7 @@ import java.util.Map;
  * @desc
  */
 public class C6Q420RecipeUtil {
-    private static Logger logger = Logger.getLogger(VSP88AHHost.class.getName());
+    private static Logger logger = Logger.getLogger(VSP88AHHost.class);
 
     public static List<RecipePara> transferFromRecipe(String filePath, String deviceType) {
         List<RecipePara> recipeParaList = new ArrayList<>();

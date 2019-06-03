@@ -11,6 +11,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import org.apache.commons.io.IOUtils;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -18,11 +19,10 @@ import org.dom4j.io.SAXReader;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class NY20RecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(NY20RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(NY20RecipeUtil.class);
 
     public static List<RecipePara> transferRcpFromDB(String filePath, String recipeName) {
         //将文件名称中的所有空格都替换为带有双引号的空格

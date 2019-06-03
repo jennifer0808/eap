@@ -36,7 +36,7 @@ import java.util.Map;
 public class Horizon03ixHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(Horizon03ixHost.class.getName());
+    private static final Logger logger = Logger.getLogger(Horizon03ixHost.class);
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
     public Horizon03ixHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

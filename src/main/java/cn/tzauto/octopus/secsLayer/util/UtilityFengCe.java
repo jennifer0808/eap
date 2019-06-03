@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 
 public class UtilityFengCe
 {
-	private static final Logger logger = Logger.getLogger(UtilityFengCe.class.getName());
+	private static final Logger logger = Logger.getLogger(UtilityFengCe.class);
 
 	private static Pattern VALID_IPV4_PATTERN = null;
 	private static Pattern VALID_IPV6_PATTERN = null;

@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class DownLoadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(DownLoadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(DownLoadHandler.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private Recipe recipe = null;
     private List<RecipePara> recipeParaList = null;

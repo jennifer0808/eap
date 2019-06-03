@@ -20,7 +20,7 @@ import java.util.Map;
  * Created by 12631 on 2019/3/1.
  */
 public class UpdateRecipeTemplateWebservice implements BaseWebservice {
-    private static Logger logger = Logger.getLogger(UpdateRecipeTemplateHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpdateRecipeTemplateHandler.class);
     private String deviceCode = "";
     private String deviceTypeId = "";
     private List<RecipeTemplate> recipeTemplates;

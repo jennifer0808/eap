@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GinRecipeUtil {
-    private static final Logger logger = LoggerFactory.getLogger(GinRecipeUtil.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(GinRecipeUtil.class);
 
     public static List<RecipePara> getRecipePara(String filePath, String deviceType) {
         BufferedReader br = null;

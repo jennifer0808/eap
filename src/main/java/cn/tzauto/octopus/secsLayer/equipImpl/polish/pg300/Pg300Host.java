@@ -29,7 +29,7 @@ import java.util.Map;
 public class Pg300Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(Pg300Host.class.getName());
+    private static final Logger logger = Logger.getLogger(Pg300Host.class);
     private String portId = "";
 
     public Pg300Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

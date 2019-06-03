@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class HT9045HWUtil {
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(HT9045HWUtil.class.getName());
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(HT9045HWUtil.class);
 
     public static Map<String, String> transferFromFile(String filePath) {
         Map<String, String> resultMap = new HashMap<String, String>();

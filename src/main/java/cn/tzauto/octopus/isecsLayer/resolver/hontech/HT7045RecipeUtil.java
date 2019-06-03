@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HT7045RecipeUtil {
-    private static final Logger logger = Logger.getLogger(HT7045RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(HT7045RecipeUtil.class);
 
     public static List  transferRcpFromDB(String recipePath, String deviceType) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();

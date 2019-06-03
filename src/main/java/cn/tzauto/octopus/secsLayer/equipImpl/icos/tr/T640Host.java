@@ -30,7 +30,7 @@ import java.util.*;
 @SuppressWarnings("serial")
 public class T640Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(T640Host.class.getName());
+    private static final Logger logger = Logger.getLogger(T640Host.class);
     private boolean startCheckOver = false;
     private boolean needCheck = false;
 

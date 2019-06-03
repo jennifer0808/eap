@@ -32,7 +32,7 @@ import java.util.*;
 public class Disco7160Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(Disco7160Host.class.getName());
+    private static final Logger logger = Logger.getLogger(Disco7160Host.class);
     private boolean isFullAutoState1st = false;
 
 

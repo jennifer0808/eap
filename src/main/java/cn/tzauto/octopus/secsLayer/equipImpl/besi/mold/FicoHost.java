@@ -42,7 +42,7 @@ import java.util.concurrent.FutureTask;
 public class FicoHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(FicoHost.class.getName());
+    private static final Logger logger = Logger.getLogger(FicoHost.class);
     boolean cancelCheckFlag = false;
 
     public FicoHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

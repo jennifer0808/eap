@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class UpLoadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpLoadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpLoadHandler.class);
 
     @Override
     public void handle(Message message) {

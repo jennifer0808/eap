@@ -65,7 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class EapClient extends Application implements JobListener, PropertyChangeListener {
 
-    private static final Logger logger = Logger.getLogger(EapClient.class.getName());
+    private static final Logger logger = Logger.getLogger(EapClient.class);
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
     public static boolean flag = true;

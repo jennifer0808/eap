@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 public class WaferTransferUtil {
 
     
-    private static final Logger logger = Logger.getLogger(WaferTransferUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(WaferTransferUtil.class);
     
     public static String transferAngleAsFlatNotchLocation(String binList, long FlatNotchLocation, String rowCount, String columnCount) {
         String binListb = "";

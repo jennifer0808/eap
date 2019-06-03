@@ -36,7 +36,7 @@ import org.apache.log4j.MDC;
  */
 public class InnovationHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(InnovationHost.class.getName());
+    private static Logger logger = Logger.getLogger(InnovationHost.class);
     private boolean autoStart = false;
 
     public InnovationHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

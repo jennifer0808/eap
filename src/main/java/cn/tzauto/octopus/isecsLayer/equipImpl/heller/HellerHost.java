@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  */
 public class HellerHost extends EquipModel {
     
-private static Logger logger = Logger.getLogger(HellerHost.class.getName());
+private static Logger logger = Logger.getLogger(HellerHost.class);
 
     public HellerHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

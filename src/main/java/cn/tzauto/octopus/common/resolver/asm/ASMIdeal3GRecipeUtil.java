@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
  */
 public class ASMIdeal3GRecipeUtil {
     
-    private static Logger logger = Logger.getLogger(ASMIdeal3GRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(ASMIdeal3GRecipeUtil.class);
     public static List<ASM3GPPbody> unzipAndGet3GRcpPPBody(String srcFile) {
         File source = new File(srcFile);
         ZipInputStream zis = null;

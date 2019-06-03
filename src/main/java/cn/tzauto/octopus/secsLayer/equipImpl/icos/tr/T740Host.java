@@ -30,7 +30,7 @@ import java.util.*;
 @SuppressWarnings("serial")
 public class T740Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(T740Host.class.getName());
+    private static final Logger logger = Logger.getLogger(T740Host.class);
     private boolean needCheck = false;
 
     public T740Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

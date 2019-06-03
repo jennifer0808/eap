@@ -12,7 +12,7 @@ import java.util.Map;
  * Created by luosy on 2019/4/3.
  */
 public class AlarmDealer {
-    private static Logger logger = Logger.getLogger(AlarmDealer.class.getName());
+    private static Logger logger = Logger.getLogger(AlarmDealer.class);
 
     public static Map deal(DataMsgMap data) {
         String ALID = (String) data.get("ALID");

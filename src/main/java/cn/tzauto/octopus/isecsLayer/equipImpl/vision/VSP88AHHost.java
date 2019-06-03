@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 
 public class VSP88AHHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(VSP88AHHost.class.getName());
+    private static Logger logger = Logger.getLogger(VSP88AHHost.class);
     private Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
 
     public VSP88AHHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

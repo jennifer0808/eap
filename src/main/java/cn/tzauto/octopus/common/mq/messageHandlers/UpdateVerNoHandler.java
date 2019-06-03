@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class UpdateVerNoHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class);
     String eventId = "";
     String recipeName = "";
     String lotId = "";

@@ -12,7 +12,7 @@ import java.io.IOException;
  * Created by luosy on 2019/4/3.
  */
 public class RcmdDealer {
-    private static Logger logger = Logger.getLogger(RcmdDealer.class.getName());
+    private static Logger logger = Logger.getLogger(RcmdDealer.class);
 
     public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         //todo 完善每个判断逻辑

@@ -23,7 +23,7 @@ import java.util.Map;
 
 //获取设备recipe列表
 public class GetRecipeListFromDeviceWebservice implements BaseWebservice {
-    private static Logger logger = Logger.getLogger(FindEqptRecipeListHandler.class.getName());
+    private static Logger logger = Logger.getLogger(FindEqptRecipeListHandler.class);
 
     @Override
     public String handle(String message) {

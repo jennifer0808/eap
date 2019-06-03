@@ -41,7 +41,7 @@ public class RecipeService extends BaseService {
     private DeviceInfoMapper deviceInfoMapper;
     public SysOfficeMapper sysOfficeMapper;
     private RecipeNameMappingMapper recipeNameMappingMapper;
-    private static Logger logger = Logger.getLogger(RecipeService.class.getName());
+    private static Logger logger = Logger.getLogger(RecipeService.class);
 
     public RecipeService(SqlSession sqlSession) {
         super(sqlSession);

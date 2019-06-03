@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class TransferUtil {
 
-    private static Logger logger = Logger.getLogger(TransferUtil.class.getName());
+    private static Logger logger = Logger.getLogger(TransferUtil.class);
 
     public static ArrayList getIDValue(ArrayList list) {
         ArrayList obj = new ArrayList<>();

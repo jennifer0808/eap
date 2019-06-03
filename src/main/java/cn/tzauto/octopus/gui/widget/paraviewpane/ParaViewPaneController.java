@@ -34,7 +34,7 @@ import java.util.ResourceBundle;
  */
 public class ParaViewPaneController implements Initializable {
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ParaViewPaneController.class.getName());
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ParaViewPaneController.class);
 
     @FXML
     private TableColumn<SimpleRecipeParaProperty, String> paraCodeCol = new TableColumn<>();

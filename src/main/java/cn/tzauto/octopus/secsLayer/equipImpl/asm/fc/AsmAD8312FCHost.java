@@ -29,7 +29,7 @@ import java.util.*;
 public class AsmAD8312FCHost extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(AsmAD8312FCHost.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmAD8312FCHost.class);
 
 
     public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

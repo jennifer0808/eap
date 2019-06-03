@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 
 public class DGP8760Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(DGP8760Host.class.getName());
+    private static Logger logger = Logger.getLogger(DGP8760Host.class);
     private boolean needLock = false;
 
     public DGP8760Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

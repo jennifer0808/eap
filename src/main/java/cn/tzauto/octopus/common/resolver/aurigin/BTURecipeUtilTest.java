@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  */
 public class BTURecipeUtilTest {
     
-    private static final Logger logger = Logger.getLogger(BTURecipeUtilTest.class.getName());
+    private static final Logger logger = Logger.getLogger(BTURecipeUtilTest.class);
     
     public static List transferBTURcp(String recipePath) {
         FileReader fr = null;

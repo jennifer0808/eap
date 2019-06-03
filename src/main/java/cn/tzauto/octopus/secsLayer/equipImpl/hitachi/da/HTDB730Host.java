@@ -26,7 +26,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * @author NJTZ
@@ -41,7 +40,7 @@ import java.util.logging.Level;
 public class HTDB730Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HTDB730Host.class.getName());
+    private static final Logger logger = Logger.getLogger(HTDB730Host.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
@@ -342,7 +341,7 @@ public class HTDB730Host extends EquipHost {
             return "1";
 
         } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(HTDB730Host.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("ex:"+ex);
             return "0";
         }
     }

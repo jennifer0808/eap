@@ -23,7 +23,7 @@ import java.util.Map;
 public class SigmaPlusWaferTransfer {
 
     // static String waferMappingPath = GlobalConstants.getProperty("LOCAL_WAFER_MAPPING_PATH");
-    private static final Logger logger = Logger.getLogger(SigmaPlusWaferTransfer.class.getName());
+    private static final Logger logger = Logger.getLogger(SigmaPlusWaferTransfer.class);
 
     public static Map getWaferFileInfo(String waferId, String angle) {
         Map resultMap = new HashMap();

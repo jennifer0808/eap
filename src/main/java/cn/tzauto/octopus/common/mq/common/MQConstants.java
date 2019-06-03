@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
  */
 public class MQConstants {
 
-    private static final Logger logger = Logger.getLogger(MQConstants.class.getName());
+    private static final Logger logger = Logger.getLogger(MQConstants.class);
     //队列预取策略
 
     public final static int DEFAULT_QUEUE_PREFETCH = 10;

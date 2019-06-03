@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
  */
 public class UpGradeRecipeHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpGradeRecipeHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpGradeRecipeHandler.class);
     private Recipe recipe;
     private List<RecipePara> recipeParas;
     private List<Attach> attachs;

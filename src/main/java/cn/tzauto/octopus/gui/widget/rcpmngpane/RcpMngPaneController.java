@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 public class RcpMngPaneController implements Initializable {
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(RcpMngPaneController.class.getName());
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(RcpMngPaneController.class);
 
 
     @FXML

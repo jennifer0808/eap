@@ -23,7 +23,7 @@ import java.util.Map;
 //下载前检查
 public class CheckBeforeDownloadWebservice implements BaseWebservice {
 
-    private static Logger logger = Logger.getLogger(EqptCheckBeforeDownloadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(EqptCheckBeforeDownloadHandler.class);
     private String deviceCode = "";
 
     @Override

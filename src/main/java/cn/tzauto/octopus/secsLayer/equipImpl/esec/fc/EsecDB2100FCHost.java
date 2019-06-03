@@ -33,7 +33,7 @@ import java.util.logging.Level;
 public class EsecDB2100FCHost extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(EsecDB2100FCHost.class.getName());
+    private static final Logger logger = Logger.getLogger(EsecDB2100FCHost.class);
 
 
     public EsecDB2100FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

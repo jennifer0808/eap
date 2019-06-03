@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class HanmiRecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(HanmiRecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(HanmiRecipeUtil.class);
 
     public static void main(String[] args) {
         String filepath = "C:\\Users\\SunTao\\Desktop\\189X68-2-3X3-0.25-1-001_V0.txt";  //F:\\D6500-6072\\WBQFN5X5-LL-32L-S2\\WBQFN5X5-LL-32L-S2_V0.txt     F:\\D6500-6072\\EEE\\EEE_V0.txt

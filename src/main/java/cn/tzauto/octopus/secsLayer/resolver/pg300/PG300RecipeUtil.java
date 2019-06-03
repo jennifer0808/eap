@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class PG300RecipeUtil {
 
-    private static Logger logger = Logger.getLogger(PG300RecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(PG300RecipeUtil.class);
 
     public static byte[] trans(String recipepath) {
         byte[] buffer = null;

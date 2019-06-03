@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public abstract class EquipModel extends Thread {
-    private static Logger logger = Logger.getLogger(EquipModel.class.getName());
+    private static Logger logger = Logger.getLogger(EquipModel.class);
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
     protected int commState = NOT_COMMUNICATING;

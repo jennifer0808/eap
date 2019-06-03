@@ -31,7 +31,7 @@ import java.util.*;
 @SuppressWarnings("serial")
 public class ASM80THost extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(ASM80THost.class.getName());
+    private static final Logger logger = Logger.getLogger(ASM80THost.class);
 
     public ASM80THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

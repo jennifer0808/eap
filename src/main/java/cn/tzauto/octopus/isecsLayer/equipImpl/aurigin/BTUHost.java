@@ -45,7 +45,7 @@ import org.slf4j.MDC;
  */
 public class BTUHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(AU850Host.class.getName());
+    private static Logger logger = Logger.getLogger(AU850Host.class);
 
     public BTUHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

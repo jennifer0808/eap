@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class PPSelectHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(PPSelectHandler.class.getName());
+    private static Logger logger = Logger.getLogger(PPSelectHandler.class);
     private String deviceCode = "";
     private String recipeName = "";
 

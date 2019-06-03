@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
  */
 public class HTM5022Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(HTM5022Host.class.getName());
+    private static Logger logger = Logger.getLogger(HTM5022Host.class);
 
     public HTM5022Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

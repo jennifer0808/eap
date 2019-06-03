@@ -27,7 +27,7 @@ import java.util.Map;
 public class HellerMK1809IIIHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HellerMK1809IIIHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HellerMK1809IIIHost.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;

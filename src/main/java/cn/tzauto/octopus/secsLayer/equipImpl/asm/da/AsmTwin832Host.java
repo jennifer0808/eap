@@ -29,7 +29,7 @@ import java.util.Map;
 public class AsmTwin832Host extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(AsmTwin832Host.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmTwin832Host.class);
 
     public AsmTwin832Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

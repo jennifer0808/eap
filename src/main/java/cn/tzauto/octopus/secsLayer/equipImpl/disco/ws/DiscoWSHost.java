@@ -28,8 +28,9 @@ import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.apache.log4j.Logger;
+
 
 import java.util.*;
 
@@ -40,7 +41,7 @@ import java.util.*;
 public class DiscoWSHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(DiscoWSHost.class.getName());
+    private static final Logger logger = Logger.getLogger(DiscoWSHost.class);
     private String shortName = "--";
     private boolean kerfCheck = true;
     private long Z1offset = 0L;
@@ -149,7 +150,7 @@ public class DiscoWSHost extends EquipHost {
                     }
                 }
             } catch (InterruptedException e) {
-                logger.fatal("Caught Interruption", e);
+                logger.error("Caught Interruption", e);
             }
         }
     }
@@ -297,6 +298,7 @@ public class DiscoWSHost extends EquipHost {
             logger.info("recipePara size:" + recipeParaList.size());
             for (RecipePara recipePara : recipeParaList) {
                 if (recipePara.getParaName().equals("DEV_ID")) {
+                    logger.info("long short recipe name mapping");
                     realRecipeName = recipePara.getSetValue();
                     recipeNameMapping.setDeviceCode(deviceCode);
                     recipeNameMapping.setRecipeName(realRecipeName);
@@ -328,11 +330,13 @@ public class DiscoWSHost extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeNameMapping", recipeNameMapping);
+        logger.info("DeviceCode : "+recipeNameMapping.getDeviceCode() +",real recipe name : "+recipeNameMapping.getRecipeName()+",short name : "+recipeNameMapping.getRecipeShortName());
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("realRecipeName", realRecipeName);
         resultMap.put("shortNameOK", shortNameOK);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+        logger.info("=========resultMap: "+resultMap);
         return resultMap;
     }
 
@@ -728,7 +732,7 @@ public class DiscoWSHost extends EquipHost {
     private Boolean checkBladeId() {
         Map map = AxisUtility.getBladeIdFromServer(deviceCode);
         if (map == null || map.isEmpty()) {
-            logger.fatal("get blade Id from server failed , return message=[" + map + "]");
+            logger.error("get blade Id from server failed , return message=[" + map + "]");
             return false;
         }
         String serverValue1 = String.valueOf(map.get("Z1"));
@@ -742,7 +746,7 @@ public class DiscoWSHost extends EquipHost {
         }
         Map mapClient = getBladeIdFromEqpt();
         if (mapClient == null || mapClient.isEmpty()) {
-            logger.fatal("get blade Id from equipment failed , return message=[" + mapClient + "]");
+            logger.error("get blade Id from equipment failed , return message=[" + mapClient + "]");
             return false;
         }
         String clientValue1 = String.valueOf(mapClient.get("Z1"));

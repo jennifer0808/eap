@@ -33,7 +33,7 @@ import java.util.*;
 public class TowaHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(TowaHost.class.getName());
+    private static final Logger logger = Logger.getLogger(TowaHost.class);
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

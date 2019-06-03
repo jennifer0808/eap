@@ -36,7 +36,7 @@ import org.quartz.JobListener;
  */
 public class CommonUtil {
 
-    private static final Logger logger = Logger.getLogger(CommonUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(CommonUtil.class);
 
     public static boolean wirteString2File(String fielName, String str) {
         try {
