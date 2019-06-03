@@ -25,8 +25,11 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import javax.xml.rpc.ServiceException;
 import java.io.File;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -497,7 +500,10 @@ public abstract class EquipModel extends Thread {
                         this.stopEquip();
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
                         for (RecipePara recipePara : recipeParasdiff) {
-                            eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
+                            eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue()
+                                    + ",默认值为：" + (recipePara.getDefValue() == null ? "未设置" : recipePara.getDefValue())
+                                    + "其最小设定值为：" + (recipePara.getMinValue() == null ? "未设置" : recipePara.getMinValue())
+                                    + ",其最大设定值为：" + (recipePara.getMaxValue() == null ? "未设置" : recipePara.getMaxValue());
                             String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
                             checkRecultDesc = checkRecultDesc + eventDesc;
@@ -1000,5 +1006,9 @@ public abstract class EquipModel extends Thread {
             exec.shutdown();
         }
         return result;
+    }
+
+  public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+        return true;
     }
 }

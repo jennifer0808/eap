@@ -20,8 +20,11 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
+import javax.xml.rpc.ServiceException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.ResourceBundle;
 
 /**
@@ -81,7 +84,9 @@ public class EquipStatusPaneController implements Initializable {
                 //                });
                 MenuItem menuItem1 = new MenuItem("保养");
                 menuItem1.setOnAction(actionEvent -> showPMInfo(deviceCodeTemp));
-                contextMenu = new ContextMenu(menuItem, menuItem1);
+                MenuItem menuItem2 = new MenuItem("报表数据重传");
+                menuItem2.setOnAction(actionEvent -> reportInfoReUp(deviceCodeTemp));
+                contextMenu = new ContextMenu(menuItem, menuItem1, menuItem2);
 
                 contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
             } else {
@@ -155,6 +160,17 @@ public class EquipStatusPaneController implements Initializable {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
             //todo 执行ocr锁屏命令
             GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputlock");
+        }
+    }
+
+    private void reportInfoReUp(String deviceCode) {
+        try {
+            boolean data = GlobalConstants.stage.equipModels.get(deviceCode).uploadData();
+            if (data) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据重传成功.");
+            }
+        } catch (Exception e) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据重传失败.");
         }
     }
 }

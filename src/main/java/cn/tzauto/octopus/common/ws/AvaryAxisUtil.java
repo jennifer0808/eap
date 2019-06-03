@@ -1,6 +1,8 @@
 package cn.tzauto.octopus.common.ws;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.equipImpl.screen.ScreenHost;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
 import org.apache.axis.encoding.XMLType;
@@ -22,6 +24,8 @@ public class AvaryAxisUtil {
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     public static DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern("yyyyMMdd");
+    public static DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    public static DateTimeFormatter dtf3 = DateTimeFormatter.ofPattern("HHmmss");
 
     private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
     //    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
@@ -101,12 +105,12 @@ public class AvaryAxisUtil {
 //        }
 
 //        1-4
-        try {
-            boolean list = get21Exposure("PNLPG012#");
-            System.out.println(list);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            boolean list = get21Exposure("PNLPG012#");
+//            System.out.println(list);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
         //1-5
 //        try {
@@ -303,7 +307,7 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0018", "防焊曝光21節記錄表|TEST|3", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
 
-    public static boolean get21Exposure(String deviceCode) {
+    public static boolean get21Exposure(String deviceCode,String ink,String power) {
         Call call = null;
         Schema result = null;
         try {
@@ -314,9 +318,55 @@ public class AvaryAxisUtil {
         } catch (Exception e) {
             return false;
         }
-        List list = parseXml(result);
-        if (list != null && !list.isEmpty())
-            return true;
+        List<Map<String,String>> list = parseXml(result);
+        if (list != null && !list.isEmpty()){
+            Map<String,String[]> map = ScreenHost.create21(list.get(0));
+            ink = ink.substring(ink.indexOf("-")+1,ink.indexOf("."));
+            String[] arr = map.get(ink);
+            if(power.contains(".")){
+                power = power.substring(0,power.indexOf("."));
+            }
+            String temp = arr[0];
+            if(temp.contains(".")){
+                temp = power.substring(0,temp.indexOf("."));
+            }
+            double num = Double.parseDouble(arr[1]);
+
+            String[] range1 = arr[2].split("<");
+            boolean flag = true;
+            double start = Double.parseDouble(range1[0]);
+            String str = range1[1];
+            if(str.startsWith("=")){
+                if( num<start){
+                    flag =false;
+                }
+            }else if(num <= start){
+                flag =false;
+            }
+
+
+            if(str.contains(">")){
+                String[] range2 = str.split("x");
+                if(range2[1].startsWith("=")){
+                    range2[1].split("")
+                    if( num>end){
+                        flag =false;
+                    }
+                }else if(num <= start){
+                    flag =false;
+                }
+            }
+
+
+
+
+
+            if(num >= start && num <= end && temp.equals(power)){
+                return true;
+            }
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
+
+        }
         return false;
     }
 
@@ -446,7 +496,7 @@ public class AvaryAxisUtil {
     public static String insertMasterTable(String paperNo, String status, String deviceCode, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
-        DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
 
@@ -559,16 +609,17 @@ public class AvaryAxisUtil {
      * para2 = "2018082400921|20181110014309|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|"+
      * "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
+     *
      */
-    public static String insertTable(String paperNo, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo, String layerName
-            , String serial, String orderId, String qty, String power, String Item2) throws RemoteException, ServiceException, MalformedURLException {
+    public static String insertTable(String paperNo,String macState, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo,String sfcLayer, String layerName
+            , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
-                "PaperNo|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|LayerName|Serial|OrderId|Qty|Item1|Item2"
-                , createParm(paperNo, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, layerName, serial, orderId, qty, power, Item2)
+                "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6"
+                , createParm(paperNo,macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo,sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6)
                 , now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         if ("OK".equals(result)) {
@@ -576,14 +627,15 @@ public class AvaryAxisUtil {
         }
         return result;
     }
+
     public static String insertTable() throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
-       String para1 = "PaperNo|StartTime|lLot|Lotnum|Layer|sfclayer|LayerName|mainserial|serial|workno|FirstAcess|Item2|Item3|Item4|Item5|Item6|Item7|Item8|Item9|" +
+        String para1 = "PaperNo|StartTime|lLot|Lotnum|Layer|sfclayer|LayerName|mainserial|serial|workno|FirstAcess|Item2|Item3|Item4|Item5|Item6|Item7|Item8|Item9|" +
                 "Item10|Qty|Item11|Item12|Item13|Item14|Item15|Item16|Item17|Item18";
 
-        String   para2 = "2018082400921|开始时间|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|"+
+        String para2 = "2018082400921|开始时间|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|" +
                 "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
@@ -596,6 +648,7 @@ public class AvaryAxisUtil {
         }
         return result;
     }
+
     private static Call getCallForSendDataToSer() throws ServiceException, MalformedURLException {
         String actionUri = "sendDataToSer"; //Action路径
         String op = "sendDataToSer"; //要调用的方法名
@@ -807,6 +860,6 @@ public class AvaryAxisUtil {
      */
     public static String getBom(String partNum, String mainSerial) {
         //todo 需要mes接口
-        return "TTM1FSAPL91";
+        return "TTM1" + partNum;
     }
 }

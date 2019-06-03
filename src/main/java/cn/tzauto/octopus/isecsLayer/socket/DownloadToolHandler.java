@@ -80,10 +80,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
                     }
-                    if (!AvaryAxisUtil.get21Exposure(deviceCode)) {
-                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!");
-                        return;
-                    }
+
                 }
                 recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo,lotNo);
                 Recipe recipe = new Recipe();

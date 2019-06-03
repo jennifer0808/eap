@@ -15,17 +15,17 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.screen.ScreenRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import javax.xml.rpc.ServiceException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,9 +40,47 @@ public class ScreenHost extends EquipModel {
 
     private String tableNum = "SFCZ4_ZD_DIExposure";
     private String power = ""; //曝光能量
+    private String lotStartTime = ""; //开始时间
+    private boolean addLimit = false; //追加限制，只有做完一批才能追加，true 限制开启，正在做，无法追加    false 限制关闭，可以追加
+    private Map<String, List<String>> zsz;
+    private static   List<String[]> inkInfo; //油墨型号，及能量格范围
+    static {
+        readText();
+    }
+
+    {
+        createMap();
+
+    }
+    private static void readText(){
+        String textPath= "D:\\tzauto\\inkInfo.txt";
+        inkInfo = new ArrayList<>();
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(textPath), "UTF-8"));
+            String tmpString = "";
+            while ((tmpString = br.readLine()) != null) {
+                String [] arr = tmpString.split(";");
+                if(arr.length!=4){
+                    logger.error("inkInfo.txt 配置文件格式错误");
+                    UiLogUtil.getInstance().appendLog2SeverTab(null,"inkInfo.txt 配置文件格式错误");
+                }
+                inkInfo.add(arr);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createMap() {
+        zsz = new HashMap<>();
+        zsz.put("ITEM3", new ArrayList<String>());
+        zsz.put("ITEM4", new ArrayList<String>());
+        zsz.put("ITEM5", new ArrayList<String>());
+        zsz.put("ITEM6", new ArrayList<String>());
+    }
 
     private String recipeServerPath = GlobalConstants.stage.hostManager.getDeviceInfo(deviceCode, deviceCode).getRemarks();
-    private String lotCount = "";
+    private String lotCount = "114";
     private String scsl = "";
 
     public ScreenHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
@@ -50,39 +88,18 @@ public class ScreenHost extends EquipModel {
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
-    @Override
-    public void run() {
-        super.run();
-        while (true) {
-            if (lotCount.equals(scsl)) {
-                try {
-                    this.uploadData();
-                } catch (RemoteException e) {
-                    logger.error("上传表单发生异常", e);
-
-                } catch (ServiceException e) {
-                    logger.error("上传表单发生异常", e);
-
-                } catch (MalformedURLException e) {
-
-                    logger.error("上传表单发生异常", e);
-                }
-
-            }
-        }
-    }
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+        addLimit = false; //接触追加限制
         int start = 80000;
         int end = 203000;
         LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
+
         String classInfo = "0";
-        int nowTime = Integer.parseInt(now.format(timeFormatter));
+        int nowTime = Integer.parseInt(now.format(AvaryAxisUtil.dtf3));
         if (start > nowTime || end < nowTime) {
             classInfo = "1";
         }
-        DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
         String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo); //夜班，白班，待确认
         if (result1 == null) {
@@ -93,7 +110,7 @@ public class ScreenHost extends EquipModel {
                 return false;
             }
             result1 = result2;
-            String result3 = AvaryAxisUtil.insertMasterTable(result2, "1", deviceCode, tableNum, classInfo, "001", now.format(dtf2), "eapsystem");  //system临时代替，  創建工號
+            String result3 = AvaryAxisUtil.insertMasterTable(result2, "1", deviceCode, tableNum, classInfo, "001", now.format(AvaryAxisUtil.dtf2), "eapsystem");  //system临时代替，  創建工號
             if (!"".equals(result3)) {
                 logger.error("报表数据上传中，插入主表數據失败" + result3);
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
@@ -117,15 +134,15 @@ public class ScreenHost extends EquipModel {
 
         /**
          * PaperNo	表單號
-         MacState	設備狀態   ----   未传入参数以----结尾
-         StartTime	開始時間   -----
+         MacState	設備狀態          未传入参数以----结尾
+         StartTime	開始時間
          EndTime	完成時間
          Lotnum	批號
          Layer	層別
          MainSerial	主途程序
          Partnum	料號
          WorkNo	工令
-         SfcLayer	SFC層別    -----
+         SfcLayer	SFC層別          与层别一样
          LayerName	層別名稱
          Serial	途程序
          IsMain	是否主件     ----
@@ -133,10 +150,10 @@ public class ScreenHost extends EquipModel {
          Qty	生產數量
          Item1	曝光能量
          Item2	PE
-         Item3	漲縮值X（左）  ----
-         Item4	漲縮值Y（左）   -----
-         Item5	漲縮值X（右）----
-         Item6	漲縮值Y（右）----
+         Item3	漲縮值X（左）
+         Item4	漲縮值Y（左）
+         Item5	漲縮值X（右）
+         Item6	漲縮值Y（右）
          Isfirst	是否初件----
          FirstCheck	初件判定---
          FirstCheckStatus	初件審核-----
@@ -150,17 +167,42 @@ public class ScreenHost extends EquipModel {
          ModifyTime	最後修改時間----
          userid	作業員------
          */
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        String result = AvaryAxisUtil.insertTable(result1, "开始时间", now.format(dateTimeFormatter), lotId, map4.get("Layer"), map5.get("MainSerial"),
-                map5.get("PartNum"), map5.get("WorkNo"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power, map5.get("PE")
+        String item3 = getMun("ITEM3");
+        String item4 = getMun("ITEM4");
+        String item5 = getMun("ITEM5");
+        String item6 = getMun("ITEM6");
+
+        String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
+                map5.get("PartNum"), map5.get("WorkNo"),map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
+                item3, item4, item5, item6
         );
+        createMap();//清空该批次涨缩值
 //        String result = AvaryAxisUtil.insertTable();
         if ("".equals(result)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功" );
             return true;
         }
         logger.error("报表数据上传中，明細表數據插入失败：" + result);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，明細表數據插入失败：" + result);
         return false;
+    }
+
+    private String getMun(String item) {
+        List<String> itemList = zsz.get(item);
+        logger.info("涨缩值为：" + itemList);
+        if (itemList.size() == 0) {
+            return "0";
+        }
+        double temp = 0;
+        for (String s : itemList) {
+            temp = Double.parseDouble(s) + temp;
+        }
+        temp = temp / itemList.size();
+        item = new Double(temp).toString();
+        if (item.contains(".")) {
+            item = item.substring(0, item.indexOf(".") + 4);
+        }
+        return item;
     }
 
     @Override
@@ -244,11 +286,11 @@ public class ScreenHost extends EquipModel {
     @Override
     public Map uploadRecipe(String recipeName) {
 
-        //todo 从共享盘取来EXPOSE.JOB用来解析
+        // 从共享盘取来EXPOSE.JOB用来解析
         String[] recipeNames = recipeName.split("/");
         List<RecipePara> recipeParas = ScreenRecipeUtil.transferFromDB(ScreenRecipeUtil.transferFromFile("//" + recipeServerPath + "//"
                 + recipeNames[0] + "//Img//" + recipeNames[1] + "//EXPOSE.JOB"), deviceType);
-        //todo 将文件从共享盘压缩，转到ftp
+        // 将文件从共享盘压缩，转到ftp
 //        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP");
         try {
             ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z");
@@ -267,12 +309,14 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String downloadRecipe(Recipe recipe) {
-
+        if (addLimit) {
+            return "当前批次结束后才可追加新的批次！";
+        }
         String ftpip = GlobalConstants.ftpIP;
         String ftpUser = GlobalConstants.ftpUser;
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
-        //todo 将文件从ftp转到共享盘
+        // 将文件从ftp转到共享盘
         String partNo = recipe.getRecipeName().split("/")[0];
         String pnlName = recipe.getRecipeName().split("/")[1];
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -281,7 +325,7 @@ public class ScreenHost extends EquipModel {
 
         if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName().replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
-                //todo 下载之后再解压
+                // 下载之后再解压
                 try {
                     ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
@@ -294,7 +338,7 @@ public class ScreenHost extends EquipModel {
         } else {
 
             if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z", ftpip, ftpPort, ftpUser, ftpPwd)) {
-                //todo 下载之后再解压
+                // 下载之后再解压
                 try {
                     ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
                 } catch (InterruptedException e) {
@@ -305,14 +349,16 @@ public class ScreenHost extends EquipModel {
             }
         }
 
-
+        addLimit = true;
         return "0";
     }
 
     @Override
     public String deleteRecipe(String recipeName) {
-        //todo 将文件从共享盘转删除
-        FileUtil.delAllFile("//" + recipeServerPath + "//" + recipeName.split("/")[0]);
+        // 将文件从共享盘转删除
+        if (recipeName.substring(0, 1).equals("F")) {
+            FileUtil.delAllFile("//" + recipeServerPath + "//" + recipeName.split("/")[0]);
+        }
         return "0";
     }
 
@@ -323,8 +369,8 @@ public class ScreenHost extends EquipModel {
         if (file.listFiles().length > 1) {
             File[] files = file.listFiles();
             for (File fileTemp : files) {
-                if (fileTemp.getName().equals(recipeNames[1])) {
-
+                if (!fileTemp.getName().equals(recipeNames[1])) {
+                    FileUtil.deleteAllFilesOfDir(fileTemp);
                 }
             }
         }
@@ -343,7 +389,7 @@ public class ScreenHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
                 iSecsHost.executeCommand("playback writenumber.txt");
                 Thread.sleep(500);
-                //todo 调用接口获取到批次数量
+                // 调用接口获取到批次数量
                 lotCount = AvaryAxisUtil.getLotQty(lotId);
                 for (int i = 0; i < lotCount.length(); i++) {
                     iSecsHost.executeCommand("playback sel" + lotCount.charAt(i) + ".txt");
@@ -351,6 +397,7 @@ public class ScreenHost extends EquipModel {
                 iSecsHost.executeCommand("playback selok.txt");
                 iSecsHost.executeCommand("playback addjob.txt");
                 iSecsHost.executeCommand("playback gotoMain.txt");
+                lotStartTime = LocalDateTime.now().format(AvaryAxisUtil.dtf2);
                 return "0";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
@@ -435,19 +482,35 @@ public class ScreenHost extends EquipModel {
     }
 
     protected boolean specialCheck() {
-
-
+        Map<String, String> resultMap = iSecsHost.readAllParaByScreen("main");
+        String gzxx = resultMap.get("gzxx");
+        String power = resultMap.get("bgl");
+        if (!AvaryAxisUtil.get21Exposure(deviceCode, gzxx, power)) {
+            return false;
+        }
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证通过!!");
         return true;
     }
 
     public Map getSpecificData(Map<String, String> dataIdMap) {
 
 
-        //todo 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
+        // 这里需要获取xy的涨缩值 zx zy  yx yy  单片是 x y
         Map<String, String> resultMap = iSecsHost.readAllParaByScreen("main");
         String temp = resultMap.get("scsl");
         if (temp.contains("/")) {
             scsl = temp.split("/")[0];
+            if (lotCount.equals(scsl)) {
+                try {
+                    uploadData();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                } catch (ServiceException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         power = resultMap.get("bgl");
         Map exposure = new HashMap();
@@ -469,17 +532,28 @@ public class ScreenHost extends EquipModel {
         List<String> parms2 = new ArrayList<>();
         parms2.add(lotId);
         parms2.add(partNo);
-        parms2.add(resultMap.get("zx").equals("") ? resultMap.get("x") : resultMap.get("zx"));
-        parms2.add(resultMap.get("zy").equals("") ? resultMap.get("y") : resultMap.get("zy"));
-        parms2.add(resultMap.get("yx"));
-        parms2.add(resultMap.get("yy"));
+        String item3 = resultMap.get("zx").equals("") ? resultMap.get("x") : resultMap.get("zx");
+        parms2.add(item3);
+
+        String item4 = resultMap.get("zy").equals("") ? resultMap.get("y") : resultMap.get("zy");
+        parms2.add(item4);
+        String item5 = resultMap.get("yx");
+        parms2.add(item5);
+        String item6 = resultMap.get("yy");
+        parms2.add(item6);
+
+        zsz.get("ITEM3").add(item3);
+        zsz.get("ITEM4").add(item4);
+        zsz.get("ITEM5").add(item5);
+        zsz.get("ITEM6").add(item6);
         for (String s : parms2) {
             if (s == null || s.equals("")) {
                 return null;
             }
         }
+
         String result = AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
-        logger.info("发送涨缩值数据到MES" + result);
+        logger.info("发送涨缩值数据到MES" + parms2);
         return exposure;
     }
 
@@ -490,11 +564,11 @@ public class ScreenHost extends EquipModel {
         try {
             mainserial = String.valueOf(AvaryAxisUtil.getParmByLotNumAndLayer(lotNo, "SFCZ4_ZD_DIExposure", layer).get("MainSerial"));
         } catch (RemoteException e) {
-            e.printStackTrace();
+            logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
         } catch (ServiceException e) {
-            e.printStackTrace();
+            logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
         }
 
         String bom = AvaryAxisUtil.getBom(partNo, mainserial);
@@ -503,32 +577,40 @@ public class ScreenHost extends EquipModel {
         try {
             uploadData();
         } catch (RemoteException e) {
-            e.printStackTrace();
+            logger.error("上传报表发生异常", e);
         } catch (ServiceException e) {
-            e.printStackTrace();
+            logger.error("上传报表发生异常", e);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            logger.error("上传报表发生异常", e);
         }
         return recipeName;
     }
-    public Map<String,String[]> create21(Map<String,String> itemMap){
-        Map<String,String[]> map = new HashMap<>();
-        map.put("300-22F",createArray(itemMap.get("ITEM1"),itemMap.get("ITEM2")));
-        map.put("300-22D",createArray(itemMap.get("ITEM3"),itemMap.get("ITEM4")));
-        map.put("9000FLX81",createArray(itemMap.get("ITEM5"),itemMap.get("ITEM6")));
-        map.put("9000FLX501",createArray(itemMap.get("ITEM7"),itemMap.get("ITEM8")));
-        map.put("9000FLX505",createArray(itemMap.get("ITEM9"),itemMap.get("ITEM10")));
-        map.put("9000FLX505WB",createArray(itemMap.get("ITEM11"),itemMap.get("ITEM12")));
-        map.put("LCL1000452",createArray(itemMap.get("ITEM13"),itemMap.get("ITEM14")));
-        map.put("LCL1000423",createArray(itemMap.get("ITEM15"),itemMap.get("ITEM16")));
-        map.put("LCL1000421",createArray(itemMap.get("ITEM17"),itemMap.get("ITEM18")));
-        map.put("LCL1000410",createArray(itemMap.get("ITEM19"),itemMap.get("ITEM20")));
-        return  map;
+
+    public static Map<String, String[]> create21(Map<String, String> itemMap) {
+        Map<String, String[]> map = new HashMap<>();
+        for(int i=0;i<inkInfo.size();i++){
+            String [] arr = inkInfo.get(i);
+            map.put(arr[0],createArray(arr[1],arr[2],arr[3]));
+        }
+
+//        map.put("300-22F", createArray(itemMap.get("ITEM1"), itemMap.get("ITEM2")));
+//        map.put("300-22D", createArray(itemMap.get("ITEM3"), itemMap.get("ITEM4")));
+//        map.put("9000FLX81", createArray(itemMap.get("ITEM5"), itemMap.get("ITEM6")));
+//        map.put("9000FLX501", createArray(itemMap.get("ITEM7"), itemMap.get("ITEM8")));
+//        map.put("9000FLX505", createArray(itemMap.get("ITEM9"), itemMap.get("ITEM10")));
+//        map.put("9000FLX505WB", createArray(itemMap.get("ITEM11"), itemMap.get("ITEM12")));
+//        map.put("LCL1000452", createArray(itemMap.get("ITEM13"), itemMap.get("ITEM14")));
+//        map.put("LCL1000423", createArray(itemMap.get("ITEM15"), itemMap.get("ITEM16")));
+//        map.put("LCL1000421", createArray(itemMap.get("ITEM17"), itemMap.get("ITEM18")));
+//        map.put("LCL1000410", createArray(itemMap.get("ITEM19"), itemMap.get("ITEM20")));
+        return map;
     }
-    private String[] createArray(String item0,String item1){
-        String [] arr = new String [2];
+
+    private static String[] createArray(String item0, String item1,String range) {
+        String[] arr = new String[3];
         arr[0] = item0;
         arr[1] = item1;
-        return  arr;
+        arr[2] = range;
+        return arr;
     }
 }
