@@ -511,4 +511,24 @@ public class ScreenHost extends EquipModel {
         }
         return recipeName;
     }
+    public Map<String,String[]> create21(Map<String,String> itemMap){
+        Map<String,String[]> map = new HashMap<>();
+        map.put("300-22F",createArray(itemMap.get("ITEM1"),itemMap.get("ITEM2")));
+        map.put("300-22D",createArray(itemMap.get("ITEM3"),itemMap.get("ITEM4")));
+        map.put("9000FLX81",createArray(itemMap.get("ITEM5"),itemMap.get("ITEM6")));
+        map.put("9000FLX501",createArray(itemMap.get("ITEM7"),itemMap.get("ITEM8")));
+        map.put("9000FLX505",createArray(itemMap.get("ITEM9"),itemMap.get("ITEM10")));
+        map.put("9000FLX505WB",createArray(itemMap.get("ITEM11"),itemMap.get("ITEM12")));
+        map.put("LCL1000452",createArray(itemMap.get("ITEM13"),itemMap.get("ITEM14")));
+        map.put("LCL1000423",createArray(itemMap.get("ITEM15"),itemMap.get("ITEM16")));
+        map.put("LCL1000421",createArray(itemMap.get("ITEM17"),itemMap.get("ITEM18")));
+        map.put("LCL1000410",createArray(itemMap.get("ITEM19"),itemMap.get("ITEM20")));
+        return  map;
+    }
+    private String[] createArray(String item0,String item1){
+        String [] arr = new String [2];
+        arr[0] = item0;
+        arr[1] = item1;
+        return  arr;
+    }
 }
