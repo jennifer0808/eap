@@ -9,6 +9,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeNameMapping;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
@@ -51,10 +52,12 @@ public class UpLoadHandler implements MessageHandler {
             Recipe recipe = new Recipe();
             List<RecipePara> recipeParaList = new ArrayList<>();
             Map recipeMap = hostManager.getRecipeParaFromDevice(deviceId, recipeName);
+            RecipeNameMapping recipeNameMapping = new RecipeNameMapping();
             if (recipeMap != null) {
                 logger.info("成功获取到recipe信息，开始上传");
                 recipe = (Recipe) recipeMap.get("recipe");
                 recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
+                recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
             }
             recipeParaList = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList);
             sqlSession.commit();
@@ -63,6 +66,7 @@ public class UpLoadHandler implements MessageHandler {
             mqMap.put("deviceCode", deviceCode);
             mqMap.put("recipe", JSONArray.toJSONString(recipe));
             mqMap.put("recipeParaList", JSONArray.toJSONString(recipeParaList));
+            mqMap.put("recipeNameMapping", JSONArray.toJSONString(recipeNameMapping));
             logger.info("开始获取Attach信息");
             List<Attach> attList=hostManager.getRecipeAttachInfo(deviceId, recipe);
             if(attList==null){
