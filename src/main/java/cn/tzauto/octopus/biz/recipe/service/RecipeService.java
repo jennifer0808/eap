@@ -620,9 +620,9 @@ public class RecipeService extends BaseService {
         this.saveRecipeOperationLog(recipeOperationLog);
         if (recipeParas != null && !recipeParas.isEmpty()) {
             recipeParas = setParasRCProwId(recipeParas, recipe.getId());
-//            this.saveRcpParaBatch(recipeParas);
+            this.saveRcpParaBatch(recipeParas);
             //存储之后查询，得到id
-            //  recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+              recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
         }
         //附件信息       
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
