@@ -1876,7 +1876,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map svValue = this.getSpecificSVData(svIdList);
         Map ecValue = this.getSpecificECData(ecIdList);
         Map recipeParaValue = this.getSpecificRcpParaData(recipeParaCodeList);
-        resultMap = svValue;
+        resultMap.putAll(svValue);
         resultMap.putAll(ecValue);
         resultMap.putAll(recipeParaValue);
         return resultMap;

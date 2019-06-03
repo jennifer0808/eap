@@ -8,23 +8,20 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.common.mq.common.MessageHandler;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+
+import javax.jms.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.Queue;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
 
 public class SvTransferHandler implements MessageHandler {
 
@@ -65,7 +62,7 @@ public class SvTransferHandler implements MessageHandler {
                     List svIdListAll = getSvIdList(recipeTemplatesAll);
                     Map resultMap = GlobalConstants.stage.hostManager.getDeviceRcpParaCheck(deviceId, svIdListAll);
                     if (resultMap != null && resultMap.size() > 0) {
-                        ArrayList svListAll = (ArrayList) resultMap.get("SVList");
+                        ArrayList svListAll = (ArrayList) resultMap.get("SV");
                         Map svValueMap = new HashMap();
                         for (int i = 0; i < svIdListAll.size(); i++) {
                             svValueMap.put(String.valueOf(svIdListAll.get(i)), String.valueOf(svListAll.get(i)));
@@ -103,7 +100,7 @@ public class SvTransferHandler implements MessageHandler {
     public static List getSvIdList(List<RecipeTemplate> recipeTemplates) {
         List svIdList = new ArrayList();
         for (int i = 0; i < recipeTemplates.size(); i++) {
-            svIdList.add(recipeTemplates.get(i).getDeviceVariableId());
+            svIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
         }
         return svIdList;
     }
