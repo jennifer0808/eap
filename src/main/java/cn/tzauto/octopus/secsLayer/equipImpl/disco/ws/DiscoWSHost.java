@@ -286,13 +286,13 @@ public class DiscoWSHost extends EquipHost {
         String realRecipeName = "";
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        logger.info("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析      
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         try {
             Map paraMap = DiscoRecipeUtil.transferFromFile(recipePath);
-            logger.info("paraMap size:" + paraMap.size() + "----" + paraMap.isEmpty() + "--++" + paraMap == null);
+            logger.info("paraMap size:" + paraMap.size());
             recipeParaList = DiscoRecipeUtil.transferFromDB(paraMap, deviceType);
             logger.info("recipePara size:" + recipeParaList.size());
             for (RecipePara recipePara : recipeParaList) {
@@ -301,12 +301,16 @@ public class DiscoWSHost extends EquipHost {
                     recipeNameMapping.setDeviceCode(deviceCode);
                     recipeNameMapping.setRecipeName(realRecipeName);
                     recipeNameMapping.setRecipeShortName(recipeName);
+                    logger.info("real recipe name : " + realRecipeName);
+                    logger.info("short recipe name : " + recipeName);
                     List<RecipeNameMapping> recipeNameMappings = recipeService.getRecipeNameByDeviceCodeAndShotName(deviceCode, recipeName, null);
                     if (recipeNameMappings == null || recipeNameMappings.size() < 1) {
+                        logger.info("no this short name in db ,save it "+ recipeName);
                         recipeService.savaRecipeNameMapping(recipeNameMapping);
                     } else {
                         for (RecipeNameMapping recipeNameMappingTmp : recipeNameMappings) {
                             if (!recipeNameMappingTmp.getRecipeName().equals(recipePara.getSetValue())) {
+                                logger.info("transfer recipe name not equals the one in db");
                                 shortNameOK = "N";
                             }
                         }
