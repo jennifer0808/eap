@@ -80,11 +80,12 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                         newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
 //                        hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
                     }
-                    sync++;
-                    publish(newState);
                     if (cev.isComm()) {
+                        newState.setNetConnect(true);
                         hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
+                    sync++;
+                    publish(newState);
                     logger.info("Equip State is changed. publish is called");
                     hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
 //                    hostsManager.getAllEquipHosts().get(this.equipNodeBean.getDeviceCode()).start();

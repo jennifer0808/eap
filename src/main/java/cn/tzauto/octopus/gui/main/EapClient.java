@@ -486,7 +486,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
                         equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
                         equipStatusPane.setCommLabelForegroundColorCommOff();
-                        logger.info(deviceCode + "getControlState---------------------off-line");
+                        logger.info(deviceCode + " getControlState---------------------off-line");
                     } else {
                         if (newPanel.getAlarmState() == 0) {
                             switch (newPanel.getControlState()) {
