@@ -590,7 +590,7 @@ public class ScreenHost extends EquipModel {
         Map<String, String[]> map = new HashMap<>();
         for(int i=0;i<inkInfo.size();i++){
             String [] arr = inkInfo.get(i);
-            map.put(arr[0],createArray(arr[1],arr[2],arr[3]));
+            map.put(arr[0],createArray(itemMap.get(arr[1]),itemMap.get(arr[2]),arr[3]));
         }
 
 //        map.put("300-22F", createArray(itemMap.get("ITEM1"), itemMap.get("ITEM2")));

@@ -332,42 +332,45 @@ public class AvaryAxisUtil {
             }
             double num = Double.parseDouble(arr[1]);
 
-            String[] range1 = arr[2].split("<");
-            boolean flag = true;
-            double start = Double.parseDouble(range1[0]);
-            String str = range1[1];
+            if(!temp.equals(power)){
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
+                return false;
+            }
+
+            String[] range = arr[2].split("<");
+            boolean flag = false;
+            double start = Double.parseDouble(range[0]);
+            String str = range[1];
             if(str.startsWith("=")){
                 if( num<start){
-                    flag =false;
+                    flag =true;
                 }
             }else if(num <= start){
-                flag =false;
+                flag =true;
             }
+            double end = 0;
 
-
-            if(str.contains(">")){
-                String[] range2 = str.split("x");
-                if(range2[1].startsWith("=")){
-                    range2[1].split("")
-                    if( num>end){
-                        flag =false;
+            if(range.length>2){
+                String str2 = range[2];
+                if(str2.startsWith("=")){
+                    end = Double.parseDouble(str2.substring(1));
+                    if(num>end){
+                        flag = true;
                     }
-                }else if(num <= start){
-                    flag =false;
+                }else {
+                    end = Double.parseDouble(str2);
+                    if(num>=end){
+                        flag = true;
+                    }
                 }
+
             }
-
-
-
-
-
-            if(num >= start && num <= end && temp.equals(power)){
-                return true;
+            if(flag){
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
+                return false;
             }
-            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
-
         }
-        return false;
+        return true;
     }
 
     /**
@@ -628,26 +631,6 @@ public class AvaryAxisUtil {
         return result;
     }
 
-    public static String insertTable() throws RemoteException, ServiceException, MalformedURLException {
-
-        Call call = getCallForSendDataToSerGrp();
-        LocalDateTime now = LocalDateTime.now();
-        String para1 = "PaperNo|StartTime|lLot|Lotnum|Layer|sfclayer|LayerName|mainserial|serial|workno|FirstAcess|Item2|Item3|Item4|Item5|Item6|Item7|Item8|Item9|" +
-                "Item10|Qty|Item11|Item12|Item13|Item14|Item15|Item16|Item17|Item18";
-
-        String para2 = "2018082400921|开始时间|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|" +
-                "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
-                para1
-                , para2
-                , now.format(dtf)};
-        String result = (String) call.invoke(params); //方法执行后的返回值
-        if ("OK".equals(result)) {
-            return "";
-        }
-        return result;
-    }
 
     private static Call getCallForSendDataToSer() throws ServiceException, MalformedURLException {
         String actionUri = "sendDataToSer"; //Action路径
@@ -853,13 +836,23 @@ public class AvaryAxisUtil {
 
     /**
      * 根據料號，主途程序獲取曝光底片信息（曝光內容）
-     *
+     *   //SZ 網屏智能化(泰治)料號與主途程序取底片編號
+     *      para1 = "料號|主途程序";
+     *      uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+     *      ds = webServiceDll.ws.getDataFromSer("設備廠商英文名稱","設備英文名稱","設備編號","FPC02","FPC05",para1,uploadTime);
+     *      ret = ds.Tables[0].Rows[0]["V_WSADDVALUE"].ToString();
      * @param partNum
      * @param mainSerial
      * @return string bom
      */
-    public static String getBom(String partNum, String mainSerial) {
+    public static String getBom(String equId,String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
         //todo 需要mes接口
+        Call call = getCallForGetDataFromSer();
+
+        Object[] params = new Object[]{"test", "test", equId, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
+        Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+        List<Map<String, String>> list = parseXml(result);
+
         return "TTM1" + partNum;
     }
 }
