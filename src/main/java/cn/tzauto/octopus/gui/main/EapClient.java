@@ -18,10 +18,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.socket.EquipStatusListen;
-import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
-import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
-import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import cn.tzauto.octopus.secsLayer.domain.*;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -411,6 +408,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             } else {
                 equipStatusPane.setCommLabelForegroundColorCommOff();
             }
+
             equipStatusPane.setRunStatus(value.getEquipStateProperty().getEventString());
             equipStatusPane.setRunningRcp(value.getEquipStateProperty().getRunningRcp());
             equipStatusPanes.put(value.getDeviceCode(), equipStatusPane);
@@ -468,10 +466,14 @@ public class EapClient extends Application implements JobListener, PropertyChang
         if (source instanceof EquipNodeBean) {
             EquipNodeBean src = (EquipNodeBean) source;
             String deviceCode = src.getDeviceCode();
-            if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_PANEL_PROPERTY)) {
-                EquipPanel newPanel = (EquipPanel) newValue;
+            if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_PANEL_PROPERTY)) {//触发监听的属性：EQUIP_PANEL_PROPERTY
+                EquipPanel newPanel = (EquipPanel) newValue;//验证newValue即可
+//                EquipState newState = (EquipState) newValue;
+
                 EquipStatusPane equipStatusPane = equipStatusPanes.get(deviceCode);
+
                 equipStatusPane.setRunStatus(newPanel.getRunState());
+
                 equipStatusPane.setLotId(newPanel.getWorkLot());
                 equipStatusPane.setAlarmState(newPanel.getAlarmState());
                 if ("".equals(newPanel.getRunningRcp())) {
@@ -517,7 +519,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 }
 //                equipStatusPane.updateUI();
             }
-            if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_STATE_PROPERTY)) {
+            if (property.equalsIgnoreCase(EquipNodeBean.EQUIP_STATE_PROPERTY)) {//触发监听的属性：EQUIP_STATE_PROPERTY
                 if (!src.getEquipStateProperty().isNetConnect()) {
                     logger.info("network disconnect==========================");
                     EquipHost equipHost = equipHosts.get(src.getDeviceCode());

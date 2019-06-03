@@ -132,9 +132,16 @@ public class EquipStatusPane {
     }
 
     public void setRunStatus(String eventText) {
-        Platform.runLater(()
-                -> this.L_RunStatus.setText(eventText)
-        );
+//        if (eventText != null && eventText.length() > 15) {
+//            this.L_RunStatus.setText(eventText.substring(0, 12) + "...");
+//        } else {
+//            this.L_RunStatus.setText(eventText);
+//        }
+            Platform.runLater(()
+                    -> this.L_RunStatus.setText(eventText)
+            );
+
+
 
     }
 

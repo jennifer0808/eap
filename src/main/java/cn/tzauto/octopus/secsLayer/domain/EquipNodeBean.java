@@ -43,7 +43,6 @@ public class EquipNodeBean implements Serializable {
     public EquipState getEquipStateProperty() {
         return equipStateProperty;
     }
-
     public void setEquipStateProperty(EquipState value) {
         EquipState oldValue = equipStateProperty;
         equipStateProperty = value;
