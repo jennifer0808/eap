@@ -590,13 +590,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected List getNcessaryData() {
         DataMsgMap data = null;
         try {
-            List statusList = new ArrayList<>();
+            List<Long> statusList = new ArrayList<>();
 
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
-            String equipStatussvid = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId();
-            String pPExecNamesvid = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId();
-            String controlStatesvid = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId();
+            long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+            long pPExecNamesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+            long controlStatesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
             statusList.add(equipStatussvid);
             statusList.add(pPExecNamesvid);
             statusList.add(controlStatesvid);
