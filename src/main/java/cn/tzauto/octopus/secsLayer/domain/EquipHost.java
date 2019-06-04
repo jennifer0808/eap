@@ -2117,7 +2117,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         mqMap.put("msgName", "eqpt.EqptStatusChange");
         mqMap.put("deviceCode", deviceCode);
         mqMap.put("eventName", "eqpt.EqptStatusChange");
-        mqMap.put("deviceInfoExt", JsonMapper.toJsonString(deviceInfoExt));
+        mqMap.put("deviceInfoExt", deviceInfoExt == null ? null:JsonMapper.toJsonString(deviceInfoExt));
         mqMap.put("deviceCeid", deviceOplog.getDeviceCeid());
         mqMap.put("eventDesc", deviceOplog.getOpDesc());
         mqMap.put("eventDate", GlobalConstants.dateFormat.format(new Date()));
@@ -2140,7 +2140,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             //发送设备状态变化记录到服务端
             if (!GlobalConstants.isLocalMode) {
                 this.sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
-                logger.info("发送设备" + deviceCode + "实时状态至服务端");
+                logger.info("deviceOplogList为空时，发送设备" + deviceCode + "实时状态至服务端");
             }
 //           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
         } else {
@@ -2151,7 +2151,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 //发送设备状态到服务端
                 if (!GlobalConstants.isLocalMode) {
                     this.sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
-                    logger.info("发送设备" + deviceCode + "实时状态至服务端");
+                    logger.info("deviceOplogList非空时，发送设备" + deviceCode + "实时状态至服务端");
                 }
 //               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送实时状态至服务端");
             }
