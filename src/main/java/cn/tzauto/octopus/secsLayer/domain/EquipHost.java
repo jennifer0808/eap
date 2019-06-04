@@ -22,9 +22,11 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
@@ -33,8 +35,10 @@ import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
+
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -575,9 +579,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
         if (listtmp != null && !listtmp.isEmpty()) {
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-            ppExecName = String.valueOf(listtmp.get(1));
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+                equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+                ppExecName = String.valueOf(listtmp.get(1));
+                controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
@@ -603,6 +607,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
+            UiLogUtil.getInstance().appendLog2SecsTab("", "获取设备当前状态信息失败，请检查设备状态.");
         }
         if (data == null || data.get("SV") == null) {
             return null;

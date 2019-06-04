@@ -15,16 +15,15 @@ import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -35,9 +34,11 @@ import org.apache.log4j.Logger;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.*;
 
 
 /**
@@ -98,14 +99,14 @@ public class DeviceInfoPaneController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        officeName.setEditable(false);
-        clientCode.setEditable(false);
-        recipeName.setEditable(false);
-        deviceCodeField.setEditable(false);
-        recipeVersionNo.setEditable(false);
-        equipStatus.setEditable(false);
-        lotNo.setEditable(false);
-        deviceType.setEditable(false);
+//        officeName.setEditable(false);
+//        clientCode.setEditable(false);
+//        recipeName.setEditable(false);
+//        deviceCodeField.setEditable(false);
+//        recipeVersionNo.setEditable(false);
+//        equipStatus.setEditable(false);
+//        lotNo.setEditable(false);
+//        deviceType.setEditable(false);
 
     }
 
@@ -126,12 +127,13 @@ public class DeviceInfoPaneController implements Initializable {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        initData(deviceCode, root);
         Image image = new Image(DeviceInfoPaneController.class.getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
 
         Scene scene = new Scene(root);
         stage.setScene(scene);
-        initData(deviceCode, root);
+
         stage.show();
         stage.setResizable(false);
         Button button = (Button) root.lookup("#button");
@@ -142,73 +144,91 @@ public class DeviceInfoPaneController implements Initializable {
     private void initData(String deviceCode, Pane root) {
         SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-        if (deviceInfo != null) {
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
-            clientCode = (TextField) root.lookup("#clientCode");
-            clientCode.setText(deviceInfo.getClientId());
-            deviceCodeField = (TextField) root.lookup("#deviceCodeField");
-            deviceCodeField.setText(deviceInfo.getDeviceCode());
-            equipStatus = (TextField) root.lookup("#equipStatus");
-            equipStatus.setText(deviceInfo.getDeviceStatus());
-            deviceType = (TextField) root.lookup("#deviceType");
-            deviceType.setText(deviceInfo.getDeviceType());
+        DeviceInfo    deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
+        DeviceInfoExt  deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
+        RecipeService recipeService = new RecipeService(sqlSession);
+        SysService sysService = new SysService(sqlSession);
 
-            lotNo = (TextField)root.lookup("#lotNo");
-            recipeVersionNo = (TextField)root.lookup("#recipeVersionNo");
-            JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
-            officeName = (TextField)root.lookup("#officeName");
-//            Map map = new HashMap();
-            try {
-//                map = (Map) statusMap.get(tempDeviceDode);
-                Map map = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
-                if (map == null || map.get("PPExecName") == null || map.isEmpty()) {
-                   UiLogUtil.getInstance().appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
-                    JOptionPane.showMessageDialog(null, "获取设备当前状态信息失败，请检查设备状态.");
-//                    CommonUtil.alert("获取设备当前状态信息失败，请检查设备状态.");
-                    recipeName.setText(deviceInfoExt.getRecipeName());
-                    recipeName.setTooltip(new Tooltip(deviceInfoExt.getRecipeName()));
-                    equipStatus.setText(deviceInfoExt.getDeviceStatus());
-                } else {
+        Map    map=new HashMap();
+
+                Task task = new Task<Map>() {
+            @Override
+            public Map call() {
+                Map map1 = new HashMap();
+                map1 = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
+               setData(map1, root);
+               return map;
+            }
+        };
+        new Thread(task).start();
+        getData(deviceInfoExt,map , deviceInfo, root, recipeService, sysService);
+        sqlSession.close();
+    }
+    public void setData(Map map,Pane root){
+       if(map!=null){
 //                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "测试 SwingWorker......");
 //                    Thread.sleep(10000);
-                    recipeName = (TextField) root.lookup("#recipeName");
-                    recipeName.setText(String.valueOf(map.get("PPExecName")));
-                    recipeName.setTooltip(new Tooltip(String.valueOf(map.get("PPExecName"))));
-                    equipStatus = (TextField) root.lookup("#equipStatus");
-                    equipStatus.setText(String.valueOf(map.get("EquipStatus")));
-                }
-
-                RecipeService recipeService = new RecipeService(sqlSession);
-                if (deviceInfoExt != null) {
-                    lotNo.setText(deviceInfoExt.getLotId());
-                    if (deviceInfoExt.getRecipeId() != null && !"".equals(deviceInfoExt.getRecipeId())) {
-                        Recipe recipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                        if (recipe != null) {
-                            recipeVersionNo.setText(recipe.getVersionNo().toString());
-                        }
-                    }
-                    //工程模式
-                    String businessMod = deviceInfoExt.getBusinessMod();
-                    if ("Engineer".equals(businessMod)) {
-                        JRB_EngineerMode.setSelected(true);
-                    } else {
-                        JRB_EngineerMode.setSelected(false);
-                    }
-                }
-                SysService sysService = new SysService(sqlSession);
-                if (deviceInfo.getOfficeId() != null && !"".equals(deviceInfo.getOfficeId())) {
-                    SysOffice sysOffice = sysService.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
-                    if (sysOffice != null) {
-                        officeName.setText(sysOffice.getName());
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Exception:", e);
-            } finally {
-                sqlSession.close();
-            }
+            recipeName = (TextField) root.lookup("#recipeName");
+            recipeName.setText(String.valueOf(map.get("PPExecName")));
+            recipeName.setTooltip(new Tooltip(String.valueOf(map.get("PPExecName"))));
+            equipStatus = (TextField) root.lookup("#equipStatus");
+            equipStatus.setText(String.valueOf(map.get("EquipStatus")));
         }
 
     }
+   public void  getData(DeviceInfoExt deviceInfoExt,Map map, DeviceInfo    deviceInfo,Pane root ,RecipeService recipeService,SysService sysService){
+       if (deviceInfo != null) {
+           clientCode = (TextField) root.lookup("#clientCode");
+           clientCode.setText(deviceInfo.getClientId());
+           deviceCodeField = (TextField) root.lookup("#deviceCodeField");
+           deviceCodeField.setText(deviceInfo.getDeviceCode());
+           equipStatus = (TextField) root.lookup("#equipStatus");
+           equipStatus.setText(deviceInfo.getDeviceStatus());
+           deviceType = (TextField) root.lookup("#deviceType");
+           deviceType.setText(deviceInfo.getDeviceType());
+
+           lotNo = (TextField) root.lookup("#lotNo");
+           recipeVersionNo = (TextField) root.lookup("#recipeVersionNo");
+           JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
+           officeName = (TextField) root.lookup("#officeName");
+//            Map map = new HashMap();
+           try {
+//                map = (Map) statusMap.get(tempDeviceDode);
+
+//                    CommonUtil.alert("获取设备当前状态信息失败，请检查设备状态.");
+               recipeName = (TextField) root.lookup("#recipeName");
+               equipStatus = (TextField) root.lookup("#equipStatus");
+
+               if (deviceInfoExt != null) {
+                   recipeName.setText(deviceInfoExt.getRecipeName());
+                   recipeName.setTooltip(new Tooltip(deviceInfoExt.getRecipeName()));
+                   equipStatus.setText(deviceInfoExt.getDeviceStatus());
+                   lotNo.setText(deviceInfoExt.getLotId());
+                   if (deviceInfoExt.getRecipeId() != null && !"".equals(deviceInfoExt.getRecipeId())) {
+                       Recipe recipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                       if (recipe != null) {
+                           recipeVersionNo.setText(recipe.getVersionNo().toString());
+                       }
+                   }
+                   //工程模式
+                   String businessMod = deviceInfoExt.getBusinessMod();
+                   if ("Engineer".equals(businessMod)) {
+                       JRB_EngineerMode.setSelected(true);
+                   } else {
+                       JRB_EngineerMode.setSelected(false);
+                   }
+               }
+
+               if (deviceInfo.getOfficeId() != null && !"".equals(deviceInfo.getOfficeId())) {
+                   SysOffice sysOffice = sysService.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
+                   if (sysOffice != null) {
+                       officeName.setText(sysOffice.getName());
+                   }
+               }
+           } catch (Exception e) {
+               logger.error("Exception:", e);
+           }
+       }
+
+   }
 }
