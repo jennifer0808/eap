@@ -70,6 +70,7 @@ public abstract class EquipModel extends Thread {
     public int notGetAlarmCount = 0;
     public String partNo = "";
     public String deviceName = "";
+    public String lotCount = "";
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -1008,7 +1009,7 @@ public abstract class EquipModel extends Thread {
         return result;
     }
 
-  public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+    public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
         return true;
     }
 }

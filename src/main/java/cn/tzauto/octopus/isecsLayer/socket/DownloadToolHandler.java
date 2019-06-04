@@ -114,6 +114,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                 if ("0".equals(downloadresult)) {
                     GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNo;
                     GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
+                    GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
                     deviceInfoExt.setLotId(lotNo);
                     deviceInfoExt.setPartNo(partNo);
                     deviceInfoExt.setRecipeName(recipeName);

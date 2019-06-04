@@ -56,7 +56,8 @@ public class UploadPaneController implements Initializable {
     private MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
     private String deviceId;
 
-    public static  Stage stage= new Stage();
+    public static Stage stage = new Stage();
+
     static {
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -76,9 +77,10 @@ public class UploadPaneController implements Initializable {
         stage.setTitle("Recipe上传");
 
     }
+
     List<DeviceInfo> deviceInfos;
     private String deviceType;
-    Boolean isAlert = true ;
+    Boolean isAlert = true;
     @FXML
     private TableView<RecipeName> dataTable; //tableView
     @FXML
@@ -188,7 +190,7 @@ public class UploadPaneController implements Initializable {
                 deviceId = deviceInfo.getDeviceCode();
                 Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
                 if (resultMap == null) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！", stage);
                     return;
                 }
                 eppd = (ArrayList) resultMap.get("eppd");
@@ -214,12 +216,12 @@ public class UploadPaneController implements Initializable {
         }
 
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！", stage);
             return;
         }
 
         if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！",stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！", stage);
             return;
         }
 
@@ -228,85 +230,76 @@ public class UploadPaneController implements Initializable {
         RecipeService recipeService = new RecipeService(sqlSession);
         try {
             for (int i = 0; i < recipeNames.size(); i++) {
-            RecipeName rn = recipeNames.get(i);
-            if (rn.getCheckBox().isSelected()) {
-                String recipeName = rn.getRecipeName().getValue();
-                rns.add(recipeName);
-                if (CMB_deviceCode.getSelectionModel().getSelectedItem() != null) {
-                    String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
-                    if ("--请选择--".equals(deviceCodeTmp) || deviceCodeTmp.equals(deviceCode)) {
-                        deviceCode = "";
+                RecipeName rn = recipeNames.get(i);
+                if (rn.getCheckBox().isSelected()) {
+                    String recipeName = rn.getRecipeName().getValue();
+                    rns.add(recipeName);
+                    if (CMB_deviceCode.getSelectionModel().getSelectedItem() != null) {
+                        String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
+                        if ("--请选择--".equals(deviceCodeTmp) || deviceCodeTmp.equals(deviceCode)) {
+                            deviceCode = "";
+                        }
+                        deviceCode = deviceCodeTmp;
                     }
-                    deviceCode = deviceCodeTmp;
-                }
 
-                if (deviceCode.equals("")) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
-                    GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
-                    return;
-                }
-                Map recipeMap = null;
-                try {
-                    recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
-                    if (recipeMap == null) {
+                    if (deviceCode.equals("")) {
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！", loginStage);
+                        GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
+                        return;
+                    }
+                    Map recipeMap = null;
+                    try {
+                        recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
+                        if (recipeMap == null) {
+                            JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+                            return;
+                        } else if (recipeMap.get("checkResult") != null) {
+                            JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+                            return;
+                        }
+                    } catch (UploadRecipeErrorException upe) {
                         JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
                         return;
-                    } else if (recipeMap.get("checkResult") != null) {
-                        JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
-                        return;
                     }
-                } catch (UploadRecipeErrorException upe) {
-                    JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
-                    return;
-                }
 
-                //此处从map中获取
-                Recipe recipe = null;
-                if (recipeMap.get("recipe") != null) {
-                    recipe = (Recipe) recipeMap.get("recipe");
-                }
-                if ("N".equals(recipeMap.get("shortNameOK"))) {
-                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
-                    return;
-                }
-                //T640如果三个文件没有全部上传成功，即可认定为上传失败，不走上传流程，rcpAnalyseSucceed为N表示上传失败
-                if (recipeMap.get("rcpAnalyseSucceed") == null || "Y".equals(String.valueOf(recipeMap.get("rcpAnalyseSucceed")))) {
+                    //此处从map中获取
+                    Recipe recipe = null;
+                    if (recipeMap.get("recipe") != null) {
+                        recipe = (Recipe) recipeMap.get("recipe");
+                    }
                     List<RecipePara> recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
                     RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
                     //保存数据
                     boolean re;
-                        if (recipeNameMapping != null) {
-                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
-                        } else {
-                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
-                        }
+                    if (recipeNameMapping != null) {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
+                    } else {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                    }
 
                     //打日志
                     if (!re) {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传",stage);
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"上传失败，ftp文件传送失败，请重新上传");
-                        isAlert = false ;
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传", stage);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败，ftp文件传送失败，请重新上传");
+                        isAlert = false;
                     } else {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
                     }
                     sqlSession.commit();
-                } else {
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
+
                 }
-              }
-           }
-            if(isAlert){
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
+            }
+            if (isAlert) {
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！", stage);
                 return;
             }
 
-        }catch(Exception e){
+        } catch (Exception e) {
             sqlSession.rollback();
             logger.error("Exception:", e);
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！",stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！", stage);
             return;
-        }finally {
+        } finally {
             sqlSession.close();
         }
         stage.close();

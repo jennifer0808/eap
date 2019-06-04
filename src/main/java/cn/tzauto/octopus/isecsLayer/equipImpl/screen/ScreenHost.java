@@ -2,6 +2,7 @@ package cn.tzauto.octopus.isecsLayer.equipImpl.screen;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
@@ -26,10 +27,7 @@ import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by luosy on 2019/5/16.
@@ -53,7 +51,7 @@ public class ScreenHost extends EquipModel {
 
     }
     private static void readText(){
-        String textPath= "D:\\tzauto\\inkInfo.txt";
+        String textPath= GlobalConstants.getProperty("INK_INFO_FILE_PATH");
         inkInfo = new ArrayList<>();
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(textPath), "UTF-8"));
@@ -66,6 +64,7 @@ public class ScreenHost extends EquipModel {
                 }
                 inkInfo.add(arr);
             }
+            logger.info("加载的油墨信息为："+inkInfo);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,7 +79,6 @@ public class ScreenHost extends EquipModel {
     }
 
     private String recipeServerPath = GlobalConstants.stage.hostManager.getDeviceInfo(deviceCode, deviceCode).getRemarks();
-    private String lotCount = "114";
     private String scsl = "";
 
     public ScreenHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
@@ -553,7 +551,7 @@ public class ScreenHost extends EquipModel {
         }
 
         String result = AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
-        logger.info("发送涨缩值数据到MES" + parms2);
+        logger.info("发送涨缩值数据到MES" + parms2+",已经生产数量："+scsl);
         return exposure;
     }
 
@@ -571,7 +569,19 @@ public class ScreenHost extends EquipModel {
             logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
         }
 
-        String bom = AvaryAxisUtil.getBom(partNo, mainserial);
+        String bom = null;
+        try {
+            bom = AvaryAxisUtil.getBom(deviceCode,partNo, mainserial);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        if(bom == null){
+            return "Can not find any bom info by partNum:"+partNo;
+        }
         String recipeName = partNo.substring(0, 7) + "/" + bom + "-2PNL";
 
         try {
@@ -612,5 +622,28 @@ public class ScreenHost extends EquipModel {
         arr[1] = item1;
         arr[2] = range;
         return arr;
+    }
+    public List<Attach> getRecipeAttachInfo(Recipe recipe) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        String recipeName = recipe.getRecipeName();
+        String ftpRecipePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
+        List<Attach> attachs = new ArrayList<>();
+        Attach attach = new Attach();
+        attach.setId(UUID.randomUUID().toString());
+        attach.setRecipeRowId(recipe.getId());
+        attach.setAttachPath(ftpRecipePath);
+        attach.setAttachName(recipeName + ".7z_V" + recipe.getVersionNo());
+        attach.setAttachType("");
+        attach.setSortNo(0);
+        if (GlobalConstants.sysUser != null) {
+            attach.setCreateBy(GlobalConstants.sysUser.getId());
+            attach.setUpdateBy(GlobalConstants.sysUser.getId());
+        } else {
+            attach.setCreateBy("System");
+            attach.setUpdateBy("System");
+        }
+        attachs.add(attach);
+        sqlSession.close();
+        return attachs;
     }
 }

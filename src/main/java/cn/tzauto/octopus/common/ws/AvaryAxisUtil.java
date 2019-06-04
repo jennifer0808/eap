@@ -75,6 +75,8 @@ public class AvaryAxisUtil {
     }
 
     public static void main(String[] args) {
+        String temp = unicode2String("&#xe23d");
+        System.out.println(temp);
 //        downLoadRecipeFormCIM("deviceCode", "recipeName");
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
         //1-1
@@ -164,8 +166,10 @@ public class AvaryAxisUtil {
 //        }
 
 //2-4
+//        String lotNum = "M905210831";
+//        Map<String,String> map = null;
 //        try {
-//             getParmByLotNum("M905271721");
+//             map = getParmByLotNum(lotNum);
 //            System.out.println();
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
@@ -174,18 +178,32 @@ public class AvaryAxisUtil {
 //        } catch (MalformedURLException e) {
 //            e.printStackTrace();
 //        }
-
-//        2-5
-        try {
-            Map list = getParmByLotNumAndLayer("M905271721", "SFCZ4_ZD_DIExposure", "0");
-            System.out.println(list);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+//
+////        2-5
+//        try {
+//            map = getParmByLotNumAndLayer(lotNum, "SFCZ4_ZD_DIExposure", map.get("Layer"));
+//            System.out.println(map);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+//
+//      //getBom
+//        try {
+//            getBom("#01","FSAPJC7B4B","47");
+////            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        }
+        System.out.print(getLotQty("M905291741"));
+        ;
 
 //2-6
 //        try {
@@ -222,6 +240,7 @@ public class AvaryAxisUtil {
             return "上岗证验证失败";
         }
         List<Map<String, String>> list = parseXml(result);
+        logger.info("員工上崗證信息查詢:" + equipID + ";" + workID + "，结果为：" + list);
         String ok = null;
         if (list.size() > 0) {
             ok = list.get(0).get("YZRESULT");
@@ -250,6 +269,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"F0716614", "6614", equipID, "0005", "PA001", createParm(equipID, partNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List list = parseXml(result);
+        logger.info("生產條件獲取接口:" + equipID + ";" + partNum + "，结果为：" + list);
         return list;
     }
 
@@ -290,6 +310,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("判定是否要開初件方法:" + partNum + ";" + deviceCode + ";" + opportunity + "，结果为：" + list);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
             String yzResult = map.get("LASTVALUE");//实际测试返回值不是returns
@@ -307,7 +328,7 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("test", "test", "#01", "0004", "0018", "防焊曝光21節記錄表|TEST|3", System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
 
-    public static boolean get21Exposure(String deviceCode,String ink,String power) {
+    public static boolean get21Exposure(String deviceCode, String ink, String power) {
         Call call = null;
         Schema result = null;
         try {
@@ -318,22 +339,23 @@ public class AvaryAxisUtil {
         } catch (Exception e) {
             return false;
         }
-        List<Map<String,String>> list = parseXml(result);
-        if (list != null && !list.isEmpty()){
-            Map<String,String[]> map = ScreenHost.create21(list.get(0));
-            ink = ink.substring(ink.indexOf("-")+1,ink.indexOf("."));
+        List<Map<String, String>> list = parseXml(result);
+        logger.info("曝光21節獲取接口:" + deviceCode + ";" + ink + ";" + power + "，结果为：" + list);
+        if (list != null && !list.isEmpty()) {
+            Map<String, String[]> map = ScreenHost.create21(list.get(0));
+            ink = ink.substring(ink.indexOf("-") + 1, ink.indexOf("."));
             String[] arr = map.get(ink);
-            if(power.contains(".")){
-                power = power.substring(0,power.indexOf("."));
+            if (power.contains(".")) {
+                power = power.substring(0, power.indexOf("."));
             }
             String temp = arr[0];
-            if(temp.contains(".")){
-                temp = power.substring(0,temp.indexOf("."));
+            if (temp.contains(".")) {
+                temp = power.substring(0, temp.indexOf("."));
             }
             double num = Double.parseDouble(arr[1]);
 
-            if(!temp.equals(power)){
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
+            if (!temp.equals(power)) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号：" + ink + ",能量强度为：" + power + ",能量格为：" + num);
                 return false;
             }
 
@@ -341,32 +363,32 @@ public class AvaryAxisUtil {
             boolean flag = false;
             double start = Double.parseDouble(range[0]);
             String str = range[1];
-            if(str.startsWith("=")){
-                if( num<start){
-                    flag =true;
+            if (str.startsWith("=")) {
+                if (num < start) {
+                    flag = true;
                 }
-            }else if(num <= start){
-                flag =true;
+            } else if (num <= start) {
+                flag = true;
             }
             double end = 0;
 
-            if(range.length>2){
+            if (range.length > 2) {
                 String str2 = range[2];
-                if(str2.startsWith("=")){
+                if (str2.startsWith("=")) {
                     end = Double.parseDouble(str2.substring(1));
-                    if(num>end){
+                    if (num > end) {
                         flag = true;
                     }
-                }else {
+                } else {
                     end = Double.parseDouble(str2);
-                    if(num>=end){
+                    if (num >= end) {
                         flag = true;
                     }
                 }
 
             }
-            if(flag){
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号："+ink+",能量强度为："+power+",能量格为："+num);
+            if (flag) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证失败!!油墨型号：" + ink + ",能量强度为：" + power + ",能量格为：" + num);
                 return false;
             }
         }
@@ -397,6 +419,7 @@ public class AvaryAxisUtil {
             e.printStackTrace();
         }
         List<Map<String, String>> list = parseXml(result);
+        logger.info("該批號印刷初件是否OK:" + deviceName + ";" + lotNum + ";" + partNum + ";" + tableNum + "，结果为：" + list);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
             String value = map.get("LASTVALUE");
@@ -425,6 +448,7 @@ public class AvaryAxisUtil {
             call = getCallForSendDataToSer();
             Object[] params = new Object[]{"F0716614", "6614", equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
             result = (String) call.invoke(params); //方法执行后的返回值
+            logger.info("每PNL物料生產信息拋轉到數據庫:" + equipID + ";" + paraName + ";" + paraValue + "，结果为：" + result);
             if ("OK".equals(result)) {
                 return "";
             }
@@ -449,6 +473,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0004", "G0001", createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("已有表單單號查詢:" + tableNum + ";" + machineNo + ";" + classInfo + "，结果为：" + list);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
             Set<String> strings = map.keySet();
@@ -476,6 +501,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0002", createParm(time.format(dtf1), classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("系統生產單號:" + classInfo + "，结果为：" + list);
         if (list.size() > 0) {
             Map<String, String> map = list.get(0);
             Set<String> strings = map.keySet();
@@ -497,7 +523,6 @@ public class AvaryAxisUtil {
      * System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
     public static String insertMasterTable(String paperNo, String status, String deviceCode, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
-
         Call call = getCallForSendDataToSerGrp();
 
         LocalDateTime now = LocalDateTime.now();
@@ -506,6 +531,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
                 , createParm(paperNo, status, time.format(dtf1), deviceCode, "SFCZ4_ZD_DIExposure", classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
+        logger.info("插入主表數據:" + paperNo + ";" + status + ";" + deviceCode + ";" + classInfo + ";" + createEmpid + ";" + "，结果为：" + result);
         if ("OK".equals(result)) {
             return "";
         }
@@ -525,6 +551,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("批號獲料號,層別,數量:" + lotNum + ";" + "，结果为：" + result);
         Map<String, String> paraMap = new HashMap();
         if (list.size() == 0) {
             return paraMap;
@@ -587,6 +614,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("根據 批號,層別 帶出 料號,在製層,途程序,主途程序:" + lotNum + ";" + paperNum + ";" + layer + ";" + "，结果为：" + list);
         Map paraMap = new HashMap();
         if (list != null && list.size() > 0) {
             Map<String, String> map = list.get(0);
@@ -597,7 +625,8 @@ public class AvaryAxisUtil {
             paraMap.put("MainSerial", map.get("主途程序"));
             paraMap.put("PE", map.get("制程"));
             paraMap.put("主配件", map.get("主配件"));
-            paraMap.put("LayerName", unicode2String(map.get("層別名稱")));
+//            paraMap.put("LayerName", unicode2String(map.get("層別名稱")));
+            paraMap.put("LayerName", "");
             paraMap.put("OrderId", map.get("第幾次過站"));
             paraMap.put("WorkNo", map.get("工令"));
             paraMap.put("BOM", "");
@@ -612,9 +641,8 @@ public class AvaryAxisUtil {
      * para2 = "2018082400921|20181110014309|FSNW003A1A|M808172031|60|60|主要+CVL-ACVL-B|17|8|WN6-I80309|5|FSNW003A1ASTA|0|0|90|90|7|SG10046|FSNW003STAA1A|"+
      * "G1478673|12|5|G1478673|STA|0.225mm|16188052-A602222|STA|0.225mm|16188052-A602222";
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
-     *
      */
-    public static String insertTable(String paperNo,String macState, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo,String sfcLayer, String layerName
+    public static String insertTable(String paperNo, String macState, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo, String sfcLayer, String layerName
             , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
@@ -622,9 +650,10 @@ public class AvaryAxisUtil {
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
                 "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6"
-                , createParm(paperNo,macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo,sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6)
+                , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6)
                 , now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
+        logger.info("明細表數據插入:" + createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6) + "，结果为：" + result);
         if ("OK".equals(result)) {
             return "";
         }
@@ -836,23 +865,33 @@ public class AvaryAxisUtil {
 
     /**
      * 根據料號，主途程序獲取曝光底片信息（曝光內容）
-     *   //SZ 網屏智能化(泰治)料號與主途程序取底片編號
-     *      para1 = "料號|主途程序";
-     *      uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-     *      ds = webServiceDll.ws.getDataFromSer("設備廠商英文名稱","設備英文名稱","設備編號","FPC02","FPC05",para1,uploadTime);
-     *      ret = ds.Tables[0].Rows[0]["V_WSADDVALUE"].ToString();
+     * //SZ 網屏智能化(泰治)料號與主途程序取底片編號
+     * para1 = "料號|主途程序";
+     * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+     * ds = webServiceDll.ws.getDataFromSer("設備廠商英文名稱","設備英文名稱","設備編號","FPC02","FPC05",para1,uploadTime);
+     * ret = ds.Tables[0].Rows[0]["V_WSADDVALUE"].ToString();
+     *
      * @param partNum
      * @param mainSerial
      * @return string bom
      */
-    public static String getBom(String equId,String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
+    public static String getBom(String deviceCode, String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
         //todo 需要mes接口
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"test", "test", equId, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", deviceCode, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
-
-        return "TTM1" + partNum;
+        if (list.size() == 0) {
+            logger.error("获取bom资料失败。。。" + partNum + ";" + mainSerial + ";" + deviceCode);
+            return null;
+        }
+        String bom = list.get(0).get("LASTVALUE");
+//        String bom = list.get(0).get("V_WSADDVALUE");
+        int j = bom.indexOf(" ");
+        String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
+        String range2 = bom.substring(bom.indexOf("REV:") + 4);
+        String num = range1.replace("-", "") + range2;
+        return num;
     }
 }

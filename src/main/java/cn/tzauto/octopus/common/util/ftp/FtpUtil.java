@@ -169,7 +169,8 @@ public class FtpUtil {
                     logger.debug("mkdir===========================================");
                 }
 
-                ftp.changeWorkingDirectory(remoteDirectory);
+                boolean changeWorkingDirectory = ftp.changeWorkingDirectory(remoteDirectory);
+                logger.debug("changeWorkingDirectory===========================================" + changeWorkingDirectory);
                 FTPFile[] ftpfiles = null;
                 String LOCAL_CHARSET = "GBK";
                 if (FTPReply.isPositiveCompletion(ftp.sendCommand("OPTS UTF8", "ON"))) {
@@ -477,19 +478,21 @@ public class FtpUtil {
 //            }
 //        }
 //        System.out.println(uploadflag);
-        uploadFile("D:\\RECIPE\\PNLPG012#TZ-TEST@TTM2FQAPKL1A4A-2PNLtemp\\TZ-TEST@TTM2FQAPKL1A4A-2PNL.7z","/usr/local/eap/RECIPE/","test.txt",
+        uploadFile("D:\\RECIPE\\PNLPG012#TZ-TEST@TTM2FQAPKL1A4A-2PNLtemp\\TZ-TEST@TTM2FQAPKL1A4A-2PNL.7z", "/RECIPE/A1/FHPG/SCREEN-LEDIA/Engineer/PNLPG012#/FSAPGH3@BTM2FSAPGH3D2F-2PNL/", "test.txt",
                 "10.182.45.182", "21", "eap", "ftp123456");
 //        uploadFile("D:\\RECIPE\\test.txt","/","test.txt",
 //                "10.182.45.182", "21", "eap", "ftp123456");
-//        boolean a = checkFileExist("/VNC/", "nginx.conf", "10.182.45.182", "21", "eap", "ftp123456");
-//        System.out.print(a);
-//        String localFilePath = "D://RECIPE/12-210-145-6K-NP-8SR-12.txt";
-//        String remoteFilePath = "VNC.url";
-//        String serverIp = "10.182.45.182";
-//        String serverPort = "21";
-//        String userName = "eap";
-//        String password = "ftp123456";
-//        a = downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
+//        boolean a = checkFileExist("/RECIPE/A1/FHPG/SCREEN-LEDIA/Engineer/PNLPG012#/FSAPFN9@BTM2FSAPFN9D2H-2PNL/", "FSAPFN9@BTM2FSAPFN9D2H-2PNL.7z_V0", "10.182.45.182", "21", "eap", "ftp123456");
+        boolean a = checkFileExist("/RECIPE/A1/FHPG/SCREEN-LEDIA/Engineer/", "a.sql", "10.182.45.182", "21", "eap", "ftp123456");
+        System.out.print(a);
+        String localFilePath = "D://RECIPE/12-210-145-6K-NP-8SR-12.txt";
+//        String remoteFilePath = "/RECIPE/A1/FHPG/SCREEN-LEDIA/Engineer/PNLPG012#/FSAPFN9@BTM2FSAPFN9D2H-2PNL/FSAPFN9@BTM2FSAPFN9D2H-2PNL.7z_V0";
+        String remoteFilePath = "/RECIPE/A1/FHPG/SCREEN-LEDIA/Engineer/a.sql";
+        String serverIp = "10.182.45.182";
+        String serverPort = "21";
+        String userName = "eap";
+        String password = "ftp123456";
+        a = downloadFile(localFilePath, remoteFilePath, serverIp, serverPort, userName, password);
 //        System.out.print(a);
 
     }
