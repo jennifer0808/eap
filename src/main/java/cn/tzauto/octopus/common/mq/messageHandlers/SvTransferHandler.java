@@ -60,7 +60,10 @@ public class SvTransferHandler implements MessageHandler {
                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "没有获取到设备sv参数信息");
                 } else {
                     List svIdListAll = getSvIdList(recipeTemplatesAll);
-                    Map resultMap = GlobalConstants.stage.hostManager.getDeviceRcpParaCheck(deviceId, svIdListAll);
+                    logger.info("svid list: "+svIdListAll);
+                    logger.info("device id: "+deviceId);
+                    logger.info("device code: "+deviceCode);
+                    Map resultMap = GlobalConstants.stage.hostManager.getDeviceRcpParaCheck(deviceCode, svIdListAll);
                     if (resultMap != null && resultMap.size() > 0) {
                         ArrayList svListAll = (ArrayList) resultMap.get("SV");
                         Map svValueMap = new HashMap();
@@ -100,6 +103,7 @@ public class SvTransferHandler implements MessageHandler {
     public static List getSvIdList(List<RecipeTemplate> recipeTemplates) {
         List svIdList = new ArrayList();
         for (int i = 0; i < recipeTemplates.size(); i++) {
+            logger.info("svid: "+recipeTemplates.get(i).getDeviceVariableId());
             svIdList.add(Long.parseLong(recipeTemplates.get(i).getDeviceVariableId()));
         }
         return svIdList;
