@@ -26,7 +26,6 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB800Util;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -65,6 +64,7 @@ public class HTDB800Host extends EquipHost {
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
         EquipStateChangeCeid = 4L;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -550,31 +550,12 @@ public class HTDB800Host extends EquipHost {
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            logger.error("InterruptedException:", e);
-        }
-        DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        //byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        byte[] ppbody = {1};
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            sleep(3000);
+            return super.sendS7F3out(localRecipeFilePath, targetRecipeName);
         } catch (Exception e) {
-            logger.error("Exception", e);
+            logger.error("Exception:", e);
+            return null;
         }
-        byte ackc7 = (byte) data.get("ACKC7");
-        Map resultMap = new HashMap();
-        resultMap.put("msgType", "s7f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-        return resultMap;
     }
 
     @Override
