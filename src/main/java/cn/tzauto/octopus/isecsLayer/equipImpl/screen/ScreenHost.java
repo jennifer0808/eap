@@ -41,7 +41,8 @@ public class ScreenHost extends EquipModel {
     private String lotStartTime = ""; //开始时间
     private boolean addLimit = false; //追加限制，只有做完一批才能追加，true 限制开启，正在做，无法追加    false 限制关闭，可以追加
     private Map<String, List<String>> zsz;
-    private static   List<String[]> inkInfo; //油墨型号，及能量格范围
+    private static List<String[]> inkInfo; //油墨型号，及能量格范围
+
     static {
         readText();
     }
@@ -50,21 +51,22 @@ public class ScreenHost extends EquipModel {
         createMap();
 
     }
-    private static void readText(){
-        String textPath= GlobalConstants.getProperty("INK_INFO_FILE_PATH");
+
+    private static void readText() {
+        String textPath = GlobalConstants.getProperty("INK_INFO_FILE_PATH");
         inkInfo = new ArrayList<>();
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(textPath), "UTF-8"));
             String tmpString = "";
             while ((tmpString = br.readLine()) != null) {
-                String [] arr = tmpString.split(";");
-                if(arr.length!=4){
+                String[] arr = tmpString.split(";");
+                if (arr.length != 4) {
                     logger.error("inkInfo.txt 配置文件格式错误");
-                    UiLogUtil.getInstance().appendLog2SeverTab(null,"inkInfo.txt 配置文件格式错误");
+                    UiLogUtil.getInstance().appendLog2SeverTab(null, "inkInfo.txt 配置文件格式错误");
                 }
                 inkInfo.add(arr);
             }
-            logger.info("加载的油墨信息为："+inkInfo);
+            logger.info("加载的油墨信息为：" + inkInfo);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -171,13 +173,13 @@ public class ScreenHost extends EquipModel {
         String item6 = getMun("ITEM6");
 
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
-                map5.get("PartNum"), map5.get("WorkNo"),map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
+                map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
                 item3, item4, item5, item6
         );
         createMap();//清空该批次涨缩值
 //        String result = AvaryAxisUtil.insertTable();
         if ("".equals(result)) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功" );
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
             return true;
         }
         logger.error("报表数据上传中，明細表數據插入失败：" + result);
@@ -355,7 +357,16 @@ public class ScreenHost extends EquipModel {
     public String deleteRecipe(String recipeName) {
         // 将文件从共享盘转删除
         if (recipeName.substring(0, 1).equals("F")) {
-            FileUtil.delAllFile("//" + recipeServerPath + "//" + recipeName.split("/")[0]);
+            FileUtil.deleteAllFilesOfDir(new File("//" + recipeServerPath + "//" + recipeName.split("/")[0]));
+        }
+        List<String> recipeNameList = (List<String>) getEquipRecipeList().get("eppd");
+        for (String recipeNameTemp : recipeNameList) {
+            if (recipeNameTemp.equals(recipeName)) {
+                continue;
+            }
+            if (recipeName.substring(0, 1).equals("F")) {
+                FileUtil.deleteAllFilesOfDir(new File("//" + recipeServerPath + "//" + recipeNameTemp.split("/")[0]));
+            }
         }
         return "0";
     }
@@ -416,13 +427,17 @@ public class ScreenHost extends EquipModel {
         File[] files = file.listFiles();
         List recipeName = new ArrayList();
         for (int i = 0; i < files.length; i++) {
-            File fileTemp = new File(files[i].getPath() + "//Img");
-            if (fileTemp.exists() && fileTemp.isDirectory()) {
-                String[] filenamesTemp = fileTemp.list();
-                for (int j = 0; j < filenamesTemp.length; j++) {
-                    recipeName.add(files[i].getName() + "/" + filenamesTemp[j]);
-                }
+            if (files[i].getName().startsWith("F")) {
+                File fileTemp = new File(files[i].getPath() + "//Img");
+                if (fileTemp.exists() && fileTemp.isDirectory()) {
+                    String[] filenamesTemp = fileTemp.list();
+                    for (int j = 0; j < filenamesTemp.length; j++) {
 
+                        recipeName.add(files[i].getName() + "/" + filenamesTemp[j]);
+
+                    }
+
+                }
             }
         }
         Map map = new HashMap();
@@ -551,7 +566,7 @@ public class ScreenHost extends EquipModel {
         }
 
         String result = AvaryAxisUtil.uploadMessageEveryPNL(deviceName, parms1, parms2);
-        logger.info("发送涨缩值数据到MES" + parms2+",已经生产数量："+scsl);
+        logger.info("发送涨缩值数据到MES" + parms2 + ",已经生产数量：" + scsl);
         return exposure;
     }
 
@@ -571,7 +586,7 @@ public class ScreenHost extends EquipModel {
 
         String bom = null;
         try {
-            bom = AvaryAxisUtil.getBom(deviceCode,partNo, mainserial);
+            bom = AvaryAxisUtil.getBom(deviceCode, partNo, mainserial);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ServiceException e) {
@@ -579,28 +594,18 @@ public class ScreenHost extends EquipModel {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        if(bom == null){
-            return "Can not find any bom info by partNum:"+partNo;
+        if (bom == null) {
+            return "Can not find any bom info by partNum:" + partNo;
         }
         String recipeName = partNo.substring(0, 7) + "/" + bom + "-2PNL";
-
-        try {
-            uploadData();
-        } catch (RemoteException e) {
-            logger.error("上传报表发生异常", e);
-        } catch (ServiceException e) {
-            logger.error("上传报表发生异常", e);
-        } catch (MalformedURLException e) {
-            logger.error("上传报表发生异常", e);
-        }
         return recipeName;
     }
 
     public static Map<String, String[]> create21(Map<String, String> itemMap) {
         Map<String, String[]> map = new HashMap<>();
-        for(int i=0;i<inkInfo.size();i++){
-            String [] arr = inkInfo.get(i);
-            map.put(arr[0],createArray(itemMap.get(arr[1]),itemMap.get(arr[2]),arr[3]));
+        for (int i = 0; i < inkInfo.size(); i++) {
+            String[] arr = inkInfo.get(i);
+            map.put(arr[0], createArray(itemMap.get(arr[1]), itemMap.get(arr[2]), arr[3]));
         }
 
 //        map.put("300-22F", createArray(itemMap.get("ITEM1"), itemMap.get("ITEM2")));
@@ -616,13 +621,14 @@ public class ScreenHost extends EquipModel {
         return map;
     }
 
-    private static String[] createArray(String item0, String item1,String range) {
+    private static String[] createArray(String item0, String item1, String range) {
         String[] arr = new String[3];
         arr[0] = item0;
         arr[1] = item1;
         arr[2] = range;
         return arr;
     }
+
     public List<Attach> getRecipeAttachInfo(Recipe recipe) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         String recipeName = recipe.getRecipeName();

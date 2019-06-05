@@ -75,7 +75,7 @@ public class AvaryAxisUtil {
     }
 
     public static void main(String[] args) {
-        String temp = unicode2String("&#xe23d");
+        String temp = unicode2String("&#x4E3B;sdf&#x8981;+CVL-ACVL-B&#x4E3B;");
         System.out.println(temp);
 //        downLoadRecipeFormCIM("deviceCode", "recipeName");
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
@@ -191,17 +191,17 @@ public class AvaryAxisUtil {
 //            e.printStackTrace();
 //        }
 //
-//      //getBom
-//        try {
-//            getBom("#01","FSAPJC7B4B","47");
-////            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
+        //getBom
+        try {
+            getBom("#01", "FSAPJC7B4B", "47");
+//            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         System.out.print(getLotQty("M905291741"));
         ;
 
@@ -551,7 +551,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
-        logger.info("批號獲料號,層別,數量:" + lotNum + ";" + "，结果为：" + result);
+        logger.info("批號獲料號,層別,數量:" + lotNum + ";" + "，结果为：" + list);
         Map<String, String> paraMap = new HashMap();
         if (list.size() == 0) {
             return paraMap;
@@ -625,8 +625,7 @@ public class AvaryAxisUtil {
             paraMap.put("MainSerial", map.get("主途程序"));
             paraMap.put("PE", map.get("制程"));
             paraMap.put("主配件", map.get("主配件"));
-//            paraMap.put("LayerName", unicode2String(map.get("層別名稱")));
-            paraMap.put("LayerName", "");
+            paraMap.put("LayerName", unicode2String(map.get("層別名稱")));
             paraMap.put("OrderId", map.get("第幾次過站"));
             paraMap.put("WorkNo", map.get("工令"));
             paraMap.put("BOM", "");
@@ -822,6 +821,10 @@ public class AvaryAxisUtil {
                     string.append((char) data);
                 } else {
                     String[] split1 = temp.split("&#x");
+                    if (split1.length == 1) {
+                        string.append(split1[0]);
+                        continue;
+                    }
                     string.append(split1[0]);
                     int data = Integer.parseInt(split1[1], 16);
                     string.append((char) data);
@@ -842,6 +845,10 @@ public class AvaryAxisUtil {
                     string.append((char) data);
                 } else {
                     String[] split1 = temp.split("&#");
+                    if (split1.length == 1) {
+                        string.append(split1[0]);
+                        continue;
+                    }
                     string.append(split1[0]);
                     int data = Integer.parseInt(split1[1], 10);
                     string.append((char) data);
@@ -882,16 +889,22 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", deviceCode, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
+        logger.info("根據料號，主途程序獲取曝光底片信息," + deviceCode + ";" + partNum + ";" + mainSerial + ",结果为：" + list);
         if (list.size() == 0) {
-            logger.error("获取bom资料失败。。。" + partNum + ";" + mainSerial + ";" + deviceCode);
             return null;
         }
         String bom = list.get(0).get("LASTVALUE");
 //        String bom = list.get(0).get("V_WSADDVALUE");
         int j = bom.indexOf(" ");
-        String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
-        String range2 = bom.substring(bom.indexOf("REV:") + 4);
-        String num = range1.replace("-", "") + range2;
+        String num = "";
+        try {
+            String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
+            String range2 = bom.substring(bom.indexOf("REV:") + 4);
+            num = range1.replace("-", "") + range2;
+        } catch (Exception e) {
+            logger.error("get bom failed bom:" + bom);
+            return null;
+        }
         return num;
     }
 }

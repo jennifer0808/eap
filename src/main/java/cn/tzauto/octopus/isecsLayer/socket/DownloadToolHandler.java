@@ -65,11 +65,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
                     return;
                 }
+                String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
                 if (deviceInfo.getDeviceType().contains("SCREEN")) {
                     try {
-                        if (AvaryAxisUtil.isInitialPart(partNo, deviceCode, "0")) {
-                            if (!AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNo, "SFCZ4_ZD_DIExposure")) {
+                        GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                        if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
+                            if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
                                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
+                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("初件检查未通过");
                                 return;
                             }
                         }
@@ -82,11 +85,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     }
 
                 }
-                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNo,lotNo);
+                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
                 Recipe recipe = new Recipe();
                 DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                 if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_RCP_FROM_CIM"))) {
                     downloadresult = AvaryAxisUtil.downLoadRecipeFormCIM(deviceCode, recipeName);
+                    if (downloadresult.contains("PASS")) {
+                        return;
+                    }
                 } else {
                     if (GlobalConstants.getProperty("EQUIP_NO_RECIPE").contains(deviceInfo.getDeviceType())) {
                         recipe.setRecipeName(recipeName);
@@ -112,7 +118,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                 }
                 logger.info("downloadresult:" + downloadresult);
                 if ("0".equals(downloadresult)) {
-                    GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNo;
+                    GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNoTemp;
                     GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
                     GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
                     deviceInfoExt.setLotId(lotNo);

@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -169,12 +170,15 @@ public class DownLoadHandler implements MessageHandler {
                 //保存下载结果至数据库并发送至服务端
                 recipeService.saveRecipeOperationLog(recipeOperationLog);
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
+                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand(downLoadResultString);
+
             } else {
                 logger.error("设备模型表中没有配置设备" + deviceCode + "的Recipe下载方式");
                 mqMap.put("eventDesc", "下载失败");
                 mqMap.put("downloadResult", "N");
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
+                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("Device Config not ok");
             }
             sqlSession.commit();
         } catch (ParseException e) {

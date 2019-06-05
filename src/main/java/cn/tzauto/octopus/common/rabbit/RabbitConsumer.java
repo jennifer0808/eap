@@ -108,7 +108,7 @@ public class RabbitConsumer {
                         msgMap.put("replyQ", replyQ);
                     }
 
-                    String deviceTypeId = msgMap.get("deviceTypeId");
+                    String deviceTypeId = msgMap.get("deviceTypeId")==null?"":msgMap.get("deviceTypeId");
                     String deviceCode = msgMap.get("deviceCode");
                     String msgName = msgMap.get("msgName");
                     if (msgName == null) {
@@ -168,14 +168,14 @@ public class RabbitConsumer {
                 return true;
             } else {
                 if (!"".equals(deviceTypeId)) {
-                    for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
+                    for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
                         if (deviceInfo.getDeviceTypeId().equals(deviceTypeId)) {
                             return true;
                         }
                     }
                 }
                 if (!"".equals(deviceCode)) {
-                    for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
+                    for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
                         if (deviceInfo.getDeviceCode().equals(deviceCode)) {
                             return true;
                         }
