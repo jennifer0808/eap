@@ -645,13 +645,13 @@ public class EsecDB2100Host extends EquipHost {
 
         List<RecipePara> recipeParaList = null;
         try{
-        byte[] ppbody = (byte[]) getPPBODY(recipeName + ".dbrcp");
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        //Recipe解析
-        recipeParaList = getRecipeParasByECSV();
-        //设备发过来的参数部分为科学计数法，这里转为一般的
-        recipeParaList = this.recipeParaBD2Str(recipeParaList);
+            byte[] ppbody = (byte[]) getPPBODY(recipeName + ".dbrcp");
+            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            //Recipe解析
+            recipeParaList = getRecipeParasByECSV();
+            //设备发过来的参数部分为科学计数法，这里转为一般的
+            recipeParaList = this.recipeParaBD2Str(recipeParaList);
 
         } catch (UploadRecipeErrorException e) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
@@ -753,7 +753,14 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS7F19out() {
         logger.info("Request sends7f19: " + sendS7F19out() + " to Device " + deviceCode);
-       return  super.sendS7F19out();
+        Map resultMap = super.sendS7F19out();
+        List eppd = (ArrayList) resultMap.get("eppd");
+        ArrayList recipeNames = new ArrayList();
+        for (int i = 0; i < eppd.size(); i++) {
+            recipeNames.add(eppd.get(i).toString().replace(".dbrcp", ""));
+        }
+        resultMap.put("eppd", recipeNames);
+        return resultMap;
 
     }
     // </editor-fold>
