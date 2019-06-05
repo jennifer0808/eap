@@ -282,7 +282,7 @@ public class AsmAD8312FCHost extends EquipHost {
                     }
                 }
             }
-        } catch (Exception e) {
+         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();
         } finally {
@@ -369,20 +369,20 @@ public class AsmAD8312FCHost extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendS7F5out(recipeName + ".rcp");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+
         List<RecipePara> recipeParaList = null;
-        if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) data.get("PPBODY");
+        try {
+            byte[] ppbody = (byte[]) getPPBODY(recipeName + ".rcp");
             TransferUtil.setPPBody(ppbody, 1, recipePath);
+
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
             recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-            logger.debug("Recive S7F6 解析 recipe " + recipeParaList );
+            logger.debug("Recive S7F6 解析 recipe " + recipeParaList);
+
+        }catch (UploadRecipeErrorException e) {
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
+            logger.error("Exception:", e);
         }
         //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
         Map resultMap = new HashMap();

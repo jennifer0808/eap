@@ -36,6 +36,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
 
+import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -1566,7 +1567,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
+//        Map resultMap = new HashMap();
+        Map resultMap = new CaseInsensitiveMap();
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
@@ -1583,11 +1585,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
-            resultMap.put("EPPD", new ArrayList<>());
+//            resultMap.put("EPPD", new ArrayList<>());
         } else {
             logger.info("recipeNameList:" + list);
             resultMap.put("eppd", list);
-            resultMap.put("EPPD", list);
+//            resultMap.put("EPPD", list);
         }
         return resultMap;
     }
