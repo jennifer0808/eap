@@ -29,7 +29,7 @@ import java.util.*;
 public class AsmAD8312FCHost extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(AsmAD8312FCHost.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmAD8312FCHost.class);
 
 
     public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
@@ -373,12 +373,12 @@ public class AsmAD8312FCHost extends EquipHost {
         List<RecipePara> recipeParaList = null;
         try {
             byte[] ppbody = (byte[]) getPPBODY(recipeName + ".rcp");
+            logger.info("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             TransferUtil.setPPBody(ppbody, 1, recipePath);
-
-            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            logger.info("Recive S7F6 解析 recipe");
             //Recipe解析      
             recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
-            logger.debug("Recive S7F6 解析 recipe " + recipeParaList);
+            logger.info("Recive S7F6 解析 recipe " + recipeParaList);
 
         }catch (UploadRecipeErrorException e) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
