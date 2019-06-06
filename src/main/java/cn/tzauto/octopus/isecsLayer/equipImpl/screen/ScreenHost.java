@@ -90,7 +90,11 @@ public class ScreenHost extends EquipModel {
 
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
-        addLimit = false; //接触追加限制
+        addLimit = false; //解除追加限制
+        if("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))){
+            createMap();//清空该批次涨缩值
+            return true;
+        }
         int start = 80000;
         int end = 203000;
         LocalDateTime now = LocalDateTime.now();
@@ -101,7 +105,7 @@ public class ScreenHost extends EquipModel {
             classInfo = "1";
         }
 
-        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo); //夜班，白班，待确认
+        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo);
         if (result1 == null) {
             String result2 = AvaryAxisUtil.getOrderNum(classInfo);
             if (result2 == null) {
@@ -501,7 +505,7 @@ public class ScreenHost extends EquipModel {
         if (!AvaryAxisUtil.get21Exposure(deviceCode, gzxx, power)) {
             return false;
         }
-        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "防焊曝光21节验证通过!!");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "防焊曝光21节验证通过!!");
         return true;
     }
 
@@ -576,22 +580,14 @@ public class ScreenHost extends EquipModel {
         String mainserial = null;
         try {
             mainserial = String.valueOf(AvaryAxisUtil.getParmByLotNumAndLayer(lotNo, "SFCZ4_ZD_DIExposure", layer).get("MainSerial"));
-        } catch (RemoteException e) {
-            logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
-        } catch (ServiceException e) {
-            logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
-        } catch (MalformedURLException e) {
+        } catch (Exception e) {
             logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料发生异常", e);
         }
 
         String bom = null;
         try {
             bom = AvaryAxisUtil.getBom(deviceCode, partNo, mainserial);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         if (bom == null) {

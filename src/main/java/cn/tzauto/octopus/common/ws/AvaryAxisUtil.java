@@ -227,7 +227,9 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0010", "HR001", para1, uploadTime);
      */
     public static String workLicense(String equipID, String workID) {
-
+        if("0".equals(GlobalConstants.getProperty("WORK_LICENSE"))){
+            return "0";
+        }
         Call call = null;
         Schema result = null;
         try {
@@ -329,6 +331,9 @@ public class AvaryAxisUtil {
      */
 
     public static boolean get21Exposure(String deviceCode, String ink, String power) {
+        if("0".equals(GlobalConstants.getProperty("EXPOSURE_21"))){
+            return true;
+        }
         Call call = null;
         Schema result = null;
         try {

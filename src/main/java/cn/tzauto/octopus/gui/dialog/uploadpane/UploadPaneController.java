@@ -291,6 +291,9 @@ public class UploadPaneController implements Initializable {
             }
             if (isAlert) {
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！", stage);
+                stage.close();
+                isUpload = false;
+                onlyOnePageUpload = false;
                 return;
             }
 
