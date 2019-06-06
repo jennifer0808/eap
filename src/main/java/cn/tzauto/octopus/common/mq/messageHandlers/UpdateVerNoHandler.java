@@ -15,7 +15,7 @@ import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
@@ -29,7 +29,8 @@ import java.util.Map;
  */
 public class UpdateVerNoHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class);
+//    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UpdateVerNoHandler.class);
     String eventId = "";
     String recipeName = "";
     String lotId = "";
@@ -49,15 +50,21 @@ public class UpdateVerNoHandler implements MessageHandler {
         } catch (JMSException ex) {
             logger.error("JMSException:", ex);
         }
+        logger.info("服务端请求更新版本号，DEVICE_CODE:[" + deviceCode + "]");
+        logger.info("服务端请求更新版本号，RECIPE_NAME:[" + recipeName + "]");
+        logger.info("服务端请求更新版本号，LOT_ID:[" + lotId + "]");
         DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         if (deviceInfo.getDeviceType().contains("DF")) {
             recipeName = deviceInfoExt.getRecipeName();
         }
-        Recipe goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());
-        if (goldRecipe == null) {
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
-            return;
+        Recipe goldRecipe = null;
+        if (!deviceInfo.getDeviceType().equals("VSP88DNHT")) {
+            goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());
+            if (goldRecipe == null) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
+                return;
+            }
         }
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
         equipHost.lotId = lotId;
@@ -70,11 +77,13 @@ public class UpdateVerNoHandler implements MessageHandler {
                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
             } else {
                 deviceInfoExt.setLotId(lotId);
-//                deviceInfoExt.setVerNo(goldRecipe.getVersionNo());
+                if (goldRecipe != null) {
+                    deviceInfoExt.setVerNo(goldRecipe.getVersionNo());
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
+                }
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
             }
             sqlSession.commit();
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();

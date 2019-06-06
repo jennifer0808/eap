@@ -34,6 +34,7 @@ public class TowaHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(TowaHost.class);
+//    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TowaHost.class);
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -93,7 +94,7 @@ public class TowaHost extends EquipHost {
             } catch (InterruptedException e) {
                 logger.info(getName() + "从阻塞中退出...");
                 logger.info("this.isInterrupted()=" + this.isInterrupted() + " is interrupt=" + isInterrupted);
-                logger.fatal("Caught Interruption", e);
+                logger.error("Caught Interruption", e);
             }
         }
     }

@@ -21,6 +21,7 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB730Util;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -343,7 +344,7 @@ public class HTDB730Host extends EquipHost {
             return "1";
 
         } catch (Exception ex) {
-            logger.error("ex:"+ex);
+            logger.error("ex:" + ex);
             return "0";
         }
     }
@@ -684,13 +685,25 @@ public class HTDB730Host extends EquipHost {
      */
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        byte[] ppbody = (byte[]) cn.tzauto.octopus.common.resolver.TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+
         try {
             sleep(3000);
-            return super.sendS7F3out(localRecipeFilePath, targetRecipeName);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
-            return null;
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
         }
+        return resultMap;
     }
 
     @Override
