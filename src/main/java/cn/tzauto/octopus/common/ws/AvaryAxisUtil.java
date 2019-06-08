@@ -75,24 +75,24 @@ public class AvaryAxisUtil {
     }
 
     public static void main(String[] args) {
-        String temp = unicode2String("&#x4E3B;sdf&#x8981;+CVL-ACVL-B&#x4E3B;");
-        System.out.println(temp);
+//        String temp = unicode2String("&#x4E3B;sdf&#x8981;+CVL-ACVL-B&#x4E3B;");
+//        System.out.println(temp);
 //        downLoadRecipeFormCIM("deviceCode", "recipeName");
 //    String temp = "&#x4E0A;&#x5D17;&#x8B49;&#x9A57;&#x8B49;&#x5931;&#x6557;";
         //1-1
 //        System.out.println(workLicense("DEXP03000100", "G1483684www"));
 
         //1-2
-//        try {
-//            List list = getProductionCondition("DEXP03000100","FSAPMN7A2A135");
-//            System.out.println(list);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            List list = getProductionCondition("DEXP03000100","FSAPY55C2R28");
+            System.out.println(list);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
         //1-3
 //        try {
@@ -192,18 +192,18 @@ public class AvaryAxisUtil {
 //        }
 //
         //getBom
-        try {
-            getBom("#01", "FSAPJC7B4B", "47");
-//            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        System.out.print(getLotQty("M905291741"));
-        ;
+//        try {
+//            getBom("#01", "FSAPJC7B4B", "47");
+////            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        } catch (ServiceException e) {
+//            e.printStackTrace();
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.print(getLotQty("M905291741"));
+//        ;
 
 //2-6
 //        try {
@@ -264,32 +264,29 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0005", "PA001", para1, uploadTime);
      */
-    private static List getProductionCondition(String equipID, String partNum) throws RemoteException, ServiceException, MalformedURLException {
+    private static List<Map<String,String>> getProductionCondition(String deviceName, String partNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"F0716614", "6614", equipID, "0005", "PA001", createParm(equipID, partNum), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"F0716614", "6614", deviceName, "0005", "PA001", createParm(deviceName, partNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List list = parseXml(result);
-        logger.info("生產條件獲取接口:" + equipID + ";" + partNum + "，结果为：" + list);
+        List<Map<String,String>> list = parseXml(result);
+        logger.info("生產條件獲取接口:" + deviceName + ";" + partNum + "，结果为：" + list);
         return list;
     }
 
-    public static String getRecipeNameByPartNum(String equipID, String partNum, String lotNum) {
+    public static Map<String,String> getRecipeParaByPartNum(String deviceName, String partNum ) {
+        Map<String,String> map = new HashMap<>();
         try {
-            List list = getProductionCondition(equipID, partNum);
-        } catch (RemoteException e) {
+            List<Map<String,String>> list = getProductionCondition(deviceName, partNum);
+            for (Map<String, String> strMap : list) {
+                map.put( strMap.get("PARM_CODE"), strMap.get("PARM_STANDARD"));
+            }
+        } catch (Exception e) {
             logger.error("Exception:", e);
-
-        } catch (ServiceException e) {
-            logger.error("Exception:", e);
-
-        } catch (MalformedURLException e) {
-            logger.error("Exception:", e);
-
+            return null;
         }
-
-        return "";
+        return map;
     }
 
     /**

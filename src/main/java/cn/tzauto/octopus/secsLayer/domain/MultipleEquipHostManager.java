@@ -101,7 +101,7 @@ public class MultipleEquipHostManager {
             DeviceType deviceTypeObj = deviceTypeDic.get(deviceInfo.getDeviceTypeId());
             // new DeviceTypeDao().queryDeviceTypeById(deviceInfo.getDeviceTypeId());
             String deviceCode = deviceInfo.getDeviceCode();
-            String deviceName = deviceInfo.getDeviceCode();
+            String deviceName = deviceInfo.getDeviceName();
             String tDeviceId = deviceInfo.getDeviceId();
             String startUp = deviceInfo.getStartUp();
             String smlPath = GlobalConstants.getProperty("SML_PRE_PATH") + deviceTypeObj.getSmlPath();
@@ -1248,7 +1248,7 @@ public class MultipleEquipHostManager {
             }
             DeviceType deviceTypeObj = deviceTypeDic.get(deviceInfo.getDeviceTypeId());
             String deviceCode = deviceInfo.getDeviceCode();
-            String deviceName = deviceInfo.getDeviceCode();
+            String deviceName = deviceInfo.getDeviceName();
             String tDeviceId = deviceInfo.getDeviceCode();
             String startUp = deviceInfo.getStartUp();
             String ipAddress = GlobalConstants.clientInfo.getClientIp();

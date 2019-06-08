@@ -91,7 +91,7 @@ public class ScreenHost extends EquipModel {
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
         addLimit = false; //解除追加限制
-        if("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))){
+        if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             createMap();//清空该批次涨缩值
             return true;
         }
@@ -341,7 +341,7 @@ public class ScreenHost extends EquipModel {
 
         } else {
 
-            if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName() + ".7z", ftpip, ftpPort, ftpUser, ftpPwd)) {
+            if (FtpUtil.downloadFile("//" + recipeServerPath + "//" + recipe.getRecipeName() + ".7z", ftpPathTmp + recipe.getRecipeName().replaceAll("/", "@") + ".7z", ftpip, ftpPort, ftpUser, ftpPwd)) {
                 // 下载之后再解压
                 try {
                     ZipUtil.unzipBy7Z(recipe.getRecipeName() + ".7z", "//" + recipeServerPath + "//", "//" + recipeServerPath + "//");
@@ -457,7 +457,7 @@ public class ScreenHost extends EquipModel {
             if (screen.equals("main")) {
                 List<String> hrunColors = this.iSecsHost.executeCommand("read equipstatus");
                 for (String startColorTemp : hrunColors) {
-                    if (startColorTemp.contains("idle") || startColorTemp.contains("Error") || "".equals(startColorTemp.trim())) {
+                    if (startColorTemp.contains("idle") || startColorTemp.contains("Error") || "".equals(startColorTemp.trim()) || "IDChange".equals(startColorTemp)) {
                         equipStatus = "Idle";
                     }
                     if (startColorTemp.contains("run")) {
@@ -647,5 +647,33 @@ public class ScreenHost extends EquipModel {
         attachs.add(attach);
         sqlSession.close();
         return attachs;
+    }
+
+    protected List<RecipePara> checkRcpPara(String recipeId, String deviceCode, List<RecipePara> equipRecipeParas, String masterCompareType) {
+//        SqlSession sqlsession = MybatisSqlSession.getSqlSession();
+//        RecipeService recipeService = new RecipeService(sqlsession);
+//        List<RecipePara> diffRecipeParas = recipeService.checkRcpPara(recipeId, deviceCode, equipRecipeParas, "");
+//        sqlsession.close();
+        String MainSerial = "";
+        try {
+            MainSerial = String.valueOf(AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, AvaryAxisUtil.getLayer(lotId)).get("MainSerial"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map<String, String> paraMap = AvaryAxisUtil.getRecipeParaByPartNum(deviceName, partNo + MainSerial);
+        Map<String, String> equipParaMap = getEquipMonitorPara();
+        if (paraMap == null || paraMap.isEmpty()) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "从MES获取生产条件信息失败!!料号:" + partNo + MainSerial);
+            return null;
+        }
+        if (equipParaMap.get("bgl").equals(paraMap.get("1"))) {
+        } else {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "曝光能量检查不通过,MES取值:" + paraMap.get("1") + "设备当前:" + equipParaMap.get("bgl"));
+        }
+        if (equipParaMap.get("jbhd").equals(paraMap.get("2"))) {
+        } else {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "板厚检查不通过,MES取值:" + paraMap.get("2") + "设备当前:" + equipParaMap.get("jbhd"));
+        }
+        return null;
     }
 }

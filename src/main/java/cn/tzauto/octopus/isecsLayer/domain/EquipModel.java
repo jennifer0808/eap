@@ -513,6 +513,12 @@ public abstract class EquipModel extends Thread {
                         //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
                         sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
                         pass = false;
+                    } else if (recipeParasdiff == null) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查不通过！");
+                        eventDesc = "设备：" + deviceCode + " 开机Check参数异常";
+                        logger.info("设备：" + deviceCode + " 开机Check失败");
+                        pass = false;
+                        checkRecultDesc = eventDesc;
                     } else {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
                         eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
