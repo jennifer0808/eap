@@ -676,4 +676,108 @@ public class ScreenHost extends EquipModel {
         }
         return null;
     }
+
+    public boolean selectProgram(String recipName) {
+        int num = 5;//页面显示最大的个数  以0开始，5就是最大6个
+        //获取所有的recipe文件夹
+        List<String> list = Arrays.asList(new String[]{"FSWUPTYI", "1SWUPTYI", "7SWUPTYI", "0SWUPTYI", "JSWUPTYI", "jSWUPTYI", "sSWUPTYI", "wSWUPTYI", "ZSWUPTYI"});
+        Collections.sort(list);
+        int indexMax = list.size() - 1;
+        int index = list.indexOf(recipName);
+        int selected = 0;//选中位置所在num中的坐标
+        String content = "";//选中的内容
+        if (num >= index) {
+            //1.直接选中该位置
+            selected = index;
+            iSecsHost.executeCommand("playback recipe" + selected + ".txt");
+            selected = index;
+            //2.获取改位置内容进行比较
+            content = "";
+            //3.比较无误，直接确定
+            if (recipName.equals(content)) {
+                return true;
+            } else if (recipName.compareTo(content) > 0) { //比较有误，继续选择
+                int length = indexMax - index;
+                for (int i = 0; i <= length; i++) {
+                    index++;
+                    if (index > indexMax) {
+                        //没有该recipe
+                        return false;
+                    }
+                    if (index < num) {
+                        selected++;
+                    }
+                    //往下一个,
+                    iSecsHost.executeCommand("playback nextRecipe.txt");
+                    content = "";//获取下一个的recipe名字
+                    if (recipName.equals(content)) {
+                        return true;
+                    }
+                }
+            } else {
+                int length = index;
+                for (int i = 0; i < length; i++) {
+                    index--;
+                    if (index < 0) {
+                        //没有该recipe
+                        return false;
+                    }
+                    selected--;
+                    //往上一个
+                    iSecsHost.executeCommand("playback preRecipe.txt");
+                    content = "";//获取上一个的recipe名字
+                    if (recipName.equals(content)) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            selected = num;
+            //先选中最下面一个
+            iSecsHost.executeCommand("playback recipe" + selected + ".txt");
+            int length = index - num;
+            for (int i = 0; i < length; i++) {
+                iSecsHost.executeCommand("playback nextRecipe.txt");
+            }
+            //获取recipe名字
+            content = "";
+            if (recipName.equals(content)) {
+                return true;
+            } else if (recipName.compareTo(content) > 0) {
+                int len = indexMax - index;
+                for (int i = 0; i <= len; i++) {
+                    index++;
+                    if (index > indexMax) {
+                        //没有该recipe
+                        return false;
+                    }
+                    //往下一个,
+                    iSecsHost.executeCommand("playback nextRecipe.txt");
+                    content = "";//获取下一个的recipe名字
+                    if (recipName.equals(content)) {
+                        return true;
+                    }
+                }
+            } else {
+                int len = index;
+                for (int i = 0; i < len; i++) {
+                    index--;
+                    if (index < 0) {
+                        //没有该recipe
+                        return false;
+                    }
+                    if (selected > 0) {
+                        selected--;
+                    }
+                    //往上一个
+                    iSecsHost.executeCommand("playback preRecipe.txt");
+                    content = "";//获取上一个的recipe名字
+                    if (recipName.equals(content)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }
