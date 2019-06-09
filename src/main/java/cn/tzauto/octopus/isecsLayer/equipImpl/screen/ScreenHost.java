@@ -684,6 +684,9 @@ public class ScreenHost extends EquipModel {
         Collections.sort(list);
         int indexMax = list.size() - 1;
         int index = list.indexOf(recipName);
+        if(index<0){
+            return false;
+        }
         int selected = 0;//选中位置所在num中的坐标
         String content = "";//选中的内容
         if (num >= index) {
