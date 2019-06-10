@@ -535,7 +535,6 @@ public class C6800SECSHost extends EquipHost {
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
             List cpNameList = new ArrayList();
             cpNameList.add(CPN_PPID);
-            cpNameList.add(recipeName);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpNameList, cpmap, cpNameFromatMap, cpValueFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
