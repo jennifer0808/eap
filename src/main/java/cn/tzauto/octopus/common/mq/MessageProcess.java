@@ -19,7 +19,7 @@ public class MessageProcess implements MessageHandler {
     private String deviceTypeId;
     private String deviceCode;
     private String msgName;
-    private static Logger logger = Logger.getLogger(MessageProcess.class.getName());
+    private static Logger logger = Logger.getLogger(MessageProcess.class);
 
     private static Logger mqLogger = Logger.getLogger("mqLog");
 

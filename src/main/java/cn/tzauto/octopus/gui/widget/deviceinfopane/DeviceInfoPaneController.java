@@ -46,7 +46,7 @@ import java.util.ResourceBundle;
  * @author luosy
  */
 public class DeviceInfoPaneController implements Initializable {
-    private static final Logger logger = Logger.getLogger(DeviceInfoPaneController.class.getName());
+    private static final Logger logger = Logger.getLogger(DeviceInfoPaneController.class);
     @FXML
     private TextField officeName;
     @FXML

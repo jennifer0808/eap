@@ -5,14 +5,11 @@
 package cn.tzauto.octopus.common.resolver.hitachi;
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import org.apache.log4j.Logger;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -23,7 +20,7 @@ import java.util.zip.ZipInputStream;
  */
 public class DB810Util {
 
-    private static final Logger logger = Logger.getLogger(DB810Util.class.getName());
+    private static final Logger logger = Logger.getLogger(DB810Util.class);
 
     public static List<RecipePara> transferFromDB(String filePath, String recipeName) {
         ZipInputStream zis = null;

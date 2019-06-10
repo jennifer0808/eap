@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class FindRecipeNameHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(FindRecipeNameHandler.class.getName());
+    private static Logger logger = Logger.getLogger(FindRecipeNameHandler.class);
     private String deviceCode = "";
     private String recipeName = "";
     private String businessMod = "";

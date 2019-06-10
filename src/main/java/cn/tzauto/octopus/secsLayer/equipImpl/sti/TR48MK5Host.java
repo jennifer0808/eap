@@ -30,7 +30,7 @@ import java.util.Map;
 public class TR48MK5Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(TR48MK5Host.class.getName());
+    private static final Logger logger = Logger.getLogger(TR48MK5Host.class);
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
 

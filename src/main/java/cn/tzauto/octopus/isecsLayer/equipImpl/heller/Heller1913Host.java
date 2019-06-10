@@ -35,7 +35,7 @@ import org.apache.log4j.MDC;
  */
 public class Heller1913Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(Heller1913Host.class.getName());
+    private static Logger logger = Logger.getLogger(Heller1913Host.class);
 
     public Heller1913Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

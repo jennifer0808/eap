@@ -17,7 +17,7 @@ import java.util.logging.Level;
 
 public class EsecDB2008Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(EsecDB2008Host.class.getName());
+    private static final Logger logger = Logger.getLogger(EsecDB2008Host.class);
 
 
     public EsecDB2008Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

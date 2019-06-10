@@ -20,7 +20,7 @@ import java.util.Map;
 public class UpdateUserInfoWebservice implements BaseWebservice {
     private SysUser sysUser;
     private String deviceCode = "";
-    private static Logger logger = Logger.getLogger(TransferSysUserHandler.class.getName());
+    private static Logger logger = Logger.getLogger(TransferSysUserHandler.class);
     @Override
     public String handle(String message) {
         Map webMap = new HashMap();

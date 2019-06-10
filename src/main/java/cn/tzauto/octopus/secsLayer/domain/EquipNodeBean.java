@@ -21,7 +21,7 @@ public class EquipNodeBean implements Serializable {
     private String protocolTypeProperty;
     private int alarmProperty;//0 no alarm  1 little alarm  2 alarm and hold
     private EquipState equipStateProperty; //if equipment state is changed, this instance must be replaced.
-    private static final Logger logger = Logger.getLogger(EquipNodeBean.class.getName());
+    private static final Logger logger = Logger.getLogger(EquipNodeBean.class);
     private EquipPanel equipPanelProperty;
     private String iconPath;
 

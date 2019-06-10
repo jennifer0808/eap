@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
  */
 public class Y1EHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(Y1EHost.class.getName());
+    private static Logger logger = Logger.getLogger(Y1EHost.class);
     private ISecsHost towaCtrlHost;
 
     public Y1EHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class FindEquipStatusHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(FindEquipStatusHandler.class.getName());
+    private static Logger logger = Logger.getLogger(FindEquipStatusHandler.class);
     private String deviceCode = "";
     private String equipStatus = "";
 

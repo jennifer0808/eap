@@ -65,7 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class EapClient extends Application implements JobListener, PropertyChangeListener {
 
-    private static final Logger logger = Logger.getLogger(EapClient.class.getName());
+    private static final Logger logger = Logger.getLogger(EapClient.class);
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
     public static boolean flag = true;
@@ -484,7 +484,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
                         equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
                         equipStatusPane.setCommLabelForegroundColorCommOff();
-                        logger.info(deviceCode + "getControlState---------------------off-line");
+                        logger.info(deviceCode + " getControlState---------------------off-line");
                     } else {
                         if (newPanel.getAlarmState() == 0) {
                             switch (newPanel.getControlState()) {

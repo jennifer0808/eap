@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class OPTI730Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(OPTI730Host.class.getName());
+    private static Logger logger = Logger.getLogger(OPTI730Host.class);
 
     public OPTI730Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

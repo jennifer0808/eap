@@ -34,7 +34,7 @@ import java.util.Map;
 public class MPTABHost extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(MPTABHost.class.getName());
+    private static final Logger logger = Logger.getLogger(MPTABHost.class);
 
 
     public MPTABHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

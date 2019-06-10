@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
  */
 public class DFL7161Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(DFL7161Host.class.getName());
+    private static Logger logger = Logger.getLogger(DFL7161Host.class);
     private Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
 
     public DFL7161Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

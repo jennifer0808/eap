@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
  */
 public class BTURecipeUtil {
 
-    private static Logger logger = Logger.getLogger(BTURecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(BTURecipeUtil.class);
 
     public static List transferBTURcp(String recipePath, String deviceType) {
         File file = new File(recipePath);

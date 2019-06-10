@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class CheckRecipePapaHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class.getName());
+    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);
     private DeviceInfo deviceInfo = null;
     private Recipe recipe = null;
     private List<RecipePara> recipeParas = null;

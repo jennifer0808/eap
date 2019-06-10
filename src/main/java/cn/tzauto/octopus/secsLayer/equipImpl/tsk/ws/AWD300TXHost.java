@@ -39,7 +39,7 @@ import java.util.Map;
 public class AWD300TXHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(AWD300TXHost.class.getName());
+    private static final Logger logger = Logger.getLogger(AWD300TXHost.class);
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
     public AWD300TXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

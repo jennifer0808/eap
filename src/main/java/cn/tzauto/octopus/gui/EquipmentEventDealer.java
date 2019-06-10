@@ -29,7 +29,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     //(1) CommStatusEvent; (2) ReceivedSeparateEvent (3) CommFailureEvent (4) ServiceStatusEvent
     //(5) BehaviorStatusEvent
     private int sync = 0;
-    private static final Logger logger = Logger.getLogger(EquipmentEventDealer.class.getName());
+    private static final Logger logger = Logger.getLogger(EquipmentEventDealer.class);
     private static boolean hostIsShutDown = false;
     private EapClient stage;
 
@@ -80,11 +80,12 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                         newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
 //                        hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
                     }
-                    sync++;
-                    publish(newState);
                     if (cev.isComm()) {
+                        newState.setNetConnect(true);
                         hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
+                    sync++;
+                    publish(newState);
                     logger.info("Equip State is changed. publish is called");
                     hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
 //                    hostsManager.getAllEquipHosts().get(this.equipNodeBean.getDeviceCode()).start();

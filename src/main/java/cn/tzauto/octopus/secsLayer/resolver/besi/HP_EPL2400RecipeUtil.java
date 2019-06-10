@@ -22,7 +22,7 @@ import java.util.zip.GZIPInputStream;
  * Created by Wang DanFeng.
  */
 public class HP_EPL2400RecipeUtil {
-    private static final Logger logger = Logger.getLogger(HP_EPL2400RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(HP_EPL2400RecipeUtil.class);
 
 
     private static void doUncompressFile(String inFileName) {

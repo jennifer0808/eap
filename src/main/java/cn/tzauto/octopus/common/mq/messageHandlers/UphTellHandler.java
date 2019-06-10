@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class UphTellHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UphTellHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UphTellHandler.class);
 
     @Override
     public void handle(Message message) throws IOException, HsmsProtocolNotSelectedException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, ItemIntegrityException, StreamFunctionNotSupportException, MessageDataException, InterruptedException {

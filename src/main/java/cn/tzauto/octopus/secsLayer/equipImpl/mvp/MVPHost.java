@@ -25,7 +25,7 @@ import java.util.Map;
 public class MVPHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(MVPHost.class.getName());
+    private static final Logger logger = Logger.getLogger(MVPHost.class);
 
     public MVPHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

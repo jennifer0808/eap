@@ -31,7 +31,7 @@ import java.util.Map;
 @SuppressWarnings("serial")
 public class HongTeng7200Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(HongTeng7200Host.class.getName());
+    private static final Logger logger = Logger.getLogger(HongTeng7200Host.class);
 
     public HongTeng7200Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

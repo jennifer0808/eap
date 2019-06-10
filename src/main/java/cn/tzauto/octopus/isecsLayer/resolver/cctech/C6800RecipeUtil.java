@@ -26,7 +26,7 @@ import java.util.Map;
  * @desc
  */
 public class C6800RecipeUtil {
-    private static Logger logger = Logger.getLogger(C6800RecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(C6800RecipeUtil.class);
 
     public static List<RecipePara> transferFromRecipe(String filePath, String deviceType) {
         List<RecipePara> recipeParaList = new ArrayList<>();

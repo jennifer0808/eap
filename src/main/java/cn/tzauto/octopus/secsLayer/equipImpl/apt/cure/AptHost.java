@@ -33,7 +33,7 @@ import java.util.Map;
 public class AptHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(AptHost.class.getName());
+    private static final Logger logger = Logger.getLogger(AptHost.class);
 
     public AptHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

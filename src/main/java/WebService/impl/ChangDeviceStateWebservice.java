@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ChangDeviceStateWebservice implements BaseWebservice {
-    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class.getName());
+    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);
     private String deviceCode = "";
     private String eventId = "";
     private String state = "";

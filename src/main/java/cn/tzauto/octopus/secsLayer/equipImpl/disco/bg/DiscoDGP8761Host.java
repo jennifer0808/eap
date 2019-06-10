@@ -35,7 +35,7 @@ import java.util.*;
 public class DiscoDGP8761Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(DiscoDGP8761Host.class.getName());
+    private static final Logger logger = Logger.getLogger(DiscoDGP8761Host.class);
     private Map<String, Boolean> cassUseMap = new HashMap<>();
     private String portARcpName = "";
     private String portBRcpName = "";

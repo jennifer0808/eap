@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class Opti750Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(Opti750Host.class.getName());
+    private static final Logger logger = Logger.getLogger(Opti750Host.class);
 
     //private Object synS2F41 = null;
     public Opti750Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

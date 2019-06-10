@@ -25,7 +25,7 @@ import java.util.*;
 
 public class BackUpRecipeHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(BackUpRecipeHandler.class.getName());
+    private static Logger logger = Logger.getLogger(BackUpRecipeHandler.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private Recipe recipe = null;
     private List<RecipePara> recipeParaList = null;

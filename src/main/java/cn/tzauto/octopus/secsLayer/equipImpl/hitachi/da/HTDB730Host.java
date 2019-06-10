@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -20,13 +21,13 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB730Util;
+import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * @author NJTZ
@@ -41,7 +42,7 @@ import java.util.logging.Level;
 public class HTDB730Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HTDB730Host.class.getName());
+    private static final Logger logger = Logger.getLogger(HTDB730Host.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
@@ -59,6 +60,7 @@ public class HTDB730Host extends EquipHost {
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
         EquipStateChangeCeid = 4L;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -342,7 +344,7 @@ public class HTDB730Host extends EquipHost {
             return "1";
 
         } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(HTDB730Host.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("ex:" + ex);
             return "0";
         }
     }
@@ -683,13 +685,25 @@ public class HTDB730Host extends EquipHost {
      */
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        byte[] ppbody = (byte[]) cn.tzauto.octopus.common.resolver.TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+
         try {
             sleep(3000);
-            return super.sendS7F3out(localRecipeFilePath, targetRecipeName);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
-            return null;
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
         }
+        return resultMap;
     }
 
     @Override

@@ -22,7 +22,7 @@ import java.util.*;
 
 
 public class BackUpRecipeWebservice implements BaseWebservice {
-    private static Logger logger = Logger.getLogger(BackUpRecipeWebservice.class.getName());
+    private static Logger logger = Logger.getLogger(BackUpRecipeWebservice.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private Recipe recipe = null;
     private List<RecipePara> recipeParaList = null;

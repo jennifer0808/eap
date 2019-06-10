@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class FindEqptRecipeListHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(FindEqptRecipeListHandler.class.getName());
+    private static Logger logger = Logger.getLogger(FindEqptRecipeListHandler.class);
 
     @Override
     public void handle(Message message) {

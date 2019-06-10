@@ -18,7 +18,7 @@ import org.apache.ibatis.session.SqlSession;
 public class TransferSysUserHandler implements MessageHandler {
     private SysUser sysUsers;
     private String deviceCode = "";
-    private static Logger logger = Logger.getLogger(TransferSysUserHandler.class.getName());
+    private static Logger logger = Logger.getLogger(TransferSysUserHandler.class);
     @Override
     public void handle(Message message) {
         MapMessage mapMessage = (MapMessage) message;

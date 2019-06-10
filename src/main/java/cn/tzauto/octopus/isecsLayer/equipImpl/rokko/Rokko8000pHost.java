@@ -39,7 +39,7 @@ import org.apache.log4j.MDC;
  */
 public class Rokko8000pHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(Rokko8000pHost.class.getName());
+    private static Logger logger = Logger.getLogger(Rokko8000pHost.class);
     private Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
     private ISecsHost sawISecsHost;
     private ISecsHost visionISecsHost;

@@ -24,20 +24,15 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
+import java.util.*;
 
 /**
  *
@@ -45,7 +40,7 @@ import org.apache.log4j.MDC;
  */
 public class Hanmi20000DAHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(Hanmi20000DAHost.class.getName());
+    private static Logger logger = Logger.getLogger(Hanmi20000DAHost.class);
     private final Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
     private ISecsHost sawISecsHost;
     private ISecsHost visionISecsHost;

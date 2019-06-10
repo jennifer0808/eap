@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class EqptCheckBeforeDownloadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(EqptCheckBeforeDownloadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(EqptCheckBeforeDownloadHandler.class);
     private String deviceCode = "";
 
     @Override

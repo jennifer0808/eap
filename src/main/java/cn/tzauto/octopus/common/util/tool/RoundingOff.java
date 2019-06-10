@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
  */
 public class RoundingOff {
 
-    private static Logger logger = Logger.getLogger(RoundingOff.class.getName());
+    private static Logger logger = Logger.getLogger(RoundingOff.class);
 
     public static double roundOff(double srcNum, int length) {
         double f1 = 0;

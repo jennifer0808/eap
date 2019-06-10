@@ -12,7 +12,7 @@ public class BasicWebserviceProcess implements BaseWebservice {
     private String deviceTypeId;
     private String deviceCode;
     private String msgName;
-    private static Logger logger = Logger.getLogger(BasicWebserviceProcess.class.getName());
+    private static Logger logger = Logger.getLogger(BasicWebserviceProcess.class);
 
     private static Logger mqLogger = Logger.getLogger("WebserviceLog");
 

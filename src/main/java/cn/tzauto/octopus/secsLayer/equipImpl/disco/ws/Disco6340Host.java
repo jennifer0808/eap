@@ -41,7 +41,7 @@ import java.util.*;
 public class Disco6340Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(DiscoWSHost.class.getName());
+    private static final Logger logger = Logger.getLogger(DiscoWSHost.class);
     private boolean kerfCheck = true;
     private long Z1offset = 0L;
     private long Z2offset = 0L;

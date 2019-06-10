@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
  */
 public class GrandaHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(GrandaHost.class.getName());
+    private static Logger logger = Logger.getLogger(GrandaHost.class);
 
     public GrandaHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

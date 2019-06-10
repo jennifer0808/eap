@@ -3,11 +3,11 @@ package cn.tzauto.octopus.secsLayer.resolver.ht;
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  *
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  */
 public class HongTengRecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(HongTengRecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(HongTengRecipeUtil.class);
 
     public static List transferRcpFromDB(String recipePath) {
         String ppbody = TransferUtil.getPPBody(0, recipePath).get(0).toString();

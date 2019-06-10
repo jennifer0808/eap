@@ -12,7 +12,7 @@ import java.util.Properties;
  * Created by luosy on 2019/4/3.
  */
 public class EquipSecsBean {
-    public static Logger sysLogger = Logger.getLogger(EquipSecsBean.class.getName());
+    public static Logger sysLogger = Logger.getLogger(EquipSecsBean.class);
     public Map<String, Process> collectionReports;
     public Map<String, SecsParameter> secsParameterMap;
     public String deviceType;

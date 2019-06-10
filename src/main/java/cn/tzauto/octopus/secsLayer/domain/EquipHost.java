@@ -50,7 +50,7 @@ import static cn.tzauto.octopus.common.resolver.TransferUtil.getIDValue;
 public abstract class EquipHost extends Thread implements MsgListener {
 
     private static final long serialVersionUID = -8008553978164121001L;
-    private static Logger logger = Logger.getLogger(EquipHost.class.getName());
+    private static Logger logger = Logger.getLogger(EquipHost.class);
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
     public int commState = NOT_COMMUNICATING;
@@ -1876,7 +1876,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map svValue = this.getSpecificSVData(svIdList);
         Map ecValue = this.getSpecificECData(ecIdList);
         Map recipeParaValue = this.getSpecificRcpParaData(recipeParaCodeList);
-        resultMap = svValue;
+        resultMap.putAll(svValue);
         resultMap.putAll(ecValue);
         resultMap.putAll(recipeParaValue);
         return resultMap;

@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class LifeThresholdHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(FindRecipeNameHandler.class.getName());
+    private static Logger logger = Logger.getLogger(FindRecipeNameHandler.class);
     private String deviceCode = "";
     private String z1LifeThreshold = "";
     private String z2LifeThreshold = "";

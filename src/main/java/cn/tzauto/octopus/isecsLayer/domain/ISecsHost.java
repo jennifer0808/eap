@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class ISecsHost implements ISecsInterface {
 
-    private static Logger logger = Logger.getLogger(ISecsHost.class.getName());
+    private static Logger logger = Logger.getLogger(ISecsHost.class);
 
     public ISecsConnection iSecsConnection;
     private List<ISecsPara> paraList;

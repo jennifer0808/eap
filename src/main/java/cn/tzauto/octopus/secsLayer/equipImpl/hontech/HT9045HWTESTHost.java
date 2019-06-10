@@ -42,7 +42,7 @@ import java.util.Map;
 public class HT9045HWTESTHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HT9045HWTESTHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HT9045HWTESTHost.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;

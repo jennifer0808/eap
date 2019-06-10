@@ -8,17 +8,13 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
-import org.apache.ibatis.session.SqlSession;
 
 /**
  *
@@ -26,7 +22,7 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class GrandaRcpTransferUtil {
 
-    private static Logger logger = Logger.getLogger(GrandaRcpTransferUtil.class.getName());
+    private static Logger logger = Logger.getLogger(GrandaRcpTransferUtil.class);
 
     public static List transferGrandaRcp(String recipePath) {
         File file = new File(recipePath);

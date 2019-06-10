@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  */
 public class NXTIIIHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(NXTIIIHost.class.getName());
+    private static Logger logger = Logger.getLogger(NXTIIIHost.class);
     private boolean needLock = false;
     List<String> stateList = new ArrayList<>();
     Map<String, String> recipeNameMap = new HashMap<>();

@@ -29,7 +29,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class GlobalConstants {
-    private static final Logger logger = Logger.getLogger(GlobalConstants.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalConstants.class);
     private static Properties prop;
     public static boolean SYNC_CONIFG = false;
     public static boolean MONITOR_CONIFG = false;
@@ -75,7 +75,7 @@ public class GlobalConstants {
     public static MessageUtils S2CDataTopicTest = new MessageUtils("S2C.T.DATA_TRANSFERTest");
     public static MessageUtils S2CEQPT_PARATopic = new MessageUtils("S2C.T.EQPT_PARAMETER");
     public static SysUser sysUser;
-    public static Logger sysLogger = Logger.getLogger(GlobalConstants.class.getName());
+    public static Logger sysLogger = Logger.getLogger(GlobalConstants.class);
     public static String clientId;
     //    public static String clientFtpPath;
     public static ClientInfo clientInfo;
