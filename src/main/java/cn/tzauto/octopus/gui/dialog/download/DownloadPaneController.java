@@ -232,7 +232,7 @@ public class DownloadPaneController implements Initializable {
 
                             } else {
                                 Platform.runLater(()->{
-//                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
+                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
                                     UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
                                     mqMap.put("eventDesc", downloadResult);
                                     recipeOperationLog.setOperationResult("N");
