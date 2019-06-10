@@ -72,6 +72,32 @@ public class YamadRecipeUtil {
         return recipeTemplates;
     }
 
+    public static List transferYamadaRcp(String deviceType, String recipePath) {
+        String ppbody = TransferUtil.getPPBody(0, recipePath).get(0).toString();
+        String[] ppbodys = ppbody.split(",");
+        System.out.println("ppbodys size:" + ppbodys.length);
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+        sqlSession.close();
+        List<RecipePara> recipeParas = new ArrayList<>();
+        //防止ppbodys的大小超过模板里配置的参数数量
+        int size = recipeTemplates.size() > ppbodys.length ? ppbodys.length : recipeTemplates.size();
+        for (int i = 0; i < size; i++) {
+            RecipePara recipePara = new RecipePara();
+            recipePara.setParaCode(recipeTemplates.get(i).getParaCode());
+            recipePara.setParaDesc(recipeTemplates.get(i).getParaDesc());
+            recipePara.setParaMeasure(recipeTemplates.get(i).getParaUnit());
+            recipePara.setParaName(recipeTemplates.get(i).getParaName());
+            recipePara.setParaShotName(recipeTemplates.get(i).getParaShotName());
+            recipePara.setSetValue(ppbodys[i]);
+            System.out.println(String.valueOf(recipePara));
+            recipeParas.add(recipePara);
+        }
+
+        return recipeParas;
+    }
+
     public static List transferYamadaRcp(String recipePath) {
         String ppbody = TransferUtil.getPPBody(0, recipePath).get(0).toString();
         String[] ppbodys = ppbody.split(",");
