@@ -18,8 +18,10 @@ import java.util.concurrent.TimeoutException;
  */
 public class MessageUtils {
 
-    private RabbitProducer producer;//生产者
-    private RabbitConsumer consumer;//消费者
+    //生产者
+    private RabbitProducer producer;
+    //消费者
+    private RabbitConsumer consumer;
 
     private static String ipAddress;
     private static int port;
@@ -67,6 +69,10 @@ public class MessageUtils {
             e.printStackTrace();
         }
         return connection;
+    }
+
+    public MessageUtils(){
+
     }
 
     public MessageUtils(String queueName, String exchangeName, String mode) {
@@ -119,6 +125,11 @@ public class MessageUtils {
      * @throws Exception 如果处理器没有初始化，则抛出异常
      */
     public void subscribeMessage(String routingKey) throws Exception {
+        consumer.subscribeMessage(routingKey);
+    }
+
+    public void subscribeMessage(String exchangeName,String queueName,String routingKey) throws Exception {
+        this.consumer = new RabbitConsumer(queueName, exchangeName);
         consumer.subscribeMessage(routingKey);
     }
 
