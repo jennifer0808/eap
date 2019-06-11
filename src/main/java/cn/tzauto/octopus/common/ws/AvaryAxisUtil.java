@@ -644,17 +644,17 @@ public class AvaryAxisUtil {
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
     public static String insertTable(String paperNo, String macState, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo, String sfcLayer, String layerName
-            , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6) throws RemoteException, ServiceException, MalformedURLException {
+            , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6,String Isfirst) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
 
         Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
-                "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6"
-                , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6)
+                "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6|Isfirst"
+                , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6,Isfirst)
                 , now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
-        logger.info("明細表數據插入:" + createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6) + "，结果为：" + result);
+        logger.info("明細表數據插入:" + createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6,Isfirst) + "，结果为：" + result);
         if ("OK".equals(result)) {
             return "";
         }

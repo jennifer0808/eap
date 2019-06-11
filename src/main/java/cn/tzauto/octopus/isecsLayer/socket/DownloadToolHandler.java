@@ -11,6 +11,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -54,6 +55,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             String userId = String.valueOf(downloadMessageMap.get("userid"));
             String partNo = String.valueOf(downloadMessageMap.get("partno"));
             String lotNo = String.valueOf(downloadMessageMap.get("lotno"));
+            String lottype = String.valueOf(downloadMessageMap.get("lottype"));
 
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
@@ -68,9 +70,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                 String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
                 if (deviceInfo.getDeviceType().contains("SCREEN")) {
                     try {
-                        GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                        EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
+                        equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                        equipModel.isFirstPro = "0".equals(lottype);
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
-
+                            if("1".equals(lottype)){
+                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("需要生产初件!");
+                                return;
+                            }
                         }
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");

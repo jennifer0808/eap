@@ -71,6 +71,7 @@ public abstract class EquipModel extends Thread {
     public String partNo = "";
     public String deviceName = "";
     public String lotCount = "";
+    public boolean isFirstPro = true;//是否初件
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;

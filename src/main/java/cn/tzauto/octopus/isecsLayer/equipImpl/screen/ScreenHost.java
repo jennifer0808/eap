@@ -158,7 +158,7 @@ public class ScreenHost extends EquipModel {
          Item4	漲縮值Y（左）
          Item5	漲縮值X（右）
          Item6	漲縮值Y（右）
-         Isfirst	是否初件----
+         Isfirst	是否初件
          FirstCheck	初件判定---
          FirstCheckStatus	初件審核-----
          FirstCheckEmpid	初件審核人---
@@ -178,7 +178,7 @@ public class ScreenHost extends EquipModel {
 
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
                 map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
-                item3, item4, item5, item6
+                item3, item4, item5, item6,isFirstPro?"是":"否"
         );
         createMap();//清空该批次涨缩值
 //        String result = AvaryAxisUtil.insertTable();
@@ -685,8 +685,10 @@ public class ScreenHost extends EquipModel {
         int indexMax = list.size() - 1;
         int index = list.indexOf(recipName);
         if(index<0){
+            logger.info("没有可选择的recipe");
             return false;
         }
+        logger.info("找到recipe："+recipName);
         int selected = 0;//选中位置所在num中的坐标
         String content = "";//选中的内容
         if (num >= index) {
