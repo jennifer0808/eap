@@ -13,6 +13,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import org.apache.ibatis.session.SqlSession;
 import org.slf4j.LoggerFactory;
@@ -31,13 +32,13 @@ public class UpdateVerNoHandler implements MessageHandler {
 
 //    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class);
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UpdateVerNoHandler.class);
-    String eventId = "";
-    String recipeName = "";
-    String lotId = "";
-    String deviceCode = "";
 
     @Override
     public void handle(Message message) {
+        String eventId = "";
+        String recipeName = "";
+        String lotId = "";
+        String deviceCode = "";
         MapMessage mapMessage = (MapMessage) message;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -55,8 +56,9 @@ public class UpdateVerNoHandler implements MessageHandler {
         logger.info("服务端请求更新版本号，LOT_ID:[" + lotId + "]");
         DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        if (deviceInfo.getDeviceType().contains("DF")) {
+        if (deviceInfo.getDeviceType().contains("DF")|| deviceInfo.getDeviceType().contains("ICOS")) {
             recipeName = deviceInfoExt.getRecipeName();
+            logger.info("服务端请求更新版本号，RECIPE_NAME更换为:[" + recipeName + "]");
         }
         Recipe goldRecipe = null;
         if (!deviceInfo.getDeviceType().equals("VSP88DNHT")) {
@@ -66,11 +68,27 @@ public class UpdateVerNoHandler implements MessageHandler {
                 return;
             }
         }
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
-        equipHost.lotId = lotId;
-        Map map = new HashMap();
-        map.put("WorkLot", lotId);
-        equipHost.changeEquipPanel(map);
+//        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+//        equipHost.lotId = lotId;
+//        Map map = new HashMap();
+//        map.put("WorkLot", lotId);
+//        equipHost.changeEquipPanel(map);
+        EquipHost equipHost = null;
+        EquipModel equipModel = null;
+//        if (deviceInfo.getDeviceId().matches("\\d+")) {
+        if (GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode()) != null) {
+            equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+            equipHost.lotId = lotId;
+            Map map = new HashMap();
+            map.put("WorkLot", lotId);
+            equipHost.changeEquipPanel(map);
+        } else {
+            equipModel = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode());
+            equipModel.lotId = lotId;
+            Map map = new HashMap();
+            map.put("WorkLot", lotId);
+            equipModel.changeEquipPanel(map);
+        }
         try {
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置，DEVICE_CODE:" + deviceCode);
