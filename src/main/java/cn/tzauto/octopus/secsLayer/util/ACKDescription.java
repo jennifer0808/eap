@@ -459,7 +459,7 @@ public class ACKDescription {
             } else if (ack.equals("5")) {
                 description = "PAUSE";
             }
-        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832") || deviceType.contains("8312Plus") || deviceType.contains("832Z")) {
+        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832") || deviceType.contains("8312Plus") || deviceType.contains("832Z") || deviceType.contains("AD830PLUS")) {
             if (ack.equals("1")) {
                 description = "Unknown Status ";
             } else if (ack.equals("2")) {
@@ -1163,7 +1163,7 @@ public class ACKDescription {
                     descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
-        } else if (deviceType.contains("AD832P") || deviceType.contains("AD838")) {
+        } else if (deviceType.contains("AD832P") || deviceType.contains("AD838") || deviceType.contains("AD830PLUS")) {
             switch (String.valueOf(obj)) {
                 case "0":
                     descriControlState = FengCeConstant.CONTROL_OFFLINE;
