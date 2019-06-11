@@ -8,8 +8,11 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.jms.*;
+
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.pool.PooledConnectionFactory;
+import org.apache.log4j.MDC;
 
 /**
  * Created by Chase on 2016/7/24.
@@ -58,6 +61,7 @@ public class ProducerServiceImpl implements ExceptionListener {
         this.maximumActiveSessionPerConnection = maximumActiveSessionPerConnection;
         this.threadPoolSize = threadPoolSize;
         init();
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, "All");
     }
 
     private void init() {
