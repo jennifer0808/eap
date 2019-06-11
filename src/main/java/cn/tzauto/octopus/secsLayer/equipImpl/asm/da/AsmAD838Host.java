@@ -14,6 +14,7 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
@@ -24,9 +25,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AsmAD838Host extends EquipHost {
 
@@ -205,6 +204,10 @@ public class AsmAD838Host extends EquipHost {
             //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
+            //发送设备UPH参数至服务端
+            sendUphData2Server();
+
+
             String busniessMod = deviceInfoExt.getBusinessMod();
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
@@ -290,6 +293,38 @@ public class AsmAD838Host extends EquipHost {
         } finally {
             sqlSession.close();
         }
+    }
+
+
+    @Override
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+        String output = "";
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+        List<Long> svidListLong= new ArrayList<>();
+        for (String str : svidlist) {
+            svidListLong.add(Long.parseLong(str));
+        }
+        sqlSession.close();
+        //获取前一状态与当前状态
+//todo z这里处理的逻辑不正确
+        Map shotCountMap = activeWrapper.sendS1F3out(svidListLong, svFormat);
+        Map mqMap = new HashMap();
+        mqMap.put("msgName", "UphDataTransfer");
+        mqMap.put("deviceCode", deviceCode);
+        mqMap.put("equipStatus", equipStatus);
+        mqMap.put("preEquipStatus", preEquipStatus);
+        mqMap.put("currentRecipe", ppExecName);
+        mqMap.put("lotId", lotId);
+        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
+        mqMap.put("output", output);
+        mqMap.put("unit", "");
+        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
+        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+        logger.info("设备" + deviceCode + " UPH参数为:" + mqMap);
+//       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
     private void processS6F11ControlStateChange(DataMsgMap data) {
