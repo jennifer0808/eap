@@ -238,6 +238,15 @@ public class GlobalConstants {
         if (getProperty("ISECS_STATUS_CONFIRM") != null) {
             ISECS_STATUS_CONFIRM = getProperty("ISECS_STATUS_CONFIRM");
         }
+        if (getProperty("MQ_MSG_WAIT_TIME") != null) {
+            try {
+                MQ_MSG_WAIT_TIME = Long.parseLong(getProperty("MQ_MSG_WAIT_TIME"));
+            } catch (Exception e) {
+                MQ_MSG_WAIT_TIME = 30000L;
+            }
+
+        }
+
         return true;
     }
 
