@@ -83,11 +83,11 @@ public class GlobalConstants {
     public static MessageUtils C2SEqptRemoteCommand = new MessageUtils("C2S.Q.EQPT_RCMD", "", "1");
     public static MessageUtils C2SSpecificDataQueue = new MessageUtils("C2S.Q.SPECIFIC_DATA", "", "1");
     public static MessageUtils C2SSvDataQueue = new MessageUtils("C2S.Q.SV_DATA", "", "1");
-    public static MessageUtils C2SPlasma2DQueue = new MessageUtils("C2S.Q.PLASMA_2D", "", "1");//RCP关注点 rabbit
+    public static MessageUtils C2SPlasma2DQueue = new MessageUtils("C2S.Q.PLASMA_2D", "", "1");//RPC关注点 rabbit
 
-    public static MessageUtils S2CRcpTopic = new MessageUtils("S2C.T.RECIPE_C", "S2C.T.EXCHANGE", "2");
-    public static MessageUtils S2CDataTopic = new MessageUtils("S2C.T.DATA_TRANSFER", "S2C.T.EXCHANGE", "2");
-    public static MessageUtils S2CEQPT_PARATopic = new MessageUtils("S2C.T.EQPT_PARAMETER", "S2C.T.EXCHANGE", "2");
+    public static MessageUtils S2CRcpTopic = new MessageUtils() ;//("S2C.T.RECIPE_C", "S2C.T.EXCHANGE", "2");
+    public static MessageUtils S2CDataTopic = new MessageUtils();//("S2C.T.DATA_TRANSFER", "S2C.T.EXCHANGE", "2");
+    public static MessageUtils S2CEQPT_PARATopic = new MessageUtils();//("S2C.T.EQPT_PARAMETER", "S2C.T.EXCHANGE", "2");
 
 
     public static SysUser sysUser;
