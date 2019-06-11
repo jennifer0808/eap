@@ -469,7 +469,7 @@ public class ASM80THost extends EquipHost {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
 //        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
 //        RecipeService recipeService = new RecipeService(sqlSession);
-//        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+//        List<String> svidlist = rvrecipeService.searchShotSVByDeviceType(deviceType);
 //        sqlSession.close();
         //获取前一状态与当前状态
         sendS1F3Check();
