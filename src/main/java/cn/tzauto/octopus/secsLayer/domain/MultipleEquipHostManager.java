@@ -879,7 +879,7 @@ public class MultipleEquipHostManager {
     public Map getSVValueBySVID(String deviceId, String svid) {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.sendS1F3SingleCheck(svid);
+            return equipHost.sendS1F3SingleCheck(Long.parseLong(svid));
         }
         Map resultMap = null;
         return resultMap;

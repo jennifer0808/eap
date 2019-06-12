@@ -16,19 +16,23 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import java.util.List;
 
+//import org.apache.log4j.Logger;
+
 /**
  * 
  */
 public class CheckRecipePapaHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);
+//    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(ChangeEqptStateHandler.class);
     private DeviceInfo deviceInfo = null;
     private Recipe recipe = null;
     private List<RecipePara> recipeParas = null;

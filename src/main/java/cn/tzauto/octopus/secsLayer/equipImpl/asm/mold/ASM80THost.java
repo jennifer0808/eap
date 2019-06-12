@@ -455,7 +455,7 @@ public class ASM80THost extends EquipHost {
 
     @Override
     public String getOutputData() {
-        String outputSVID = "251";  //shotcount
+        Long outputSVID = 251L;  //shotcount
         Map resultMap = sendS1F3SingleCheck(outputSVID);
         if (resultMap != null && resultMap.get("Value") != null) {
             return String.valueOf(resultMap.get("Value"));

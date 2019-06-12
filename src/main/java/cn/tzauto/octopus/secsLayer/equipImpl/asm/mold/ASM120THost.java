@@ -522,7 +522,7 @@ public class ASM120THost extends EquipHost {
 
     @Override
     public String getOutputData() {
-        String outputSVID = "251";
+        Long outputSVID = 251L;
         Map resultMap = sendS1F3SingleCheck(outputSVID);
         if (resultMap != null && resultMap.get("Value") != null) {
             return String.valueOf(resultMap.get("Value"));
