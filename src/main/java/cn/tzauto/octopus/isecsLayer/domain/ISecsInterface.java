@@ -11,4 +11,6 @@ public interface ISecsInterface {
 
     //     String getMuiltiPara(List<String> paraNameList);
     boolean sendMessage(String message);
+
+    List<String> executePLCCommand(String command);
 }

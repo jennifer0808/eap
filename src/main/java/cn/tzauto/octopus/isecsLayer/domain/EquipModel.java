@@ -50,6 +50,7 @@ public abstract class EquipModel extends Thread {
     public String ppExecName = "--";
     public String equipStatus = "--";
     public String preEquipStatus = "";
+    public String curEquipStatus ="";
     public String lotId = "--";
     protected long LastComDate = 0;//最后一次通信时间
     public boolean holdSuccessFlag = true;
@@ -863,6 +864,10 @@ public abstract class EquipModel extends Thread {
         map.put("CommState", 1);
         changeEquipPanel(map);
         return map;
+    }
+
+    public  Map getEquipRealTimeStateNow(){
+        return getEquipRealTimeState();
     }
 
     /**

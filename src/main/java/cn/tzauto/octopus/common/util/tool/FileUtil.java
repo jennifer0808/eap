@@ -4,19 +4,7 @@
  */
 package cn.tzauto.octopus.common.util.tool;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -573,5 +561,41 @@ public class FileUtil {
         }
 
         return flag;
+    }
+
+    /**
+     * 将文本按行写入文件
+     *
+     * @param lines 文本
+     * @param path  路径
+     * @throws IOException
+     */
+    public static void writeFileWithlines(List<String> lines, String path) throws IOException {
+        File file = new File(path);
+        FileWriter fileWriter = new FileWriter(file);
+        BufferedWriter bw = new BufferedWriter(fileWriter);
+        for (String line : lines) {
+            bw.write(line);
+            bw.newLine();
+        }
+        bw.close();
+        fileWriter.close();
+    }
+
+    /**
+     * 以指定编码将文本按行写入文件
+     *
+     * @param lines  文本
+     * @param path   路径
+     * @param encode 编码
+     * @throws IOException
+     */
+    public static void writeFileWithLinesByEncode(List<String> lines, String path, String encode) throws IOException {
+        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(path)), encode));
+        for (String line : lines) {
+            bufferedWriter.write(line);
+            bufferedWriter.newLine();
+        }
+        bufferedWriter.close();
     }
 }

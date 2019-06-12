@@ -192,6 +192,92 @@ public class ISecsHost implements ISecsInterface {
 
     }
 
+    /**
+     * 根据传入的命令执行，并且返回参数
+     *
+     * @param command
+     * @return
+     */
+    @Override
+    public List<String> executePLCCommand(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        List<String> result = new ArrayList<String>();
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command);
+            writer.flush();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream()));
+            String lineContent = "";
+            while ((lineContent = reader.readLine()) != null) {
+                logger.info(deviceCode + " success get reply==>" + lineContent);
+                if (lineContent.trim().contains("done")) {
+                    result.add(lineContent);
+                    logger.info("get done flag,and ignore");
+                    break;
+                }
+                if (!"done".equals(lineContent.trim())) {
+                    result.add(lineContent);
+                } else {
+                    logger.info("get done flag,and ignore");
+                    break;
+                }
+            }
+            logger.info(deviceCode + " execute command [" + command + "] success and get reply==>" + result);
+            return result;
+        } catch (Exception e) {
+            logger.error(deviceCode + " execute command fail==>" + e.getMessage());
+            logger.debug(e);
+            //可能断线了，直接回复错误，尝试重连并再次发送指令
+            result.clear();
+            logger.error(deviceCode + " 尝试重新连接 ==>" + e.getMessage());
+            try {
+                if(iSecsConnection.getSocketClient()!=null){
+                    iSecsConnection.getSocketClient().close();
+                    iSecsConnection.setSocketClient(null);
+                    logger.error(deviceCode + " 关闭连接并置空!==>");
+                }
+                iSecsConnection = new ISecsConnection(ip, port);
+                if (iSecsConnection.getSocketClient() == null) {
+                    logger.error(deviceCode + " 重新连接失败!==>");
+                    result.add("ResetFail");
+                    return result;
+                }
+                logger.error(deviceCode + " 重新连接完毕 ==>IP:"+iSecsConnection.getSocketClient().getRemoteSocketAddress().toString()
+                        +"PORT:"+iSecsConnection.getSocketClient().getPort());
+                //再次尝试发送指令
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+                logger.info(deviceCode + "TryAgain; Ready to execute command==>" + command);
+                writer.write(command);
+                writer.flush();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream()));
+                String lineContent = "";
+                while ((lineContent = reader.readLine()) != null) {
+                    logger.info(deviceCode + "TryAgain;success get reply==>" + lineContent);
+                    if (lineContent.trim().contains("done")) {
+                        result.add(lineContent);
+                        logger.info("TryAgain;get done flag,and ignore");
+                        break;
+                    }
+                    if (!"done".equals(lineContent.trim())) {
+                        result.add(lineContent);
+                    } else {
+                        logger.info("TryAgain;get done flag,and ignore");
+                        break;
+                    }
+                }
+                logger.info(deviceCode + " TryAgain;execute command [" + command + "] success and get reply==>" + result);
+                return result;
+            } catch (Exception ex) {
+                logger.error(deviceCode + " Reset Fail ==>" + e.getMessage());
+                result.add("ResetFail");
+                return result;
+            }finally {
+
+            }
+        }
+    }
+
     private String gotoScreen(String screenName, int repeatCnt) {
         if (repeatCnt <= 0) {
             repeatCnt = 1;
