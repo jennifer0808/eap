@@ -179,7 +179,7 @@ public class ScreenHost extends EquipModel {
 
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
                 map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
-                item3, item4, item5, item6,isFirstPro?"是":"否"
+                item3, item4, item5, item6, isFirstPro ? "是" : "否"
         );
         createMap();//清空该批次涨缩值
 //        String result = AvaryAxisUtil.insertTable();
@@ -296,7 +296,7 @@ public class ScreenHost extends EquipModel {
         List<RecipePara> recipeParas = ScreenRecipeUtil.transferFromDB(ScreenRecipeUtil.transferFromFile("//" + recipeServerPath + "//"
                 + recipeNames[0] + "//Img//" + recipeNames[1] + "//EXPOSE.JOB"), deviceType);
         // 将文件从共享盘压缩，转到ftp
-//        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP");
+        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + "temp/TMP");
 //        try {
 ////            ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z");
 //        } catch (IOException e) {
@@ -378,16 +378,19 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
-        String[] recipeNames = recipeName.split("/");
-        File file = new File("//" + this.recipeServerPath + "//" + recipeNames[0] + "//Img//");
-        if (file.listFiles().length > 1) {
-            File[] files = file.listFiles();
-            for (File fileTemp : files) {
-                if (!fileTemp.getName().equals(recipeNames[1])) {
-                    FileUtil.deleteAllFilesOfDir(fileTemp);
-                }
-            }
+        if (!checkRecipeExist(recipeName)) {
+            return "Recipe file not exist!";
         }
+        String[] recipeNames = recipeName.split("/");
+//        File file = new File("//" + this.recipeServerPath + "//" + recipeNames[0] + "//Img//");
+//        if (file.listFiles().length > 1) {
+//            File[] files = file.listFiles();
+//            for (File fileTemp : files) {
+//                if (!fileTemp.getName().equals(recipeNames[1])) {
+//                    FileUtil.deleteAllFilesOfDir(fileTemp);
+//                }
+//            }
+//        }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 String screen = iSecsHost.executeCommand("curscreen").get(0);
@@ -400,7 +403,17 @@ public class ScreenHost extends EquipModel {
                     return "选中失败";
                 }
                 iSecsHost.executeCommand("playback add.txt");
-                List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
+                //点击选择料号
+                iSecsHost.executeCommand("playback openpartno.txt");
+                Thread.sleep(500);
+                iSecsHost.executeCommand("dialog \"Job Select\" listbox " + recipeNames[0]);
+                iSecsHost.executeCommand("playback selpartno.txt");
+                //点击选择面
+                iSecsHost.executeCommand("playback openpnl.txt");
+                Thread.sleep(500);
+                iSecsHost.executeCommand("dialog \"Front Data Select\" listbox " + recipeNames[1]);
+                iSecsHost.executeCommand("playback selpnl.txt");
+//                List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
                 iSecsHost.executeCommand("playback writenumber.txt");
                 Thread.sleep(500);
                 // 调用接口获取到批次数量
@@ -423,6 +436,16 @@ public class ScreenHost extends EquipModel {
     @Override
     public Map getEquipMonitorPara() {
         return this.iSecsHost.readAllParaByScreen("main");
+    }
+
+    private boolean checkRecipeExist(String recipeName) {
+        List<String> eppds = (List<String>) getEquipRecipeList().get("eppd");
+        for (String eppd : eppds) {
+            if (eppd.equals(recipeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -485,7 +508,7 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
-        String path = GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/TMP";
+        String path = GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + "temp/TMP";
         TransferUtil.setPPBody(recipe.getRecipeName(), 0, path);
         String recipeName = recipe.getRecipeName();
         String ftpip = GlobalConstants.ftpIP;
@@ -598,6 +621,9 @@ public class ScreenHost extends EquipModel {
             return "Can not find any bom info by partNum:" + partNo;
         }
         String recipeName = partNo.substring(0, 7) + "/" + bom + "-2PNL";
+        if (!checkRecipeExist(recipeName)) {
+            return "Can not find recipe at device " + deviceName;
+        }
         return recipeName;
     }
 
@@ -688,11 +714,11 @@ public class ScreenHost extends EquipModel {
         Collections.sort(list);
         int indexMax = list.size() - 1;
         int index = list.indexOf(recipName);
-        if(index<0){
+        if (index < 0) {
             logger.info("没有可选择的recipe");
             return false;
         }
-        logger.info("找到recipe："+recipName);
+        logger.info("找到recipe：" + recipName);
         int selected = 0;//选中位置所在num中的坐标
         String content = "";//选中的内容
         if (num >= index) {

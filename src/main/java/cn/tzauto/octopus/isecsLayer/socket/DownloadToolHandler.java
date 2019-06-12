@@ -23,6 +23,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import javax.xml.rpc.ServiceException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -74,14 +75,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
                         equipModel.isFirstPro = "0".equals(lottype);
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
-                            if("1".equals(lottype)){
-                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("需要生产初件!");
+                            if ("1".equals(lottype)) {
+                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("需要开初件!");
                                 return;
                             }
                         }
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
-                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("初件检查未通过");
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("初件检查未通过");
                             return;
                         }
                     } catch (RemoteException e) {
@@ -94,47 +95,51 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
                 }
                 recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
-                Recipe recipe = new Recipe();
-                DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-                if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_RCP_FROM_CIM"))) {
-                    downloadresult = AvaryAxisUtil.downLoadRecipeFormCIM(deviceCode, recipeName);
-                    if (downloadresult.contains("PASS")) {
-                        return;
-                    }
+                if (recipeName.contains("Can not")) {
+                    downloadresult = recipeName;
                 } else {
-                    if (GlobalConstants.getProperty("EQUIP_NO_RECIPE").contains(deviceInfo.getDeviceType())) {
-                        recipe.setRecipeName(recipeName);
-                        recipe.setId(recipeName);
-                    } else {
-                        List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Unique");
-                        if (recipes == null || recipes.isEmpty()) {
-                            recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "GOLD");
-                            if (recipes == null || recipes.isEmpty()) {
-                                recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer");
-                            }
+                    Recipe recipe = new Recipe();
+                    DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+                    if ("1".equals(GlobalConstants.getProperty("DOWNLOAD_RCP_FROM_CIM"))) {
+                        downloadresult = AvaryAxisUtil.downLoadRecipeFormCIM(deviceCode, recipeName);
+                        if (downloadresult.contains("PASS")) {
+                            return;
                         }
-                        if (recipes != null && !recipes.isEmpty()) {
-                            recipe = recipes.get(0);
-                            downloadresult = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
-                            if (downloadresult.contains("下载Recipe失败,设备通讯异常,请稍后重试")) {
-                                downloadresult = "Connect error,please check it and try later.";
-                            }
+                    } else {
+                        if (GlobalConstants.getProperty("EQUIP_NO_RECIPE").contains(deviceInfo.getDeviceType())) {
+                            recipe.setRecipeName(recipeName);
+                            recipe.setId(recipeName);
                         } else {
-                            downloadresult = "Can not find any recipe,please upload recipe" + recipeName;
+                            List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Unique");
+                            if (recipes == null || recipes.isEmpty()) {
+                                recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "GOLD");
+                                if (recipes == null || recipes.isEmpty()) {
+                                    recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer");
+                                }
+                            }
+                            if (recipes != null && !recipes.isEmpty()) {
+                                recipe = recipes.get(0);
+                                downloadresult = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
+                                if (downloadresult.contains("下载Recipe失败,设备通讯异常,请稍后重试")) {
+                                    downloadresult = "Connect error,please check it and try later.";
+                                }
+                            } else {
+                                downloadresult = "Can not find any recipe,please upload recipe" + recipeName;
+                            }
                         }
                     }
-                }
-                logger.info("downloadresult:" + downloadresult);
-                if ("0".equals(downloadresult)) {
-                    GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNoTemp;
-                    GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
-                    GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
-                    deviceInfoExt.setLotId(lotNo);
-                    deviceInfoExt.setPartNo(partNo);
-                    deviceInfoExt.setRecipeName(recipeName);
-                    deviceInfoExt.setRecipeId(recipe.getId());
-                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                    sqlSession.commit();
+                    logger.info("downloadresult:" + downloadresult);
+                    if ("0".equals(downloadresult)) {
+                        GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNoTemp;
+                        GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
+                        GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                        deviceInfoExt.setLotId(lotNo);
+                        deviceInfoExt.setPartNo(partNo);
+                        deviceInfoExt.setRecipeName(recipeName);
+                        deviceInfoExt.setRecipeId(recipe.getId());
+                        deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                        sqlSession.commit();
+                    }
                 }
             } else {
                 downloadresult = "Can not find any device by MachineNo " + deviceCode;
@@ -142,15 +147,17 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
             sqlSession.close();
 
-            Channel channel = ctx.channel();
-            AttributeKey attrKey = AttributeKey.valueOf("123456789");
-            Attribute<Object> attr = channel.attr(attrKey);
-            String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
-            attr.set(downloadresult);
-            buf = channel.alloc().buffer(downloadresult.getBytes().length);
-            buf.writeBytes(downloadresult.getBytes());
-            channel.writeAndFlush(buf);
-            new ISecsHost(eqpIp, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand(downloadresult);
+//            Channel channel = ctx.channel();
+//            AttributeKey attrKey = AttributeKey.valueOf("123456789");
+//            Attribute<Object> attr = channel.attr(attrKey);
+//            String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
+//            attr.set(downloadresult);
+//            buf = channel.alloc().buffer(downloadresult.getBytes().length);
+//            buf.writeBytes(downloadresult.getBytes());
+//            channel.writeAndFlush(buf);
+            ISecsHost iSecsHost = new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "");
+            iSecsHost.sendSocketMsg(downloadresult);
+
 
         }
         if (command.equals("getRecipeName")) {

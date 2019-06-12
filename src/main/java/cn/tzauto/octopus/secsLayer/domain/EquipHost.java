@@ -3416,7 +3416,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 ISecsHost iSecsHost = new ISecsHost("127.0.0.1", port, deviceType, deviceCode);
                 String commond = rote + "," + mapRow + "," + mapCol + "," + binList + "," + MaterialID;
                 logger.info("准备发送服务器端数据至wafer软件" + commond);
-                iSecsHost.executeCommand3("START," + commond + ",END;");
+                iSecsHost.sendSocketMsg("START," + commond + ",END;");
             }
             try {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
@@ -3511,7 +3511,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 String port = "8080";
                 ISecsHost iSecsHost = new ISecsHost("127.0.0.1", port, deviceType, deviceCode);
                 logger.info("准备发送坐标至wafer软件" + row + "," + col);
-                iSecsHost.executeCommand3("START," + row + col + ",END;");
+                iSecsHost.sendSocketMsg("START," + row + col + ",END;");
 
             } catch (Exception e) {
                 logger.error("Exception:", e);

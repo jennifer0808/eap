@@ -170,7 +170,7 @@ public class DownLoadHandler implements MessageHandler {
                 //保存下载结果至数据库并发送至服务端
                 recipeService.saveRecipeOperationLog(recipeOperationLog);
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
-                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand(downLoadResultString);
+                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg(downLoadResultString);
 
             } else {
                 logger.error("设备模型表中没有配置设备" + deviceCode + "的Recipe下载方式");
@@ -178,7 +178,7 @@ public class DownLoadHandler implements MessageHandler {
                 mqMap.put("downloadResult", "N");
                 GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备模型表中没有配置该设备的Recipe下载方式，请联系ME处理！");
-                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("Device Config not ok");
+                new ISecsHost(deviceInfo.getDeviceIp(), GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("Device Config not ok");
             }
             sqlSession.commit();
         } catch (ParseException e) {

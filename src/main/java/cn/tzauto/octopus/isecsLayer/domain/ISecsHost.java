@@ -540,6 +540,7 @@ public class ISecsHost implements ISecsInterface {
         }
         return resultMap;
     }
+
     public byte[] executeCommand2(String command) {
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -557,21 +558,18 @@ public class ISecsHost implements ISecsInterface {
         return null;
     }
 
-    public String executeCommand3(String command) {
+    public void sendSocketMsg(String command) {
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
             logger.info(deviceCode + " Ready to execute command==>" + command);
             writer.write(command.toString());
             writer.flush();
-            byte[] bytes = new byte[1024];
-            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
-            System.out.println("=======================");
-            System.out.println(new String(bytes, "GBK"));
-            logger.info("已经将参数发送至wafer软件:"+command);
+            iSecsConnection.getSocketClient().shutdownOutput();
+            iSecsConnection.getSocketClient().close();
         } catch (Exception e) {
-            System.out.print("111111");
+
         }
-        return null;
+
     }
 }
