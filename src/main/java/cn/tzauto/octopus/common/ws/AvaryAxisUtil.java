@@ -13,6 +13,10 @@ import org.apache.log4j.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.rpc.ParameterMode;
 import javax.xml.rpc.ServiceException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
@@ -21,11 +25,68 @@ import java.util.*;
 
 public class AvaryAxisUtil {
 
+    public static Map<String,String[]> parmsNames ;
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     public static DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern("yyyyMMdd");
     public static DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     public static DateTimeFormatter dtf3 = DateTimeFormatter.ofPattern("HHmmss");
+
+    static {
+        parmsNames = new HashMap<>();
+        String textPath = GlobalConstants.getProperty("WEBSERVICE_METHOD_PARM");
+        FileInputStream fis = null;
+        Properties properties = new Properties();
+        try {
+            fis = new FileInputStream(textPath);
+            properties.load(fis);
+            properties.forEach((x,y)->
+            {
+                String[] arr = ((String) y).split(",");
+                if(arr.length==2){
+                    parmsNames.put((String)x,arr);
+                }else{
+                    throw new RuntimeException("webService 接口配置文件路径  加载错误！"+x+"="+y);
+                }
+            });
+            /**
+             * workLicense=0010,HR001
+             * getProductionCondition=0005,PA001
+             * isInitialPart=0004,G0003
+             * get21Exposure=0004,0018
+             * firstProductionIsOK=0004,0009
+             * uploadMessageEveryPNL=F0716614,6614
+             * tableQuery=0004,G0001
+             * getOrderNum=0004,0002
+             * insertMasterTable=0004,0003
+             * getParmByLotNum=0001,0002
+             * getParmByLotNumAndLayer=0001,0009
+             * insertTable=0004,0006
+             * getBom=FPC02,FPC05
+             */
+            String[] methodName = {"workLicense","getProductionCondition","isInitialPart","get21Exposure","firstProductionIsOK","uploadMessageEveryPNL","tableQuery","getOrderNum","insertMasterTable","getParmByLotNum","getParmByLotNumAndLayer","insertTable","getBom"};
+            for (String s : methodName) {
+                String[] strings = parmsNames.get(s);
+                if(strings==null){
+                    throw new RuntimeException("webService 接口配置文件路径  加载失败！文件路径："+textPath);
+                }
+                logger.info("加载webService方法参数为："+s+"="+Arrays.toString(strings));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("webService 接口配置文件路径  加载报错！文件路径："+textPath);
+        } finally {
+            if(fis!= null){
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+    }
 
     private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
     //    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
@@ -227,6 +288,7 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0010", "HR001", para1, uploadTime);
      */
     public static String workLicense(String equipID, String workID) {
+        String[] arr = parmsNames.get("workLicense");
         if("0".equals(GlobalConstants.getProperty("WORK_LICENSE"))){
             return "0";
         }
@@ -235,7 +297,7 @@ public class AvaryAxisUtil {
         try {
             call = getCallForGetDataFromSer();
 
-            Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"F0716614", "6614", equipID, arr[0],arr[1], createParm(equipID, workID), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
             logger.error("上岗证验证发生错误", e);
@@ -267,8 +329,8 @@ public class AvaryAxisUtil {
     private static List<Map<String,String>> getProductionCondition(String deviceName, String partNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-
-        Object[] params = new Object[]{"F0716614", "6614", deviceName, "0005", "PA001", createParm(deviceName, partNum), LocalDateTime.now().format(dtf)};
+        String[] arr = parmsNames.get("getProductionCondition");
+        Object[] params = new Object[]{"F0716614", "6614", deviceName, arr[0], arr[1], createParm(deviceName, partNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String,String>> list = parseXml(result);
         logger.info("生產條件獲取接口:" + deviceName + ";" + partNum + "，结果为：" + list);
@@ -303,10 +365,10 @@ public class AvaryAxisUtil {
 
     public static boolean isInitialPart(String partNum, String deviceCode, String opportunity) throws
             RemoteException, ServiceException, MalformedURLException {
-
+        String[] arr = parmsNames.get("isInitialPart");
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("判定是否要開初件方法:" + partNum + ";" + deviceCode + ";" + opportunity + "，结果为：" + list);
@@ -328,6 +390,7 @@ public class AvaryAxisUtil {
      */
 
     public static boolean get21Exposure(String deviceCode, String ink, String power) {
+        String[] exposures = parmsNames.get("get21Exposure");
         if("0".equals(GlobalConstants.getProperty("EXPOSURE_21"))){
             return true;
         }
@@ -336,7 +399,7 @@ public class AvaryAxisUtil {
         try {
             call = getCallForGetDataFromSer();
 
-            Object[] params = new Object[]{"test", "test", "#01", "0004", "0018", createParm("防焊曝光21節記錄表", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"test", "test", "#01", exposures[0],exposures[1], createParm("防焊曝光21節記錄表", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
             return false;
@@ -406,12 +469,12 @@ public class AvaryAxisUtil {
      */
 
     public static boolean firstProductionIsOK(String deviceName, String lotNum, String partNum, String tableNum) {
-
+        String[] arr = parmsNames.get("firstProductionIsOK");
         Call call = null;
         Schema result = null; //方法执行后的返回值try
         try {
             call = getCallForGetDataFromSer();
-            Object[] params = new Object[]{"F0716614", "6614", deviceName, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"F0716614", "6614", deviceName, arr[0],arr[1], createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params);
         } catch (ServiceException e) {
             e.printStackTrace();
@@ -443,12 +506,12 @@ public class AvaryAxisUtil {
      */
 
     public static String uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
-
+        String[] arr = parmsNames.get("uploadMessageEveryPNL");
         Call call = null;
         String result = null;
         try {
             call = getCallForSendDataToSer();
-            Object[] params = new Object[]{"F0716614", "6614", equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{arr[0],arr[1], equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
             result = (String) call.invoke(params); //方法执行后的返回值
             logger.info("每PNL物料生產信息拋轉到數據庫:" + equipID + ";" + paraName + ";" + paraValue + "，结果为：" + result);
             if ("OK".equals(result)) {
@@ -471,8 +534,8 @@ public class AvaryAxisUtil {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0001", createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
+        String[] arr = parmsNames.get("tableQuery");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("已有表單單號查詢:" + tableNum + ";" + machineNo + ";" + classInfo + "，结果为：" + list);
@@ -499,8 +562,8 @@ public class AvaryAxisUtil {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0002", createParm(time.format(dtf1), classInfo), now.format(dtf)};
+        String[] arr = parmsNames.get("getOrderNum");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], createParm(time.format(dtf1), classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("系統生產單號:" + classInfo + "，结果为：" + list);
@@ -529,8 +592,8 @@ public class AvaryAxisUtil {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
+        String[] arr = parmsNames.get("insertMasterTable");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
                 , createParm(paperNo, status, time.format(dtf1), deviceCode, "SFCZ4_ZD_DIExposure", classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         logger.info("插入主表數據:" + paperNo + ";" + status + ";" + deviceCode + ";" + classInfo + ";" + createEmpid + ";" + "，结果为：" + result);
@@ -549,8 +612,8 @@ public class AvaryAxisUtil {
     public static Map getParmByLotNum(String lotNum) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
+        String[] arr = parmsNames.get("getParmByLotNum");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("批號獲料號,層別,數量:" + lotNum + ";" + "，结果为：" + list);
@@ -612,8 +675,8 @@ public class AvaryAxisUtil {
     public static Map getParmByLotNumAndLayer(String lotNum, String paperNum, String layer) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
+        String[] arr = parmsNames.get("getParmByLotNumAndLayer");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1], createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("根據 批號,層別 帶出 料號,在製層,途程序,主途程序:" + lotNum + ";" + paperNum + ";" + layer + ";" + "，结果为：" + list);
@@ -648,8 +711,8 @@ public class AvaryAxisUtil {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
+        String[] arr = parmsNames.get("insertTable");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0],arr[1],
                 "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6|Isfirst"
                 , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6,Isfirst)
                 , now.format(dtf)};
@@ -887,8 +950,8 @@ public class AvaryAxisUtil {
     public static String getBom(String deviceCode, String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
         //todo 需要mes接口
         Call call = getCallForGetDataFromSer();
-
-        Object[] params = new Object[]{"test", "test", deviceCode, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
+        String[] arr = parmsNames.get("getBom");
+        Object[] params = new Object[]{"test", "test", deviceCode, arr[0], arr[1], createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("根據料號，主途程序獲取曝光底片信息," + deviceCode + ";" + partNum + ";" + mainSerial + ",结果为：" + list);

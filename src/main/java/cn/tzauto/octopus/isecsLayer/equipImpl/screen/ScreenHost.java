@@ -52,7 +52,7 @@ public class ScreenHost extends EquipModel {
         createMap();
 
     }
-
+    //加载油墨型号，及能量格范围
     private static void readText() {
         String textPath = GlobalConstants.getProperty("INK_INFO_FILE_PATH");
         inkInfo = new ArrayList<>();
