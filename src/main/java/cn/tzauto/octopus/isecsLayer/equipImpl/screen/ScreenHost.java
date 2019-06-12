@@ -8,6 +8,7 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.ZipUtil;
@@ -296,13 +297,13 @@ public class ScreenHost extends EquipModel {
                 + recipeNames[0] + "//Img//" + recipeNames[1] + "//EXPOSE.JOB"), deviceType);
         // 将文件从共享盘压缩，转到ftp
 //        TransferUtil.setPPBody(recipeName, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP");
-        try {
-            ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+////            ZipUtil.zipFileBy7Z("//" + recipeServerPath + "//" + recipeNames[0], GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         Map resultMap = new HashMap();
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", setRecipe(recipeName));
@@ -484,12 +485,15 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
+        String path = GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/TMP";
+        TransferUtil.setPPBody(recipe.getRecipeName(), 0, path);
         String recipeName = recipe.getRecipeName();
         String ftpip = GlobalConstants.ftpIP;
         String ftpUser = GlobalConstants.ftpUser;
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
-        if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z", remoteRcpPath, recipeName.replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+        if (!FtpUtil.uploadFile(path, remoteRcpPath, recipeName.replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+//        if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName.replaceAll("/", "@") + "temp/" + recipeName.replaceAll("/", "@") + ".7z", remoteRcpPath, recipeName.replaceAll("/", "@") + ".7z_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + recipeName + " 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
