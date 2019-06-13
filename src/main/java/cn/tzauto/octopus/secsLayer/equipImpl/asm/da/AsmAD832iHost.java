@@ -75,7 +75,7 @@ public class AsmAD832iHost extends EquipHost {
 //                    sendS1F17out();
                     super.findDeviceRecipe();
                     rptDefineNum++;
-                    sendS2F37outAll();
+//                    sendS2F37outAll();
                     sendS2F37outClose(267);
                     sendS2F37outClose(47);
                     sendS2F37outClose(58);
