@@ -145,7 +145,7 @@ public class DownLoadHandler implements MessageHandler {
                 String deviceId = deviceInfo.getDeviceCode();
                 String recipeName = recipe.getRecipeName();
                 downLoadResultString = hostManager.checkBeforeDownload(deviceId, recipeName);
-                if ("0".equals(downLoadResultString)) {
+                if ("0".equals(downLoadResultString)|| "下载取消".equals(downLoadResultString)) {
                     if ("2".equals(deviceType.getProtocolType())) {
                         downLoadResultString = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipe, deviceInfoExt.getRecipeDownloadMod());
                     } else {
