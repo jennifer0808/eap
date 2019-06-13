@@ -461,10 +461,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
             addWatchDog(deviceCode, eqpEventDealer);
         } catch (Exception e1) {
             logger.fatal(deviceCode + " has not been initialized!", e1);
-            Platform.runLater(() -> {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode ,  " has not been initialized!");
-                CommonUiUtil.alert(Alert.AlertType.WARNING, deviceCode + " has not been initialized!");
-            });
         }
         return null;
             }
