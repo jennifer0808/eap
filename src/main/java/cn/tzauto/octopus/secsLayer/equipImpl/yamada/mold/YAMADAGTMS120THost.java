@@ -3,6 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.yamada.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
+import cn.tzauto.generalDriver.entity.msg.FormatCode;
 import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -15,6 +16,7 @@ import cn.tzauto.octopus.common.resolver.yamada.YamadRecipeUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
@@ -65,7 +67,10 @@ public class YAMADAGTMS120THost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+                }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     try {
                         processS6F11EquipStatusChange(msg);
                     } catch (Exception e) {
@@ -82,7 +87,7 @@ public class YAMADAGTMS120THost extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
                     processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) msg.get("PPExecName");
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -96,7 +101,25 @@ public class YAMADAGTMS120THost extends EquipHost {
             }
         }
     }
-
+    public void processS6F11in(DataMsgMap data) {
+        long ceid=0L;
+        try{
+        if(data.get("CEID")!=null){
+            ceid=Long.parseLong(data.get("CEID").toString());
+            logger.info("Received a s6f11in with CEID = " + ceid);
+        }
+        if(ceid==StripMapUpCeid){
+            processS6F11inStripMapUpload(data);
+        }else {
+            if(ceid==EquipStateChangeCeid){
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                processS6F11EquipStatusChange(data);
+            }
+        }
+    } catch (Exception e) {
+        logger.error("Exception:", e);
+    }
+    }
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
@@ -139,7 +162,10 @@ public class YAMADAGTMS120THost extends EquipHost {
                 ack[0] = 0;
                 replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+            }else if (tagName.equalsIgnoreCase("s6f11in")) {
+                this.inputMsgQueue.put(data);
+            }
+            else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -176,10 +202,13 @@ public class YAMADAGTMS120THost extends EquipHost {
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
+
+    //toDo  没改完
     public List sendS1F3PressCheckout() {
         DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
         long transactionId = activeWrapper.getNextAvailableTransactionId();
         s1f3out.setTransactionId(transactionId);
+        List svidlist = new ArrayList<>();
         long[] press1SV = new long[1];
         press1SV[0] = 5101l;
         s1f3out.put("Press1", press1SV);
@@ -194,6 +223,8 @@ public class YAMADAGTMS120THost extends EquipHost {
         s1f3out.put("Press4", press4SV);
         DataMsgMap data = null;
         try {
+             data = activeWrapper.sendS1F3out(svidlist, svFormat);
+
             // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s1f3out);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -204,7 +235,7 @@ public class YAMADAGTMS120THost extends EquipHost {
         if (data == null || data.get("RESULT") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList list = (ArrayList)  data.get("RESULT");
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         return listtmp;
     }
@@ -213,7 +244,7 @@ public class YAMADAGTMS120THost extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = Long.parseLong(data.get("CEID").toString());
             if (ceid == 2) {
                 super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 3) {
@@ -240,6 +271,7 @@ public class YAMADAGTMS120THost extends EquipHost {
             logger.error("Exception:", e);
         }
         //更新页面显示内容
+        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "CEID");
@@ -257,10 +289,10 @@ public class YAMADAGTMS120THost extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid =Long.parseLong(data.get("CEID").toString()) ;
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             if (equipStatus.equalsIgnoreCase("idle") || equipStatus.equalsIgnoreCase("setup")) {
 //                sendS2f41Cmd("UNLOCK");
             }
@@ -268,7 +300,7 @@ public class YAMADAGTMS120THost extends EquipHost {
             logger.error("Exception:", e);
         }
         //将设备的当前状态显示在界面上
-        sendS1F3Check();
+        findDeviceRecipe();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -317,6 +349,7 @@ public class YAMADAGTMS120THost extends EquipHost {
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     holdDeviceAndShowDetailInfo();
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，不能运行，设备已被锁!");
+                    return;
                 }
                 //查询trackin时的recipe和GoldRecipe
                 Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
@@ -366,36 +399,65 @@ public class YAMADAGTMS120THost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code"> 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
+//        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
+//        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap data = null;
-        try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+
+
+//        try {
+//            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f5out);
+//
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
+//        byte[] ppbodys = (byte[]) (data.get("Processprogram"));
+
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        Map map = new HashMap();
+        Map resultMap = new HashMap();
+        map = sendS1F3Check();
+        String rcpName = (String) map.get("PPExecName");
+        logger.info("===================rcpName:" + rcpName);
+        logger.info("===================recipeName:" + recipeName);
+        if (!recipeName.contains(rcpName)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
+
+            resultMap.put("checkResult", "Y");
+            return resultMap;
         }
-        byte[] ppbodys = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbodys, recipeType, recipePath);
+        byte[] ppbody = new byte[0];
+        try {
+            //sendS7F5
+            ppbody = (byte[]) getPPBODY(recipeName);
+        } catch (UploadRecipeErrorException e) {
+            e.printStackTrace();
+        }
+        if (ppbody == null && ppbody.length == 0) {
+            resultMap.put("checkResult", "ppbody为空，请检查程序！");
+            return resultMap;
+        }
+        cn.tzauto.octopus.common.resolver.TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
-        try {
-            recipeParaList = YamadRecipeUtil.transferYamadaRcp(deviceType, recipePath);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+//        try {
+            recipeParaList = getRecipeParasByECSV();
+//            recipeParaList = YamadRecipeUtil.transferYamadaRcp(deviceType, recipePath);
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
 
-        Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
-
+        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -432,6 +494,8 @@ public class YAMADAGTMS120THost extends EquipHost {
             Map map = sendS2f41Cmd("STOP");
             if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
                 this.setAlarmState(2);
+//                sendStatus2Server("LOCK");
+//                holdFlag = true;
             }
             sendS2f41Cmd("LOCAL");
             return map;
@@ -495,10 +559,9 @@ public class YAMADAGTMS120THost extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", recipeName);
-        byte[] hcack = new byte[1];
+//        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
+//        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s2f41out.put("PPID", recipeName);
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
@@ -506,16 +569,26 @@ public class YAMADAGTMS120THost extends EquipHost {
         try {
             sendS2f41Cmd("REMOTE");
             Thread.sleep(1000);
-            // TODO: 2019/6/10    data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
+            Map cpmap = new HashMap();
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
+            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
+            data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
+
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+          byte  hcack = (byte) ( data.get("HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 " + " means " + e.getMessage());
         }
         sendS2f41Cmd("LOCAL");
         return resultMap;

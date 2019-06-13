@@ -96,11 +96,16 @@ public class T340Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
+                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+//                    processS6F11EquipStatus(msg);
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11equipstatuschange")) {
+//                    processS6F11EquipStatusChange(msg);
+//                }
+                else {
                     //logger.debug("A message in queue with tag = " + msg.getMsgSfName()
                     //      + " which I do not want to process! ");
                 }
@@ -109,7 +114,35 @@ public class T340Host extends EquipHost {
             }
         }
     }
+    public void processS6F11in(DataMsgMap data) {
+        long ceid=0L;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = Long.parseLong(data.get("CEID").toString());
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            if (ceid == StripMapUpCeid) {
 
+            } else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if(ceid==EquipStateChangeCeid){
+                    processS6F11EquipStatusChange(data);
+                } if (ceid == 1 || ceid == 2 || ceid == 3) {
+                    if (ceid == 2) {
+                        super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                    } else if (ceid == 3) {
+                        super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    } else if (ceid == 1) {
+                        super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    }
+                    findDeviceRecipe();
+                    updateCommStateInExt();
+                }
+            }
+        }catch (Exception e){
+            logger.error("Exception:", e);
+        }
+    }
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
@@ -145,7 +178,10 @@ public class T340Host extends EquipHost {
                 ack[0] = 0;
                 replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f12in")) {
+            }else if (tagName.equalsIgnoreCase("s6f11in")) {
+                this.inputMsgQueue.put(data);
+            }
+            else if (tagName.equalsIgnoreCase("s6f12in")) {
                 processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
@@ -309,9 +345,9 @@ public class T340Host extends EquipHost {
 
  
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid =Long.parseLong( data.get("CEID").toString());
             if (ceid == 1 || ceid == 2 || ceid == 3) {
                 if (ceid == 2) {
                     super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
@@ -331,19 +367,20 @@ public class T340Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long preStatus = 0l;
-        long nowStatus = 0;
+//        long preStatus = 0l;
+//        long nowStatus = 0L;
         long ceid = 0L;
         try {
-            preStatus = data.getSingleNumber("PreStatus");
-            nowStatus = data.getSingleNumber("EquipStatus");
-            ceid = data.getSingleNumber("CollEventID");
+//            preStatus = data.get("PreStatus");
+//            nowStatus = Long.parseLong(data.get("EquipStatus").toString());
+            ceid = Long.parseLong(data.get("CEID").toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
+//        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
+        findDeviceRecipe();
         if (equipStatus.equalsIgnoreCase("run")) {
             //首先从服务端获取机台是否处于锁机状态
             //如果设备应该是锁机，那么首先发送锁机命令给机台
@@ -356,6 +393,7 @@ public class T340Host extends EquipHost {
             findDeviceRecipe();
         }
         super.changeEquipPanel(map);
+//        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -962,26 +1000,38 @@ public class T340Host extends EquipHost {
 
             @Override
             public void run() {
-                DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-                s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-                s2f41out.put("PPID", recipeName);
-                byte[] hcack = new byte[1];
+//                DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
+//                s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//                s2f41out.put("PPID", recipeName);
+
 
                 resultMap.put("msgType", "s2f42");
                 resultMap.put("deviceCode", deviceCode);
                 DataMsgMap data = null;
                 try {
+
+                    sendS2f41Cmd("REMOTE");
                     Thread.sleep(4000);
+                    Map cpmap = new HashMap();
+                    cpmap.put(CPN_PPID, recipeName);
+                    Map cpNameFromatMap = new HashMap();
+                    cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+                    Map cpValueFromatMap = new HashMap();
+                    cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+                    List cplist = new ArrayList();
+                    cplist.add(CPN_PPID);
+                    data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
+
                     // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
                     logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-                    hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-                    logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-                    resultMap.put("HCACK", hcack[0]);
-                    resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+                    byte  hcack = (byte) ( data.get("HCACK"));
+                    logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+                    resultMap.put("HCACK", hcack);
+                    resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                     resultMap.put("HCACK", 9);
-                    resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+                    resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9"  + " means " + e.getMessage());
                 }
 
             }
