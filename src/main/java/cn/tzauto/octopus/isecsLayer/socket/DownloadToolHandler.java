@@ -60,12 +60,13 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
-            logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " partNo:" + partNo + " lotNo:" + lotNo);
+            logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " lotNo:" + lotNo);
             List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByDeviceCode(deviceCode);
             if (deviceInfos != null && !deviceInfos.isEmpty()) {
                 DeviceInfo deviceInfo = deviceInfos.get(0);
                 if (!"0".equals(AvaryAxisUtil.workLicense(deviceInfo.getDeviceName(), userId))) {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("上岗证验证失败!!");
                     return;
                 }
                 String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
@@ -73,10 +74,11 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     try {
                         EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
                         equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                        equipModel.lotId = lotNo;
                         equipModel.isFirstPro = "0".equals(lottype);
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
                             if ("1".equals(lottype)) {
-                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("需要开初件!");
+                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("需要开初件!");
                                 return;
                             }
                         }
@@ -134,7 +136,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
                         GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
                         deviceInfoExt.setLotId(lotNo);
-                        deviceInfoExt.setPartNo(partNo);
+                        deviceInfoExt.setPartNo(partNoTemp);
                         deviceInfoExt.setRecipeName(recipeName);
                         deviceInfoExt.setRecipeId(recipe.getId());
                         deviceService.modifyDeviceInfoExt(deviceInfoExt);

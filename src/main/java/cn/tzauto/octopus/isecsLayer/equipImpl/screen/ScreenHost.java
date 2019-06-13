@@ -62,13 +62,15 @@ public class ScreenHost extends EquipModel {
             while ((tmpString = br.readLine()) != null) {
                 String[] arr = tmpString.split(";");
                 if (arr.length != 4) {
-                    throw new RuntimeException("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+                    logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+                    AvaryAxisUtil.main.stop();
                 }
                 inkInfo.add(arr);
             }
             logger.info("加载的油墨信息为：" + inkInfo);
         } catch (IOException e) {
-            throw new RuntimeException("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+            logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+            AvaryAxisUtil.main.stop();
         }
     }
 
@@ -178,7 +180,7 @@ public class ScreenHost extends EquipModel {
 
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
                 map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
-                item3, item4, item5, item6, isFirstPro ? "是" : "否"
+                item3, item4, item5, item6, isFirstPro ? "1" : "0"
         );
         createMap();//清空该批次涨缩值
 //        String result = AvaryAxisUtil.insertTable();
@@ -377,6 +379,9 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
+        if (addLimit) {
+            return "当前批次结束后才可追加新的批次！";
+        }
         if (!checkRecipeExist(recipeName)) {
             return "Recipe file not exist!";
         }
@@ -424,6 +429,7 @@ public class ScreenHost extends EquipModel {
                 iSecsHost.executeCommand("playback addjob.txt");
                 iSecsHost.executeCommand("playback gotoMain.txt");
                 lotStartTime = LocalDateTime.now().format(AvaryAxisUtil.dtf2);
+                addLimit = true;
                 return "0";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());

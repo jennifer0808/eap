@@ -25,6 +25,7 @@ import java.util.*;
 
 public class AvaryAxisUtil {
 
+    public static Thread main;
     public static Map<String,String[]> parmsNames ;
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -67,13 +68,14 @@ public class AvaryAxisUtil {
             for (String s : methodName) {
                 String[] strings = parmsNames.get(s);
                 if(strings==null){
-                    throw new RuntimeException("webService 接口配置文件路径  加载失败！文件路径："+textPath);
+                    logger.error("webService 接口配置文件路径  加载失败！文件路径："+textPath);
+                    main.stop();
                 }
                 logger.info("加载webService方法参数为："+s+"="+Arrays.toString(strings));
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("webService 接口配置文件路径  加载报错！文件路径："+textPath);
+            logger.error("Exception",e);
+            main.stop();
         } finally {
             if(fis!= null){
                 try {
