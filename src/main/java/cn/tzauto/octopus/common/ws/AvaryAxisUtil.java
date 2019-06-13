@@ -55,7 +55,6 @@ public class AvaryAxisUtil {
              * isInitialPart=0004,G0003
              * get21Exposure=0004,0018
              * firstProductionIsOK=0004,0009
-             * uploadMessageEveryPNL=F0716614,6614
              * tableQuery=0004,G0001
              * getOrderNum=0004,0002
              * insertMasterTable=0004,0003
@@ -64,7 +63,7 @@ public class AvaryAxisUtil {
              * insertTable=0004,0006
              * getBom=FPC02,FPC05
              */
-            String[] methodName = {"workLicense","getProductionCondition","isInitialPart","get21Exposure","firstProductionIsOK","uploadMessageEveryPNL","tableQuery","getOrderNum","insertMasterTable","getParmByLotNum","getParmByLotNumAndLayer","insertTable","getBom"};
+            String[] methodName = {"workLicense","getProductionCondition","isInitialPart","get21Exposure","firstProductionIsOK","tableQuery","getOrderNum","insertMasterTable","getParmByLotNum","getParmByLotNumAndLayer","insertTable","getBom"};
             for (String s : methodName) {
                 String[] strings = parmsNames.get(s);
                 if(strings==null){
@@ -506,12 +505,11 @@ public class AvaryAxisUtil {
      */
 
     public static String uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
-        String[] arr = parmsNames.get("uploadMessageEveryPNL");
         Call call = null;
         String result = null;
         try {
             call = getCallForSendDataToSer();
-            Object[] params = new Object[]{arr[0],arr[1], equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"F0716614","6614", equipID, createParm(paraName), createParm(paraValue), LocalDateTime.now().format(dtf)};
             result = (String) call.invoke(params); //方法执行后的返回值
             logger.info("每PNL物料生產信息拋轉到數據庫:" + equipID + ";" + paraName + ";" + paraValue + "，结果为：" + result);
             if ("OK".equals(result)) {

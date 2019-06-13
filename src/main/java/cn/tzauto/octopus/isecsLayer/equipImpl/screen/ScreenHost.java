@@ -62,14 +62,13 @@ public class ScreenHost extends EquipModel {
             while ((tmpString = br.readLine()) != null) {
                 String[] arr = tmpString.split(";");
                 if (arr.length != 4) {
-                    logger.error("inkInfo.txt 配置文件格式错误");
-                    UiLogUtil.getInstance().appendLog2SeverTab(null, "inkInfo.txt 配置文件格式错误");
+                    throw new RuntimeException("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
                 }
                 inkInfo.add(arr);
             }
             logger.info("加载的油墨信息为：" + inkInfo);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
         }
     }
 
