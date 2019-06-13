@@ -12,12 +12,15 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import java.util.HashMap;
 import java.util.Map;
+
+//import org.apache.log4j.Logger;
 
 /**
  *
@@ -25,7 +28,8 @@ import java.util.Map;
  */
 public class EdcUploadRequestHandler implements MessageHandler {
 
-    private static final Logger logger = Logger.getLogger(EdcUploadRequestHandler.class);
+//    private static final Logger logger = Logger.getLogger(EdcUploadRequestHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(EdcUploadRequestHandler.class);
     private Map<String, String> dataIdMap = null;
 
     @Override

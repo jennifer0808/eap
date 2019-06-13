@@ -20,11 +20,14 @@ import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
 import javax.jms.Queue;
 import java.util.*;
+
+//import org.apache.log4j.Logger;
 
 /**
  *
@@ -33,7 +36,8 @@ import java.util.*;
  */
 public class UpLoadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpLoadHandler.class);
+//    private static Logger logger = Logger.getLogger(UpLoadHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(UpLoadHandler.class);
 
     @Override
     public void handle(Message message) {
