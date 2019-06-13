@@ -10,6 +10,7 @@ import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ContextMenu;
@@ -22,6 +23,7 @@ import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane.bgGray;
@@ -86,8 +88,8 @@ public class EquipStatusPaneController implements Initializable {
             } else {
                 contextMenu.hide();
                 MenuItem menuItem2 = new MenuItem("开启连接");
-                menuItem2.setOnAction(actionEvent -> new EapClient().startComByEqp(equipNodeBean));
-                contextMenu = new ContextMenu(menuItem2);
+                        menuItem2.setOnAction(actionEvent -> new EapClient().startComByEqp(equipNodeBean));
+              contextMenu = new ContextMenu(menuItem2);
                 contextMenu.show(P_EquipPane, event.getScreenX(), event.getScreenY());
             }
 
