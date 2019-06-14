@@ -93,10 +93,8 @@ public class VSP88DNHTHost extends EquipHost {
                 if (msg.getMsgSfName() != null) {
                     if (msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                         processS14F1in(msg);
-                    } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                         processS6F11in(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) { //3
-                        processS6F11inStripMapUpload(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {// 1
                         long ceid = msg.getSingleNumber("CollEventID");
                         if (ceid == 1010L) {
@@ -131,12 +129,16 @@ public class VSP88DNHTHost extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
+            //1010 ProcessStateChange ; 1101 LotIdRead
             if (ceid == 1010L || ceid == 1101L) {
                 processS6F11EquipStatusChange(data);
-            } else if (ceid == 1002L || ceid == 1011L) {
-                logger.info("将设备控制状态由Local调整为Remote");
-                sendS2f41Cmd("REMOTE");
-            } else if (ceid == 1103L || ceid == 1104L) {
+            }
+//            else if (ceid == 1002L || ceid == 1011L) {
+//
+//                logger.info("将设备控制状态由Local调整为Remote");
+//                sendS2f41Cmd("REMOTE");
+//            }
+            else if (ceid == 1103L || ceid == 1104L) {
                 processS6F11stripIdRead(data);
             }
 
@@ -168,7 +170,7 @@ public class VSP88DNHTHost extends EquipHost {
                 putDataIntoWaitMsgValueMap(data);
             } else if (tagName.equalsIgnoreCase("s7f20in")) {
                 putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
@@ -355,14 +357,14 @@ public class VSP88DNHTHost extends EquipHost {
                 MapMessage mapMessage = (MapMessage) message;
                 result = mapMessage.getString("message");
             } else {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+//                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                logger.error("等待MQ回复信息超时!TimeOut= " +GlobalConstants.MQ_MSG_WAIT_TIME);
             }
         } catch (Exception ex) {
             logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
         }
         sendS2f41Cmd("REMOTE");
         if (result.equalsIgnoreCase("Y")) {
-            //todo 测试 if(true){
             holdFlag = false;
             this.sends2f41stripReply(true);
         } else {

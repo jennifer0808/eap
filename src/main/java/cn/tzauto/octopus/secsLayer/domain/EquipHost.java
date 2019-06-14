@@ -618,9 +618,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     }
 
-    public Map sendS1F3SingleCheck(String svid) {
-        List svidlist = new ArrayList();
-        svidlist.add(Long.parseLong(svid));
+    public Map sendS1F3SingleCheck(Long svid) {
+        List<Long> svidlist = new ArrayList();
+        svidlist.add(svid);
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {

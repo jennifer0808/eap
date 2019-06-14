@@ -170,6 +170,7 @@ public class LoginController implements Initializable {
                     JB_MainPage.setVisible(true);
                     JB_RcpMng.setVisible(true);
                     JB_Login.setVisible(false);
+                    JB_Login.setVisible(false);
                     JB_SignOut.setVisible(true);
                     //todo 本地模式隐藏  localMode.setVisible(true);
 

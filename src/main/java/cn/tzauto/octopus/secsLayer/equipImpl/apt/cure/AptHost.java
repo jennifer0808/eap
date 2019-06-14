@@ -140,11 +140,11 @@ public class AptHost extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     private List sendf3beforeStartCheck() {
-        List list = new ArrayList();
-        list.add(2202);
-        list.add(2306);
-        list.add(2311);
-        list.add(2303);
+        List<Long> list = new ArrayList();
+        list.add(2202L);
+        list.add(2306L);
+        list.add(2311L);
+        list.add(2303L);
         DataMsgMap data = null;
         try {
             data = activeWrapper.sendS1F3out(list, svFormat);
@@ -221,45 +221,15 @@ public class AptHost extends EquipHost {
     }
 
     public List getProfile() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svids = new long[1];
-        svids[0] = 2107L;
-        s1f3out.put("SVID", svids);
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
+
         try {
-            return (ArrayList) sendS1F3SingleCheck("2107").get("SV");
+            return (ArrayList) sendS1F3SingleCheck(2107L).get("Value");
         } catch (Exception e) {
             logger.error("Exception:getProfile", e);
             return null;
         }
     }
-    public Map sendS1F3SingleCheck(String svid) {
 
-        List svidlist = new ArrayList();
-        svidlist.add(Long.parseLong(svid));
-        DataMsgMap data = null;
-        logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
-        try {
-            data = activeWrapper.sendS1F3out(svidlist, svFormat);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (data == null || data.get("SV") == null) {
-            return null;
-        }
-        ArrayList listtmp = (ArrayList) data.get("SV");
-        String fileName = CSVUtil.setCSVFile(listtmp, deviceCode, ppExecName);
-        Map resultMap = new HashMap();
-        String svValue = String.valueOf(listtmp.get(0));
-        resultMap.put("msgType", "s1f4");
-        resultMap.put("deviceCode", deviceCode);
-        resultMap.put("Value", svValue);
-        logger.info("resultMap=" + resultMap);
-        return resultMap;
-    }
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
 

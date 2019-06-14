@@ -12,6 +12,7 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -85,11 +86,11 @@ public class C6800SECSHost extends EquipHost {
                     initRptPara();
                     rptDefineNum++;
                 }
-                DataMsgMap msg = null;
+                DataMsgMap msg;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = (long) msg.get("CEID");
                     if (ceid == 3 || ceid == 7) {
                         setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
@@ -102,8 +103,8 @@ public class C6800SECSHost extends EquipHost {
                             + " which I do not want to process! ");
                 }
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 logger.fatal("Caught Interruption", e);
+                return;//destory the blocked thread
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
             }
@@ -166,7 +167,7 @@ public class C6800SECSHost extends EquipHost {
     public void initRptPara() {
     }
 
-    public void processEquipStatusChange(DataMsgMap msg) {
+    private void processEquipStatusChange(DataMsgMap msg) {
         long ceid = 0l;
         try {
             ceid = (long) msg.get("CEID");
@@ -204,7 +205,7 @@ public class C6800SECSHost extends EquipHost {
         }
     }
 
-    protected void processPressStartButton(DataMsgMap data) {
+    private void processPressStartButton(DataMsgMap data) {
         long ceid = 0l;
         logger.info("[" + deviceCode + "]" + "Start按钮被按下，设备开始作业！");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -220,6 +221,7 @@ public class C6800SECSHost extends EquipHost {
                 //锁机
                 holdDevice();
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
+                return;
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceInfoExt.setConnectionStatus(controlState);
@@ -229,10 +231,10 @@ public class C6800SECSHost extends EquipHost {
 //            //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
-//            if (AxisUtility.isEngineerMode(deviceCode)) {
-//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-//                return;
-//            }
+            if (AxisUtility.isEngineerMode(deviceCode)) {
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                return;
+            }
             //获取设备状态为ready时检查领料记录
             if (true) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {

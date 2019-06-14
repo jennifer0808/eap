@@ -181,6 +181,10 @@ public class HT9045HWHost extends EquipHost {
         sendS2F37out(27L);
         //Tray Feed
         sendS2F37out(49L);
+        //Press Clean Out button
+        sendS2F37out(4L);
+        //Auto Clean Start
+        sendS2F37out(34L);
         sendS5F3out(true);
     }
 
