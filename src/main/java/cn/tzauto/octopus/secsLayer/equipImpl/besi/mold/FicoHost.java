@@ -181,21 +181,6 @@ public class FicoHost extends EquipHost {
         }
     }
 
-    @Override
-    public Map sendS1F3SingleCheck(String svid){
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        List<RecipeTemplate> recipeTemplatesAll = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
-        List svIdListAll = getSvIdList(recipeTemplatesAll);
-        sqlSession.commit();
-        List list = new ArrayList();
-        for(Object sv : svIdListAll){
-            list.add(Long.parseLong(String.valueOf(sv)));
-        }
-        sendS1F3RcpParaCheckout(list);
-        return super.sendS1F3SingleCheck(svid);
-    }
-
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     public List sendS1F3PressCheckout() {
@@ -219,8 +204,12 @@ public class FicoHost extends EquipHost {
 
     public Map sendS1F3RcpParaCheckout(List svidlist) {
         DataMsgMap data = null;
+        List<Long> svList = new ArrayList<>();
+        for (Object svid : svidlist) {
+            svList.add(Long.parseLong(String.valueOf(svid)));
+        }
         try {
-            data = activeWrapper.sendS1F3out(svidlist, svFormat);
+            data = activeWrapper.sendS1F3out(svList, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -852,7 +841,7 @@ public class FicoHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
-        List<Long>svidListLong=new ArrayList<>();
+        List<Long> svidListLong = new ArrayList<>();
         for (String str : svidlist) {
             svidListLong.add(Long.parseLong(str));
         }
@@ -933,7 +922,7 @@ public class FicoHost extends EquipHost {
 
     @Override
     public String getOutputData() {
-        String outputSVID = "114";
+        Long outputSVID = 114L;
         Map resultMap = sendS1F3SingleCheck(outputSVID);
         if (resultMap != null && resultMap.get("Value") != null) {
             return String.valueOf(resultMap.get("Value"));

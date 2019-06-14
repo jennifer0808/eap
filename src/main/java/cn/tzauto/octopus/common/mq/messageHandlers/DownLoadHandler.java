@@ -16,7 +16,8 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
@@ -28,9 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//import org.apache.log4j.Logger;
+
 public class DownLoadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(DownLoadHandler.class);
+//    private static Logger logger = Logger.getLogger(DownLoadHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(DownLoadHandler.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private Recipe recipe = null;
     private List<RecipePara> recipeParaList = null;

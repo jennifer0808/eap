@@ -314,6 +314,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 //开启MQ监听
                 startMq();
 
+                UiLogUtil.getInstance().appendLog2EventTab("System", "系统启动...");
+
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
                 closeApp(window, stage);

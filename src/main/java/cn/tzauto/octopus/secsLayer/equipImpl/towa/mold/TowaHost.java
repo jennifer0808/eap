@@ -38,6 +38,7 @@ public class TowaHost extends EquipHost {
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        //Y1R Y1E 50007 ; YPM 271
         EquipStateChangeCeid = 50007;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
@@ -185,7 +186,9 @@ public class TowaHost extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            if (ceid == EquipStateChangeCeid) {
+            if (ceid == 50007) {
+                processS6F11EquipStatusChange(data);
+            } else if (ceid == 271 && "TOWAYPM".equalsIgnoreCase(deviceType)) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 50013) {
                 findDeviceRecipe();
