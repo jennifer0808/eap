@@ -15,7 +15,6 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -25,7 +24,10 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AsmAD838Host extends EquipHost {
 
@@ -205,15 +207,15 @@ public class AsmAD838Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             //发送设备UPH参数至服务端
-            sendUphData2Server();
+           // sendUphData2Server();
 
 
-            String busniessMod = deviceInfoExt.getBusinessMod();
-            if (AxisUtility.isEngineerMode(deviceCode)) {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-                sqlSession.close();
-                return;
-            }
+//            String busniessMod = deviceInfoExt.getBusinessMod();
+//            if (AxisUtility.isEngineerMode(deviceCode)) {
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+//                sqlSession.close();
+//                return;
+//            }
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑
             if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("Idle Remote")) {
@@ -296,20 +298,19 @@ public class AsmAD838Host extends EquipHost {
     }
 
 
+    /**
+     * 上报包含preEquipStatus, 发送设备UPH参数至服务端
+     */
     @Override
     public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-        List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
-        List<Long> svidListLong= new ArrayList<>();
-        for (String str : svidlist) {
-            svidListLong.add(Long.parseLong(str));
-        }
+        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+
         sqlSession.close();
         //获取前一状态与当前状态
-//todo z这里处理的逻辑不正确
-        Map shotCountMap = activeWrapper.sendS1F3out(svidListLong, svFormat);
+        Map shotCountMap = activeWrapper.sendS1F3out(svidlist, svFormat);
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);

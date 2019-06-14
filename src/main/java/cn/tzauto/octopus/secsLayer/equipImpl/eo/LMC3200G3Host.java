@@ -22,6 +22,7 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
@@ -45,6 +46,7 @@ public class LMC3200G3Host extends EquipHost {
     public LMC3200G3Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+
     }
 
 
@@ -70,51 +72,96 @@ public class LMC3200G3Host extends EquipHost {
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
-                    this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11StripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    long ceid = 0;
-                    try {
-                        ceid = msg.getSingleNumber("CollEventID");
-                    } catch (Exception ex) {
-                        java.util.logging.Logger.getLogger(LMC3200G3Host.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    if (ceid == 1003) {
-                        processS6F11EquipStatusChange(msg);
-                    }
-
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                       processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                       processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
-                } else {
-                    //logger.debug("A message in queue with tag = " + msg.getMsgTagName()
-                    //      + " which I do not want to process! ");
+                    processS5F1in(msg);
                 }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11StripMapUpload")) {
+//                    processS6F11inStripMapUpload(msg);
+//
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+//                    long ceid = 0;
+//                    try {
+//                        ceid =Long.parseLong(msg.get("CEID").toString());
+//                    } catch (Exception ex) {
+//                        java.util.logging.Logger.getLogger(LMC3200G3Host.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                    if (ceid == 1003) {
+//                        processS6F11EquipStatusChange(msg);
+//                    }
+//
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+//                       processS6F11EquipStatus(msg);
+//                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
+                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+//                    ppExecName = (String) msg.get("PPExecName");
+//                    Map map = new HashMap();
+//                    map.put("PPExecName", ppExecName);
+//                    changeEquipPanel(map);
+//                }
+//                else {
+//                    //logger.debug("A message in queue with tag = " + msg.getMsgTagName()
+//                    //      + " which I do not want to process! ");
+//                }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
         }
     }
 
-
-    protected void processS6F11EquipStatus(DataMsgMap data) {
-        //回复s6f11消息
-        long ceid = 0l;
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = -12345679;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            if (data.get("CEID") != null) {
+                ceid = Long.parseLong(data.get("CEID").toString());
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+
+            if (ceid == 1003) {
+                processS6F11EquipStatusChange(data);
+            }
+
+//            if (equipSecsBean.collectionReports.get(ceid) != null) {
+//                Process process = equipSecsBean.collectionReports.get(ceid);
+            //todo 这里看是重定义事件报告，还是查一遍sv数据把数据放到data里方便后面使用
+            //
+//                if (process.getProcessKey().equals("STATE_CHANGE")) {
+//
+//                }
+//                EventDealer.deal(data, deviceCode, process, activeWrapper);
+
+//            }
+            //TODO 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        showCollectionsEventInfo(ceid);
     }
+
+//    protected void processS6F11EquipStatus(DataMsgMap data) {
+//        //回复s6f11消息
+//        long ceid = 0l;
+//        try {
+//            ceid =(long) data.get("CEID");
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
+////        showCollectionsEventInfo(ceid);
+//    }
 
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
@@ -129,17 +176,22 @@ public class LMC3200G3Host extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = data.getSingleNumber("CollEventID");
-                if (ceid == 1003) {
-                    this.inputMsgQueue.put(data);
-                }
-            } else if (tagName.equalsIgnoreCase("s6f11in")) {
+            }
+//            else if (tagName.equalsIgnoreCase("s6f11equipstatuschange")) {
+//                byte[] ack = new byte[1];
+//                ack[0] = 0;
+//                replyS6F12WithACK(data, ack[0]);
+//                long ceid = Long.parseLong(data.get("CEID").toString());
+//                if (ceid == 1003) {
+//                    this.inputMsgQueue.put(data);
+//                }
+//            }
+            else if (tagName.equalsIgnoreCase("s6f11in")) {
+//                byte[] ack = new byte[1];
+//                ack[0] = 0;
+//                replyS6F12WithACK(data, ack[0]);
                 //回复掉消息
-                processS6F11in(data);
+//                processS6F11in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.toLowerCase().contains("s6f11incommon")) {
                 processS6F11in(data);
@@ -193,23 +245,19 @@ public class LMC3200G3Host extends EquipHost {
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName)  throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", "PRODUCTION\\" + recipeName + ".PRJ");
+//        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
+//        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f5out.put("ProcessprogramID", "PRODUCTION\\" + recipeName + ".PRJ");
         DataMsgMap msgdata = null;
-        try {
-            // TODO: 2019/6/10    msgdata = activeWrapper.sendPrimaryWsetMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
-        //Recipe解析
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+//        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        //r
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
             Map paraMap = EORecipeUtil.transferFromFile(recipePath);
@@ -224,7 +272,7 @@ public class LMC3200G3Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
-
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
@@ -263,7 +311,11 @@ public class LMC3200G3Host extends EquipHost {
             Map map = this.sendS2f41Cmd("PAUSE");//Map map = this.sendS2f41Cmd("LOCK");
             if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
                 this.setAlarmState(2);
+//                sendStatus2Server("LOCK");
+//                holdFlag = true;
             }
+
+            //toDo 逻辑不清楚
             sendS2f41Cmd("GO-LOCAL");
             return map;
         } else {
@@ -279,20 +331,17 @@ public class LMC3200G3Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
+            ceid = Long.parseLong(data.get("CEID").toString());
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get(0)), deviceType);
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        map.put("ControlState", controlState);
-        changeEquipPanel(map);
+        findDeviceRecipe();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -401,23 +450,22 @@ public class LMC3200G3Host extends EquipHost {
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s7f19out.setTransactionId(transactionId);
+//        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s7f19out.setTransactionId(transactionId);
         DataMsgMap data = null;
         try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f19out);
+
+            data = activeWrapper.sendS7F19out();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         if (data == null || data.get("EPPD") == null) {
-            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("EPPD") == null) {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
+//            data = this.getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList list = (ArrayList)  data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
@@ -436,26 +484,28 @@ public class LMC3200G3Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", "PRODUCTION\\" + recipeName + ".PRJ");
+//        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
+//        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f17out.put("ProcessprogramID", "PRODUCTION\\" + recipeName + ".PRJ");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", "PRODUCTION\\" + recipeName + ".PRJ");
-        byte[] ackc7 = new byte[1];
-        DataMsgMap data =null;
+
+        List recipeIDlist = new ArrayList();
+        recipeIDlist.add(recipeName);
         try {
-            // TODO: 2019/6/10   DataMsgMap data = activeWrapper.sendPrimaryWsetMessage(s7f17out);
+            DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
             logger.info("Request delete recipe " + "PRODUCTION\\" + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            if (ackc7[0] == 0) {
+     // toDo   data.get("AckCode") or  data.get("ACKC7")?
+           byte ackc7 = (byte) data.get("AckCode");
+            if (ackc7 == 0) {
                 logger.info("The recipe " + "PRODUCTION\\" + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + "PRODUCTION\\" + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + "PRODUCTION\\" + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -476,26 +526,24 @@ public class LMC3200G3Host extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", "PRODUCTION\\" + targetRecipeName + ".PRJ");
-        long[] length = new long[1];
-        length[0] = TransferUtil.getPPLength(localFilePath);
-        if (length[0] == 0) {
+        long length = TransferUtil.getPPLength(localFilePath);
+        if (length == 0) {
             resultMap.put("ppgnt", 9);
             resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
             return resultMap;
         }
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", "PRODUCTION\\" + targetRecipeName + ".PRJ");
-        s7f1out.put("Length", length);
+//        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+//        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f1out.put("ProcessprogramID", "PRODUCTION\\" + targetRecipeName + ".PRJ");
+//        s7f1out.put("Length", length);
 
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
         try {
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length, lengthFormat);
+            byte ppgnt  = (byte)  data.get("PPGNT");
             logger.info("Request send ppid= " + "PRODUCTION\\" + targetRecipeName + " to Device " + deviceCode);
-            resultMap.put("ppgnt", ppgnt[0]);
-            resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+            resultMap.put("ppgnt", ppgnt);
+            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ppgnt", 9);
@@ -513,22 +561,23 @@ public class LMC3200G3Host extends EquipHost {
      */
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
+//        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", "PRODUCTION\\" + targetRecipeName + ".PRJ");
-        s7f3out.put("Processprogram", secsItem);
+//        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+//        s7f3out.put("ProcessprogramID", "PRODUCTION\\" + targetRecipeName + ".PRJ");
+//        s7f3out.put("Processprogram", secsItem);
+        targetRecipeName="PRODUCTION\\" + targetRecipeName + ".PRJ";
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ppid", "PRODUCTION\\" + targetRecipeName + ".PRJ");
-        byte[] ackc7 = new byte[1];
+        resultMap.put("ppid", targetRecipeName);
         try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f3out);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-            resultMap.put("ACKC7", ackc7[0]);
-            resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+         //toDo  data.get("AckCode") or data.get("ACKC7")?
+            byte ackc7 = (byte)  data.get("AckCode");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("ACKC7", 9);
@@ -539,40 +588,44 @@ public class LMC3200G3Host extends EquipHost {
 
     @Override
     public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-            // TODO: 2019/6/10        data = sendMsg2Equip(s1f3out);
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
+//        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s1f3out.setTransactionId(transactionId);
+//        long[] equipStatuss = new long[1];
+//        long[] pPExecNames = new long[1];
+//        long[] controlStates = new long[1];
+//        DataMsgMap data = null;
+//        try {
+//            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+//            RecipeService recipeService = new RecipeService(sqlSession);
+//            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+//            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+//            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
+//            sqlSession.close();
+//            s1f3out.put("EquipStatus", equipStatuss);
+//            s1f3out.put("PPExecName", pPExecNames);
+//            s1f3out.put("ControlState", controlStates);
+//            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
+//            // DO: 2019/6/10        data = sendMsg2Equip(s1f3out);
+//        } catch (Exception e) {
+//            logger.error("Wait for get meessage directly error：" + e);
+//        }
+
+//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+//        }
+//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//            return null;
+//        }
+//        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
+//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        List listtmp = getNcessaryData();
+        if (listtmp != null && !listtmp.isEmpty()) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1) == null ? "" : listtmp.get(1)).replaceAll("PRODUCTION\\\\", "").replaceAll(".PRJ", "");
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = String.valueOf(listtmp.get(1) == null ? "" : listtmp.get(1)).replaceAll("PRODUCTION\\\\", "").replaceAll(".PRJ", "");
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
@@ -584,16 +637,16 @@ public class LMC3200G3Host extends EquipHost {
     @Override
     public String testRUThere() {
         try {
-            DataMsgMap s1f1out = new DataMsgMap("s1f1out", activeWrapper.getDeviceId());
-            long transactionId = activeWrapper.getNextAvailableTransactionId();
-            s1f1out.setTransactionId(transactionId);
-            DataMsgMap s1f2in = null;
-            // TODO: 2019/6/10    s1f2in = activeWrapper.sendPrimaryWsetMessage(s1f1out);
+//            DataMsgMap s1f1out = new DataMsgMap("s1f1out", activeWrapper.getDeviceId());
+//            long transactionId = activeWrapper.getNextAvailableTransactionId();
+//            s1f1out.setTransactionId(transactionId);
+            DataMsgMap s1f2in =  activeWrapper.sendS1F1out();
+            // DO: 2019/6/10    s1f2in = activeWrapper.sendPrimaryWsetMessage(s1f1out);
             if (s1f2in != null) {
                 //如果回复取消会话，那么需要重新发送S1F13
-                if (s1f2in.getMsgSfName().contains("s1f0")) {
+                if (s1f2in.getMsgSfName().contains("S1F0")) {
                     logger.info("testRUThere成功,但是未正确回复消息,需要重新建立连接 ");
-                    return "0";
+                    return "1";
                 } else {
                     logger.info("testRUThere成功、通信正常 ");
                     return "0";
@@ -611,25 +664,34 @@ public class LMC3200G3Host extends EquipHost {
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
         sendS2f41Cmd("GO-REMOTE");
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("PPID", "PRODUCTION\\" + recipeName + ".PRJ");
-        byte[] hcack = new byte[1];
+//        DataMsgMap s2f41out = new DataMsgMap("s2f41outPPSelect", activeWrapper.getDeviceId());
+//        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s2f41out.put("PPID", "PRODUCTION\\" + recipeName + ".PRJ");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
         DataMsgMap data = null;
         try {
+            Map cpmap = new HashMap();
+            cpmap.put(CPN_PPID, recipeName);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            List cplist = new ArrayList();
+            cplist.add(CPN_PPID);
             // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
+           data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
+
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
-            resultMap.put("HCACK", hcack[0]);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+          byte  hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
             resultMap.put("HCACK", 9);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + e.getMessage());
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9"  + " means " + e.getMessage());
         }
         sendS2f41Cmd("GO-LOCAL");
         return resultMap;

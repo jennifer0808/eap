@@ -36,6 +36,7 @@ public class AsmAD832iHost extends EquipHost {
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
     public String Datelength;
+    public Long ceid =0L;
 
     public AsmAD832iHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -74,8 +75,23 @@ public class AsmAD832iHost extends EquipHost {
 //                    sendS1F17out();
                     super.findDeviceRecipe();
                     rptDefineNum++;
-                    sendS2F37outAll();
+//                    sendS2F37outAll();
                     sendS2F37outClose(267);
+                    sendS2F37outClose(47);
+                    sendS2F37outClose(58);
+                    sendS2F37outClose(59);
+                    sendS2F37outClose(114);
+                    sendS2F37outClose(116);
+                    sendS2F37outClose(117);
+                    sendS2F37outClose(118);
+                    sendS2F37outClose(119);
+                    sendS2F37outClose(164);
+                    sendS2F37outClose(174);
+                    sendS2F37outClose(175);
+                    sendS2F37outClose(176);
+                    sendS2F37outClose(177);
+                    sendS2F37outClose(207);
+                    sendS2F37outClose(275);
                     sendS5F3out(true);
                     sendStatus2Server(equipStatus);
                 }
@@ -118,7 +134,15 @@ public class AsmAD832iHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                this.inputMsgQueue.put(data);
+                replyS6F12WithACK(data,(byte)0);
+                if (data.get("CEID") != null) {
+                    ceid = Long.parseLong(data.get("CEID").toString());
+                    logger.info("Received a s6f11in with CEID = " + ceid);
+                }
+                if (ceid == StripMapUpCeid || ceid == EquipStateChangeCeid) {
+                    this.inputMsgQueue.put(data);
+                }
+
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -137,18 +161,38 @@ public class AsmAD832iHost extends EquipHost {
         }
     }
 
+
+    public void processS6F11in(DataMsgMap data) {
+        try {
+//            if (data.get("CEID") != null) {
+//                ceid = Long.parseLong(data.get("CEID").toString());
+//                logger.info("Received a s6f11in with CEID = " + ceid);
+//            }
+            //TODO 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else  if (ceid == EquipStateChangeCeid) {
+               processS6F11EquipStatusChange(data);
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            logger.info("机台状态变化,当前状态为=======" + equipStatus);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
+//
+//        try {
+//            ceid = (long) data.get("CEID");
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
         //将设备的当前状态显示在界面上
         findEqptStatus();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
