@@ -41,6 +41,8 @@ public class GIS126Host extends EquipHost {
     public GIS126Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode){
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.svFormat = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
+         long StripMapUpCeid=-1;
+         long EquipStateChangeCeid=-1;
     }
 
     @Override
@@ -84,19 +86,27 @@ public class GIS126Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    processS6F11inStripMapUpload(msg);
-
+                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
+//                    processS6F11inStripMapUpload(msg);
+//                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1inMapDownLoad")) {
                     processS14F1in(msg);
-
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
+                    processS14F1in(msg);
+                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+//                    processS6F11EquipStatusChange(msg);
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+//                    processS6F11EquipStatus(msg);
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+//                    processS6F11EquipStatus(msg);
+//                }
+                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
                     ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
@@ -108,6 +118,44 @@ public class GIS126Host extends EquipHost {
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
             }
+        }
+    }
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = -12345679;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = Long.parseLong(data.get("CEID").toString());
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+//            if (equipSecsBean.collectionReports.get(ceid) != null) {
+//                Process process = equipSecsBean.collectionReports.get(ceid);
+            //todo 这里看是重定义事件报告，还是查一遍sv数据把数据放到data里方便后面使用
+            //
+//                if (process.getProcessKey().equals("STATE_CHANGE")) {
+//
+//                }
+//                EventDealer.deal(data, deviceCode, process, activeWrapper);
+
+//            }
+            //TODO 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }else if(ceid==-1){
+                    processS6F11EquipStatus(data);
+//                }else if(){
+
+                }
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
     }
 
@@ -181,12 +229,13 @@ public class GIS126Host extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+                ceid =Long.parseLong(data.get("CEID").toString()) ;
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         //获取当前设备状态
-        sendS1F3Check();
+//        sendS1F3Check();
+        findDeviceRecipe();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -367,7 +416,8 @@ public class GIS126Host extends EquipHost {
 //        s1f13out.put("SoftRev", SoftRev);
         DataMsgMap data = null;
         try {
-            // TODO: 2019/6/10       data = activeWrapper.sendPrimaryWsetMessage(s1f13out);
+            // TODO: 2019/6/10
+             data = activeWrapper.sendS1F13out();
             if (data != null) {
                 setCommState(1);
             }
@@ -397,7 +447,8 @@ public class GIS126Host extends EquipHost {
         DataMsgMap msgdata = null;
         try {
             // TODO: 2019/6/10     msgdata = activeWrapper.sendPrimaryWsetMessage(s1f11out);
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) msgdata.get("RESULT")).getData();
+//            msgdata = activeWrapper.sendS1F11out();
+            ArrayList list = (ArrayList)  msgdata.get("RESULT");
             if (list != null && !list.isEmpty()) {
                 ArrayList<Object> listtmp = CommonSMLUtil.getECSVData(list);
                 for (int i = 0; i < listtmp.size(); i++) {
@@ -468,6 +519,7 @@ public class GIS126Host extends EquipHost {
 //            s1f2out.put("SoftRev", SoftRev);
             s1f2out.setTransactionId(data.getTransactionId());
             // TODO: 2019/6/10      activeWrapper.sendSecondaryOutputMessage(s1f2out);
+//             activeWrapper.sendS1F2out();
             setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);

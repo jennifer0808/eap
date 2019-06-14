@@ -37,6 +37,8 @@ public class HitachiWaferHost extends EquipHost {
 
     public HitachiWaferHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        long StripMapUpCeid=-1;
+        long EquipStateChangeCeid=-1;
     }
 
 
@@ -244,6 +246,7 @@ public class HitachiWaferHost extends EquipHost {
 
             s12f16ut.setTransactionId(msgDataHashtable.getTransactionId());
             // TODO: 2019/6/10   activeWrapper.sendSecondaryOutputMessage(s12f16ut);
+
             waferInfoMap = new HashMap();
         } catch (Exception e) {
             logger.error("Exception:", e);
