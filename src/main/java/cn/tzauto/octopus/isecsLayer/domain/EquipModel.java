@@ -72,6 +72,7 @@ public abstract class EquipModel extends Thread {
     public String deviceName = "";
     public String lotCount = "";
     public boolean isFirstPro = true;//是否初件
+    public boolean firstLot = true; // 第一批次，标志位    手动重传数据后标志为重置
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;

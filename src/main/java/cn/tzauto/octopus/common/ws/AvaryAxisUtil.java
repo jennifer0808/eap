@@ -47,7 +47,8 @@ public class AvaryAxisUtil {
                 if(arr.length==2){
                     parmsNames.put((String)x,arr);
                 }else{
-                    throw new RuntimeException("webService 接口配置文件路径  加载错误！"+x+"="+y);
+                    logger.error("webService 接口配置文件路径  加载错误！"+x+"="+y);
+                    main.stop();
                 }
             });
             /**
@@ -73,7 +74,7 @@ public class AvaryAxisUtil {
                 }
                 logger.info("加载webService方法参数为："+s+"="+Arrays.toString(strings));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Exception",e);
             main.stop();
         } finally {
@@ -629,12 +630,14 @@ public class AvaryAxisUtil {
 
     public static String getLotQty(String lotNum) {
         try {
-            return String.valueOf(getParmByLotNum(lotNum).get("Qty"));
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
+            String num = String.valueOf(getParmByLotNum(lotNum).get("Qty"));
+            int i = Integer.parseInt(num);
+            if(i%2==1){
+                i--;
+            }
+            return String.valueOf(i);
+        } catch (Exception e) {
+            logger.error("Exception",e);
             e.printStackTrace();
         }
         return "0";

@@ -52,25 +52,73 @@ public class ScreenHost extends EquipModel {
         createMap();
 
     }
+
     //加载油墨型号，及能量格范围
     private static void readText() {
         String textPath = GlobalConstants.getProperty("INK_INFO_FILE_PATH");
         inkInfo = new ArrayList<>();
+        BufferedReader br = null;
+        InputStreamReader isr = null;
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(textPath), "UTF-8"));
+            isr = new InputStreamReader(new FileInputStream(textPath), "UTF-8");
+            br = new BufferedReader(isr);
             String tmpString = "";
             while ((tmpString = br.readLine()) != null) {
                 String[] arr = tmpString.split(";");
+                logger.info("加载的油墨信息为：" + Arrays.toString(arr));
                 if (arr.length != 4) {
-                    logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+                    logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径：" + textPath);
                     AvaryAxisUtil.main.stop();
                 }
+                String temp = arr[3];
+                String[] range = temp.split("<");
+                double start = Double.parseDouble(range[0]);
+                String str = range[1];
+//                if (str.startsWith("=")) {
+//                    if (num < start) {
+//                        flag = true;
+//                    }
+//                } else if (num <= start) {
+//                    flag = true;
+//                }
+                double end = 0;
+                if (range.length > 2) {
+                    String str2 = range[2];
+                    if (str2.startsWith("=")) {
+                        end = Double.parseDouble(str2.substring(1));
+//                        if (num > end) {
+//                            flag = true;
+//                        }
+                    } else {
+                        end = Double.parseDouble(str2);
+//                        if (num >= end) {
+//                            flag = true;
+//                        }
+                    }
+
+                }
                 inkInfo.add(arr);
+
             }
-            logger.info("加载的油墨信息为：" + inkInfo);
-        } catch (IOException e) {
-            logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径："+textPath);
+
+        } catch (Exception e) {
+            logger.error("油墨型号，及能量格范围配置文件格式错误,文件路径：" + textPath);
             AvaryAxisUtil.main.stop();
+        }finally {
+            if(isr!=null){
+                try {
+                    isr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(br!=null){
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -379,9 +427,15 @@ public class ScreenHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
-        if (addLimit) {
-            return "当前批次结束后才可追加新的批次！";
+
+        try {
+            if(!firstLot){
+                uploadData();
+            }
+        } catch (Exception e) {
+            logger.error("报表上传出错",e);
         }
+
         if (!checkRecipeExist(recipeName)) {
             return "Recipe file not exist!";
         }
@@ -429,11 +483,13 @@ public class ScreenHost extends EquipModel {
                 iSecsHost.executeCommand("playback addjob.txt");
                 iSecsHost.executeCommand("playback gotoMain.txt");
                 lotStartTime = LocalDateTime.now().format(AvaryAxisUtil.dtf2);
-                addLimit = true;
+
                 return "0";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
                 return "选中失败";
+            }finally {
+                firstLot = false;
             }
         }
     }
@@ -549,17 +605,17 @@ public class ScreenHost extends EquipModel {
         String temp = resultMap.get("scsl");
         if (temp.contains("/")) {
             scsl = temp.split("/")[0];
-            if (lotCount.equals(scsl)) {
-                try {
-                    uploadData();
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                } catch (ServiceException e) {
-                    e.printStackTrace();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if (lotCount.equals(scsl)) {
+//                try {
+//                    uploadData();
+//                } catch (RemoteException e) {
+//                    e.printStackTrace();
+//                } catch (ServiceException e) {
+//                    e.printStackTrace();
+//                } catch (MalformedURLException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
         power = resultMap.get("bgl");
         Map exposure = new HashMap();

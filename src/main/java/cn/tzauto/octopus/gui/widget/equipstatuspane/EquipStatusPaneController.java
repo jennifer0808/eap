@@ -9,6 +9,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -165,8 +166,10 @@ public class EquipStatusPaneController implements Initializable {
 
     private void reportInfoReUp(String deviceCode) {
         try {
-            boolean data = GlobalConstants.stage.equipModels.get(deviceCode).uploadData();
+            EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
+            boolean data = equipModel.uploadData();
             if (data) {
+                equipModel.firstLot = true;
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据重传成功.");
             }
         } catch (Exception e) {
