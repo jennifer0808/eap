@@ -21,10 +21,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class AsmAD832iHost extends EquipHost {
@@ -73,25 +70,14 @@ public class AsmAD832iHost extends EquipHost {
 //                    sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
+                    logger.info("go to initial s1f3....");
                     super.findDeviceRecipe();
+                    logger.info("go to initial s1f3 end....");
                     rptDefineNum++;
-//                    sendS2F37outAll();
-                    sendS2F37outClose(267);
-                    sendS2F37outClose(47);
-                    sendS2F37outClose(58);
-                    sendS2F37outClose(59);
-                    sendS2F37outClose(114);
-                    sendS2F37outClose(116);
-                    sendS2F37outClose(117);
-                    sendS2F37outClose(118);
-                    sendS2F37outClose(119);
-                    sendS2F37outClose(164);
-                    sendS2F37outClose(174);
-                    sendS2F37outClose(175);
-                    sendS2F37outClose(176);
-                    sendS2F37outClose(177);
-                    sendS2F37outClose(207);
-                    sendS2F37outClose(275);
+                    sendS2F37outCloseAll();
+                    sendS2F37out(8);
+                    sendS2F37out(237);
+
                     sendS5F3out(true);
                     sendStatus2Server(equipStatus);
                 }
@@ -114,6 +100,9 @@ public class AsmAD832iHost extends EquipHost {
             }
         }
     }
+
+
+
 
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
@@ -194,7 +183,9 @@ public class AsmAD832iHost extends EquipHost {
 //            logger.error("Exception:", e);
 //        }
         //将设备的当前状态显示在界面上
-        findEqptStatus();
+        logger.info("s6f11:go to s1f3 ....");
+        findDeviceRecipe();
+        logger.info("s6f11:go to s1f3 end....");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
