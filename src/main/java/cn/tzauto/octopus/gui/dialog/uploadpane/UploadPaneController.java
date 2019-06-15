@@ -356,11 +356,13 @@ public class UploadPaneController implements Initializable {
         if (isAlert) {
             Platform.runLater(()->{
                 Optional<ButtonType> result = CommonUiUtil.alert(Alert.AlertType.WARNING, "上传 结束，请到Recipe管理界面进行查看！", stage);
-                if (result.get() == ButtonType.OK) {
-                    stage.close();
-                    isUpload = false;
-                    onlyOnePageUpload = false;
-                    return;
+                if(result.get()!=null &&  result.isPresent()){
+                    if (result.get() == ButtonType.OK) {
+                        stage.close();
+                        isUpload = false;
+                        onlyOnePageUpload = false;
+                        return;
+                    }
                 }
             });
         }
