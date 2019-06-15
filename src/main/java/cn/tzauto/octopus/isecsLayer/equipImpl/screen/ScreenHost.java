@@ -18,6 +18,7 @@ import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.screen.ScreenRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -141,18 +142,22 @@ public class ScreenHost extends EquipModel {
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
         addLimit = false; //解除追加限制
+        String item3 = getMun("ITEM3");
+        String item4 = getMun("ITEM4");
+        String item5 = getMun("ITEM5");
+        String item6 = getMun("ITEM6");
+        createMap();//清空该批次涨缩值
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
-            createMap();//清空该批次涨缩值
             return true;
         }
         int start = 80000;
         int end = 203000;
         LocalDateTime now = LocalDateTime.now();
 
-        String classInfo = "0";
+        String classInfo = "0"; //白班
         int nowTime = Integer.parseInt(now.format(AvaryAxisUtil.dtf3));
         if (start > nowTime || end < nowTime) {
-            classInfo = "1";
+            classInfo = "1";   //夜班
         }
 
         String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo);
@@ -221,16 +226,12 @@ public class ScreenHost extends EquipModel {
          ModifyTime	最後修改時間----
          userid	作業員------
          */
-        String item3 = getMun("ITEM3");
-        String item4 = getMun("ITEM4");
-        String item5 = getMun("ITEM5");
-        String item6 = getMun("ITEM6");
 
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
                 map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
                 item3, item4, item5, item6, isFirstPro ? "1" : "0"
         );
-        createMap();//清空该批次涨缩值
+
 //        String result = AvaryAxisUtil.insertTable();
         if ("".equals(result)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
@@ -243,18 +244,27 @@ public class ScreenHost extends EquipModel {
 
     private String getMun(String item) {
         List<String> itemList = zsz.get(item);
-        logger.info("涨缩值为：" + itemList);
-        if (itemList.size() == 0) {
+        int size = itemList.size();
+        logger.info(item+"涨缩值为：" + itemList);
+        if (size == 0) {
             return "0";
         }
         double temp = 0;
         for (String s : itemList) {
-            temp = Double.parseDouble(s) + temp;
+            try {
+                temp = Double.parseDouble(s) + temp;
+            } catch (NumberFormatException e) {
+                logger.error("没有取到值"+s+":"+e);
+                size--;
+            }
         }
-        temp = temp / itemList.size();
+        temp = temp / size;
         item = new Double(temp).toString();
         if (item.contains(".")) {
-            item = item.substring(0, item.indexOf(".") + 4);
+            try {
+                item = item.substring(0, item.indexOf(".") + 4);
+            } catch (Exception e) {
+            }
         }
         return item;
     }
@@ -647,10 +657,18 @@ public class ScreenHost extends EquipModel {
         String item6 = resultMap.get("yy");
         parms2.add(item6);
 
-        zsz.get("ITEM3").add(item3);
-        zsz.get("ITEM4").add(item4);
-        zsz.get("ITEM5").add(item5);
-        zsz.get("ITEM6").add(item6);
+        if(StringUtils.isNotEmpty(item3)){
+            zsz.get("ITEM3").add(item3);
+        }
+        if(StringUtils.isNotEmpty(item4)){
+            zsz.get("ITEM4").add(item4);
+        }
+        if(StringUtils.isNotEmpty(item5)){
+            zsz.get("ITEM5").add(item5);
+        }
+        if(StringUtils.isNotEmpty(item6)){
+            zsz.get("ITEM6").add(item6);
+        }
         for (String s : parms2) {
             if (s == null || s.equals("")) {
                 return null;

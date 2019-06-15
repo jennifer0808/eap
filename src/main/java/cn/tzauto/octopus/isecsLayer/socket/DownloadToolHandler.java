@@ -78,7 +78,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         equipModel.isFirstPro = "0".equals(lottype);
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
                             if ("1".equals(lottype)) {
-                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("需要开初件!");
+                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("Need check isfirst!");
                                 return;
                             }
                         }
@@ -87,11 +87,8 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                             new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").sendSocketMsg("初件检查未通过");
                             return;
                         }
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    } catch (ServiceException e) {
-                        e.printStackTrace();
-                    } catch (MalformedURLException e) {
+                    } catch (Exception e) {
+                        logger.error("Exception",e);
                         e.printStackTrace();
                     }
 
