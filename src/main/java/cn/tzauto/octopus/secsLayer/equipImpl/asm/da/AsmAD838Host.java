@@ -60,12 +60,26 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
+                }
+
+                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
 
                 if (rptDefineNum < 1) {
-                    initRptPara();
+                    super.findDeviceRecipe();
                     rptDefineNum++;
+
+                    sendS2F37outCloseAll();
+                    sendS2F37out(2);
+                    sendS2F37out(3);
+                    sendS2F37out(4);
+                    sendS2F37out(6);
+                    sendS2F37out(7);
+                    sendS2F37out(237);
+
+                    sendS5F3out(true);
+                    sendStatus2Server(equipStatus);
                 }
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
@@ -438,13 +452,6 @@ public class AsmAD838Host extends EquipHost {
         }
     }
 
-    private void initRptPara() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
-        sendS1F1out();
-        super.findDeviceRecipe();
-        sendS2F37outAll();
-        sendS2F37outClose(267L);
-        sendS5F3out(true);
-    }
 
     @Override
     public String checkPPExecName(String recipeName) {
@@ -464,15 +471,12 @@ public class AsmAD838Host extends EquipHost {
             }
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                }
-                if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
-                    processS6F11ControlStateChange(data);
-                }
+            } else if (ceid == EquipStateChangeCeid) {
+                processS6F11EquipStatusChange(data);
+            }else  if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
+                processS6F11ControlStateChange(data);
             }
+
             if (commState != 1) {
                 this.setCommState(1);
             }
