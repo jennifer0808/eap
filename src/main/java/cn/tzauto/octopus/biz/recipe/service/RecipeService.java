@@ -528,6 +528,7 @@ public class RecipeService extends BaseService {
         String deviceId = deviceInfo.getDeviceCode();
         String recipeName = recipe.getRecipeName();
         String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
+
         /*
             这里checkBeforeDownload有四种情况：
             1.“无法获取设备实时状态,请重试并检查设备通讯状态!下载失败！”
@@ -544,6 +545,12 @@ public class RecipeService extends BaseService {
                     //如果删除失败，流程继续
                 }
             }
+            if("下载取消".equals(checkResult)){
+                if (deviceInfo.getDeviceType().contains("832i") || deviceInfo.getDeviceType().contains("8312plus") || deviceInfo.getDeviceType().contains("810") || deviceInfo.getDeviceType().contains("8312")  ) {
+                    checkResult = "0";
+                }
+            }
+
             return checkResult;
         }
         if (type.contains("Delete")) {

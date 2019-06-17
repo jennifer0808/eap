@@ -61,9 +61,9 @@ public class EquipStatusPaneController implements Initializable {
 //        if (equipNodeBean.getEquipStateProperty().isCommOn()) {
         if (event.getButton().equals(MouseButton.SECONDARY)) {
             String deviceCodeTemp = ((Label) P_EquipPane.lookup("#L_DeviceCode")).getText();
-
-           ;
-
+            String statu=((Label) P_EquipPane.lookup("#L_RunStatus")).getText();
+            String lotid=((Label) P_EquipPane.lookup("#L_LotId")).getText();
+            String recipeName=((Label) P_EquipPane.lookup("#L_RecipeName")).getText();
             for (EquipNodeBean enb : GlobalConstants.stage.equipBeans) {
                 if (deviceCodeTemp.equalsIgnoreCase(enb.getDeviceCode())) {
                     equipNodeBean = enb;
@@ -75,7 +75,7 @@ public class EquipStatusPaneController implements Initializable {
                 contextMenu.hide();
                 MenuItem menuItem = new MenuItem("设备详情");
 
-                menuItem.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp));
+                menuItem.setOnAction(actionEvent -> showDeviceInfo(deviceCodeTemp,statu,lotid,recipeName));
 
                 MenuItem menuItem1 = new MenuItem("SV数据查询");
                 menuItem1.setOnAction(actionEvent -> showSVQuery(deviceCodeTemp));
@@ -108,14 +108,14 @@ public class EquipStatusPaneController implements Initializable {
     /**
      * 设备详情
      */
-    private void showDeviceInfo(String deviceCode) {
+    private void showDeviceInfo(String deviceCode,String statu,String lotId,String recipeName) {
         if(DeviceInfoPaneController.flag.get(deviceCode)==null){
             DeviceInfoPaneController.flag.put(deviceCode,false);
         }else if(DeviceInfoPaneController.flag.get(deviceCode)){
             return;
         }
         try{
-            new DeviceInfoPaneController(deviceCode).init();
+            new DeviceInfoPaneController(deviceCode,statu,lotId,recipeName).init();
         }catch (Exception e){
             DeviceInfoPaneController.flag.put(deviceCode,false);
             e.printStackTrace();
