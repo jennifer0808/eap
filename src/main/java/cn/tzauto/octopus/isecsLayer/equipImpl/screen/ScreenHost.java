@@ -17,7 +17,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.screen.ScreenRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -27,7 +26,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
-
 import java.util.*;
 
 /**
@@ -41,7 +39,7 @@ public class ScreenHost extends EquipModel {
     private String power = ""; //曝光能量
     private String lotStartTime = ""; //开始时间
     private boolean addLimit = false; //追加限制，只有做完一批才能追加，true 限制开启，正在做，无法追加    false 限制关闭，可以追加
-    private Map<String, List<String>> zsz;
+    private Map<String, List<String>> zsz;//涨缩值
     private static List<String[]> inkInfo; //油墨型号，及能量格范围
 
     static {

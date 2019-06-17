@@ -73,8 +73,9 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
                         equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
                         equipModel.isFirstPro = "0".equals(lottype);
+                        equipModel.equipState.setWorkLot(lotNo);
                         if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
-                            if("1".equals(lottype)){
+                            if ("1".equals(lottype)) {
                                 new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", "").executeCommand("需要生产初件!");
                                 return;
                             }
@@ -128,6 +129,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                 if ("0".equals(downloadresult)) {
                     GlobalConstants.stage.equipModels.get(deviceCode).partNo = partNoTemp;
                     GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo;
+                    GlobalConstants.stage.equipModels.get(deviceCode).equipState.setWorkLot(lotNo);
                     GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
                     deviceInfoExt.setLotId(lotNo);
                     deviceInfoExt.setPartNo(partNo);
