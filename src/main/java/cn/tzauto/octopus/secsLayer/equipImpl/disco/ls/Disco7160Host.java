@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.ls;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -87,9 +86,9 @@ public class Disco7160Host extends EquipHost {
                         ex.printStackTrace();
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11IN")) {
-                    long ceid = 0l;
+                    Long ceid = 0L;
                     try {
-                        ceid = (long) msg.get("CEID");
+                        ceid = (Long) msg.get("CEID");
                         Map panelMap = new HashMap();
                         if (ceid == 75 || ceid == 76) {
                             if (ceid == 75) {
@@ -254,7 +253,7 @@ public class Disco7160Host extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-                if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
+                if (equipStatus.equalsIgnoreCase("run") && ceid == 150L) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
                         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();

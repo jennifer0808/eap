@@ -158,6 +158,7 @@ public class OcrHost extends EquipHost {
             } else if (ceid == 1003) {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
+            updateCommStateInExt();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

@@ -160,7 +160,7 @@ public class DiscoBGHost extends EquipHost {
     @SuppressWarnings("unchecked")
     private void sendS1F3CheckCassUse() {
         DataMsgMap data = null;
-        List cassIdlist = new ArrayList();
+        List<Long> cassIdlist = new ArrayList();
         cassIdlist.add(1004L);
         cassIdlist.add(1005L);
         try {
