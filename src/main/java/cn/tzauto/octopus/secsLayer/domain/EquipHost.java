@@ -583,6 +583,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
                 ppExecName = String.valueOf(listtmp.get(1));
                 controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+                logger.info("controlState 为："+controlState+":"+deviceType+";"+listtmp.get(2));
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);

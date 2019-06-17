@@ -41,8 +41,8 @@ public class GIS126Host extends EquipHost {
     public GIS126Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode){
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.svFormat = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
-         long StripMapUpCeid=-1;
-         long EquipStateChangeCeid=-1;
+         StripMapUpCeid=3435973836L;
+         EquipStateChangeCeid=-1;
     }
 
     @Override
@@ -179,8 +179,6 @@ public class GIS126Host extends EquipHost {
                 replyS6F12WithACK(data, ack[0]);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                //回复掉消息
-                processS6F11in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.toLowerCase().contains("s6f11incommon")) {
                 processS6F11in(data);

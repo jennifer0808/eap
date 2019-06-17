@@ -37,8 +37,8 @@ public class HitachiWaferHost extends EquipHost {
 
     public HitachiWaferHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        long StripMapUpCeid=-1;
-        long EquipStateChangeCeid=-1;
+        StripMapUpCeid=-1;
+        EquipStateChangeCeid=-1;
     }
 
 
@@ -65,7 +65,7 @@ public class HitachiWaferHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s12f3in")) {
                     processS12F3in(msg);
@@ -92,7 +92,7 @@ public class HitachiWaferHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11incommon")) {
+            } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s6f12in")) {
                 processS6F12in(data);
