@@ -517,7 +517,7 @@ public class MultipleEquipHostManager {
     public Map getRecipeParaFromDevice(String deviceCode, String recipeName) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceCode) != null) {
             EquipHost equipHost = equipHosts.get(deviceCode);
-            if (equipHost.deviceType.contains("DEKHorizon03ix")) {
+            if (equipHost.deviceType.contains("DEKHorizon03ix")|| equipHost.deviceType.contains("ESEC2100") || equipHost.deviceType.contains("AD830PLUS") ||equipHost.deviceType.contains("AD838") ||equipHost.deviceType.contains("ASMAD832") ||equipHost.deviceType.contains("ASMTwin832")) {
                 equipHost.sendS1F3Check();
                 if (!equipHost.ppExecName.equalsIgnoreCase(recipeName)) {
                     Map resultMap = new HashMap();
