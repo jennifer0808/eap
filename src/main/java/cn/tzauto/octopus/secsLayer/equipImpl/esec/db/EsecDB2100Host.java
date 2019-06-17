@@ -752,7 +752,7 @@ public class EsecDB2100Host extends EquipHost {
 
     @Override
     public Map sendS7F19out() {
-        logger.info("Request sends7f19: " + sendS7F19out() + " to Device " + deviceCode);
+        logger.info("Request sends7f19 to Device: " + deviceCode);
         Map resultMap = super.sendS7F19out();
         List eppd = (ArrayList) resultMap.get("eppd");
         ArrayList recipeNames = new ArrayList();
