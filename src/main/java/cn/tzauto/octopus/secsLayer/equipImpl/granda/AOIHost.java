@@ -19,6 +19,7 @@ import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
@@ -38,6 +39,9 @@ public class AOIHost extends EquipHost {
 
     public AOIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+
+        EquipStateChangeCeid = -1L;
+        StripMapUpCeid = 137L;
 
     }
 
@@ -83,9 +87,11 @@ public class AOIHost extends EquipHost {
                 }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
-                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
+                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
+                } else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
+                    processS6F11in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     Long ceid = 0L;
                     try {
                         ceid = msg.getSingleNumber("CollEventID");
@@ -104,30 +110,13 @@ public class AOIHost extends EquipHost {
 
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {//todo ceid未找到
                     processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11incommon40")) {
-                    Long ceid = 0L;
-                    try {
-                        ceid = msg.getSingleNumber("CollEventID");
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                    //TR7700设备点击测试等待HOST发送START指令
-                    if (ceid == 133L) {
-                        sendS2f41Cmd("START");
-                    }
-//                    processS6F11in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {//todo ceid未找到
                     ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
-                } else {
-                    //logger.debug("A message in queue with tag = " + msg.getMsgTagName()
-                    //      + " which I do not want to process! ");
                 }
             } catch (InterruptedException e) {
                 logger.fatal("Caught Interruption", e);
@@ -149,20 +138,12 @@ public class AOIHost extends EquipHost {
                 processS1F13in(data);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstatuschange") || tagName.equalsIgnoreCase("s6f11equipstate") || tagName.equalsIgnoreCase("s6f11ppselectfinish")
-                    || tagName.equalsIgnoreCase("s6f11SPCData1") || tagName.equalsIgnoreCase("s6f11SPCData2")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11in")) {
+            }  else if (tagName.contains("s6f11in")) {
                 //回复掉消息
-                processS6F11in(data);
+               replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().equals("s6f11incommon")) {
-                processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s6f12in")) {
-                processS6F12in(data);
+                processS6F12in(data);//todo SMLMapConverter未找到事件
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
@@ -176,10 +157,7 @@ public class AOIHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                processS6F11inStripMapUpload(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s14f1inMapDownLoad")) {
+            }else if (tagName.equalsIgnoreCase("s14f1")) {
                 processS14F1in(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
                 controlState = FengCeConstant.CONTROL_OFFLINE;
@@ -188,6 +166,35 @@ public class AOIHost extends EquipHost {
             } else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = -12345679;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = Long.parseLong(data.get("CEID").toString());
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            // 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+            }else if(ceid == 133L){
+                //TR7700设备点击测试等待HOST发送START指令
+                    sendS2f41Cmd("START");
+            }else{
+                processS6F11EquipStatus(data);
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -205,14 +212,14 @@ public class AOIHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
     @SuppressWarnings("unchecked")
     protected void processS6F11EquipStatus(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
         //获取当前设备状态
-        sendS1F3Check();
+        findDeviceRecipe();
 
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -316,121 +323,57 @@ public class AOIHost extends EquipHost {
         } finally {
             sqlSession.close();
         }
-//        long ceid = 0l;
-//        try {
-//            ceid = data.getSingleNumber("CollEventID");
-//            Map panelMap = new HashMap();
-//            if (ceid == 1L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
-//            } else if (ceid == 2L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE); //Online_Local               
-//            } else if (ceid == 3L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE); //Online_Remote            
-//            }
-//            changeEquipPanel(panelMap);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        showCollectionsEventInfo(ceid);
-    }// </editor-fold> 
+    }// </editor-fold>
 
-//    @Override
-//    @SuppressWarnings("unchecked")
-//    public void processS6F11in(DataMsgMap data) {
-//        long ceid = 0;
-//        try {
-//            if (data.get("CollEventId") != null) {
-//                ceid = data.getSingleNumber("CollEventId");
-//                logger.info("Received a s6f11in with CEID = " + ceid);
-//            }
-//            DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-//            byte[] ack = new byte[1];
-//            ack[0] = 0;
-//            out.put("AckCode", ack);
-//            out.setTransactionId(data.getTransactionId());
-//            activeWrapper.sendSecondaryOutputMessage(out);
-//            this.setCommState(1);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
+
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
     @Override
     public Map sendS7F5out(String recipeName) {
-        Recipe recipe = setRecipe(recipeName);
-//        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
-//        recipePath = super.getRecipePathByConfig(recipe);
-//        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-//        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s7f5out.put("ProcessprogramID", recipeName);
-//        DataMsgMap msgdata = null;
-//        try {
-//            msgdata = activeWrapper.sendPrimaryWsetMessage(s7f5out);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
 
-        TransferUtil.setPPBody(UUID.randomUUID().toString(), recipeType, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
-        //Recipe解析
-        List<RecipePara> recipeParaList = new ArrayList<>();
-        recipeParaList = getRecipeParasByECSV();
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = super.getRecipePathByConfig(recipe);//路径
+        List<RecipePara> recipeParaList = null;
+
+        try {
+            byte[] ppbody = (byte[]) getPPBODY(recipeName);
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            //Recipe解析
+            recipeParaList = getRecipeParasByECSV();
+        } catch (UploadRecipeErrorException e) {
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
+            logger.error("Exception:", e);
+        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
+        resultMap.put("recipeNameMapping", null);
         resultMap.put("recipeParaList", recipeParaList);
-
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
     // </editor-fold>
 
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-//        s1f13out.put("Mdln", Mdln);
-//        s1f13out.put("SoftRev", SoftRev);
-        DataMsgMap data = null ;
-        try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s1f13out);
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            setCommState(0);
-            logger.error("Exception:", e);
-        }
-    }
 
     @Override
     public Map sendS1F3SingleCheck(String svidName) {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3singleout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] svid = new long[1];
-        svid[0] = Long.parseLong(svidName);
-        s1f3out.put("SVID", svid);
+
+        List svidlist = new ArrayList();
+        svidlist.add(Long.parseLong(svidName));
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
-            // TODO: 2019/6/10       data = sendMsg2Equip(s1f3out);
+            data = activeWrapper.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
+        if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<SecsItem> list = (ArrayList)  data.get("SV");;
         if (list == null) {
             return null;
         }
