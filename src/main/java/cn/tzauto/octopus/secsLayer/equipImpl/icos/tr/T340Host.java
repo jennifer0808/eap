@@ -19,10 +19,12 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import com.alibaba.fastjson.JSONArray;
+import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -38,6 +40,11 @@ public class T340Host extends EquipHost {
     
     public T340Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+        EquipStateChangeCeid=101L;
+        this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.rptFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -121,23 +128,11 @@ public class T340Host extends EquipHost {
                 ceid = Long.parseLong(data.get("CEID").toString());
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            if (ceid == StripMapUpCeid) {
-
-            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if(ceid==EquipStateChangeCeid){
                     processS6F11EquipStatusChange(data);
-                } if (ceid == 1 || ceid == 2 || ceid == 3) {
-                    if (ceid == 2) {
-                        super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
-                    } else if (ceid == 3) {
-                        super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-                    } else if (ceid == 1) {
-                        super.setControlState(FengCeConstant.CONTROL_OFFLINE);
-                    }
-                    findDeviceRecipe();
-                    updateCommStateInExt();
-                }
+                } if (ceid == 1L || ceid == 2L || ceid == 3L) {
+                    processS6F11EquipStatus(data);
             }
         }catch (Exception e){
             logger.error("Exception:", e);
@@ -348,16 +343,15 @@ public class T340Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid =Long.parseLong( data.get("CEID").toString());
-            if (ceid == 1 || ceid == 2 || ceid == 3) {
-                if (ceid == 2) {
+                if (ceid == 2L) {
                     super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
-                } else if (ceid == 3) {
+                } else if (ceid == 3L) {
                     super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-                } else if (ceid == 1) {
+                } else if (ceid == 1L) {
                     super.setControlState(FengCeConstant.CONTROL_OFFLINE);
                 }
                 findDeviceRecipe();
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -456,43 +450,40 @@ public class T340Host extends EquipHost {
         if (hanAndCompMap == null) {
             return null;
         }
-        long[] length0 = new long[1];
-        length0[0] = TransferUtil.getPPLength(localFilePath);
-        long[] length1 = new long[1];
-        length1[0] = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("hanRcpPath")));
-        long[] length2 = new long[1];
-        length2[0] = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("compRcpPath")));
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName);
-        s7f1out.put("Length", length0);
+        long length0 = TransferUtil.getPPLength(localFilePath);
+        long length1 = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("hanRcpPath")));
+        long length2 = TransferUtil.getPPLength(String.valueOf(hanAndCompMap.get("compRcpPath")));
+//        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+//        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f1out.put("ProcessprogramID", targetRecipeName);
+//        s7f1out.put("Length", length0);
         DataMsgMap data = null;
-        byte[] ppgnt = new byte[1];
+        byte ppgnt = -1;
         try {
-            // TODO: 2019/6/10    data = activeWrapper.sendPrimaryWsetMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(targetRecipeName, length0, lengthFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid(recipe)= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("hanRcpName")));
-        s7f1out.put("Length", length1);
+//        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f1out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("hanRcpName")));
+//        s7f1out.put("Length", length1);
         try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("hanRcpName")), length1, lengthFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid(handler)= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("compRcpName")));
-        s7f1out.put("Length", length2);
+//        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f1out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("compRcpName")));
+//        s7f1out.put("Length", length2);
         try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            data = activeWrapper.sendS7F1out(String.valueOf(hanAndCompMap.get("compRcpName")), length2, lengthFormat);
+            ppgnt = (byte) data.get("PPGNT");
             logger.info("Request send ppid(component)= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             e.printStackTrace();
@@ -502,8 +493,8 @@ public class T340Host extends EquipHost {
         resultMap.put("msgType", "s7f2");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ppgnt", ppgnt[0]);
-        resultMap.put("Description", ACKDescription.description(ppgnt[0], "PPGNT"));
+        resultMap.put("ppgnt", ppgnt);
+        resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
         return resultMap;
     }
 
@@ -526,20 +517,20 @@ public class T340Host extends EquipHost {
         byte[] ppbody0 = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         byte[] ppbody1 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("hanRcpPath"))).get(0);
         byte[] ppbody2 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("compRcpPath"))).get(0);
-        SecsItem secsItem0 = new SecsItem(ppbody0, FormatCode.SECS_BINARY);
-        SecsItem secsItem1 = new SecsItem(ppbody1, FormatCode.SECS_BINARY);
-        SecsItem secsItem2 = new SecsItem(ppbody2, FormatCode.SECS_BINARY);
+//        SecsItem secsItem0 = new SecsItem(ppbody0, FormatCode.SECS_BINARY);
+//        SecsItem secsItem1 = new SecsItem(ppbody1, FormatCode.SECS_BINARY);
+//        SecsItem secsItem2 = new SecsItem(ppbody2, FormatCode.SECS_BINARY);
         //下载han文件
-        s7f3out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("hanRcpName")));
-        s7f3out.put("Processprogram", secsItem1);
+//        s7f3out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("hanRcpName")));
+//        s7f3out.put("Processprogram", secsItem1);
         try {
             sleep(1000);
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ackc7han = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        if (ackc7han[0] == 0) {
+        byte ackc7han = (byte) data.get("ACKC7");
+        if (ackc7han == 0) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("hanRcpName")) + "下载成功.");
         } else {
@@ -548,16 +539,16 @@ public class T340Host extends EquipHost {
         }
         //下载comp文件
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f3out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("compRcpName")));
-        s7f3out.put("Processprogram", secsItem2);
+//        s7f3out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("compRcpName")));
+//        s7f3out.put("Processprogram", secsItem2);
         try {
             sleep(1000);
-            // TODO: 2019/6/10    data = activeWrapper.sendPrimaryWsetMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ackc7comp = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        if (ackc7comp[0] == 0) {
+        byte ackc7comp = (byte) data.get("ACKC7");
+        if (ackc7comp == 0) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
             logger.debug("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载成功.");
         } else {
@@ -565,17 +556,17 @@ public class T340Host extends EquipHost {
             logger.error("Recipe:" + String.valueOf(hanAndCompMap.get("compRcpName")) + "下载失败.");
         }
         //下载recipe文件
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem0);
+//        s7f3out.put("ProcessprogramID", targetRecipeName);
+//        s7f3out.put("Processprogram", secsItem0);
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         try {
             sleep(1000);
-            // TODO: 2019/6/10    data = activeWrapper.sendPrimaryWsetMessage(s7f3out);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, FormatCode.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        if (ackc7[0] == 0) {
+        byte ackc7 = (byte) data.get("AckCode");
+        if (ackc7 == 0) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Recipe:" + targetRecipeName + "下载成功.");
             logger.debug("Recipe:" + targetRecipeName + "下载成功.");
         } else {
@@ -586,58 +577,51 @@ public class T340Host extends EquipHost {
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        if (ackc7han[0] == 0 && ackc7comp[0] == 0 && ackc7[0] == 0) {
-            ackc7[0] = 0;
+        if (ackc7han == 0 && ackc7comp== 0 && ackc7 == 0) {
+            ackc7 = 0;
         } else {
-            ackc7[0] = 1;
+            ackc7 = 1;
         }
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
     @Override
-    public Map sendS7F5out(String recipeName) {
+    public Map sendS7F5out(String recipeName)  throws UploadRecipeErrorException {
         if ("Idle".equalsIgnoreCase(equipStatus) || "UNKNOWN".equalsIgnoreCase(equipStatus) || "ready".equalsIgnoreCase(equipStatus)) {
             Recipe recipe = setRecipe(recipeName);
             recipePath = super.getRecipePathByConfig(recipe);
-            DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-            s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-            s7f5out.put("ProcessprogramID", recipeName);
+//            DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
+//            s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//            s7f5out.put("ProcessprogramID", recipeName);
+            byte[] ppbody = (byte[]) getPPBODY(recipeName);
             DataMsgMap data = null;
-            try {
-//            data = activeWrapper.sendPrimaryWsetMessage(s7f5out);
-                // TODO: 2019/6/10       data = sendMsg2Equip(s7f5out);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (data == null || data.isEmpty()) {
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
-                return null;
-            }
-
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+//            byte[] ppbody1 = (byte[])  data.get("Processprogram");
+            TransferUtil.setPPBody(ppbody, 1, recipePath);
             List<String> list = TrRecipeUtil.readRCP(recipePath);
             String rcpContent = "";
             for (String str : list) {
                 if (str.contains("handler") || str.contains("component")) {
                     String recipePathTem = recipePath.substring(0, recipePath.lastIndexOf("/") + 1) + str + "_V" + recipe.getVersionNo() + ".txt";
                     String ppidTem = str.replace("@", "/");
-                    DataMsgMap s7f5outTem = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-                    s7f5outTem.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-                    s7f5outTem.put("ProcessprogramID", ppidTem);
-                    try {
-                        // TODO: 2019/6/10       data = activeWrapper.sendPrimaryWsetMessage(s7f5outTem);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    if (data.get("ProcessprogramID") != null) {
-                        ppidTem = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
-                        byte[] ppbodyTem = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-                        TransferUtil.setPPBody(ppbodyTem, recipeType, recipePathTem);
-                        rcpContent = rcpContent + str;
-                    }
+                    byte[] ppbodyTem = (byte[]) getPPBODY(ppidTem);
+                   TransferUtil.setPPBody(ppbodyTem, 1, recipePathTem);
+                    rcpContent = rcpContent + str;
+//                    DataMsgMap s7f5outTem = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
+//                    s7f5outTem.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//                    s7f5outTem.put("ProcessprogramID", ppidTem);
+//                    try {
+//
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                    if (data.get("ProcessprogramID") != null) {
+//                        ppidTem = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
+//                        byte[] ppbodyTem = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+//                        TransferUtil.setPPBody(ppbodyTem, recipeType, recipePathTem);
+//                        rcpContent = rcpContent + str;
+//                    }
                 }
             }
             String rcpAnalyseSucceed = "Y";
@@ -664,7 +648,7 @@ public class T340Host extends EquipHost {
             resultMap.put("recipe", recipe);
             resultMap.put("recipeParaList", recipeParaList);
             resultMap.put("rcpAnalyseSucceed", rcpAnalyseSucceed);
-
+            resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
             resultMap.put("Description", " Receive the recipe " + recipeName + " from equip " + deviceCode);
             return resultMap;
         } else {
@@ -675,39 +659,43 @@ public class T340Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS7F17out(String recipeName) {
-        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName);
-        byte[] ackc7 = new byte[1];
+//        DataMsgMap s7f17out = new DataMsgMap("s7f17out", activeWrapper.getDeviceId());
+//        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f17out.put("ProcessprogramID", recipeName);
+        List ProcessprogramIDList = new ArrayList();
+        ProcessprogramIDList.add(recipeName);
+        byte ackc7 = -1;
         DataMsgMap data = null;
         try {
-            // TODO: 2019/6/10        data = activeWrapper.sendPrimaryWsetMessage(s7f17out);
+            data=activeWrapper.sendS7F17out(ProcessprogramIDList);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            ackc7 = (byte)  data.get("AckCode");
             sleep(1000);
-            if (ackc7[0] == 0 || ackc7[0] == 6) {
+            if (ackc7 == 0 || ackc7 == 6) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
-                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7[0], "ACKC7"));
+                logger.error("Delete recipe " + recipeName + " from " + deviceCode + " failure whit ACKC7=" + ackc7 + " means " + ACKDescription.description(ackc7, "ACKC7"));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "component"));
-
+//        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "component"));
+        List ProcessprogramIDList1 = new ArrayList();
+        ProcessprogramIDList1.add(recipeName.replace("recipe", "component"));
         try {
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s7f17out);
+              data=activeWrapper.sendS7F17out(ProcessprogramIDList1);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "handler"));
-
+//        s7f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f17out.put("ProcessprogramID", recipeName.replace("recipe", "handler"));
+        List ProcessprogramIDList2=new ArrayList();
+        ProcessprogramIDList2.add(recipeName.replace("recipe", "handler"));
         try {
-            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f17out);
+            data=activeWrapper.sendS7F17out(ProcessprogramIDList2);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
             sleep(1000);
         } catch (Exception e) {
@@ -717,31 +705,31 @@ public class T340Host extends EquipHost {
         resultMap.put("msgType", "s7f18");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipeName", recipeName);
-        resultMap.put("ACKC7", ackc7[0]);
-        resultMap.put("Description", ACKDescription.description(ackc7[0], "ACKC7"));
+        resultMap.put("ACKC7", ackc7);
+        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         return resultMap;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F19out() {
-        Map resultMap = new HashMap();
+        Map resultMap = new CaseInsensitiveMap();
         resultMap.put("msgType", "s7f20");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
-        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
-        s7f19out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        DataMsgMap s7f19out = new DataMsgMap("s7f19out", activeWrapper.getDeviceId());
+//        s7f19out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
         try {
 //            data = activeWrapper.sendPrimaryWsetMessage(s7f19out);
-            // TODO: 2019/6/10        data = sendMsg2Equip(s7f19out);
+            data=activeWrapper.sendS7F19out();
         } catch (Exception e) {
             e.printStackTrace();
         }
         if (data == null || data.isEmpty()) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList  list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {
@@ -966,28 +954,30 @@ public class T340Host extends EquipHost {
 
     @Override
     public String testRUThere() {
-        try {
-            DataMsgMap s1f1out = new DataMsgMap("s1f1out", activeWrapper.getDeviceId());
-            long transactionId = activeWrapper.getNextAvailableTransactionId();
-            s1f1out.setTransactionId(transactionId);
-            DataMsgMap s1f2in = null ;
-            // TODO: 2019/6/10     s1f2in  = activeWrapper.sendPrimaryWsetMessage(s1f1out);
-            if (s1f2in != null) {
-                //如果回复取消会话，那么需要重新发送S1F13
-                if (s1f2in.getMsgSfName().contains("s1f0")) {
-                    logger.info("testRUThere成功,但是未正确回复消息,需要重新建立连接 ");
-                    return "0";
-                } else {
-                    logger.info("testRUThere成功、通信正常 ");
-                    return "0";
-                }
-            } else {
-                return "2";
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-            return "2";
-        }
+//        try {
+//            DataMsgMap s1f1out = new DataMsgMap("s1f1out", activeWrapper.getDeviceId());
+//            long transactionId = activeWrapper.getNextAvailableTransactionId();
+//            s1f1out.setTransactionId(transactionId);
+//            DataMsgMap s1f2in = null ;
+//
+//            s1f2in=activeWrapper.sendS1F1out();
+//            if (s1f2in != null) {
+//                //如果回复取消会话，那么需要重新发送S1F13
+//                if (s1f2in.getMsgSfName().contains("s1f0")) {
+//                    logger.info("testRUThere成功,但是未正确回复消息,需要重新建立连接 ");
+//                    return "0";
+//                } else {
+//                    logger.info("testRUThere成功、通信正常 ");
+//                    return "0";
+//                }
+//            } else {
+//                return "2";
+//            }
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//            return "2";
+//        }
+        return super.testRUThere();
     }
 
     @SuppressWarnings("unchecked")
@@ -1022,7 +1012,6 @@ public class T340Host extends EquipHost {
                     cplist.add(CPN_PPID);
                     data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
 
-                    // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
                     logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
                     byte  hcack = (byte) ( data.get("HCACK"));
                     logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));

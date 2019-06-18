@@ -45,9 +45,13 @@ public class LMC3200G3Host extends EquipHost {
 
     public LMC3200G3Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
+       //toDo  StripMapUpCeid
+        StripMapUpCeid=-1L;
+        EquipStateChangeCeid=1003L;
         this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-
-    }
+        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+}
 
 
     public void run() {
@@ -97,10 +101,7 @@ public class LMC3200G3Host extends EquipHost {
                     processS6F11in(msg);
                 }
 //                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-//                    ppExecName = (String) msg.get("PPExecName");
-//                    Map map = new HashMap();
-//                    map.put("PPExecName", ppExecName);
-//                    changeEquipPanel(map);
+//
 //                }
 //                else {
 //                    //logger.debug("A message in queue with tag = " + msg.getMsgTagName()
@@ -113,34 +114,24 @@ public class LMC3200G3Host extends EquipHost {
     }
 
     public void processS6F11in(DataMsgMap data) {
-        long ceid = -12345679;
+        long ceid = -1L;
         try {
             if (data.get("CEID") != null) {
                 ceid = Long.parseLong(data.get("CEID").toString());
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 
-            if (ceid == 1003) {
-                processS6F11EquipStatusChange(data);
-            }
-
-//            if (equipSecsBean.collectionReports.get(ceid) != null) {
-//                Process process = equipSecsBean.collectionReports.get(ceid);
-            //todo 这里看是重定义事件报告，还是查一遍sv数据把数据放到data里方便后面使用
-            //
-//                if (process.getProcessKey().equals("STATE_CHANGE")) {
-//
-//                }
-//                EventDealer.deal(data, deviceCode, process, activeWrapper);
-
-//            }
-            //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
+                }if(ceid==10L){
+                    ppExecName = (String) data.get("PPExecName");
+                    Map map = new HashMap();
+                    map.put("PPExecName", ppExecName);
+                    changeEquipPanel(map);
                 }
             }
 
@@ -160,7 +151,7 @@ public class LMC3200G3Host extends EquipHost {
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }
-////        showCollectionsEventInfo(ceid);
+//        showCollectionsEventInfo(ceid);
 //    }
 
     public void inputMessageArrived(MsgArrivedEvent event) {
@@ -315,7 +306,6 @@ public class LMC3200G3Host extends EquipHost {
 //                holdFlag = true;
             }
 
-            //toDo 逻辑不清楚
             sendS2f41Cmd("GO-LOCAL");
             return map;
         } else {
@@ -334,9 +324,6 @@ public class LMC3200G3Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid = Long.parseLong(data.get("CEID").toString());
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get(0)), deviceType);
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -497,7 +484,7 @@ public class LMC3200G3Host extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendS7F17out(recipeIDlist);
             logger.info("Request delete recipe " + "PRODUCTION\\" + recipeName + " on " + deviceCode);
-     // toDo   data.get("AckCode") or  data.get("ACKC7")?
+
            byte ackc7 = (byte) data.get("AckCode");
             if (ackc7 == 0) {
                 logger.info("The recipe " + "PRODUCTION\\" + recipeName + " has been delete from " + deviceCode);
@@ -573,8 +560,7 @@ public class LMC3200G3Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
-         //toDo  data.get("AckCode") or data.get("ACKC7")?
+            data = activeWrapper.sendS7F3out(targetRecipeName, 1, FormatCode.SECS_BINARY);
             byte ackc7 = (byte)  data.get("AckCode");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));

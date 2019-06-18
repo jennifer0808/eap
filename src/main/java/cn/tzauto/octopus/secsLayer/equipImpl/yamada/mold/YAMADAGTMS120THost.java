@@ -41,6 +41,13 @@ public class YAMADAGTMS120THost extends EquipHost {
     public YAMADAGTMS120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        //toDo StripMapUpCeid没找到
+        StripMapUpCeid=-1L;
+        EquipStateChangeCeid=101L;
+        this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.rptFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -70,28 +77,30 @@ public class YAMADAGTMS120THost extends EquipHost {
                 }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
                     processS6F11in(msg);
                 }
-                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    try {
-                        processS6F11EquipStatusChange(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate") || (msg.getMsgSfName().equalsIgnoreCase("s6f11lotstartready"))) {
-                    try {
-                        processS6F11EquipStatus(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11RunModeChange")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) msg.get("PPExecName");
-                    Map map = new HashMap();
-                    map.put("PPExecName", ppExecName);
-                    changeEquipPanel(map);
-                } else {
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
+//                    try {
+//                        processS6F11EquipStatusChange(msg);
+//                    } catch (Exception e) {
+//                        logger.error("Exception:", e);
+//                    }
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate") || (msg.getMsgSfName().equalsIgnoreCase("s6f11lotstartready"))) {
+//                    try {
+//                        processS6F11EquipStatus(msg);
+//                    } catch (Exception e) {
+//                        logger.error("Exception:", e);
+//                    }
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11RunModeChange")) {
+//                    processS6F11EquipStatus(msg);
+//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11workloaded")) {
+//                    processS6F11EquipStatus(msg);
+//                }
+//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+//                    ppExecName = (String) msg.get("PPExecName");
+//                    Map map = new HashMap();
+//                    map.put("PPExecName", ppExecName);
+//                    changeEquipPanel(map);
+//                }
+                else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -114,6 +123,14 @@ public class YAMADAGTMS120THost extends EquipHost {
             if(ceid==EquipStateChangeCeid){
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 processS6F11EquipStatusChange(data);
+            }if(ceid==1L ||ceid==2L||ceid==3L||ceid==102L||ceid==105L||ceid==115L||ceid==601L){
+                processS6F11EquipStatus(data);
+            }if(ceid==601L){
+                //toDO  ppselectid
+                ppExecName = (String) data.get("PPExecName");
+                Map map = new HashMap();
+                map.put("PPExecName", ppExecName);
+                changeEquipPanel(map);
             }
         }
     } catch (Exception e) {
@@ -221,11 +238,13 @@ public class YAMADAGTMS120THost extends EquipHost {
         long[] press4SV = new long[1];
         press4SV[0] = 5401l;
         s1f3out.put("Press4", press4SV);
+        svidlist.add(0, 5101l);
+        svidlist.add(1, 5201l);
+        svidlist.add(2, 5301l);
+        svidlist.add(3, 5401l);
         DataMsgMap data = null;
         try {
              data = activeWrapper.sendS1F3out(svidlist, svFormat);
-
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s1f3out);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -403,55 +422,31 @@ public class YAMADAGTMS120THost extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
+        System.out.println(recipePath);
+
 //        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
 //        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
 //        s7f5out.put("ProcessprogramID", recipeName);
-        DataMsgMap data = null;
-
 
 //        try {
-//            // TODO: 2019/6/10     data = activeWrapper.sendPrimaryWsetMessage(s7f5out);
+//
 //
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }
 //        byte[] ppbodys = (byte[]) (data.get("Processprogram"));
-
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        Map map = new HashMap();
-        Map resultMap = new HashMap();
-        map = sendS1F3Check();
-        String rcpName = (String) map.get("PPExecName");
-        logger.info("===================rcpName:" + rcpName);
-        logger.info("===================recipeName:" + recipeName);
-        if (!recipeName.contains(rcpName)) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传程序与设备当前程序不一致，请调整后再上传！");
 
-            resultMap.put("checkResult", "Y");
-            return resultMap;
-        }
-        byte[] ppbody = new byte[0];
-        try {
-            //sendS7F5
-            ppbody = (byte[]) getPPBODY(recipeName);
-        } catch (UploadRecipeErrorException e) {
-            e.printStackTrace();
-        }
-        if (ppbody == null && ppbody.length == 0) {
-            resultMap.put("checkResult", "ppbody为空，请检查程序！");
-            return resultMap;
-        }
-        cn.tzauto.octopus.common.resolver.TransferUtil.setPPBody(ppbody, 1, recipePath);
-        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
-//        try {
-            recipeParaList = getRecipeParasByECSV();
-//            recipeParaList = YamadRecipeUtil.transferYamadaRcp(deviceType, recipePath);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-
+        try {
+        recipeParaList = YamadRecipeUtil.transferYamadaRcp(recipePath);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        Map resultMap=new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
