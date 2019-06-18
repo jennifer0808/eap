@@ -152,9 +152,10 @@ public class EquipStatusPane {
     public void setLotId(String lotId) {
         this.L_LotId.setTooltip(new Tooltip(lotId));
         if (lotId != null && lotId.length() > 15) {
-            Platform.runLater(()
-                    -> this.L_LotId.setText(lotId.substring(0, 12) + "...")
-            );
+//            Platform.runLater(()
+//                    ->
+            this.L_LotId.setText(lotId.substring(0, 12) + "...");
+//            );
         } else {
             Platform.runLater(()
                     -> this.L_LotId.setText(lotId)
@@ -213,8 +214,8 @@ public class EquipStatusPane {
         P_EquipPane.setBorder(borderWhite);
         switch (controlState) {
             case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色
-
+//                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色,实现onLocal/offLocal功能按钮
+                Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
                 break;
             case FengCeConstant.CONTROL_REMOTE_ONLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
