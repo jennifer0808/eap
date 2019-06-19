@@ -146,7 +146,7 @@ public class GlobalConstants {
 
 
     public static List<DeviceInfo> deviceInfos;
-
+    public static Map<String,Map> mesInferfaceParaMap;
 
     public static boolean loadPropertyFromDB() {
         try {

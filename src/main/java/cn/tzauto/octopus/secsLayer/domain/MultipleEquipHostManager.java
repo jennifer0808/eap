@@ -21,6 +21,7 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
+import cn.tzauto.octopus.sdr4isecs.main.MultipleSDRManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
@@ -44,7 +45,6 @@ public class MultipleEquipHostManager {
     private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class.getName());
     private HashMap<String, EquipHost> equipHosts; //store pairs <deviceId, Equip>
     private String clientId = ""; //used for naming DB connection Cache
-    private String hostXmlFilePath = null;
     private String equipListStr = "";
     private EquipModel equipModel;
     private EquipHost equipHost;
@@ -61,7 +61,7 @@ public class MultipleEquipHostManager {
         pass = loadDeviceInfoAndInstanciateEquips(deviceInfos);
         this.deviceInfos = deviceInfos;
         if (!pass) {
-            logger.fatal("Error during loading host.xnl file - returned false. Exit!");
+            logger.fatal("Error during initialize secs  - returned false. Exit!");
             //System.out.println("Error during loading host.xnl file - returned false. Exit!");
             return false;
         }
@@ -326,14 +326,6 @@ public class MultipleEquipHostManager {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
-    }
-
-    public String getHostXmlFilePath() {
-        return hostXmlFilePath;
-    }
-
-    public void setHostXmlFilePath(String hostXmlFilePath) {
-        this.hostXmlFilePath = hostXmlFilePath;
     }
 
     public HashMap<String, EquipHost> getAllEquipHosts() {
@@ -1220,7 +1212,7 @@ public class MultipleEquipHostManager {
         boolean pass = false;
         pass = instanciateEquipModels(deviceInfos);
         if (!pass) {
-            logger.fatal("Error during loading host.xnl file - returned false. Exit!");
+            logger.fatal("Error during initialize Isecs - returned false. Exit!");
             return false;
         }
         for (EquipModel value : this.equipModels.values()) {
@@ -1243,7 +1235,7 @@ public class MultipleEquipHostManager {
         for (DeviceInfo deviceInfo : deviceInfos) {
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
             if (deviceInfoExt == null) {
-                logger.error("未配置设备"+deviceInfo.getDeviceCode()+"对应的EXT信息");
+                logger.error("未配置设备" + deviceInfo.getDeviceCode() + "对应的EXT信息");
                 return false;
             }
             DeviceType deviceTypeObj = deviceTypeDic.get(deviceInfo.getDeviceTypeId());
@@ -1476,6 +1468,9 @@ public class MultipleEquipHostManager {
         Map<String, List<DeviceInfo>> deviceInfoMap = getDeviceInfos();
         List<DeviceInfo> deviceInfoSecs = deviceInfoMap.get("SECS");
         List<DeviceInfo> deviceInfoIsecs = deviceInfoMap.get("ISECS");
+        if (GlobalConstants.getProperty("USE_SDR").equals("1")) {
+            initializeSDR(deviceInfoSecs);
+        }
         pass = initializeSecs(deviceInfoSecs);
         if (!pass) {
             logger.fatal("Error during initializeSecs - returned false. Exit!");
@@ -1683,4 +1678,48 @@ public class MultipleEquipHostManager {
         }
         return equipStatus;
     }
+
+
+    /**
+     * 此方法需要在initializeSecs之前调用
+     *
+     * @param deviceInfos
+     * @return
+     */
+    private boolean initializeSDR(List<DeviceInfo> deviceInfos) {
+        boolean pass = false;
+        MultipleSDRManager multipleSDRManager = new MultipleSDRManager();
+        try {
+            pass = multipleSDRManager.initialize(deviceInfos);
+        } catch (ParserConfigurationException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (SAXException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (IOException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            pass = false;
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            pass = false;
+            e.printStackTrace();
+        } finally {
+            return pass;
+        }
+
+
+    }
+
 }

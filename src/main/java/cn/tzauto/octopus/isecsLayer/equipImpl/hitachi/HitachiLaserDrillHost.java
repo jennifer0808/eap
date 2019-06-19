@@ -25,6 +25,7 @@ import cn.tzauto.octopus.isecsLayer.socket.RecipeMapping;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -40,7 +41,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     public HitachiLaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        org.slf4j.MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -905,20 +906,10 @@ public class HitachiLaserDrillHost extends EquipModel {
     }
 
     @Override
-    public String organizeRecipe(String partNo,String lotNo) {
-        Map recipeNameMap = RecipeMapping.loadRecipeLotMapping(GlobalConstants.getProperty("HITACHI_LASER_DRILL_RECIPE_MAPPING_PATH"));
+    public String organizeRecipe(String partNo, String lotNo) {
+
         String recipeName = "";
-        if (recipeNameMap != null) {
-            recipeName = String.valueOf(recipeNameMap.get(partNo));
-            if (!recipeName.equals("null") && !"".equals(recipeName)) {
-                if (recipeName.contains(",")) {
-                    recipeName = recipeName.split(",")[0];
-                }
-            } else {
-            }
-        } else {
-            return "Can not find config file at " + GlobalConstants.getProperty("HITACHI_LASER_DRILL_RECIPE_MAPPING_PATH");
-        }
+
 
         return recipeName;
     }

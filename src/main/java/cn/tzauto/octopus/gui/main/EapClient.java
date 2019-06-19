@@ -11,6 +11,8 @@ import cn.tzauto.octopus.common.rabbit.SubscribeMessage;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
@@ -328,7 +330,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
+        AvaryAxisUtil.main = Thread.currentThread();
         launch(args);
 
     }

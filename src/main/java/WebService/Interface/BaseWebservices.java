@@ -65,7 +65,7 @@ public class BaseWebservices implements BaseWebservice {
 
                     IsUser = String.valueOf(isUseFlagmap.get(MethodName + "UseFlag") + "");
 //                    mqLogger.info("接收到webservice==================================,deviceCode：" + deviceCode + "，MethodName:" + MethodName + "，deviceTypeId:" + deviceTypeId);
-                    //todo 根据properties 判断ws是否可反射调用
+
                     if ("1".equals(IsUser)) {
 
                         try {

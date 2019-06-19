@@ -15,7 +15,7 @@ public class TestLog4j {
     private static Logger logger = Logger.getLogger(TestLog4j.class);
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
+
         logger.debug("This is debug message3.");
         System.out.println("print...");
     }

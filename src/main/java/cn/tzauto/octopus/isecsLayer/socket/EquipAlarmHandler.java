@@ -4,25 +4,20 @@
  */
 package cn.tzauto.octopus.isecsLayer.socket;
 
-import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import org.apache.log4j.Logger;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author 陈佳能
@@ -86,6 +81,55 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             alarm = str;
                         }
                         break;
+                    case "HITACHI-LaserDrill":
+                        if (str.contains("._PC")) {
+                            if (str.contains("Alarm =")) {
+                                String[] HITACHILaserDrillalarms = str.split(",");
+                                alarm = HITACHILaserDrillalarms[1].replace("Alarm =", "").trim();
+                                logger.info("收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                            }
+                            if (str.contains("AlarmClear =")) {
+                                String[] HITACHILaserDrillalarms = str.split(",");
+                                alarm = HITACHILaserDrillalarms[1].replace("AlarmClear =", "").trim();
+                                logger.info("收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                            }
+                            String[] keys = String.valueOf(GlobalConstants.getProperty("HITACHI_LASER_DRILL_FILE_KEYS")).split(",");
+                            for (String key : keys) {
+                                if (str.contains(key)) {
+                                    logger.info("HITACHILaserDrill " + str);
+                                }
+                            }
+                        }
+                        if (str.contains(".UVP")) {
+                            if (str.contains("Date")) {
+                                logger.info("power check data:Date:" + str.split(",")[1]);
+//                            ((HitachiLaserDrillHost) GlobalConstants.eapView.equipModels.get(deviceInfo.getDeviceCode())).setPCHK(str.split(",")[1], null, null, null);
+                            }
+                            if (str.contains("Axis")) {
+                                logger.info("power check data:Axis:" + str.split(",")[1]);
+                            }
+                            if (str.contains("AP_No")) {
+                                logger.info("power check data:AP_No:" + str.split(",")[1]);
+                            }
+                            if (str.contains("Power")) {
+                                logger.info("power check data:Power:" + str.split(",")[1]);
+                            }
+                            if (str.contains("Crystal No.")) {
+                                logger.info("power check data:CrystalNo:" + str.split(",")[1]);
+                            }
+                            if (str.contains("Crystal_Time")) {
+                                logger.info("power check data:Crystal_Time:" + str.split(",")[1]);
+                            }
+                        }
+                        if (str.contains(".GLV")) {
+                            if (str.contains("RMAX_")) {
+                                logger.info("power check data:Crystal_Time:" + str);
+                                accuracyCheck(deviceInfo.getDeviceCode(), str);
+                            }
+                        }
+                        break;
                     default:
                         alarm = str;
                         break;
@@ -123,5 +167,25 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         }
         return alarmRecords;
+    }
+
+    private void accuracyCheck(String deviceCode, String str) {
+        logger.info("HITACHI_LASER_DRILL_ACCURACY=" + GlobalConstants.getProperty("HITACHI_LASER_DRILL_ACCURACY"));
+        String[] accuracys = str.split(",");
+        for (String accuracy : accuracys) {
+            if (accuracy.contains("=") && accuracy.contains("RMAX_")) {
+                String[] accuracysTemp = accuracy.split(",");
+                try {
+                    Double.parseDouble(accuracysTemp[1]);
+                    double accuracyD = Double.parseDouble(GlobalConstants.getProperty("HITACHI_LASER_DRILL_ACCURACY"));
+                    logger.info(accuracy);
+                    if (Double.parseDouble(accuracysTemp[1]) > accuracyD) {
+                        logger.warn(accuracy + "out of rang " + accuracyD);
+                        GlobalConstants.stage.equipModels.get(deviceCode).stopEquip();
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }
     }
 }

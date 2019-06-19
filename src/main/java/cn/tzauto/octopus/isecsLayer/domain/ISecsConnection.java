@@ -9,10 +9,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.logging.Level;
+
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author gavin
  */
 public class ISecsConnection {
@@ -26,7 +26,7 @@ public class ISecsConnection {
         this.ip = ip;
         this.port = port;
         if (this.ip != null && this.port != null) {
-            this.socketClient = initConnection();
+            this.socketClient = getSocketClient();
             if (this.socketClient == null) {
                 logger.info("init socket error");
             }

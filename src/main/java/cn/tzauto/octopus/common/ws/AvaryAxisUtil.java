@@ -13,6 +13,9 @@ import org.apache.log4j.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.rpc.ParameterMode;
 import javax.xml.rpc.ServiceException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
@@ -21,20 +24,96 @@ import java.util.*;
 
 public class AvaryAxisUtil {
 
+    public static Thread main;
+    public static Map<String, String[]> parmsNames;
     private static final Logger logger = Logger.getLogger(AvaryAxisUtil.class);
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     public static DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern("yyyyMMdd");
     public static DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     public static DateTimeFormatter dtf3 = DateTimeFormatter.ofPattern("HHmmss");
+    public static Map<String, Map> mesInterfaceParaMap = new HashMap<>();
 
     private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
     //    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
     private static final String namespace = "http://tempuri.org/";
 //    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
 
+    static {
+        parmsNames = new HashMap<>();
+        Map<String, Object> parmsNamesTemp = new HashMap<>();
+        mesInterfaceParaMap = new HashMap<>();
+        String textPath = GlobalConstants.getProperty("WEBSERVICE_CONFIG_FILE_PATH");
+        File file = new File(textPath);
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File fileTemp : files) {
+                //要求配置文件名称为：devicetype_wbconfig.properties格式
+                String deviceType = fileTemp.getName().split("_")[0];
+
+
+                FileInputStream fis = null;
+                Properties properties = new Properties();
+                try {
+                    fis = new FileInputStream(fileTemp.getPath());
+                    properties.load(fis);
+                    properties.forEach((x, y) -> {
+                        if ((String.valueOf(y)).contains(",")) {
+                            String[] arr = ((String) y).split(",");
+                            if (arr.length == 2) {
+                                parmsNamesTemp.put((String) x, arr);
+                                parmsNames.put((String) x, arr);
+                            } else {
+                                logger.error("webService 接口配置文件路径加载错误！" + x + "=" + y);
+                                main.stop();
+                            }
+                        } else {
+                            parmsNamesTemp.put((String) x, (String) y);
+                        }
+                    });
+                    mesInterfaceParaMap.put(deviceType, parmsNamesTemp);
+                    int i = 1;
+                    System.out.println(i);
+                    i++;
+                    /**
+                     * workLicense=0010,HR001
+                     * getProductionCondition=0005,PA001
+                     * isInitialPart=0004,G0003
+                     * get21Exposure=0004,0018
+                     * firstProductionIsOK=0004,0009
+                     * tableQuery=0004,G0001
+                     * getOrderNum=0004,0002
+                     * insertMasterTable=0004,0003
+                     * getParmByLotNum=0001,0002
+                     * getParmByLotNumAndLayer=0001,0009
+                     * insertTable=0004,0006
+                     * getBom=FPC02,FPC05
+                     */
+                    String[] methodName = {"workLicense", "getProductionCondition", "isInitialPart", "get21Exposure", "firstProductionIsOK", "tableQuery", "getOrderNum", "insertMasterTable", "getParmByLotNum", "getParmByLotNumAndLayer", "insertTable", "getBom"};
+                    for (String s : methodName) {
+                        String[] strings = parmsNames.get(s);
+                        if (strings == null) {
+                            logger.error("webService 接口配置文件路径  加载失败！文件路径：" + textPath);
+                            main.stop();
+                        }
+                        logger.info("加载webService方法参数为：" + s + "=" + Arrays.toString(strings));
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception", e);
+                    main.stop();
+                } finally {
+                    if (fis != null) {
+                        try {
+                            fis.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public static String downLoadRecipeFormCIM(String deviceCode, String recipeName) {
-//        downLoadRecipe
-//        String endPoint ="szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";
         String endPoint = "http://10.182.34.239/cim/services/recipeService?wsdl";
         try {
             Service service = new Service();
@@ -84,7 +163,7 @@ public class AvaryAxisUtil {
 
         //1-2
         try {
-            List list = getProductionCondition("DEXP03000100","FSAPY55C2R28");
+            List list = getProductionCondition("DEXP03000100", "FSAPY55C2R28");
             System.out.println(list);
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -227,15 +306,15 @@ public class AvaryAxisUtil {
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0010", "HR001", para1, uploadTime);
      */
     public static String workLicense(String equipID, String workID) {
-        if("0".equals(GlobalConstants.getProperty("WORK_LICENSE"))){
+        String[] arr = parmsNames.get("workLicense");
+        if ("0".equals(GlobalConstants.getProperty("WORK_LICENSE"))) {
             return "0";
         }
         Call call = null;
         Schema result = null;
         try {
             call = getCallForGetDataFromSer();
-
-            Object[] params = new Object[]{"F0716614", "6614", equipID, "0010", "HR001", createParm(equipID, workID), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"F0716614", "6614", equipID, arr[0], arr[1], createParm(equipID, workID), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
             logger.error("上岗证验证发生错误", e);
@@ -264,23 +343,23 @@ public class AvaryAxisUtil {
      * uploadTime = System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
      * ds = webServiceSZ.ws.wsGetFun("F0716614", "6614", "設備編號", "0005", "PA001", para1, uploadTime);
      */
-    private static List<Map<String,String>> getProductionCondition(String deviceName, String partNum) throws RemoteException, ServiceException, MalformedURLException {
+    private static List<Map<String, String>> getProductionCondition(String deviceName, String partNum) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForGetDataFromSer();
-
-        Object[] params = new Object[]{"F0716614", "6614", deviceName, "0005", "PA001", createParm(deviceName, partNum), LocalDateTime.now().format(dtf)};
+        String[] arr = parmsNames.get("getProductionCondition");
+        Object[] params = new Object[]{"F0716614", "6614", deviceName, arr[0], arr[1], createParm(deviceName, partNum), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
-        List<Map<String,String>> list = parseXml(result);
+        List<Map<String, String>> list = parseXml(result);
         logger.info("生產條件獲取接口:" + deviceName + ";" + partNum + "，结果为：" + list);
         return list;
     }
 
-    public static Map<String,String> getRecipeParaByPartNum(String deviceName, String partNum ) {
-        Map<String,String> map = new HashMap<>();
+    public static Map<String, String> getRecipeParaByPartNum(String deviceName, String partNum) {
+        Map<String, String> map = new HashMap<>();
         try {
-            List<Map<String,String>> list = getProductionCondition(deviceName, partNum);
+            List<Map<String, String>> list = getProductionCondition(deviceName, partNum);
             for (Map<String, String> strMap : list) {
-                map.put( strMap.get("PARM_CODE"), strMap.get("PARM_STANDARD"));
+                map.put(strMap.get("PARM_CODE"), strMap.get("PARM_STANDARD"));
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -303,10 +382,10 @@ public class AvaryAxisUtil {
 
     public static boolean isInitialPart(String partNum, String deviceCode, String opportunity) throws
             RemoteException, ServiceException, MalformedURLException {
-
+        String[] arr = parmsNames.get("isInitialPart");
         Call call = getCallForGetDataFromSer();
 
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0003", createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(partNum, deviceCode, GlobalConstants.getProperty("FREQUENCY"), opportunity), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("判定是否要開初件方法:" + partNum + ";" + deviceCode + ";" + opportunity + "，结果为：" + list);
@@ -328,7 +407,8 @@ public class AvaryAxisUtil {
      */
 
     public static boolean get21Exposure(String deviceCode, String ink, String power) {
-        if("0".equals(GlobalConstants.getProperty("EXPOSURE_21"))){
+        String[] exposures = parmsNames.get("get21Exposure");
+        if ("0".equals(GlobalConstants.getProperty("EXPOSURE_21"))) {
             return true;
         }
         Call call = null;
@@ -336,7 +416,7 @@ public class AvaryAxisUtil {
         try {
             call = getCallForGetDataFromSer();
 
-            Object[] params = new Object[]{"test", "test", "#01", "0004", "0018", createParm("防焊曝光21節記錄表", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"test", "test", "#01", exposures[0], exposures[1], createParm("防焊曝光21節記錄表", deviceCode, GlobalConstants.getProperty("SFCZ4_ZD_DIExposure_DAYS")), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params); //方法执行后的返回值
         } catch (Exception e) {
             return false;
@@ -406,12 +486,12 @@ public class AvaryAxisUtil {
      */
 
     public static boolean firstProductionIsOK(String deviceName, String lotNum, String partNum, String tableNum) {
-
+        String[] arr = parmsNames.get("firstProductionIsOK");
         Call call = null;
         Schema result = null; //方法执行后的返回值try
         try {
             call = getCallForGetDataFromSer();
-            Object[] params = new Object[]{"F0716614", "6614", deviceName, "0004", "0009", createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
+            Object[] params = new Object[]{"F0716614", "6614", deviceName, arr[0], arr[1], createParm(lotNum, partNum, tableNum), LocalDateTime.now().format(dtf)};
             result = (Schema) call.invoke(params);
         } catch (ServiceException e) {
             e.printStackTrace();
@@ -443,7 +523,6 @@ public class AvaryAxisUtil {
      */
 
     public static String uploadMessageEveryPNL(String equipID, List paraName, List paraValue) {
-
         Call call = null;
         String result = null;
         try {
@@ -471,8 +550,8 @@ public class AvaryAxisUtil {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "G0001", createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
+        String[] arr = parmsNames.get("tableQuery");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(tableNum, time.format(dtf1), machineNo, classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("已有表單單號查詢:" + tableNum + ";" + machineNo + ";" + classInfo + "，结果为：" + list);
@@ -499,8 +578,8 @@ public class AvaryAxisUtil {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0002", createParm(time.format(dtf1), classInfo), now.format(dtf)};
+        String[] arr = parmsNames.get("getOrderNum");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(time.format(dtf1), classInfo), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("系統生產單號:" + classInfo + "，结果为：" + list);
@@ -529,8 +608,8 @@ public class AvaryAxisUtil {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0003", "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
+        String[] arr = parmsNames.get("insertMasterTable");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
                 , createParm(paperNo, status, time.format(dtf1), deviceCode, "SFCZ4_ZD_DIExposure", classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         logger.info("插入主表數據:" + paperNo + ";" + status + ";" + deviceCode + ";" + classInfo + ";" + createEmpid + ";" + "，结果为：" + result);
@@ -549,8 +628,8 @@ public class AvaryAxisUtil {
     public static Map getParmByLotNum(String lotNum) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0001", "0002", lotNum, now.format(dtf)};
+        String[] arr = parmsNames.get("getParmByLotNum");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], lotNum, now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("批號獲料號,層別,數量:" + lotNum + ";" + "，结果为：" + list);
@@ -566,12 +645,14 @@ public class AvaryAxisUtil {
 
     public static String getLotQty(String lotNum) {
         try {
-            return String.valueOf(getParmByLotNum(lotNum).get("Qty"));
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
+            String num = String.valueOf(getParmByLotNum(lotNum).get("Qty"));
+            int i = Integer.parseInt(num);
+            if (i % 2 == 1) {
+                i--;
+            }
+            return String.valueOf(i);
+        } catch (Exception e) {
+            logger.error("Exception", e);
             e.printStackTrace();
         }
         return "0";
@@ -612,8 +693,8 @@ public class AvaryAxisUtil {
     public static Map getParmByLotNumAndLayer(String lotNum, String paperNum, String layer) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForGetDataFromSer();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0001", "0009", createParm(lotNum, paperNum, layer), now.format(dtf)};
+        String[] arr = parmsNames.get("getParmByLotNumAndLayer");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(lotNum, paperNum, layer), now.format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("根據 批號,層別 帶出 料號,在製層,途程序,主途程序:" + lotNum + ";" + paperNum + ";" + layer + ";" + "，结果为：" + list);
@@ -644,17 +725,17 @@ public class AvaryAxisUtil {
      * ret = webServiceSZ.ws.wsSendFun("test", "test", "#01", "0004", "0006",para1,para2,System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
     public static String insertTable(String paperNo, String macState, String startTime, String endTime, String lotnum, String layer, String mainSerial, String partnum, String workNo, String sfcLayer, String layerName
-            , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6,String Isfirst) throws RemoteException, ServiceException, MalformedURLException {
+            , String serial, String orderId, String qty, String power, String Item3, String Item4, String Item5, String Item6, String Isfirst) throws RemoteException, ServiceException, MalformedURLException {
 
         Call call = getCallForSendDataToSerGrp();
         LocalDateTime now = LocalDateTime.now();
-
-        Object[] params = new Object[]{"test", "test", "#01", "0004", "0006",
+        String[] arr = parmsNames.get("insertTable");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1],
                 "PaperNo|MacState|StartTime|EndTime|Lotnum|Layer|MainSerial|Partnum|WorkNo|SfcLayer|LayerName|Serial|OrderId|Qty|Item1|Item3|Item4|Item5|Item6|Isfirst"
-                , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6,Isfirst)
+                , createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6, Isfirst)
                 , now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
-        logger.info("明細表數據插入:" + createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6,Isfirst) + "，结果为：" + result);
+        logger.info("明細表數據插入:" + createParm(paperNo, macState, startTime, endTime, lotnum, layer, mainSerial, partnum, workNo, sfcLayer, layerName, serial, orderId, qty, power, Item3, Item4, Item5, Item6, Isfirst) + "，结果为：" + result);
         if ("OK".equals(result)) {
             return "";
         }
@@ -885,10 +966,9 @@ public class AvaryAxisUtil {
      * @return string bom
      */
     public static String getBom(String deviceCode, String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
-        //todo 需要mes接口
         Call call = getCallForGetDataFromSer();
-
-        Object[] params = new Object[]{"test", "test", deviceCode, "FPC02", "FPC05", createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
+        String[] arr = parmsNames.get("getBom");
+        Object[] params = new Object[]{"test", "test", deviceCode, arr[0], arr[1], createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
         logger.info("根據料號，主途程序獲取曝光底片信息," + deviceCode + ";" + partNum + ";" + mainSerial + ",结果为：" + list);
@@ -908,5 +988,38 @@ public class AvaryAxisUtil {
             return null;
         }
         return num;
+    }
+
+    public static String uploadReportDetail(String deviceType, String groupId, String functionId, List paraValue) {
+        String paraName = (String) mesInterfaceParaMap.get(deviceType).get("reportDetailParaName");
+        String[] paraNames = paraName.split("|");
+        if (paraNames.length != paraValue.size()) {
+            logger.error("传入的参数值个数与需求个数不符,需求个数:" + paraNames.length + " 传入个数:" + paraValue.size());
+            logger.error("需求参数:" + paraName + " 传入的参数值:" + paraValue);
+            return "上传明细数据失败";
+        }
+        Call call = null;
+        String result = null;
+        try {
+            call = getCallForSendDataToSerGrp();
+            LocalDateTime now = LocalDateTime.now();
+            String[] arr = (String[]) mesInterfaceParaMap.get(deviceType).get("insertTable");
+            Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1],
+                    paraName
+                    , createParm(paraValue)
+                    , now.format(dtf)};
+            result = (String) call.invoke(params); //方法执行后的返回值
+            logger.info("明細表數據插入结果为：" + result);
+            if ("OK".equals(result)) {
+                return "";
+            }
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 }
