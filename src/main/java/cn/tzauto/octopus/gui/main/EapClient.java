@@ -363,7 +363,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+
             int finalI = i;
             new Thread(new Runnable() {
                 @Override
@@ -445,8 +445,9 @@ public class EapClient extends Application implements JobListener, PropertyChang
     }
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
-        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         String deviceCode = equipNodeBean.getDeviceCode();
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         Task task = new Task<String >() {
             @Override
             public String  call() {

@@ -26,6 +26,7 @@ public class MonitorAlarmLockTask implements Job {
     public void execute(JobExecutionContext jec) throws JobExecutionException {
         logger.info("MonitorAlarmLockTask start...");
         if ( GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
+            String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
                 MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (!equipModel.iSecsHost.isConnect) {
@@ -39,6 +40,11 @@ public class MonitorAlarmLockTask implements Job {
                 } catch (Exception e) {
                     logger.error("设备:" + equipModel.deviceCode + "定时检查AlarmLock时触发异常." + e.getMessage());
                 }
+            }
+            if(temp ==null){
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            }else{
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
     }
