@@ -834,10 +834,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void sendS2F15out(String ecid, String ecv) {
+    public void sendS2F15out(long ecid, String ecv) {
         DataMsgMap s2f15out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());
         s2f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long tmpL = Long.parseLong(ecid);
+        long tmpL = ecid ;
         long l[] = new long[1];
         l[0] = tmpL;
         float tmpF = Float.parseFloat(ecv);
@@ -1192,7 +1192,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
+                ceid = (long)data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 //            if (equipSecsBean.collectionReports.get(ceid) != null) {
