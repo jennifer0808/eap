@@ -369,12 +369,12 @@ public class GIS126Host extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
 //        recipePath = this.getRecipePathPrefix() + "/" + recipe.getDeviceTypeCode() + "/" + recipe.getDeviceCode() + "/" + recipe.getVersionType() + "/" + ppid + "/" + ppid + "_V" + recipe.getVersionNo() + ".txt";
         recipePath = super.getRecipePathByConfig(recipe);
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", recipeName);
+//        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
+//        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        s7f5out.put("ProcessprogramID", recipeName);
         DataMsgMap msgdata = null;
         try {
-            // TODO: 2019/6/10   msgdata = activeWrapper.sendPrimaryWsetMessage(s7f5out);
+            activeWrapper.sendS7F5out(recipeName);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -403,7 +403,8 @@ public class GIS126Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
-
+        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
