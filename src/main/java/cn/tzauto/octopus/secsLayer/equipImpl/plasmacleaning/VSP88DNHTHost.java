@@ -372,10 +372,10 @@ public class VSP88DNHTHost extends EquipHost {
             this.sends2f41stripReply(false);
             sendS2f41Cmd("STOP");
             if ("".equals(result)) {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, msgMap.get("msgName")+"等待MQ回复信息超时!");
             }
         }
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
         sendS2f41Cmd("LOCAL");
 //        changeEqptControlStateAndShowDetailInfo("LOCAL");
     }
