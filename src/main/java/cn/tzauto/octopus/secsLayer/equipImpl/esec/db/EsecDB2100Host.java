@@ -250,13 +250,13 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
-        ppExecName = (String) listtmp.get(1);
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+        ppExecName = String.valueOf(listtmp.get(1));
         ppExecName = ppExecName.replaceAll(".dbrcp", "");
+        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         // sendS2F15outLearnDevice(151126402L, "disabled");
