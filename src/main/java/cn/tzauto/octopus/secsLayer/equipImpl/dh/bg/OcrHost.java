@@ -173,7 +173,8 @@ public class OcrHost extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName+".ini");
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
+        logger.info("recipe path : "+recipePath);
+        //        logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
