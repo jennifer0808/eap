@@ -25,7 +25,6 @@ import java.util.Map;
 
 
 /**
- *
  * @author luosy
  */
 @SuppressWarnings(value = "all")
@@ -37,8 +36,8 @@ public class HitachiWaferHost extends EquipHost {
 
     public HitachiWaferHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        StripMapUpCeid=-1;
-        EquipStateChangeCeid=-1;
+        StripMapUpCeid = -1;
+        EquipStateChangeCeid = -1;
     }
 
 
@@ -60,12 +59,22 @@ public class HitachiWaferHost extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
-
+                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+//                    sendS1F1out();
+//                    //为了能调整为online remote
+//                    sendS1F17out();
+                    //获取设备开机状态
+                    super.findDeviceRecipe();
+//                    initRptPara();
+//                    sendS2F41outPPselect("BDM572HFSM-01");
+//                    sendS2f41Cmd("STOP");
+                }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    logger.info("HitachiWafterHost:s6f11in-->"+msg+";"+msg.get("CEID"));
                     processS6F11EquipStatusChange(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s12f3in")) {
                     processS12F3in(msg);
@@ -78,6 +87,7 @@ public class HitachiWaferHost extends EquipHost {
         }
 
     }
+
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
@@ -94,6 +104,7 @@ public class HitachiWaferHost extends EquipHost {
                 processS1F1in(data);
             } else if (tagName.toLowerCase().contains("s6f11in")) {
                 processS6F11in(data);
+//                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f12in")) {
                 processS6F12in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
@@ -155,67 +166,82 @@ public class HitachiWaferHost extends EquipHost {
     public Map sendS7F5out(String recipeName) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
     Map waferInfoMap = new HashMap();
 
     @Override
     public Map processS12F3in(DataMsgMap DataMsgMap) {
-        DataMsgMap s12f4out = null;
+//        DataMsgMap s12f4out = null;
         try {
-             s12f4out = new DataMsgMap("s12f4out", activeWrapper.getDeviceId());
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) DataMsgMap.get("RESULT")).getData();
-            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-            String MaterialID = String.valueOf(listtmp.get(0)).trim();
+//            s12f4out = new DataMsgMap("s12f4out", activeWrapper.getDeviceId());
+//            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) DataMsgMap.get("RESULT")).getData();
+//            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+//
+            String MaterialID = String.valueOf(DataMsgMap.get("MID")).trim();
             logger.info("waferid：" + MaterialID);
-            String IDTYP = String.valueOf(listtmp.get(1));
-            byte[] IDTYPs = new byte[1];
-            IDTYPs[0] = Byte.valueOf(IDTYP);
-            String MapDataFormatType = String.valueOf(listtmp.get(2));
-            FlatNotchLocation = String.valueOf(listtmp.get(3));
-            long[] FlatNotchLocations = new long[1];
-            FlatNotchLocations[0] = Long.valueOf(FlatNotchLocation);
-            String FileFrameRotation = String.valueOf(listtmp.get(4));
-            String OriginLocation = String.valueOf(listtmp.get(5));
-            byte[] OriginLocations = new byte[1];
-            OriginLocations[0] = Byte.valueOf(OriginLocation);
-            String ProcessAxis = String.valueOf(listtmp.get(6));
-            String BinCodeEquivalents = String.valueOf(listtmp.get(7));
-//            String NullBinCodeValue = String.valueOf(listtmp.get(8));
+            String temp = String.valueOf(DataMsgMap.get("IDTYP"));
+            byte IDTYP = Byte.valueOf(temp);
+//            byte[] IDTYPs = new byte[1];
+////            IDTYPs[0] = Byte.valueOf(IDTYP);
+
+            String MapDataFormatType = String.valueOf(DataMsgMap.get("MAPFT"));
+            FlatNotchLocation = String.valueOf(DataMsgMap.get("FNLOC"));
+            long flatNotchLocation = Long.valueOf(FlatNotchLocation);
+//            long[] FlatNotchLocations = new long[1];
+//            FlatNotchLocations[0] = Long.valueOf(FlatNotchLocation);
+            String FileFrameRotation = String.valueOf(DataMsgMap.get("FFROT"));
+            temp = String.valueOf(DataMsgMap.get("ORLOC"));
+            byte OriginLocation = Byte.valueOf(temp);
+//            byte[] OriginLocations = new byte[1];
+//            OriginLocations[0] = Byte.valueOf(OriginLocation);
+            String ProcessAxis = String.valueOf(DataMsgMap.get("PRAXI"));
+            String BinCodeEquivalents = String.valueOf(DataMsgMap.get("BCEQU"));
+            String NullBinCodeValue = String.valueOf(DataMsgMap.get("NULBC"));
 //            long[] NullBinCodeValues = new long[1];
 //            NullBinCodeValues[0] = Long.valueOf(NullBinCodeValue);
             waferInfoMap = HitachiWaferUtil.getWaferFileInfo(MaterialID, FlatNotchLocation, deviceCode.replace("-M", ""));
-            s12f4out.put("MaterialID", MaterialID);
-            s12f4out.put("IDTYP", IDTYPs);
-            s12f4out.put("FlatNotchLocation", FlatNotchLocations);
-            s12f4out.put("OriginLocation", OriginLocations);
-            long[] RrferencePointSelects = new long[1];
-            RrferencePointSelects[0] = 0L;
-            s12f4out.put("RrferencePointSelect", RrferencePointSelects);
-            SecsItem vRoot = new SecsItem();
-            vRoot.setFormatCode(FormatCode.SECS_LIST);
+//            s12f4out.put("MaterialID", MaterialID);
+//            s12f4out.put("IDTYP", IDTYPs);
+//            s12f4out.put("FlatNotchLocation", FlatNotchLocations);
+//            s12f4out.put("OriginLocation", OriginLocations);
+//            long[] RrferencePointSelects = new long[1];
+//            RrferencePointSelects[0] = 0L;
+//            s12f4out.put("RrferencePointSelect", RrferencePointSelects);
+//            SecsItem vRoot = new SecsItem();
+//            vRoot.setFormatCode(FormatCode.SECS_LIST);
 //            s12f4out.put("REFPxREFPy", vRoot);
-            s12f4out.put("DieUnitsOfMeasure", "");
-            s12f4out.put("XAxisDieSize", RrferencePointSelects);
-            s12f4out.put("YAxisDieSize", RrferencePointSelects);
-            long[] RowCountInDieIncrementss = new long[1];
-            RowCountInDieIncrementss[0] = Long.parseLong(String.valueOf(waferInfoMap.get("RowCountInDieIncrements")));
-            s12f4out.put("RowCountInDieIncrements", RowCountInDieIncrementss);
+//            s12f4out.put("DieUnitsOfMeasure", "");
+//            s12f4out.put("XAxisDieSize", RrferencePointSelects);
+//            s12f4out.put("YAxisDieSize", RrferencePointSelects);
+//            long[] RowCountInDieIncrementss = new long[1];
+            long rowCount = Long.parseLong(String.valueOf(waferInfoMap.get("RowCountInDieIncrements")));
+//            s12f4out.put("RowCountInDieIncrements", RowCountInDieIncrementss);
 
-            long[] ColumnCountInDieIncrementss = new long[1];
-            ColumnCountInDieIncrementss[0] = Long.parseLong(String.valueOf(waferInfoMap.get("ColumnCountInDieIncrements")));
-            s12f4out.put("ColumnCountInDieIncrements", ColumnCountInDieIncrementss);
+//            long[] ColumnCountInDieIncrementss = new long[1];
+            long columnCount = Long.parseLong(String.valueOf(waferInfoMap.get("ColumnCountInDieIncrements")));
+//            s12f4out.put("ColumnCountInDieIncrements", ColumnCountInDieIncrementss);
 
-            long[] ProcessDieCounts = new long[1];
-            ProcessDieCounts[0] = Long.parseLong(String.valueOf(waferInfoMap.get("ProcessDieCount")));
-            s12f4out.put("ProcessDieCount", ProcessDieCounts);
-            s12f4out.put("BinCodeEquivalents", BinCodeEquivalents);
+//            long[] ProcessDieCounts = new long[1];
+
+            long dieCount = Long.parseLong(String.valueOf(waferInfoMap.get("ProcessDieCount")));
+//            s12f4out.put("ProcessDieCount", ProcessDieCounts);
+//            s12f4out.put("BinCodeEquivalents", BinCodeEquivalents);
 //            s12f4out.put("NullBinCodeValue", NullBinCodeValues);
-            s12f4out.put("NullBinCodeValue", " ");
-            long[] MessageLengths = new long[1];
-            MessageLengths[0] = 38L;
-            s12f4out.put("MessageLength", MessageLengths);
-            s12f4out.setTransactionId(DataMsgMap.getTransactionId());
-            // TODO: 2019/6/10          activeWrapper.sendSecondaryOutputMessage(s12f4out);
+//            s12f4out.put("NullBinCodeValue", " ");
+//            long[] MessageLengths = new long[1];
+//            MessageLengths[0] = 38L;
+//            s12f4out.put("MessageLength", MessageLengths);
+//            s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
+
+//            Object mid, short midFormat, byte idtype, long flatNotchLocation, byte originLocation,
+//            long referencePointSelect, List referencePoint,short referencePointFormat, String dieUnit,
+//            long xdies, long ydies, short xydiesFormat, long rowCount, long columnCount, long dieCount,
+//            short countFormat, Object binCode, Object nullBinCode,short binCodeFormat, long messageLength,
+//            short messageLengthFromat, long transactionId
+
+            activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, flatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "", 0, 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
+                    , rowCount, columnCount, dieCount, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 38L, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -224,45 +250,58 @@ public class HitachiWaferHost extends EquipHost {
 
     }
 
-  @Override
+    @Override
     public Map processS12F15in(DataMsgMap msgDataHashtable) {
-      DataMsgMap s12f16ut = null ;
+//        DataMsgMap s12f16ut = null;
         try {
-             s12f16ut = new DataMsgMap("s12f16out", activeWrapper.getDeviceId());
-            byte[] IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData());
-            String MaterialID = ((SecsItem) msgDataHashtable.get("MaterialID")).getData().toString();
-            s12f16ut.put("MaterialID", MaterialID);
-            s12f16ut.put("IDTYP", IDTYP);
-            int[] STRPxSTRPy = new int[2];
+            String MaterialID = (String) msgDataHashtable.get("MID");
+            String idtyp = (String) msgDataHashtable.get("IDTYP");
+            byte IDTYP = Byte.valueOf(idtyp);
+
+//            s12f16ut = new DataMsgMap("s12f16out", activeWrapper.getDeviceId());
+//            byte[] IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData());
+//            String MaterialID = ((SecsItem) msgDataHashtable.get("MaterialID")).getData().toString();
+//            s12f16ut.put("MaterialID", MaterialID);
+//            s12f16ut.put("IDTYP", IDTYP);
+            long[] STRPxSTRPy = new long[2];
             STRPxSTRPy[0] = 0;
             STRPxSTRPy[1] = 0;
-            s12f16ut.put("STRPxSTRPy", STRPxSTRPy);
+//            s12f16ut.put("STRPxSTRPy", STRPxSTRPy);
             String[] BinListTmp = (String[]) waferInfoMap.get("BinList");
             String BinList = "";
             for (int i = 0; i < BinListTmp.length; i++) {
                 BinList = BinList + BinListTmp[i];
             }
-            s12f16ut.put("BinList", new SecsItem(BinList, FormatCode.SECS_ASCII));
+//            s12f16ut.put("BinList", new SecsItem(BinList, FormatCode.SECS_ASCII));
+//
+//
+//            map.put("MID", resultList.get(0) != null ? resultList.get(0) : "");
+//            map.put("IDTYP", resultList.get(1) != null ? resultList.get(1) : "");
+//
+//
+//            s12f16ut.setTransactionId(msgDataHashtable.getTransactionId());
+//
+//            Object mid, short midFormat, byte idtype, long[] strp, short strpFormat,
+//            Object binlist, short binlistFormat, long transactionId
 
-            s12f16ut.setTransactionId(msgDataHashtable.getTransactionId());
-            // TODO: 2019/6/10   activeWrapper.sendSecondaryOutputMessage(s12f16ut);
-
+            activeWrapper.sendS12F16out(MaterialID, FormatCode.SECS_ASCII, IDTYP, STRPxSTRPy, FormatCode.SECS_2BYTE_SIGNED_INTEGER,
+                    BinList, FormatCode.SECS_ASCII, msgDataHashtable.getTransactionId());
             waferInfoMap = new HashMap();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-      return null;
+        return null;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
-        s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        try {
-            DataMsgMap data = activeWrapper.sendS1F13out();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public void sendS1F13out() {
+//        DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
+//        s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        try {
+//            DataMsgMap data = activeWrapper.sendS1F13out();
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
+//    }
 }

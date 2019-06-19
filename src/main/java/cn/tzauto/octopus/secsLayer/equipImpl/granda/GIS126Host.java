@@ -30,7 +30,6 @@ import java.util.*;
 
 
 /**
- *
  * @author luosy
  */
 public class GIS126Host extends EquipHost {
@@ -38,11 +37,14 @@ public class GIS126Host extends EquipHost {
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(GIS126Host.class);
 
-    public GIS126Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode){
+    public GIS126Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         this.svFormat = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
-         StripMapUpCeid=3435973836L;
-         EquipStateChangeCeid=-1;
+        StripMapUpCeid = 3435973836L;
+        EquipStateChangeCeid = -1;  //日志文件找不到该记录，暂时不处理
+        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -120,6 +122,7 @@ public class GIS126Host extends EquipHost {
             }
         }
     }
+
     public void processS6F11in(DataMsgMap data) {
         long ceid = -12345679;
         try {
@@ -142,9 +145,14 @@ public class GIS126Host extends EquipHost {
                 processS6F11inStripMapUpload(data);
             } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                logger.info(ceid + ":没有特殊处理,数据为：" + data);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
-                }else if(ceid==-1){
+//                }else if(ceid==1003L||ceid==1010L||ceid==1011L||ceid==1012L||ceid==1013L||ceid==1014L
+//                        ||ceid==1016L||ceid==1017L||ceid==1025L||ceid==1030L||ceid==1031L||ceid==1032L
+//                        ||ceid==1033L||ceid==1034L||ceid==1035L||ceid==1052){
+//
+                } else if (ceid == -1) {
                     processS6F11EquipStatus(data);
 //                }else if(){
 
@@ -227,7 +235,7 @@ public class GIS126Host extends EquipHost {
     protected void processS6F11EquipStatus(DataMsgMap data) {
         long ceid = 0l;
         try {
-                ceid =Long.parseLong(data.get("CEID").toString()) ;
+            ceid = Long.parseLong(data.get("CEID").toString());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -402,28 +410,25 @@ public class GIS126Host extends EquipHost {
     // </editor-fold>
 
 
-
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void sendS1F13out() {
-        DataMsgMap s1f13out = new DataMsgMap("s1f13out", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f13out.setTransactionId(transactionId);
-//        s1f13out.put("Mdln", Mdln);
-//        s1f13out.put("SoftRev", SoftRev);
-        DataMsgMap data = null;
-        try {
-            // TODO: 2019/6/10
-             data = activeWrapper.sendS1F13out();
-            if (data != null) {
-                setCommState(1);
-            }
-        } catch (Exception e) {
-            setCommState(0);
-            logger.error("Exception:", e);
-        }
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public void sendS1F13out() {
+//        DataMsgMap s1f13out = new DataMsgMap("s1f13out", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s1f13out.setTransactionId(transactionId);
+////        s1f13out.put("Mdln", Mdln);
+////        s1f13out.put("SoftRev", SoftRev);
+//        DataMsgMap data = null;
+//        try {
+//            data = activeWrapper.sendS1F13out();
+//            if (data != null) {
+//                setCommState(1);
+//            }
+//        } catch (Exception e) {
+//            setCommState(0);
+//            logger.error("Exception:", e);
+//        }
+//    }
 
     private void initRptPara() {
         //定义StripMapping上传事件
@@ -436,19 +441,21 @@ public class GIS126Host extends EquipHost {
 
 
     public Map sendS1F11out() {
-        DataMsgMap s1f11out = new DataMsgMap("s1f11out", activeWrapper.getDeviceId());
-        s1f11out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+//        DataMsgMap s1f11out = new DataMsgMap("s1f11out", activeWrapper.getDeviceId());
+//        s1f11out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s1f12");
         resultMap.put("deviceCode", deviceCode);
         List<Map> resultList = new ArrayList();
         DataMsgMap msgdata = null;
         try {
-            // TODO: 2019/6/10     msgdata = activeWrapper.sendPrimaryWsetMessage(s1f11out);
-//            msgdata = activeWrapper.sendS1F11out();
-            ArrayList list = (ArrayList)  msgdata.get("RESULT");
+            msgdata = activeWrapper.sendS1F11out(null, svFormat);
+            logger.info("s1f12结果为：" + msgdata);
+            ArrayList list = (ArrayList) msgdata.get("SVNRR");
+            logger.info("消息为：" + list);
             if (list != null && !list.isEmpty()) {
                 ArrayList<Object> listtmp = CommonSMLUtil.getECSVData(list);
+                logger.info("具体结构为：" + listtmp);
                 for (int i = 0; i < listtmp.size(); i++) {
                     List dateItemList = (List) listtmp.get(i);
                     logger.info("SVID ==" + ((long[]) dateItemList.get(0))[0] + "; SVName ==" + (String) dateItemList.get(1) + ";UNITS" + (String) dateItemList.get(2));
@@ -484,7 +491,7 @@ public class GIS126Host extends EquipHost {
 //            return "选中Recipe失败，PPID=" + recipeName + ", 设备消息回复错误，请联系CIM人员处理";
 //        }
 
-//    }
+    //    }
     //hold机台，先停再锁
     @Override
     public Map holdDevice() {
@@ -512,12 +519,11 @@ public class GIS126Host extends EquipHost {
     @Override
     public void processS1F1in(DataMsgMap data) {
         try {
-            DataMsgMap s1f2out = new DataMsgMap("s1f2out", activeWrapper.getDeviceId());
-//            s1f2out.put("Mdln", Mdln);
-//            s1f2out.put("SoftRev", SoftRev);
-            s1f2out.setTransactionId(data.getTransactionId());
-            // TODO: 2019/6/10      activeWrapper.sendSecondaryOutputMessage(s1f2out);
-//             activeWrapper.sendS1F2out();
+//            DataMsgMap s1f2out = new DataMsgMap("s1f2out", activeWrapper.getDeviceId());
+////            s1f2out.put("Mdln", Mdln);
+////            s1f2out.put("SoftRev", SoftRev);
+//            s1f2out.setTransactionId(data.getTransactionId());
+            activeWrapper.sendS1F2out(data.getTransactionId());
             setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);
