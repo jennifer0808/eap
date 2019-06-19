@@ -187,7 +187,7 @@ public class CommonUtil {
     public static void startCommuCheckJob(JobListener jobListener) {
         CommCheckTask commCheckTask = new CommCheckTask();
         try {
-            QuartzManager.addJob(GlobalConstants.COMM_CHECK_JOB_NAME, commCheckTask, "0 0/1 * * * ?"); //每10秒执行一次  
+            QuartzManager.addJob(GlobalConstants.COMM_CHECK_JOB_NAME, commCheckTask, "0 0/10 * * * ?"); //每10秒执行一次
             JobKey jobKey = new JobKey(GlobalConstants.COMM_CHECK_JOB_NAME, QuartzManager.JOB_GROUP_NAME);
             QuartzManager.addJobListner(jobListener, jobKey);
         } catch (Exception e) {
