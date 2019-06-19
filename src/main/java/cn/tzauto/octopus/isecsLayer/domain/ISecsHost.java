@@ -558,6 +558,7 @@ public class ISecsHost implements ISecsInterface {
     }
 
     public String executeCommand3(String command) {
+        String temp = (String)MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -570,7 +571,14 @@ public class ISecsHost implements ISecsInterface {
             System.out.println(new String(bytes, "GBK"));
             logger.info("已经将参数发送至wafer软件:"+command);
         } catch (Exception e) {
+            logger.error("Exception",e);
             System.out.print("111111");
+        }finally {
+            if(temp ==null){
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            }else{
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            }
         }
         return null;
     }

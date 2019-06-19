@@ -56,6 +56,7 @@ public class CommCheckTask implements Job {
             logger.info("未正确配置通信检测次数，使用默认值");
         }
         // Todo 扫描所有Host线程，如果超过1分钟未通信，发送S1F1信号
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             boolean isSecsException = false;
@@ -187,6 +188,11 @@ public class CommCheckTask implements Job {
                 }
 
             }
+        }
+        if(temp ==null){
+            MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        }else{
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
         }
     }
 

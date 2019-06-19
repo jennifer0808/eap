@@ -23,9 +23,10 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import org.slf4j.MDC;
+
 
 import java.util.*;
 
@@ -47,6 +48,7 @@ public class MonitorTask implements Job {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         try {
             for (EquipHost equipHost : GlobalConstants.stage.equipHosts.values()) {
                 MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipHost.getDeviceCode());
@@ -144,6 +146,11 @@ public class MonitorTask implements Job {
         } catch (Exception e) {
             logger.error("Exception:", e);
         } finally {
+            if(temp ==null){
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            }else{
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            }
             sqlSession.close();
         }
     }
@@ -399,6 +406,7 @@ public class MonitorTask implements Job {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         try {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
                 MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
@@ -491,6 +499,11 @@ public class MonitorTask implements Job {
         } catch (Exception e) {
             logger.error("Exception:", e);
         } finally {
+            if(temp ==null){
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            }else{
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            }
             sqlSession.close();
         }
     }

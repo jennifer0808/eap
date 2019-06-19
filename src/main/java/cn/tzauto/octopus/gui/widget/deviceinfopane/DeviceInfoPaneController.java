@@ -74,9 +74,9 @@ public class DeviceInfoPaneController implements Initializable {
      * Initializes the controller class.
      */
     private final String deviceCode;
-    private  String statu=null;
-    private  String lotId=null;
-    private  String panerecipeName=null;
+    private  String statu="";
+    private  String lotId="";
+    private  String panerecipeName="";
     public DeviceInfoPaneController( ) {
         this.deviceCode = null;
         stage.setTitle("设备详情");
@@ -209,7 +209,6 @@ public class DeviceInfoPaneController implements Initializable {
                equipStatus.setText(statu);
                lotNo.setText(lotId);
                if (deviceInfoExt != null) {
-
                    if (deviceInfoExt.getRecipeId() != null && !"".equals(deviceInfoExt.getRecipeId())) {
                        Recipe recipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                        if (recipe != null) {

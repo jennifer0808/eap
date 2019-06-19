@@ -34,7 +34,7 @@ public class AsmAD8312FCHost extends EquipHost {
 
     public AsmAD8312FCHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+
         EquipStateChangeCeid = 4L;
         StripMapUpCeid = 237L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
