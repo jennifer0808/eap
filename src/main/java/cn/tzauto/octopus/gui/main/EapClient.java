@@ -68,18 +68,36 @@ public class EapClient extends Application implements JobListener, PropertyChang
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
     public static boolean flag = true;
-    private String clientId;
-    public List<DeviceInfo> deviceInfos;
-
-    public HashMap<String, EquipHost> equipHosts;
-    public ConcurrentHashMap<String, EquipModel> equipModels;
     public static ConcurrentHashMap<String, EquipStatusPane> equipStatusPanes = new ConcurrentHashMap<>();
-
     public static GridPane root;
-    public Tab mainTab;
-
     public static ServerSocket server;
     public static HashMap<String, EquipmentEventDealer> watchDogs = new HashMap<>();
+    public List<DeviceInfo> deviceInfos;
+    public HashMap<String, EquipHost> equipHosts;
+    public ConcurrentHashMap<String, EquipModel> equipModels;
+    public Tab mainTab;
+    private String clientId;
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+
+        launch(args);
+
+    }
+
+    public static void addWatchDog(String deviceId, EquipmentEventDealer watchDog) {
+        EapClient.watchDogs.put(deviceId, watchDog);
+    }
+
+    public static EquipmentEventDealer removeWatchDog(String deviceId) {
+        return EapClient.watchDogs.remove(deviceId);
+    }
+
+    public static EquipmentEventDealer getWatchDog(String deviceId) {
+        return EapClient.watchDogs.get(deviceId);
+    }
 
     @Override
     public void start(Stage stage) {
@@ -178,7 +196,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
                     @Override
                     public void handle(ActionEvent event) {
-                        if(flag){
+                        if (flag) {
                             stage.setMaximized(flag);
                             Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
                             stage.setX(primaryScreenBounds.getMinX());
@@ -188,11 +206,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
                             double height = primaryScreenBounds.getHeight();
                             stage.setHeight(height);
                             root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
-                        }else{
+                            flag = !flag;
+                        } else {
                             stage.setMaximized(flag);
                             root.setPrefHeight(vBox.getHeight() - gridPane.getHeight());
-                            flag=!flag;
+                            flag = !flag;
                         }
 
                     }
@@ -328,15 +346,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         System.exit(0);
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-
-        launch(args);
-
-    }
-
     public void initializeEquipNodeBeansAndAddListen() {
         //工控编号
         clientId = GlobalConstants.getProperty("clientId");
@@ -359,7 +368,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
         }
         UiLogUtil.getInstance().addPropertyChangeListener(this);
     }
-
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
@@ -448,23 +456,22 @@ public class EapClient extends Application implements JobListener, PropertyChang
         String deviceCode = equipNodeBean.getDeviceCode();
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
-        Task task = new Task<String >() {
+        Task task = new Task<String>() {
             @Override
-            public String  call() {
-        try {
-            hostManager.startHostThread(deviceCode);
-            hostManager.startSECS(deviceCode, eqpEventDealer);
-            removeWatchDog(deviceCode);
-            addWatchDog(deviceCode, eqpEventDealer);
-        } catch (Exception e1) {
-            logger.fatal(deviceCode + " has not been initialized!", e1);
-        }
-        return null;
+            public String call() {
+                try {
+                    hostManager.startHostThread(deviceCode);
+                    hostManager.startSECS(deviceCode, eqpEventDealer);
+                    removeWatchDog(deviceCode);
+                    addWatchDog(deviceCode, eqpEventDealer);
+                } catch (Exception e1) {
+                    logger.fatal(deviceCode + " has not been initialized!", e1);
+                }
+                return null;
             }
         };
-                new Thread(task).start();
+        new Thread(task).start();
     }
-
 
     @Override
     public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
@@ -574,18 +581,6 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 }
             }
         }
-    }
-
-    public static void addWatchDog(String deviceId, EquipmentEventDealer watchDog) {
-        EapClient.watchDogs.put(deviceId, watchDog);
-    }
-
-    public static EquipmentEventDealer removeWatchDog(String deviceId) {
-        return EapClient.watchDogs.remove(deviceId);
-    }
-
-    public static EquipmentEventDealer getWatchDog(String deviceId) {
-        return EapClient.watchDogs.get(deviceId);
     }
 
     public EquipStatusPane getThePane(String deviceCode) {
