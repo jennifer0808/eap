@@ -367,10 +367,13 @@ public class MultipleEquipHostManager {
 //                equipHosts.remove(deviceId);
 //                equipHosts.put(deviceId, newEquip);
 //                newEquip.start();
-//                logger.info("调用了start方法" + deviceId);
+                logger.info("调用了start方法,equip.isThreadUsed()" + deviceId);
 //                equip = newEquip;
             } else {
                 equip.start();
+
+                logger.info("equip.start()"+equip);
+                logger.info("调用了else  start方法" + deviceId);
             }
             logger.info("Equipment Host " + equip.deviceCode + " has been started.");
         }

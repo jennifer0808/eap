@@ -27,6 +27,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
 /**
  * @author luosy
@@ -53,6 +54,7 @@ public class EquipStatusPane {
     @FXML
     private ImageView equipImg;
     public Pane equipStatusPane;
+    private static final Logger logger = Logger.getLogger(EquipStatusPaneController.class);
 
     Background bgYellow = new Background(new BackgroundFill(Paint.valueOf("#e3d81c"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgRed = new Background(new BackgroundFill(Paint.valueOf("#ff4500"), CornerRadii.EMPTY, Insets.EMPTY));
@@ -113,6 +115,7 @@ public class EquipStatusPane {
             iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
         }
         Image image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
+        logger.info("on"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }
@@ -126,6 +129,7 @@ public class EquipStatusPane {
         String lastName = iconPath.split("\\.")[1];
         String commofficonpath = iconPath.replaceAll("." + lastName, "-commoff." + lastName);
         Image image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
+        logger.info("off"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGray);
 
@@ -150,17 +154,23 @@ public class EquipStatusPane {
     }
 
     public void setLotId(String lotId) {
-        this.L_LotId.setTooltip(new Tooltip(lotId));
-        if (lotId != null && lotId.length() > 15) {
-//            Platform.runLater(()
-//                    ->
-            this.L_LotId.setText(lotId.substring(0, 12) + "...");
-//            );
-        } else {
-            Platform.runLater(()
-                    -> this.L_LotId.setText(lotId)
-            );
-        }
+        L_LotId = (Label) equipStatusPane.lookup("#L_LotId");
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                L_LotId.setTooltip(new Tooltip(lotId));
+                if (lotId != null && lotId.length() > 15) {
+                            L_LotId.setText(lotId.substring(0, 12) + "...");
+                } else {
+
+                             L_LotId.setText(lotId);
+
+                }
+            }
+        });
+
+
+
     }
 
     public String getLotId() {

@@ -235,8 +235,9 @@ public class UploadPaneController implements Initializable {
             CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！", stage);
             return;
         }
-        if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！", stage);
+        if (flag > 1) {
+//            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！", stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "一次只能上传一条recipe，请重试！", stage);
             return;
         }
         List rns = new ArrayList<>();
