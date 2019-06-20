@@ -193,7 +193,7 @@ public class DeviceInfoPaneController implements Initializable {
            deviceType = (TextField) root.lookup("#deviceType");
            deviceType.setText(deviceInfo.getDeviceType());
 
-//           lotNo = (TextField) root.lookup("#lotNo");
+           lotNo = (TextField) root.lookup("#lotNo");
            recipeVersionNo = (TextField) root.lookup("#recipeVersionNo");
            JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
            officeName = (TextField) root.lookup("#officeName");
