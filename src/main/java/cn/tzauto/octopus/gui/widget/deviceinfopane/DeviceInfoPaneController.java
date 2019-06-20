@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
 
+import static cn.tzauto.generalDriver.mid.HsmsProtocol.NOT_CONNECTED;
 import static cn.tzauto.octopus.secsLayer.domain.EquipHost.*;
 
 
@@ -53,7 +54,7 @@ import static cn.tzauto.octopus.secsLayer.domain.EquipHost.*;
  * @author luosy
  */
 public class DeviceInfoPaneController implements Initializable {
-    private static final Logger logger = Logger.getLogger(DeviceInfoPaneController.class.getName());
+    private static final Logger logger = Logger.getLogger(DeviceInfoPaneController.class);
     @FXML
     private TextField officeName;
     @FXML
@@ -161,8 +162,10 @@ public class DeviceInfoPaneController implements Initializable {
         RecipeService recipeService = new RecipeService(sqlSession);
         SysService sysService = new SysService(sqlSession);
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
+       boolean isCommon= equipHost.getEquipState().isCommOn();
        int com= equipHost.commState;
-        if(com==COMMUNICATING){
+        logger.info("isCommon=====>"+isCommon+";com=====>"+com);
+        if(com==COMMUNICATING ||isCommon==true ){
             Task task = new Task<Map>() {
                 @Override
                 public Map call() {
@@ -173,7 +176,7 @@ public class DeviceInfoPaneController implements Initializable {
                 }
             };
             new Thread(task).start();
-        }else if(com==NOT_COMMUNICATING){
+        }else if(com==NOT_COMMUNICATING||isCommon==false){
 //            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
             equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");

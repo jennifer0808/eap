@@ -51,6 +51,7 @@ public class UpLoadHandler implements MessageHandler {
             Recipe recipe = new Recipe();
             List<RecipePara> recipeParaList = new ArrayList<>();
             Map recipeMap = hostManager.getRecipeParaFromDevice(deviceId, recipeName);
+            logger.info("recipeMap------>"+recipeMap.size());
             if (recipeMap != null) {
                 logger.info("成功获取到recipe信息，开始上传");
                 recipe = (Recipe) recipeMap.get("recipe");
