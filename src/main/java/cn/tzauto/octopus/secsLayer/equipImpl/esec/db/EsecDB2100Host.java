@@ -564,13 +564,16 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-
+        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
+        s7f1out.put("Length", length);
         DataMsgMap data = null;
         byte ppgnt = 0;
         try {
             data = activeWrapper.sendS7F1out(targetRecipeName + ".dbrcp", length, lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -589,6 +592,7 @@ public class EsecDB2100Host extends EquipHost {
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName + ".dbrcp", ppbody, FormatCode.SECS_BINARY);
+            logger.info("send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
