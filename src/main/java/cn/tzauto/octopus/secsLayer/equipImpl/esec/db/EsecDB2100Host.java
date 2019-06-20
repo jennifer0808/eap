@@ -48,6 +48,7 @@ public class EsecDB2100Host extends EquipHost {
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 15339L;
+        EquipStateChangeCeid = 3255L;
         CPN_PPID = "PPNAME";
     }
 
@@ -97,7 +98,7 @@ public class EsecDB2100Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    processS6F11LearnDevice(msg);
+                    processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     processS6F11inStripMapUpload(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
@@ -146,6 +147,7 @@ public class EsecDB2100Host extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 processS6F11in(data);
+//                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -248,13 +250,13 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
-        ppExecName = (String) listtmp.get(1);
+        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+        ppExecName = String.valueOf(listtmp.get(1));
         ppExecName = ppExecName.replaceAll(".dbrcp", "");
+        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         // sendS2F15outLearnDevice(151126402L, "disabled");
@@ -320,20 +322,41 @@ public class EsecDB2100Host extends EquipHost {
         }
     }
 
-    // </editor-fold> 
+    // </editor-fold>
+
+
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+            logger.info("Received a s6f11in with CEID = " + ceid);
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                replyS6F12WithACK(data,(byte) 0);
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }else if(ceid == 3L){
+                    processS6F11LearnDevice(data);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
         long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             preEquipStatus = equipStatus;
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-            controlState = ACKDescription.describeControlState(data.getSingleNumber("ControlState"), deviceType);
+            findDeviceRecipe();
+
             ppExecName = ppExecName.replace(".dbrcp", "");
 
-            findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -492,19 +515,19 @@ public class EsecDB2100Host extends EquipHost {
     }
 
     private void processS6F11LearnDevice(DataMsgMap data) {
-        long ceid = 0L;
         String command = "";
         String commandName = "";
         try {
-            ceid = data.getSingleNumber("CollEventId");
-            command = ((SecsItem) data.get("OpreatorCommand")).getData().toString();
-            commandName = ((SecsItem) data.get("OpreatorCommandName")).getData().toString();
+            ArrayList rptList = (ArrayList) data.get("REPORT");
+            ArrayList cmdList = (ArrayList) rptList.get(1);
+            command = (String) cmdList.get(0);
+            commandName = (String) cmdList.get(1);
             logger.info("=========command=" + command);
             logger.info("=========commandName=" + commandName);
-            if (commandName.equals("Learn device")) {
+            if ("Learn device".equals(commandName)) {
                 logger.info("检测到设备触发LearnDevice事件，请求将设备ProductionAccess改成“disabled”!");
                 // TODO 需要检查下MES状态，判断是否需要发送锁机指令
-                sendS2F15outLearnDevice(151126402, 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+                sendS2F15outLearnDevice(151126402L, 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
 
                 Map resultMap = new HashMap();
                 resultMap.put("msgType", "s5f1");
@@ -523,23 +546,8 @@ public class EsecDB2100Host extends EquipHost {
     }
 
     public void sendS2F15outLearnDevice(long ecid, Object ecv, short ecvFormat) {
-        DataMsgMap out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());
-        out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        SecsItem secsItem = new SecsItem();
-        List list = new ArrayList();
-        SecsItem secsItemECID = new SecsItem(ecid, FormatCode.SECS_4BYTE_UNSIGNED_INTEGER);
-        SecsItem secsItemEcv = new SecsItem(ecv, ecvFormat);
-        list.add(secsItemECID);
-        list.add(ecv);
-        secsItem.setData(list);
-        secsItem.setFormatCode(FormatCode.SECS_LIST);
-        out.put("S2F15OUT", secsItem);
+        sendS2F15out(ecid,(String)ecv);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Learn Device，设备进行锁机，请报修MES并进行数据BuyOff！");
-        try {
-            activeWrapper.sendAwaitMessage(out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
     }
 
     public void processS2f16inLearnDevice(DataMsgMap in) {
@@ -556,10 +564,7 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
-        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
-        s7f1out.put("Length", length);
+
         DataMsgMap data = null;
         byte ppgnt = 0;
         try {
@@ -604,14 +609,14 @@ public class EsecDB2100Host extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
 
         List<RecipePara> recipeParaList = null;
-        try{
-        byte[] ppbody = (byte[]) getPPBODY(recipeName + ".dbrcp");
-        TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-        //Recipe解析
-        recipeParaList = getRecipeParasByECSV();
-        //设备发过来的参数部分为科学计数法，这里转为一般的
-        recipeParaList = recipeParaBD2Str(recipeParaList);
+        try {
+            byte[] ppbody = (byte[]) getPPBODY(recipeName + ".dbrcp");
+            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+            //Recipe解析
+            recipeParaList = getRecipeParasByECSV();
+            //设备发过来的参数部分为科学计数法，这里转为一般的
+            recipeParaList = recipeParaBD2Str(recipeParaList);
 
         } catch (UploadRecipeErrorException e) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
@@ -726,7 +731,7 @@ public class EsecDB2100Host extends EquipHost {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList listtmp = (ArrayList)  data.get("EPPD");
+        ArrayList listtmp = (ArrayList) data.get("EPPD");
         if (listtmp == null || listtmp.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {

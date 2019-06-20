@@ -293,4 +293,20 @@
       'System',sysdate(), #{item.remarks,jdbcType=VARCHAR},'0' from dual
         </foreach>
     </insert>
+
+    <select id="getCurClientDeviceInfo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        md_device_info
+        WHERE
+        client_id = (
+        SELECT
+        PROPERTY_VAL
+        FROM
+        sys_property
+        WHERE
+        PROPERTY_KEY = 'clientId'
+        )
+    </select>
 </mapper>

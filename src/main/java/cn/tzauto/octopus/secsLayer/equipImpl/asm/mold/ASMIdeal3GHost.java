@@ -405,10 +405,10 @@ public class ASMIdeal3GHost extends EquipHost {
 //    }
     public List sendS1F3PressCheckout() {
         DataMsgMap data = null;
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(104L);
         list.add(204L);
-        list.add(304);
+        list.add(304L);
         list.add(404L);
         try {
             data = activeWrapper.sendS1F3out(list, svFormat);
