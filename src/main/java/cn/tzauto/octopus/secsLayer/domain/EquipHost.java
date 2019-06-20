@@ -53,16 +53,28 @@ import static cn.tzauto.octopus.common.resolver.TransferUtil.getIDValue;
 
 public abstract class EquipHost extends Thread implements MsgListener {
 
-    private static final long serialVersionUID = -8008553978164121001L;
-    private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
+    private static final long serialVersionUID = -8008553978164121001L;
+    private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-    private int alarmState = 0;
-    private boolean sdrReady = false;
-
     public String iPAddress;
+    public String ppExecName = "--";
+    public String equipStatus = "--";
+    public String preEquipStatus = "";
+    public String lotId = "--";
+    public Map<Integer, Boolean> pressUseMap = new HashMap<>();
+    public boolean holdSuccessFlag = true;
+    public int secsMsgTimeoutTime = 0;//check通信超时次数
+    public int checkNotComm = 0;
+    public int checkNotReady = 0;
+    public boolean isCleanMode = false;
+    public Map<String, CommandDomain> remoteCommandMap = new HashMap<>();
+    public Map<Long, DataMsgMap> waitMsgValueMap = new ConcurrentHashMap<>();
+    public int restartCnt = 0;
+    //延迟删除的标识，判断是否是切换recipe之后,用于DB800,DB730
+    public boolean ppselectFlag = false;
     protected int tCPPort;
     protected String connectMode = "active"; //only "active" or "passive" allowed, default is "active"
     protected String deviceId;
@@ -80,20 +92,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String Mdln = "";
     protected String SoftRev = "";
     protected String recipePath = "";
-    public String ppExecName = "--";
-    public String equipStatus = "--";
-    public String preEquipStatus = "";
-    public String lotId = "--";
     protected long LastComDate = 0;//最后一次通信时间
-    public Map<Integer, Boolean> pressUseMap = new HashMap<>();
-    public boolean holdSuccessFlag = true;
-    public int secsMsgTimeoutTime = 0;//check通信超时次数
     protected int rptDefineNum = 0;
-    public int checkNotComm = 0;
-    public int checkNotReady = 0;
-    public boolean isCleanMode = false;
-    public Map<String, CommandDomain> remoteCommandMap = new HashMap<>();
-    public Map<Long, DataMsgMap> waitMsgValueMap = new ConcurrentHashMap<>();
     protected short svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
     protected short ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
@@ -107,7 +107,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String lastMsgTagName = "";
     protected volatile boolean isInterrupted = false;
     protected long startedDate = 0;//Host启动的时间
-    public int restartCnt = 0;
     //wafermapping相关属性
     protected long downFlatNotchLocation;
     protected long upFlatNotchLocation;
@@ -116,14 +115,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String waferMappingbins = ""; //转换后的binlist
     protected String uploadWaferMappingRow = "";
     protected String uploadWaferMappingCol = "";
-    //延迟删除的标识，判断是否是切换recipe之后,用于DB800,DB730
-    public boolean ppselectFlag = false;
     //    EquipSecsBean equipSecsBean;
     protected long StripMapUpCeid;
     protected long EquipStateChangeCeid;
     protected String RCMD_PPSELECT = "PP-SELECT";
     protected String CPN_PPID = "PPID";
     protected String iconPath;
+    private int alarmState = 0;
+    private boolean sdrReady = false;
 
     public EquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
                      String connectMode, String deviceType, String deviceCode) {
@@ -221,11 +220,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return controlState;
     }
 
-    public synchronized void setAlarmState(int alarmState) {
-//        equipState.setAlarmState(alarmState);
-        this.alarmState = alarmState;
+    /**
+     * @param controlState the controlState to set
+     */
+    public synchronized void setControlState(String controlState) {
+        this.controlState = controlState;
         Map resultMap = new HashMap();
-        resultMap.put("AlarmState", alarmState);
+        resultMap.put("ControlState", controlState);
         changeEquipPanel(resultMap);
     }
 
@@ -236,13 +237,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return alarmState;
     }
 
-    /**
-     * @param controlState the controlState to set
-     */
-    public synchronized void setControlState(String controlState) {
-        this.controlState = controlState;
+    public synchronized void setAlarmState(int alarmState) {
+//        equipState.setAlarmState(alarmState);
+        this.alarmState = alarmState;
         Map resultMap = new HashMap();
-        resultMap.put("ControlState", controlState);
+        resultMap.put("AlarmState", alarmState);
         changeEquipPanel(resultMap);
     }
 
@@ -301,17 +300,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         return deviceType;
     }
 
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
+    }
+
     public String[] getMdlnSoftRev() {
         String[] MdlnSoftRev = new String[2];
         MdlnSoftRev[0] = Mdln;
         MdlnSoftRev[1] = SoftRev;
         return MdlnSoftRev;
     }
-
-    public void setDeviceType(String deviceType) {
-        this.deviceType = deviceType;
-    }
-
 
     public String getLotId() {
         return lotId;
@@ -580,14 +578,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
         if (listtmp != null && !listtmp.isEmpty()) {
-                equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-                ppExecName = String.valueOf(listtmp.get(1));
-                controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-                logger.info("controlState 为："+controlState+":"+deviceType+";"+listtmp.get(2));
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+            logger.info("controlState 为：" + controlState + ":" + deviceType + ";" + listtmp.get(2));
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName",ppExecName);
+        panelMap.put("PPExecName", ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
         return panelMap;
@@ -635,17 +633,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Object obj = data.get("SV");
         Map resultMap = new HashMap();
         ArrayList listsvValue = new ArrayList();
-        if(obj != null){
-            if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
+        if (obj != null) {
+            if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
                     String svValue = String.valueOf(listtmp.get(i));
                     listsvValue.add(svValue);
                 }
                 resultMap.put("Value", listsvValue);
-                logger.info("SV查询得值svValue:"+resultMap);
-            }else{
-                String s= getSpecificSVEC(obj, 0);
+                logger.info("SV查询得值svValue:" + resultMap);
+            } else {
+                String s = getSpecificSVEC(obj, 0);
                 resultMap.put("Value", s);
             }
         }
@@ -810,27 +808,27 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         String ecValue = null;
 
-       // ArrayList listtmp = (ArrayList) data.get("EC");
+        // ArrayList listtmp = (ArrayList) data.get("EC");
         //  ecValue = String.valueOf(listtmp.get(0));
         //EC
         ArrayList listecValue = new ArrayList();
         Object obj = data.get("EC");
-        if(obj != null){
-           if(obj instanceof ArrayList){
-                ArrayList listtmp = (ArrayList)obj;
-                for(int i=0;i<listtmp.size();i++){
-                     ecValue = String.valueOf(listtmp.get(i));
+        if (obj != null) {
+            if (obj instanceof ArrayList) {
+                ArrayList listtmp = (ArrayList) obj;
+                for (int i = 0; i < listtmp.size(); i++) {
+                    ecValue = String.valueOf(listtmp.get(i));
                     listecValue.add(ecValue);
                 }
                 resultMap.put("Value", listecValue);
-                logger.info("EC查询得值ecValue:"+listecValue);
-            }else{
+                logger.info("EC查询得值ecValue:" + listecValue);
+            } else {
                 resultMap.put("Value", obj);
             }
         }
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
-       // resultMap.put("Value", ecValue);
+        // resultMap.put("Value", ecValue);
         return resultMap;
     }
 
@@ -1234,7 +1232,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
             //通过Web Service上传mapping
 
-        //    byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
+            //    byte ack = WSUtility.binSet(stripMapData, deviceCode).getBytes()[0];
             byte ack = AxisUtility.uploadStripMap(stripMapData, deviceCode).getBytes()[0];
             if (ack == '0') {//上传成功
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上传Strip Map成功！StripID:[" + stripId + "]");
@@ -1932,20 +1930,21 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         return resultMap;
     }
-    public String  getSpecificSVEC(Object object,int i) {
 
-            if (object instanceof long[]) {
-                long[] longs = ((long[]) object);
-                if (longs.length == 0) {
-                    return "";
+    public String getSpecificSVEC(Object object, int i) {
 
-                } else {
-                   return String.valueOf(longs[0]);
-                }
+        if (object instanceof long[]) {
+            long[] longs = ((long[]) object);
+            if (longs.length == 0) {
+                return "";
 
+            } else {
+                return String.valueOf(longs[0]);
             }
-        if (object instanceof  int[]) {
-            int[] ints = (( int[]) object);
+
+        }
+        if (object instanceof int[]) {
+            int[] ints = ((int[]) object);
             if (ints.length == 0) {
                 return "";
 
@@ -1955,13 +1954,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
         }
 
-        if (object instanceof  String) {
+        if (object instanceof String) {
             String s = (String) object;
-           return s;
+            return s;
 
         }
-        if (object instanceof  String[]) {
-            String[] strings = (( String[]) object);
+        if (object instanceof String[]) {
+            String[] strings = ((String[]) object);
             if (strings.length == 0) {
                 return "";
 
@@ -1970,8 +1969,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  float[]) {
-            float[] floats = (( float[]) object);
+        if (object instanceof float[]) {
+            float[] floats = ((float[]) object);
             if (floats.length == 0) {
                 return "";
 
@@ -1980,8 +1979,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  byte[]) {
-            byte[] bytes = (( byte[]) object);
+        if (object instanceof byte[]) {
+            byte[] bytes = ((byte[]) object);
             if (bytes.length == 0) {
                 return "";
 
@@ -1990,8 +1989,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  boolean[]) {
-            boolean[] booleans = (( boolean[]) object);
+        if (object instanceof boolean[]) {
+            boolean[] booleans = ((boolean[]) object);
             if (booleans.length == 0) {
                 return "";
 
@@ -2000,8 +1999,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  double[]) {
-            double[] doubles = (( double[]) object);
+        if (object instanceof double[]) {
+            double[] doubles = ((double[]) object);
             if (doubles.length == 0) {
                 return "";
 
@@ -2010,8 +2009,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
 
         }
-        if (object instanceof  char[]) {
-            char[] chars = (( char[]) object);
+        if (object instanceof char[]) {
+            char[] chars = ((char[]) object);
             if (chars.length == 0) {
                 return "";
 
@@ -2032,9 +2031,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 return String.valueOf(tmp.get(0));
             }
 
-            }
+        }
 
-          return String.valueOf(object);
+        return String.valueOf(object);
     }
 
     /**
@@ -2125,7 +2124,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         mqMap.put("msgName", "eqpt.EqptStatusChange");
         mqMap.put("deviceCode", deviceCode);
         mqMap.put("eventName", "eqpt.EqptStatusChange");
-        mqMap.put("deviceInfoExt", deviceInfoExt == null ? null:JsonMapper.toJsonString(deviceInfoExt));
+        mqMap.put("deviceInfoExt", deviceInfoExt == null ? null : JsonMapper.toJsonString(deviceInfoExt));
         mqMap.put("deviceCeid", deviceOplog.getDeviceCeid());
         mqMap.put("eventDesc", deviceOplog.getOpDesc());
         mqMap.put("eventDate", GlobalConstants.dateFormat.format(new Date()));
@@ -2747,7 +2746,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         return ecsvIdList;
     }
-
 
 
     protected List<RecipePara> transferECSVValue2RecipePara(List<RecipeTemplate> ECtemplates, List<RecipeTemplate> SVtemplates) {
