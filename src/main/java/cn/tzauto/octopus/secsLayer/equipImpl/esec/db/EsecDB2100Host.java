@@ -352,9 +352,7 @@ public class EsecDB2100Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            preEquipStatus = equipStatus;
             findDeviceRecipe();
-
             ppExecName = ppExecName.replace(".dbrcp", "");
 
         } catch (Exception e) {
@@ -390,13 +388,15 @@ public class EsecDB2100Host extends EquipHost {
             String busniessMod = deviceInfoExt.getBusinessMod();
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑&&
-//            if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("stopped RDY")) {
-            if (dataReady && equipStatus.equalsIgnoreCase("run")) {
+            logger.info("equipStatus: "+  equipStatus);
+            if (dataReady && "run".equalsIgnoreCase(equipStatus)) {
+                logger.info("校验2D");
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
                 List<String> svlist = new ArrayList<>();
-                svlist.add("252968976");//2D开关
+                //2D开关
+                svlist.add("252968976");
                 Map svValue = this.getSpecificSVData(svlist);
-                if (!svValue.get("252968976").equals("41")) {
+                if (!"41".equals(svValue.get("252968976"))) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");

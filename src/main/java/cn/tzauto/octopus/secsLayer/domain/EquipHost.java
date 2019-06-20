@@ -1895,14 +1895,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map getSpecificSVData(List dataIdList) {
         Map resultMap = new HashMap();
-        List svidList = dataIdList;
+        List<Long> svidList = new ArrayList();
+        for(Object dataId:dataIdList){
+            svidList.add(Long.parseLong(String.valueOf(dataId)));
+        }
         List svValueList = new ArrayList();
         //发送查询SV命令，并取值
         if (svidList.size() > 0) {
 
             try {
                 DataMsgMap data = null;
-                data = activeWrapper.sendS1F3out(dataIdList, svFormat);
+                data = activeWrapper.sendS1F3out(svidList, svFormat);
 
                 if (data != null && data.get("SV") != null) {
 
@@ -1910,13 +1913,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     if (obj != null) {
                         if (obj instanceof ArrayList) {
                             svValueList = (ArrayList) (data.get("SV"));
+
                             for (int i = 0; i < svValueList.size(); i++) {
                                 String sv = getSpecificSVEC(svValueList.get(i), i);
-                                resultMap.put(svidList.get(i), sv);
+                                resultMap.put(dataIdList.get(i), sv);
                             }
                         } else {
                             String s = getSpecificSVEC(obj, 0);
-                            resultMap.put(svidList.get(0), s);
+                            resultMap.put(dataIdList.get(0), s);
                         }
                     }
 

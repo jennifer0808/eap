@@ -313,12 +313,12 @@ public class FicoHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             List report = (List) data.get("REPORT");
-            rptid = (long) report.get(0);
+            rptid = ((long[]) report.get(0))[0] ;
             if (rptid == 1555) {
                 List dataList = (List) report.get(1);
-                pressStateId = (long) dataList.get(0);
-                cavityVacuumValue = (long) dataList.get(1);
-                boardVacuumValue = (long) dataList.get(2);
+                pressStateId = ((long[]) dataList.get(0))[0];
+                cavityVacuumValue = ((long[]) dataList.get(1))[0];
+                boardVacuumValue = ((long[]) dataList.get(2))[0];
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
