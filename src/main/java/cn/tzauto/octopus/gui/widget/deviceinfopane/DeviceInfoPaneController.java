@@ -17,6 +17,9 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.gui.main.EapClient;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -39,6 +42,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
+
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.*;
+
 
 
 /**
@@ -154,20 +160,26 @@ public class DeviceInfoPaneController implements Initializable {
         DeviceInfoExt  deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
         RecipeService recipeService = new RecipeService(sqlSession);
         SysService sysService = new SysService(sqlSession);
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
+       int com= equipHost.commState;
+        if(com==COMMUNICATING){
+            Task task = new Task<Map>() {
+                @Override
+                public Map call() {
+                    Map map1 = new HashMap();
+                    map1 = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
+                    setData(map1, root);
+                    return null;
+                }
+            };
+            new Thread(task).start();
+        }else if(com==NOT_COMMUNICATING){
+//            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
+            equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
 
-        Map    map=new HashMap();
-
-                Task task = new Task<Map>() {
-            @Override
-            public Map call() {
-                Map map1 = new HashMap();
-                map1 = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
-               setData(map1, root);
-               return map;
-            }
-        };
-        new Thread(task).start();
-        getData(deviceInfoExt,map , deviceInfo, root, recipeService, sysService);
+        }
+        getData(deviceInfoExt , deviceInfo, root, recipeService, sysService);
         sqlSession.close();
     }
     public void setData(Map map,Pane root){
@@ -182,7 +194,7 @@ public class DeviceInfoPaneController implements Initializable {
         }
 
     }
-   public void  getData(DeviceInfoExt deviceInfoExt,Map map, DeviceInfo    deviceInfo,Pane root ,RecipeService recipeService,SysService sysService){
+   public void  getData(DeviceInfoExt deviceInfoExt, DeviceInfo    deviceInfo,Pane root ,RecipeService recipeService,SysService sysService){
        if (deviceInfo != null) {
            clientCode = (TextField) root.lookup("#clientCode");
            clientCode.setText(deviceInfo.getClientId());
