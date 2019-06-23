@@ -201,27 +201,21 @@ public class EsecDB2100Host extends EquipHost {
             sendS2F35out(3L, 3L, 3L);
             sendS2F37out(3L);
             //发送s2f33
-            String ack = "";
-            long rptid = 1001l;
-            long vid = 269352993l;
-            long ceid = 15338l;
-            sendS2F33out(1001l, vid);//15339
 
+            sendS2F33out(1001L, 269352993L);//15339
 
-            sendS2F33out(1002l, vid);//15338
+            sendS2F33out(1002L, 269352993L);//15338
 
-
-            sendS2F33out(1003l, 269352995l);//15328
+            sendS2F33out(1003L, 269352995L);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(15339l, 1001l);//15339 1001
+            sendS2F35out(15339L, 1001L);//15339 1001
 
-            sendS2F35out(15338l, 1002l);//15339 1001
+            sendS2F35out(15338L, 1002L);//15339 1001
 
-
-            sendS2F35out(15328l, 1003l);//15339 1001
+            sendS2F35out(15328L, 1003L);//15339 1001
 
             List list = new ArrayList();
             list.add(2031L);
@@ -239,7 +233,6 @@ public class EsecDB2100Host extends EquipHost {
             return "1";
 
         } catch (Exception ex) {
-//            java.util.logging.Logger.getLogger(EsecDB2100Host.class.getName()).log(Level.SEVERE, null, ex);
             logger.error("Exception:", ex);
             return "0";
         }
@@ -249,17 +242,20 @@ public class EsecDB2100Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
+
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = String.valueOf(listtmp.get(1));
-        ppExecName = ppExecName.replaceAll(".dbrcp", "");
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        if (listtmp != null && !listtmp.isEmpty()) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            ppExecName = ppExecName.replaceAll(".dbrcp", "");
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        }
+
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
-        // sendS2F15outLearnDevice(151126402L, "disabled");
         return panelMap;
     }
 
@@ -334,7 +330,7 @@ public class EsecDB2100Host extends EquipHost {
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
-                replyS6F12WithACK(data,(byte) 0);
+                replyS6F12WithACK(data, (byte) 0);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }else if(ceid == 3L){
@@ -349,10 +345,15 @@ public class EsecDB2100Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            findDeviceRecipe();
+            sendS1F3Check();
             ppExecName = ppExecName.replace(".dbrcp", "");
 
         } catch (Exception e) {
@@ -394,9 +395,10 @@ public class EsecDB2100Host extends EquipHost {
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
                 List<String> svlist = new ArrayList<>();
                 //2D开关
-                svlist.add("252968976");
-                Map svValue = this.getSpecificSVData(svlist);
-                if (!"41".equals(svValue.get("252968976"))) {
+//                svlist.add("252968976");
+//                Map svValue = this.getSpecificSVData(svlist);
+                Map svValue = sendS1F3SingleCheck(252968976L);
+                if (!"41".equals(String.valueOf(svValue.get("Value")))) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
