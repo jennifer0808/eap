@@ -14,7 +14,7 @@ public class BasicWebserviceProcess implements BaseWebservice {
     private String msgName;
     private static Logger logger = Logger.getLogger(BasicWebserviceProcess.class);
 
-    private static Logger mqLogger = Logger.getLogger("WebserviceLog");
+    private static Logger mqLogger = Logger.getLogger("mqLog");
 
     public String handle(String message) {
         try {
