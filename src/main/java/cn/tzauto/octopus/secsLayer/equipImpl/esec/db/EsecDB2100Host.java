@@ -202,20 +202,26 @@ public class EsecDB2100Host extends EquipHost {
             sendS2F37out(3L);
             //发送s2f33
 
-            sendS2F33out(1001L, 269352993L);//15339
+            List list1 = new ArrayList();
+            list1.add(269352993L);
+            sendS2F33out(1001L,1001L, list1);//15339
 
-            sendS2F33out(1002L, 269352993L);//15338
+            List list2 = new ArrayList();
+            list2.add(269352993L);
+            sendS2F33out(1001L,1002L, list1);//15338
 
-            sendS2F33out(1003L, 269352995L);//15328
+            List list3 = new ArrayList();
+            list3.add(269352995L);
+            sendS2F33out(1001L,1003L, list3);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(15339L, 1001L);//15339 1001
+            sendS2F35out(1001L,15339L, 1001L);//15339 1001
 
-            sendS2F35out(15338L, 1002L);//15339 1001
+            sendS2F35out(1001L,15338L, 1002L);//15339 1001
 
-            sendS2F35out(15328L, 1003L);//15339 1001
+            sendS2F35out(1001L,15328L, 1003L);//15339 1001
 
             List list = new ArrayList();
             list.add(2031L);
