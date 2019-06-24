@@ -441,7 +441,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         logger.info("START CHECK: ready to upload recipe:" + new Date());
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException upe) {
             logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
         }
@@ -2858,7 +2858,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+//        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
         if (recipeTemplates == null || recipeTemplates.isEmpty()) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备未设置参数实时监控,开机前实时值检查取消...");
             return;
@@ -2867,7 +2868,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         for (int i = 0; i < recipeTemplates.size(); i++) {
             svIdList.add(recipeTemplates.get(i).getDeviceVariableId());
         }
-        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceId(), svIdList);
+        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceCode(), svIdList);
         try {
             List<DeviceRealtimePara> deviceRealtimeParas = putSV2DeviceRealtimeParas(recipeTemplates, resultMap);
             if (deviceRealtimeParas != null && !deviceRealtimeParas.isEmpty()) {

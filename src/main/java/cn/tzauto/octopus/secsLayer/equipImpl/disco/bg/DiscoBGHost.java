@@ -53,6 +53,7 @@ public class DiscoBGHost extends EquipHost {
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        EquipStateChangeCeid = 10150L;
     }
 
     @Override
@@ -356,7 +357,7 @@ public class DiscoBGHost extends EquipHost {
                 changeEquipPanel(panelMap);
             } else if (ceid == 77 || ceid == 211 || ceid == 221 || ceid == 1000000401) {
                 processS6F11PPselect(data);
-            } else if (ceid == 150) {
+            } else if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
             }
         } catch (Exception e) {
@@ -396,7 +397,7 @@ public class DiscoBGHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
 
-            if (equipStatus.equalsIgnoreCase("SETUP")) {
+            if ("SETUP".equalsIgnoreCase(equipStatus)) {
                 portARcpName = "";
                 portBRcpName = "";
             }
@@ -404,7 +405,7 @@ public class DiscoBGHost extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-                if (equipStatus.equalsIgnoreCase("run")) {
+                if ("run".equalsIgnoreCase(equipStatus)) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
                         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();
