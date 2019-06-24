@@ -5,6 +5,7 @@
  */
 package cn.tzauto.octopus.secsLayer.resolver.hitachi;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -18,6 +19,7 @@ import java.util.*;
 public class HitachiWaferUtil {
 
     static String waferMappingPath = "D:\\WAFERMAPPING";
+    static String waferSavePath = "D:\\WAFERMAPPING_RESULT";
     private static final Logger logger = Logger.getLogger(HitachiWaferUtil.class);
     private static Properties prop = new Properties();
 //    private static String maxColumnCount = "0";
@@ -31,23 +33,34 @@ public class HitachiWaferUtil {
 //            lotID = waferId.split("-")[0];
 //        }
 
-        String waferFilePath = getPath(waferId, deviceCode);
+        String[] arr = getPath(waferId, deviceCode);
+        String waferFilePath = arr[0];
+        String savePath = arr[1];
+        BufferedWriter bw = null;
         BufferedReader br = null;
         try {
             String cfgline = null;
 
             int rowCount = 0;
             String columnCount = "";
-//            List<String> binList = new LinkedList();
-            String bin = "";
+
             File cfgfile = new File(waferFilePath);
+            if (!cfgfile.exists()) {
+                logger.error("文件不存在：" + waferFilePath);
+                return null;
+            }
+            bw = new BufferedWriter(new OutputStreamWriter(FileUtils.openOutputStream(new File(savePath))));
             br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "UTF-8"));
             List<String> list = new ArrayList<>();
             while ((cfgline = br.readLine()) != null) {
                 list.add(cfgline);
             }
+            if (list.size() == 0) {
+                logger.error("文件里面没有内容");
+                return null;
+            }
             list = parseList(list);
-            br.close();
+
             rowCount = list.size();
             int col = list.get(0).length();
             columnCount = columnCount + col;
@@ -55,7 +68,15 @@ public class HitachiWaferUtil {
             for (int i = 0; i < list.size(); i++) {
                 bins[i] = list.get(i);
             }
-            resultMap.put("BinList", transferAngle(bins, angle, rowCount, col));
+            String[] results = transferAngle(bins, angle, rowCount, col);
+            resultMap.put("BinList", results);
+            bw.write("Wafer_ID : " + waferId + "\n");
+            bw.write("Flat_Notch : Bottom" + "\n");
+            bw.write("" + "\n");
+            for (int i = 0; i < results.length; i++) {
+                bw.write(results[i] + "\n");
+            }
+            bw.flush();
             if ("90".equals(angle) || "270".equals(angle)) {
                 int tmp = rowCount;
                 rowCount = Integer.valueOf(columnCount);
@@ -68,6 +89,22 @@ public class HitachiWaferUtil {
         } catch (Exception e) {
             logger.error("waferMap加载失败", e);
             return null;
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (bw != null) {
+                try {
+                    bw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
         return resultMap;
     }
@@ -469,9 +506,12 @@ public class HitachiWaferUtil {
         return result;
     }
 
-    private static String getPath(String waferId, String deviceCode) {
+    private static String[] getPath(String waferId, String deviceCode) {
         String lot = waferId.split("-")[0];
         String path = waferMappingPath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
+        String savePath = waferSavePath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
+        String[] arr = new String[]{path, savePath};
+
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\tmb\\NF10A-08.tmb";
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\out\\H00H37-08.out";
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\asc\\HYMJC-01.asc";
@@ -495,7 +535,7 @@ public class HitachiWaferUtil {
 //         path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\6.txt";
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\7.txt";
         logger.info("waferpath：" + path);
-        return path;
+        return arr;
     }
 
     public static void main(String[] args) {

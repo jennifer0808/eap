@@ -232,7 +232,7 @@ public class UploadPaneController implements Initializable {
             }
         }
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！", stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条Recipe！", stage);
             return;
         }
         if (flag > 1) {
