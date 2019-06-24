@@ -995,8 +995,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public void processS2F38in(DataMsgMap data) {
         logger.info("----------Received s2f38in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
-        logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
+        byte ack = (byte) data.get("ERACK");
+        logger.info("ackCode = " + ((ack == 0) ? "" : ack));
     }
 
     /**
