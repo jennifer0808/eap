@@ -18,6 +18,7 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -68,6 +69,7 @@ public class AsmAD838Host extends EquipHost {
 
                 if (rptDefineNum < 1) {
                     super.findDeviceRecipe();
+//                    initRptPara();
                     rptDefineNum++;
 
                     sendS2F37outCloseAll();
@@ -97,6 +99,23 @@ public class AsmAD838Host extends EquipHost {
                 logger.fatal("Caught Interruption", e);
             }
         }
+    }
+    private void initRptPara() {
+//sendS6F23clear();
+        //重写事件 报告
+//            sendS2f33out(50007l, 902l, 906l);
+//            sendS2f35out(50007l, 50007l, 50007l);
+//            sendS2F37out(50007l);
+//        sendS2F37outCloseAll();
+//        sendS2F33clear();
+//        sendS2F35clear();
+//        sendS2F33init();
+//        sendS2F35init();
+        sendS2F37outAll();
+        sendS2F33clear();
+        sendS2F35clear();
+
+        sendStatus2Server(equipStatus);
     }
 
     @Override
@@ -160,7 +179,11 @@ public class AsmAD838Host extends EquipHost {
                 processS12F17in(data);
             } else if (tagName.equalsIgnoreCase("s12f19in")) {
                 processS12F19in(data);
-            } else {
+            }else if(tagName.equalsIgnoreCase("f0")){
+                sendSnF0();
+                logger.info("tagName===========>"+tagName);
+            }
+            else {
                 System.out.println("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
@@ -179,6 +202,7 @@ public class AsmAD838Host extends EquipHost {
             byte[] ppbody = (byte[]) getPPBODY(recipeName);
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+
             recipeParaList = getRecipeParasByECSV();
         } catch (UploadRecipeErrorException e) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");

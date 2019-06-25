@@ -136,6 +136,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.deviceType = deviceType;
         this.deviceCode = deviceCode;
 //        equipSecsBean = new EquipSecsBean(deviceCode, deviceType);
+//        equipSecsBean = new EquipSecsBean(deviceCode, deviceType);
         EquipStateChangeCeid = -1;
         StripMapUpCeid = -1;
     }
@@ -607,7 +608,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
-            UiLogUtil.getInstance().appendLog2SecsTab("", "获取设备当前状态信息失败，请检查设备状态.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
         }
         if (data == null || data.get("SV") == null) {
             return null;
@@ -2781,6 +2782,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             recipePara.setParaMeasure(recipeTemplate.getParaUnit());
             recipePara.setParaName(recipeTemplate.getParaName());
             recipePara.setSetValue(String.valueOf(totalValueMap.get(Long.parseLong(recipeTemplate.getDeviceVariableId()))));
+//            recipePara.setSetValue(String.valueOf(totalValueMap.get(recipeTemplate.getDeviceVariableId())));
             recipeParas.add(recipePara);
         }
         return recipeParas;
@@ -2801,6 +2803,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
         sqlSession.close();
         return checkResult;
     }
+
+    //当设备发送SnF0时，eap界面显示断线
+    public void  sendSnF0(){
+        controlState = FengCeConstant.CONTROL_OFFLINE;
+        setCommState(0);
+    }
+
 
     public DataMsgMap sendMsg2EquipOld(DataMsgMap dataMsgMap) {
         final DataMsgMap dataMsgMapTemp = dataMsgMap;
@@ -3068,6 +3077,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("Exception:", e);
         }
     }
+
 
     @SuppressWarnings("unchecked")
     public void sendS2F35clear() {
