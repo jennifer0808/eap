@@ -13,9 +13,10 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
@@ -29,14 +30,15 @@ import java.util.Map;
  */
 public class UpdateVerNoHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class.getName());
-    String eventId = "";
-    String recipeName = "";
-    String lotId = "";
-    String deviceCode = "";
+//    private static Logger logger = Logger.getLogger(UpdateVerNoHandler.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UpdateVerNoHandler.class);
 
     @Override
     public void handle(Message message) {
+        String eventId = "";
+        String recipeName = "";
+        String lotId = "";
+        String deviceCode = "";
         MapMessage mapMessage = (MapMessage) message;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -49,32 +51,57 @@ public class UpdateVerNoHandler implements MessageHandler {
         } catch (JMSException ex) {
             logger.error("JMSException:", ex);
         }
+        logger.info("服务端请求更新版本号，DEVICE_CODE:[" + deviceCode + "]");
+        logger.info("服务端请求更新版本号，RECIPE_NAME:[" + recipeName + "]");
+        logger.info("服务端请求更新版本号，LOT_ID:[" + lotId + "]");
         DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        if (deviceInfo.getDeviceType().contains("DF")) {
+        if (deviceInfo.getDeviceType().contains("DF")|| deviceInfo.getDeviceType().contains("ICOS")) {
             recipeName = deviceInfoExt.getRecipeName();
+            logger.info("服务端请求更新版本号，RECIPE_NAME更换为:[" + recipeName + "]");
         }
-        Recipe goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());
-        if (goldRecipe == null) {
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
-            return;
+        Recipe goldRecipe = null;
+        if (!deviceInfo.getDeviceType().equals("VSP88DNHT")) {
+            goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());
+            if (goldRecipe == null) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "工控上不存在： " + recipeName + " 的Gold版本，无法更新版本号！请联系PE处理！");
+                return;
+            }
         }
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
-        equipHost.lotId = lotId;
-        Map map = new HashMap();
-        map.put("WorkLot", lotId);
-        equipHost.changeEquipPanel(map);
+//        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+//        equipHost.lotId = lotId;
+//        Map map = new HashMap();
+//        map.put("WorkLot", lotId);
+//        equipHost.changeEquipPanel(map);
+        EquipHost equipHost = null;
+        EquipModel equipModel = null;
+//        if (deviceInfo.getDeviceId().matches("\\d+")) {
+        if (GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode()) != null) {
+            equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+            equipHost.lotId = lotId;
+            Map map = new HashMap();
+            map.put("WorkLot", lotId);
+            equipHost.changeEquipPanel(map);
+        } else {
+            equipModel = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode());
+            equipModel.lotId = lotId;
+            Map map = new HashMap();
+            map.put("WorkLot", lotId);
+            equipModel.changeEquipPanel(map);
+        }
         try {
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置，DEVICE_CODE:" + deviceCode);
                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在该设备模型信息，请联系ME处理！");
             } else {
                 deviceInfoExt.setLotId(lotId);
-//                deviceInfoExt.setVerNo(goldRecipe.getVersionNo());
+                if (goldRecipe != null) {
+                    deviceInfoExt.setVerNo(goldRecipe.getVersionNo());
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
+                }
                 deviceService.modifyDeviceInfoExt(deviceInfoExt);
             }
             sqlSession.commit();
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "最新的版本信息为：" + goldRecipe.getVersionNo());
         } catch (Exception e) {
             logger.error("Exception:", e);
             sqlSession.rollback();

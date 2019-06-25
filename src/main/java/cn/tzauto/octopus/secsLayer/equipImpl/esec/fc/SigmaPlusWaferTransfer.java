@@ -23,7 +23,7 @@ import java.util.Map;
 public class SigmaPlusWaferTransfer {
 
     // static String waferMappingPath = GlobalConstants.getProperty("LOCAL_WAFER_MAPPING_PATH");
-    private static final Logger logger = Logger.getLogger(SigmaPlusWaferTransfer.class.getName());
+    private static final Logger logger = Logger.getLogger(SigmaPlusWaferTransfer.class);
 
     public static Map getWaferFileInfo(String waferId, String angle) {
         Map resultMap = new HashMap();
@@ -164,7 +164,7 @@ public class SigmaPlusWaferTransfer {
 
         //transferArgs1(transferArgs1((long[]) map.get("BinList"), 53, 58), 58, 53);
 //        transferAngle((long[]) map.get("BinList"), "90");
-        System.out.println("cn.tzinfo.htauto.octopus.secsLayer.equipImpl.esec.SigmaPlusWaferTransfer.main()" + getPath("T19M35.00-03.TXT"));
+        System.out.println("cn.tzauto.octopus.secsLayer.equipImpl.esec.SigmaPlusWaferTransfer.main()" + getPath("T19M35.00-03.TXT"));
     }
 
     private static long[] transferAngle(long[] src, String angle, int row, int col) {

@@ -23,7 +23,7 @@ import java.util.*;
 
 //上传接口
 public class UploadRecipeWebservice implements BaseWebservice {
-    private static Logger logger = Logger.getLogger(UploadRecipeWebservice.class.getName());
+    private static Logger logger = Logger.getLogger(UploadRecipeWebservice.class);
     @Override
     public String  handle(String message) {
         HashMap map = (HashMap) JsonMapper.fromJsonString(message.replace("\n", ""), HashMap.class);

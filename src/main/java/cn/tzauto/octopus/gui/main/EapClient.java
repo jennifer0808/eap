@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -26,6 +27,7 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -65,7 +67,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class EapClient extends Application implements JobListener, PropertyChangeListener {
 
-    private static final Logger logger = Logger.getLogger(EapClient.class.getName());
+    private static final Logger logger = Logger.getLogger(EapClient.class);
     public static MultipleEquipHostManager hostManager;
     public static ArrayList<EquipNodeBean> equipBeans;
     public static boolean flag = true;
@@ -314,6 +316,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 //开启MQ监听
                 startMq();
 
+                UiLogUtil.getInstance().appendLog2EventTab("System", "系统启动...");
+
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
                 closeApp(window, stage);
@@ -364,7 +368,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+
             int finalI = i;
             new Thread(new Runnable() {
                 @Override
@@ -445,8 +449,12 @@ public class EapClient extends Application implements JobListener, PropertyChang
     }
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
-        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         String deviceCode = equipNodeBean.getDeviceCode();
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
+        Task task = new Task<String >() {
+            @Override
+            public String  call() {
         try {
             hostManager.startHostThread(deviceCode);
             hostManager.startSECS(deviceCode, eqpEventDealer);
@@ -455,7 +463,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
         } catch (Exception e1) {
             logger.fatal(deviceCode + " has not been initialized!", e1);
         }
-
+        return null;
+            }
+        };
+                new Thread(task).start();
     }
 
 
@@ -484,7 +495,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
                         equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
                         equipStatusPane.setCommLabelForegroundColorCommOff();
-                        logger.info(deviceCode + "getControlState---------------------off-line");
+                        logger.info(deviceCode + " getControlState---------------------off-line");
                     } else {
                         if (newPanel.getAlarmState() == 0) {
                             switch (newPanel.getControlState()) {

@@ -34,7 +34,7 @@ import java.util.concurrent.*;
 public class ASM120THost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(ASM120THost.class.getName());
+    private static final Logger logger = Logger.getLogger(ASM120THost.class);
 
     public ASM120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -522,7 +522,7 @@ public class ASM120THost extends EquipHost {
 
     @Override
     public String getOutputData() {
-        String outputSVID = "251";
+        Long outputSVID = 251L;
         Map resultMap = sendS1F3SingleCheck(outputSVID);
         if (resultMap != null && resultMap.get("Value") != null) {
             return String.valueOf(resultMap.get("Value"));

@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class FlexTRAKRecipeUtil {
 
-    private static Logger logger = Logger.getLogger(FlexTRAKRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(FlexTRAKRecipeUtil.class);
 
     public static List transferFromRecipe(String filePath, String deviceType) {
         List<RecipePara> recipeParaList = new ArrayList<>();

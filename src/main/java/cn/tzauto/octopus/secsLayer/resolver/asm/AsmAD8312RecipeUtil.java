@@ -28,7 +28,7 @@ import java.util.zip.ZipInputStream;
  */
 public class AsmAD8312RecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(AsmAD8312RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmAD8312RecipeUtil.class);
 
     /**
      * 将recipe文件按照设备类型解析成参数

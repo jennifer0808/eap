@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
  */
 public class MultiDownloadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(MultiDownloadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(MultiDownloadHandler.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private List<Recipe> recipes = null;
 

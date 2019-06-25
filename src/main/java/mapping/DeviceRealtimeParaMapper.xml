@@ -70,10 +70,10 @@
         order by create_date desc
     </select>
     <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
-        select 
+        select
         <include refid="Base_Column_List" />
         from ar_device_realtime_para
-        where ID = #{id,jdbcType=VARCHAR} 
+        where ID = #{id,jdbcType=VARCHAR}
         and DEL_FLAG = '0'
     </select>
     <select id="getMaxUpdateCnt" resultType="java.lang.Long" parameterType="java.lang.String" >

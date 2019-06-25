@@ -30,7 +30,7 @@ import java.util.Map;
 public class BTUPypamax125nHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(BTUPypamax125nHost.class.getName());
+    private static final Logger logger = Logger.getLogger(BTUPypamax125nHost.class);
 
     public BTUPypamax125nHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);

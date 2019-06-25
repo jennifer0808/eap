@@ -37,7 +37,7 @@ import java.util.*;
 public class ASMIdeal3GHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(ASMIdeal3GHost.class.getName());
+    private static final Logger logger = Logger.getLogger(ASMIdeal3GHost.class);
 
     public ASMIdeal3GHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -405,10 +405,10 @@ public class ASMIdeal3GHost extends EquipHost {
 //    }
     public List sendS1F3PressCheckout() {
         DataMsgMap data = null;
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(104L);
         list.add(204L);
-        list.add(304);
+        list.add(304L);
         list.add(404L);
         try {
             data = activeWrapper.sendS1F3out(list, svFormat);

@@ -29,7 +29,7 @@ import java.util.logging.Level;
  */
 public class AptVST60AHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(AptVST60AHost.class.getName());
+    private static Logger logger = Logger.getLogger(AptVST60AHost.class);
 
     public AptVST60AHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

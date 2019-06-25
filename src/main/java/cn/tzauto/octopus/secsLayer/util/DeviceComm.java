@@ -13,7 +13,8 @@ import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import org.apache.log4j.Logger;
-import org.slf4j.MDC;
+import org.apache.log4j.MDC;
+
 
 /**
  * @author njtz
@@ -23,7 +24,7 @@ public class DeviceComm {
     private static final Logger logger = Logger.getLogger(DeviceComm.class);
 
     public static void startHost(final EquipNodeBean equipNodeBean) {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
+//        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
 //        EquipmentEventDealer watchDogOld = EAPGuiView.removeWatchDog(equipNodeBean.getDeviceIdProperty());
 //        if (watchDogOld != null && !watchDogOld.isDone()) { // still runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.
@@ -73,6 +74,7 @@ public class DeviceComm {
 
     public static void restartHost(EquipNodeBean equipNodeBean) {
         boolean needRestart = true;
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
         EquipmentEventDealer watchDog = EapClient.getWatchDog(equipNodeBean.getDeviceCode());
 //        if (watchDog == null || watchDog.isDone()) { // not runnning
@@ -131,6 +133,12 @@ public class DeviceComm {
             logger.info("deviceId===>" + deviceId + "    已经重新开启通信");
         } else {
             logger.info("deviceId===>" + deviceId + "    已不需要重启");
+        }
+
+        if(temp ==null){
+            MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        }else{
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
         }
 
     }

@@ -16,8 +16,8 @@ public class BaseWebservices implements BaseWebservice {
         private String deviceCode;
         private String MethodName;
         private String SysName;
-        private static Logger logger = Logger.getLogger(BaseWebservices.class.getName());
-        private static Logger mqLogger = Logger.getLogger("WebserviceLog");
+        private static Logger logger = Logger.getLogger(BaseWebservices.class);
+        private static Logger mqLogger = Logger.getLogger("mqLog");
         HashMap isUseFlagmap=useFlagMap;
        String strs="11";
     String token = "";

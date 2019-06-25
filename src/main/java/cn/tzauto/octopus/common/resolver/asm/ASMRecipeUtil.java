@@ -30,7 +30,7 @@ import org.apache.log4j.Logger;
  * @author wjy
  */
 public class ASMRecipeUtil {
-    private static Logger logger = Logger.getLogger(ASMRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(ASMRecipeUtil.class);
 
     public static void main(String[] args) {
         String filePath = "C:/Users/wjy/Desktop/120T/120t new/TSOT-23-XL(16R)-G600.zip";

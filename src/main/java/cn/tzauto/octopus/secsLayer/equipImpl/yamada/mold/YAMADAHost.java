@@ -32,7 +32,7 @@ import java.util.*;
 public class YAMADAHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(YAMADAHost.class.getName());
+    private static final Logger logger = Logger.getLogger(YAMADAHost.class);
     private long ppselectfinishCeid = 601L;
 
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
@@ -122,11 +122,11 @@ public class YAMADAHost extends EquipHost {
 
     public List sendS1F3PressCheckout() {
         DataMsgMap data = null;
-        List list = new ArrayList();
-        list.add(5101l);
-        list.add(5201l);
-        list.add(5301l);
-        list.add(5401l);
+        List<Long> list = new ArrayList();
+        list.add(5101L);
+        list.add(5201L);
+        list.add(5301L);
+        list.add(5401L);
         try {
             data = activeWrapper.sendS1F3out(list, svFormat);
         } catch (Exception e) {

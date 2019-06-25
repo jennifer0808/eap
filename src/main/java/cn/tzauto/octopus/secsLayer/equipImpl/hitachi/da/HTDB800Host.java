@@ -47,7 +47,7 @@ import java.util.*;
 public class HTDB800Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HTDB800Host.class.getName());
+    private static final Logger logger = Logger.getLogger(HTDB800Host.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
@@ -65,6 +65,7 @@ public class HTDB800Host extends EquipHost {
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
         EquipStateChangeCeid = 4L;
+        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -549,31 +550,24 @@ public class HTDB800Host extends EquipHost {
      */
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            logger.error("InterruptedException:", e);
-        }
         DataMsgMap data = null;
-        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
-        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        //byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         byte[] ppbody = {1};
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
-        s7f3out.put("ProcessprogramID", targetRecipeName);
-        s7f3out.put("Processprogram", secsItem);
-        try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
-        } catch (Exception e) {
-            logger.error("Exception", e);
-        }
-        byte ackc7 = (byte) data.get("ACKC7");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
-        resultMap.put("ACKC7", ackc7);
-        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+
+        try {
+            sleep(3000);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
         return resultMap;
     }
 

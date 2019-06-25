@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
  */
 public class DFG8540Host extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(DFG8540Host.class.getName());
+    private static Logger logger = Logger.getLogger(DFG8540Host.class);
     private boolean needLock = false;
 
     public DFG8540Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {

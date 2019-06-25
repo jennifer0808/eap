@@ -32,4 +32,6 @@ public interface DeviceInfoMapper {
     List<DeviceInfo> getDeviceInfo(String clientId);
 
     int delete(String id);
+
+    List<DeviceInfo> getCurClientDeviceInfo();
 }

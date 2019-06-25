@@ -1,26 +1,21 @@
 package cn.tzauto.octopus.common.resolver.asm;
 
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-
-import org.apache.ibatis.session.SqlSession;
 
 public class ASMAD9212RcpUtil {
 
-    private static final Logger logger = Logger.getLogger(ASMAD9212RcpUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(ASMAD9212RcpUtil.class);
 
     public static List<RecipePara> transferRcpFromDB(String filePath, String recipeName) {
         //将文件名称中的所有空格都替换为带有双引号的空格

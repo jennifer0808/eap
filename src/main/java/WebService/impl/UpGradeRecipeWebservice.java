@@ -22,7 +22,7 @@ import java.util.Map;
  *
  */
 public class UpGradeRecipeWebservice implements BaseWebservice {
-    private static final Logger logger = Logger.getLogger(UpGradeRecipeWebservice.class.getName());
+    private static final Logger logger = Logger.getLogger(UpGradeRecipeWebservice.class);
     private Recipe recipe;
     private List<RecipePara> recipeParas;
     private List<Attach> attachs;

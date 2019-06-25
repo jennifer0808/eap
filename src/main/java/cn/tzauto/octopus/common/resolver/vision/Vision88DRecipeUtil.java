@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
  */
 public class Vision88DRecipeUtil {
 
-    private static Logger logger = Logger.getLogger(Vision88DRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(Vision88DRecipeUtil.class);
 
     public static List transferFromDB(String recipePath, String deviceType) {
         File file = new File(recipePath);

@@ -16,6 +16,7 @@ import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.service.BaseService;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.mq.messageHandlers.UpdateVerNoHandler;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.RoundingOff;
 import cn.tzauto.octopus.common.ws.AxisUtility;
@@ -24,7 +25,7 @@ import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import com.alibaba.fastjson.JSON;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -41,7 +42,8 @@ public class RecipeService extends BaseService {
     private DeviceInfoMapper deviceInfoMapper;
     public SysOfficeMapper sysOfficeMapper;
     private RecipeNameMappingMapper recipeNameMappingMapper;
-    private static Logger logger = Logger.getLogger(RecipeService.class.getName());
+//    private static Logger logger = Logger.getLogger(RecipeService.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UpdateVerNoHandler.class);
 
     public RecipeService(SqlSession sqlSession) {
         super(sqlSession);
@@ -179,14 +181,9 @@ public class RecipeService extends BaseService {
      */
     public Recipe getGoldRecipe(String recipeName, String deviceCode, String deviceTypeCode) {
         Recipe recipe = null;
-        List<Recipe> recipes = this.searchRecipeOrderByVerNo(recipeName, deviceCode, "GOLD");
+        List<Recipe> recipes = this.searchRecipeGoldByPara(recipeName, deviceTypeCode, "GOLD", null);
         if (recipes != null && !recipes.isEmpty()) {
             recipe = recipes.get(0);
-        } else {
-            recipes = this.searchRecipeGoldByPara(recipeName, deviceTypeCode, "GOLD", null);
-            if (recipes != null && !recipes.isEmpty()) {
-                recipe = recipes.get(0);
-            }
         }
         return recipe;
     }

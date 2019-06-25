@@ -349,7 +349,7 @@ public class EquipStatusListen {
     private class ChildChannelHandler extends ChannelInitializer<SocketChannel> {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
-            ch.pipeline().addLast(new EquipStatusHandler());
+            ch.pipeline().addLast(new EquipStatusHandler()).addLast(new Alarm7045Handler());
         }
     }
 

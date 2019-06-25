@@ -1,0 +1,642 @@
+{
+  "9102": {
+    "disc": "联筋上刀记数",
+    "ename": "FORM TOOL LIFE"
+  },
+  "9103": {
+    "disc": "联筋下刀模具记数",
+    "ename": "SINGULATION TOOL LIFE"
+  },
+  "9100": {
+    "disc": "保养下刀记数",
+    "ename": "MAINTENANCE DIE CLEANING"
+  },
+  "9101": {
+    "disc": "废料箱满载记数",
+    "ename": "SCRAP BOX FULL COUNT"
+  },
+  "9106": {
+    "disc": "PM COUNT 7",
+    "ename": "PM COUNT 7"
+  },
+  "9502": {
+    "disc": "9502",
+    "ename": "9502"
+  },
+  "9107": {
+    "disc": "PM COUNT 8",
+    "ename": "PM COUNT 8"
+  },
+  "9503": {
+    "disc": "9503",
+    "ename": "9503"
+  },
+  "9104": {
+    "disc": "高压气吹下刀次数记数",
+    "ename": "AIR BLOW DIE CLEANING"
+  },
+  "9500": {
+    "disc": "9500",
+    "ename": "9500"
+  },
+  "9105": {
+    "disc": "注入润滑油记数",
+    "ename": "GREASE INSERTION COUNT"
+  },
+  "9501": {
+    "disc": "9501",
+    "ename": "9501"
+  },
+  "9614": {
+    "disc": "9614",
+    "ename": "9614"
+  },
+  "9615": {
+    "disc": "主气源压力低",
+    "ename": "AIR PRESSURE LOW (MAIN)"
+  },
+  "9113": {
+    "disc": "PM COUNT 14",
+    "ename": "PM COUNT 14"
+  },
+  "9114": {
+    "disc": "PM COUNT 15",
+    "ename": "PM COUNT 15"
+  },
+  "9510": {
+    "disc": "料箱满",
+    "ename": "EXCHANGE BOX PKG FULL"
+  },
+  "9111": {
+    "disc": "PM COUNT 12",
+    "ename": "PM COUNT 12"
+  },
+  "9112": {
+    "disc": "PM COUNT 13",
+    "ename": "PM COUNT 13"
+  },
+  "9513": {
+    "disc": "未装载检查箱",
+    "ename": "INSPECTION BOX EMPTY"
+  },
+  "9514": {
+    "disc": "检查箱满",
+    "ename": "INSPECTION BOX PKG FULL"
+  },
+  "9910": {
+    "disc": "9910",
+    "ename": "9910"
+  },
+  "9115": {
+    "disc": "9115",
+    "ename": "9115"
+  },
+  "9511": {
+    "disc": "9511",
+    "ename": "9511"
+  },
+  "9512": {
+    "disc": "9512",
+    "ename": "9512"
+  },
+  "9110": {
+    "disc": "检查器件",
+    "ename": "INSPECTION PKG VOLUME"
+  },
+  "9908": {
+    "disc": "9908",
+    "ename": "9908"
+  },
+  "9909": {
+    "disc": "9909",
+    "ename": "9909"
+  },
+  "9506": {
+    "disc": "9506",
+    "ename": "9506"
+  },
+  "9902": {
+    "disc": "9902",
+    "ename": "9902"
+  },
+  "9507": {
+    "disc": "9507",
+    "ename": "9507"
+  },
+  "9903": {
+    "disc": "9903",
+    "ename": "9903"
+  },
+  "9108": {
+    "disc": "PM COUNT 9",
+    "ename": "PM COUNT 9"
+  },
+  "9504": {
+    "disc": "9504",
+    "ename": "9504"
+  },
+  "9900": {
+    "disc": "9900",
+    "ename": "9900"
+  },
+  "9109": {
+    "disc": "检查引线框架记数",
+    "ename": "INSPECTION L/F COUNTER"
+  },
+  "9505": {
+    "disc": "9505",
+    "ename": "9505"
+  },
+  "9901": {
+    "disc": "9901",
+    "ename": "9901"
+  },
+  "9906": {
+    "disc": "9906",
+    "ename": "9906"
+  },
+  "9907": {
+    "disc": "9907",
+    "ename": "9907"
+  },
+  "9508": {
+    "disc": "更换料箱",
+    "ename": "EXCHANGE BOX EMPTY"
+  },
+  "9904": {
+    "disc": "9904",
+    "ename": "9904"
+  },
+  "9509": {
+    "disc": "料箱开/合超时",
+    "ename": "EXCHANG BOX OPEN/CLOSE T/O"
+  },
+  "9905": {
+    "disc": "9905",
+    "ename": "9905"
+  },
+  "9003": {
+    "disc": "空转",
+    "ename": "***AUTO RUN (DRY)***"
+  },
+  "9004": {
+    "disc": "更换上料花篮（前侧）",
+    "ename": "ONLOAD M/Z CHANGE (FRONT)"
+  },
+  "9400": {
+    "disc": "9400",
+    "ename": "9400"
+  },
+  "9001": {
+    "disc": "待机（空转）",
+    "ename": "*** STAND-BY(DRY) ***"
+  },
+  "9002": {
+    "disc": "自动运行",
+    "ename": "*** AUTO RUNNING ***"
+  },
+  "9007": {
+    "disc": "9007",
+    "ename": "9007"
+  },
+  "9403": {
+    "disc": "9403",
+    "ename": "9403"
+  },
+  "9008": {
+    "disc": "注润滑油",
+    "ename": "GREASE INSERTING"
+  },
+  "9404": {
+    "disc": "9404",
+    "ename": "9404"
+  },
+  "9800": {
+    "disc": "9800",
+    "ename": "9800"
+  },
+  "9005": {
+    "disc": "更换上料花篮（后侧）",
+    "ename": "ONLOAD M/Z CHANGE (REAR)"
+  },
+  "9401": {
+    "disc": "模具顶部限位错误",
+    "ename": "TOOL TOP LIMIT ERROR"
+  },
+  "9006": {
+    "disc": "检测模式",
+    "ename": "***INSPECTION MODE***"
+  },
+  "9402": {
+    "disc": "9402",
+    "ename": "9402"
+  },
+  "9000": {
+    "disc": "待机",
+    "ename": "*** STAND-BY ***"
+  },
+  "9913": {
+    "disc": "9913",
+    "ename": "9913"
+  },
+  "9914": {
+    "disc": "9914",
+    "ename": "9914"
+  },
+  "9515": {
+    "disc": "检查箱开/合超时",
+    "ename": "INSPECTION BOX OPEN/CLOSE T/O"
+  },
+  "9911": {
+    "disc": "9911",
+    "ename": "9911"
+  },
+  "9912": {
+    "disc": "9912",
+    "ename": "9912"
+  },
+  "9915": {
+    "disc": "9915",
+    "ename": "9915"
+  },
+  "9014": {
+    "disc": "更换箱体",
+    "ename": "GOOD BOX NOT LOADING"
+  },
+  "9410": {
+    "disc": "9410",
+    "ename": "9410"
+  },
+  "9015": {
+    "disc": "关闭进料前侧安全门",
+    "ename": "CLOSE ONLOAD FRONT SAFEDOOR"
+  },
+  "9411": {
+    "disc": "9411",
+    "ename": "9411"
+  },
+  "9012": {
+    "disc": "没有检查盒",
+    "ename": "INSPECTION BOX NOT LOADING"
+  },
+  "9013": {
+    "disc": "9013",
+    "ename": "9013"
+  },
+  "9414": {
+    "disc": "9414",
+    "ename": "9414"
+  },
+  "9810": {
+    "disc": "右侧安全门开",
+    "ename": "SAFETY COVER OPEN RIGHT"
+  },
+  "9415": {
+    "disc": "9415",
+    "ename": "9415"
+  },
+  "9811": {
+    "disc": "9811",
+    "ename": "9811"
+  },
+  "9412": {
+    "disc": "9412",
+    "ename": "9412"
+  },
+  "9413": {
+    "disc": "9413",
+    "ename": "9413"
+  },
+  "9010": {
+    "disc": "检测箱体器件",
+    "ename": "INSPECTION BOX PKG CHECK"
+  },
+  "9011": {
+    "disc": "花篮门开",
+    "ename": "M/Z DOOR OPEN"
+  },
+  "9809": {
+    "disc": "左侧安全门开",
+    "ename": "SAFETY COVER OPEN LEFT"
+  },
+  "9407": {
+    "disc": "9407",
+    "ename": "9407"
+  },
+  "9803": {
+    "disc": "9803",
+    "ename": "9803"
+  },
+  "9408": {
+    "disc": "9408",
+    "ename": "9408"
+  },
+  "9804": {
+    "disc": "编码检查",
+    "ename": "ENCODE CHECK"
+  },
+  "9009": {
+    "disc": "9009",
+    "ename": "9009"
+  },
+  "9405": {
+    "disc": "上料引线框架翻身",
+    "ename": "INLET L/F TURN OVER"
+  },
+  "9801": {
+    "disc": "凸轮制动器错误",
+    "ename": "CAM BRAKE TROUBLE"
+  },
+  "9406": {
+    "disc": "9406",
+    "ename": "9406"
+  },
+  "9802": {
+    "disc": "9802",
+    "ename": "9802"
+  },
+  "9807": {
+    "disc": "前侧安全门开",
+    "ename": "SAFETY COVER OPEN FRONT "
+  },
+  "9808": {
+    "disc": "后侧安全门开",
+    "ename": "SAFETY COVER OPEN REAR"
+  },
+  "9409": {
+    "disc": "9409",
+    "ename": "9409"
+  },
+  "9805": {
+    "disc": "9805",
+    "ename": "9805"
+  },
+  "9806": {
+    "disc": "9806",
+    "ename": "9806"
+  },
+  "9300": {
+    "disc": "10:后侧抓手开/合超时",
+    "ename": "REAR GRIPPER LEAD FRAME MIS-PICKUP"
+  },
+  "9301": {
+    "disc": "供料错误1",
+    "ename": "L/F MISFEEDING 1"
+  },
+  "9304": {
+    "disc": "9304",
+    "ename": "9304"
+  },
+  "9700": {
+    "disc": "9700",
+    "ename": "9700"
+  },
+  "9305": {
+    "disc": "模具定位错误(1)",
+    "ename": "TOOL1 MIS PILOT (1)"
+  },
+  "9701": {
+    "disc": "除尘马达过载",
+    "ename": "DUST MOTOR OVER LOAD"
+  },
+  "9302": {
+    "disc": "供料错误2",
+    "ename": "L/F MISFEEDING 2"
+  },
+  "9303": {
+    "disc": "9303",
+    "ename": "9303"
+  },
+  "9814": {
+    "disc": "9814",
+    "ename": "9814"
+  },
+  "9815": {
+    "disc": "9815",
+    "ename": "9815"
+  },
+  "9812": {
+    "disc": "检查箱开",
+    "ename": "9812"
+  },
+  "9813": {
+    "disc": "9813",
+    "ename": "9813"
+  },
+  "9311": {
+    "disc": "17:拨针在上位",
+    "ename": "17 : INDEX FEEDER UP"
+  },
+  "9312": {
+    "disc": "16/17:拨针上/下超时",
+    "ename": "16/17:INDEX FINGER UP/DOWN TIME OUT"
+  },
+  "9310": {
+    "disc": "9310",
+    "ename": "9310"
+  },
+  "9315": {
+    "disc": "9315",
+    "ename": "9315"
+  },
+  "9711": {
+    "disc": "保护驱动器报警",
+    "ename": "PROTECTOR DRIVE ALARM"
+  },
+  "9712": {
+    "disc": "9712",
+    "ename": "9712"
+  },
+  "9313": {
+    "disc": "9313",
+    "ename": "9313"
+  },
+  "9314": {
+    "disc": "30:模具保护原点",
+    "ename": "30 : TOOL PROTECTOR HOME"
+  },
+  "9710": {
+    "disc": "9710",
+    "ename": "9710"
+  },
+  "9308": {
+    "disc": "9308",
+    "ename": "9308"
+  },
+  "9704": {
+    "disc": "9704",
+    "ename": "9704"
+  },
+  "9309": {
+    "disc": "9309",
+    "ename": "9309"
+  },
+  "9705": {
+    "disc": "9705",
+    "ename": "9705"
+  },
+  "9306": {
+    "disc": "模具定位错误(2)",
+    "ename": "TOOL1 MIS PILOT (2)"
+  },
+  "9702": {
+    "disc": "无润滑油",
+    "ename": "GREASE EMPTY ERROR"
+  },
+  "9307": {
+    "disc": "9307",
+    "ename": "9307"
+  },
+  "9703": {
+    "disc": "废料箱开(顶部)",
+    "ename": "SCRAP BOX OPEN (TOP)"
+  },
+  "9708": {
+    "disc": "定位模块第一轴报警",
+    "ename": "POSITION MODULE 1st AXIS ALARM"
+  },
+  "9709": {
+    "disc": "9709",
+    "ename": "9709"
+  },
+  "9706": {
+    "disc": "注油错误",
+    "ename": "GREASE INSERT ERROR"
+  },
+  "9707": {
+    "disc": "9707",
+    "ename": "9707"
+  },
+  "9201": {
+    "disc": "9201",
+    "ename": "9201"
+  },
+  "9202": {
+    "disc": "9202",
+    "ename": "9202"
+  },
+  "9200": {
+    "disc": "一批料结束",
+    "ename": "***LOT END***"
+  },
+  "9205": {
+    "disc": "06:上料第一滚筒超时",
+    "ename": "06: ONLOAD 1st ROLLER TIME OUT"
+  },
+  "9601": {
+    "disc": "成品箱空",
+    "ename": "GOOD BOX EMPTY"
+  },
+  "9206": {
+    "disc": "进料厚度检测异常-进料2条产品重叠。",
+    "ename": "进料厚度检测异常"
+  },
+  "9602": {
+    "disc": "成品箱满",
+    "ename": "GOOD BOX FULL"
+  },
+  "9203": {
+    "disc": "01:上料前侧电梯超时",
+    "ename": "01: ONLOAD FRONT ELEVATOR TIME OUT"
+  },
+  "9204": {
+    "disc": "02:上料后侧电梯超时",
+    "ename": "02: ONLOAD REAR ELEVATOR TIME OUT"
+  },
+  "9600": {
+    "disc": "检查箱开/合超时",
+    "ename": "INSPECTION CLAMP O/C T/O"
+  },
+  "9715": {
+    "disc": "凸轮侍服驱动器报警",
+    "ename": "CAM SERVO DRIVE ALARM"
+  },
+  "9713": {
+    "disc": "保护制动错误",
+    "ename": "TOOL PROTECTOR BRAKE TROUBLE"
+  },
+  "9714": {
+    "disc": "9714",
+    "ename": "9714"
+  },
+  "9212": {
+    "disc": "03：上料引线框架传送器前/后超时",
+    "ename": "05: ONLOAD L/F TRF FWD/BWD TIME OUT"
+  },
+  "9213": {
+    "disc": "13:上料第二滚筒超时",
+    "ename": "13: ONLOAD 2nd ROLLER TIME OUT"
+  },
+  "9210": {
+    "disc": "03：上料引线框架传送器CW/CCW超时",
+    "ename": "03: ONLOAD L/F TRF CW/CCW TIME OUT"
+  },
+  "9211": {
+    "disc": "04：上料引线框架传送器上/下超时",
+    "ename": "04: ONLOAD L/F TRF UP/DOWN TIME OUT"
+  },
+  "9612": {
+    "disc": "9612",
+    "ename": "9612"
+  },
+  "9613": {
+    "disc": "9613",
+    "ename": "9613"
+  },
+  "9214": {
+    "disc": "14:上料挡块超时",
+    "ename": "14 : ONLOAD STOPPER T/O"
+  },
+  "9610": {
+    "disc": "顶模检查",
+    "ename": "TOOL TOP MODULE CHECK"
+  },
+  "9215": {
+    "disc": "09:前侧抓手开/合超时",
+    "ename": "FORNT GRIPPER LEAD FRAME MIS-PICKUP"
+  },
+  "9611": {
+    "disc": "底模检查",
+    "ename": "TOOL BTM MODULE CHECK"
+  },
+  "9209": {
+    "disc": "上料花篮空",
+    "ename": "ONLOAD M/Z EMPTY"
+  },
+  "9605": {
+    "disc": "检查OPTION(选择)孔 (在支架上）",
+    "ename": "OPTION HOLE PIN CHECK (ON BLOCK)"
+  },
+  "9606": {
+    "disc": "9606",
+    "ename": "9606"
+  },
+  "9207": {
+    "disc": "上料前侧花篮装载错误",
+    "ename": "ONLOAD FRONT M/Z MISLOAD"
+  },
+  "9603": {
+    "disc": "GOOD BOX CLAMP O/C T/O",
+    "ename": "GOOD BOX CLAMP O/C T/O"
+  },
+  "9208": {
+    "disc": "上料后侧花篮装载错误",
+    "ename": "ONLOAD REAR M/Z MISLOAD"
+  },
+  "9604": {
+    "disc": "下料箱位置错误",
+    "ename": "OFF LOAD BOX NORMAL POSITION ERROR"
+  },
+  "9609": {
+    "disc": "子模器件检查",
+    "ename": "OFFLOAD PIN BLOCK MODULE CHECK"
+  },
+  "9607": {
+    "disc": "93:凸轮原点位置",
+    "ename": "93:CAM HOME POSITION !!!"
+  },
+  "9608": {
+    "disc": "子模器件检查",
+    "ename": "ONLOAD PIN BLOCK MODULE CHECK"
+  }
+}

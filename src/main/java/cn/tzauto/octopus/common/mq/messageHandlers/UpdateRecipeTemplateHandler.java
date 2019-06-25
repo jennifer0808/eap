@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 
 public class UpdateRecipeTemplateHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpdateRecipeTemplateHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpdateRecipeTemplateHandler.class);
     private String deviceCode = "";
     private String deviceTypeId = "";
     private List<RecipeTemplate> recipeTemplates;

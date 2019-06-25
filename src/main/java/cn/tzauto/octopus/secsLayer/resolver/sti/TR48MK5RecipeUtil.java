@@ -6,12 +6,11 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -22,7 +21,7 @@ import java.util.zip.ZipInputStream;
  */
 public class TR48MK5RecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(TR48MK5RecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(TR48MK5RecipeUtil.class);
 
     public static List<RecipePara> transferRcpFromDB(String filePath, String recipeName, String deviceType) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -80,7 +79,7 @@ public class TR48MK5RecipeUtil {
                 zis.close();
                 br.close();
             } catch (IOException ex) {
-                Logger.getLogger(TR48MK5RecipeUtil.class.getName()).log(Level.SEVERE, null, ex);
+                logger.error("ex："+ex);
             }
         }
         return recipeParas;

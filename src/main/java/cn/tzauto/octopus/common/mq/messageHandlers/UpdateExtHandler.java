@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
  */
 public class UpdateExtHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpdateExtHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpdateExtHandler.class);
     private String deviceCode = "";
     private String lockSwitch = "";
 

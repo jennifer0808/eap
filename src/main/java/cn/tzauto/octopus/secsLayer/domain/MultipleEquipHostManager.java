@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MultipleEquipHostManager {
 
-    private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class.getName());
+    private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class);
     private HashMap<String, EquipHost> equipHosts; //store pairs <deviceId, Equip>
     private String clientId = ""; //used for naming DB connection Cache
     private String hostXmlFilePath = null;
@@ -516,6 +516,7 @@ public class MultipleEquipHostManager {
      */
     public Map getRecipeParaFromDevice(String deviceCode, String recipeName) throws UploadRecipeErrorException {
         if (equipHosts.get(deviceCode) != null) {
+
             EquipHost equipHost = equipHosts.get(deviceCode);
             if (equipHost.deviceType.contains("DEKHorizon03ix")) {
                 equipHost.sendS1F3Check();
@@ -567,7 +568,7 @@ public class MultipleEquipHostManager {
             EquipHost equipHost = equipHosts.get(deviceInfo.getDeviceCode());
             //直接从FTP下载，如果本地有就覆盖，如果FTP不存在，那么下载失败
             String localRecipeFilePath = GlobalConstants.localRecipePath + recipeFilePath;
-            if (deviceInfo.getDeviceType().contains("HITACHIDB8")) {
+            if (deviceInfo.getDeviceType().contains("DB-800HSD")) {
                 //本地地址    D:/DB-800HSDRecipe/
                 localRecipeFilePath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从[" + recipeFilePath + "]FTP上下载到本地[" + localRecipeFilePath + "]本地");
@@ -605,10 +606,6 @@ public class MultipleEquipHostManager {
                     } else {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "从FTP下载Recipe成功.PPID=" + recipe.getRecipeName());
                     }
-                }
-                if (deviceInfo.getDeviceType().contains("8760inline")) {
-                    FtpUtil.connectServerAndDownloadFile(localRecipeFilePath.replaceAll(".txt", ".DFM"), recipeFilePath.replaceAll(".txt", ".DFM"), GlobalConstants.ftpIP,
-                            GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
                 }
             } else {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Local 模式,仅读取本地文件...");
@@ -878,7 +875,7 @@ public class MultipleEquipHostManager {
     public Map getSVValueBySVID(String deviceId, String svid) {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            return equipHost.sendS1F3SingleCheck(svid);
+            return equipHost.sendS1F3SingleCheck(Long.parseLong(svid));
         }
         Map resultMap = null;
         return resultMap;

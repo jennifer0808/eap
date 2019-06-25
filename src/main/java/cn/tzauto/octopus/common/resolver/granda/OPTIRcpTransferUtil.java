@@ -8,15 +8,12 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-import org.apache.ibatis.session.SqlSession;
 
 /**
  *
@@ -24,7 +21,7 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class OPTIRcpTransferUtil {
 
-    private static Logger logger = Logger.getLogger(OPTIRcpTransferUtil.class.getName());
+    private static Logger logger = Logger.getLogger(OPTIRcpTransferUtil.class);
 
     public static List transferOptiRcp(String recipePath) {
         File file = new File(recipePath);

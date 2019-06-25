@@ -40,7 +40,7 @@ import java.util.*;
 public class HT9045HWHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HT9045HWHost.class.getName());
+    private static final Logger logger = Logger.getLogger(HT9045HWHost.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;
@@ -181,6 +181,10 @@ public class HT9045HWHost extends EquipHost {
         sendS2F37out(27L);
         //Tray Feed
         sendS2F37out(49L);
+        //Press Clean Out button
+        sendS2F37out(4L);
+        //Auto Clean Start
+        sendS2F37out(34L);
         sendS5F3out(true);
     }
 

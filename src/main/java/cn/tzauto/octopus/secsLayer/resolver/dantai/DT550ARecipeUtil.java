@@ -18,7 +18,7 @@ import java.util.List;
 public class DT550ARecipeUtil {
 
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DT550ARecipeUtil.class.getName());
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(DT550ARecipeUtil.class);
 
     public static List<RecipePara> getRecipeParas(String filePath, String deviceType) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();

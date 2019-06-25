@@ -1,21 +1,22 @@
 package cn.tzauto.octopus.common.mq.messageHandlers;
 
 
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.mq.common.MessageHandler;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
@@ -23,9 +24,12 @@ import javax.jms.Message;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+//import org.apache.log4j.Logger;
+
 public class BackUpRecipeHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(BackUpRecipeHandler.class.getName());
+//    private static Logger logger = Logger.getLogger(BackUpRecipeHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(BackUpRecipeHandler.class);
     private DeviceInfo deviceInfo = new DeviceInfo();
     private Recipe recipe = null;
     private List<RecipePara> recipeParaList = null;

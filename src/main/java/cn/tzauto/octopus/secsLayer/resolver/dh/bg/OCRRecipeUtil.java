@@ -77,7 +77,7 @@ public class OCRRecipeUtil {
         try {
             isr = new InputStreamReader(new FileInputStream(source));
             reader = new BufferedReader(isr);
-            while ((line = reader.readLine()) != null && line.contains("=")) {
+            while ((line = reader.readLine()) != null) {
                 OCRPPBody body = new OCRPPBody();
                 if (line.contains("[")) {
                     String type = line.substring(line.indexOf("[") + 1, line.lastIndexOf("]")) + "-";

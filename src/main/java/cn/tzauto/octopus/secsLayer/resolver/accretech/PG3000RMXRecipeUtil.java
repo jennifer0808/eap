@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
  */
 public class PG3000RMXRecipeUtil {
 
-    private static Logger logger = Logger.getLogger(PG3000RMXRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(PG3000RMXRecipeUtil.class);
 
     public static byte[] trans(String recipepath) {
         byte[] buffer = null;

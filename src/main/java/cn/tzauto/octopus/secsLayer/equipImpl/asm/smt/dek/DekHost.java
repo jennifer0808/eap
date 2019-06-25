@@ -22,7 +22,7 @@ import java.util.*;
 public class DekHost extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(DekHost.class.getName());
+    private static final Logger logger = Logger.getLogger(DekHost.class);
 
 
     public DekHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

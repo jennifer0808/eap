@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -14,7 +13,6 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -34,7 +32,7 @@ import java.util.*;
 public class T830Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(T830Host.class.getName());
+    private static final Logger logger = Logger.getLogger(T830Host.class);
 
     public T830Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -186,51 +184,51 @@ public class T830Host extends EquipHost {
         return resultMap;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-//            List<>
-//            data = activeWrapper.sendS1F3out();
-
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
-            return null;
-        }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
+//    @SuppressWarnings("unchecked")
+//    @Override
+//    public Map sendS1F3Check() {
+//        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s1f3out.setTransactionId(transactionId);
+//        long[] equipStatuss = new long[1];
+//        long[] pPExecNames = new long[1];
+//        long[] controlStates = new long[1];
+//        DataMsgMap data = null;
+//        try {
+//            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+//            RecipeService recipeService = new RecipeService(sqlSession);
+//            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+//            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+//            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
+//            sqlSession.close();
+//            s1f3out.put("EquipStatus", equipStatuss);
+//            s1f3out.put("PPExecName", pPExecNames);
+//            s1f3out.put("ControlState", controlStates);
+////            List<>
+////            data = activeWrapper.sendS1F3out();
+//
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//        }
+//        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
+//        if (data == null || data.get("RESULT") == null) {
+//            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+//        }
+//        if (data == null || data.get("RESULT") == null) {
+//            return null;
+//        }
+//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+//        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
+//        ppExecName = (String) listtmp.get(1);
+//        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+//        Map panelMap = new HashMap();
+//        panelMap.put("EquipStatus", equipStatus);
+//        panelMap.put("PPExecName", ppExecName);
+//        panelMap.put("ControlState", controlState);
+//        changeEquipPanel(panelMap);
+//        return panelMap;
+//    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S2FX Code">
@@ -301,16 +299,13 @@ public class T830Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long preStatus = 0L;
-        long nowStatus = 0;
         long ceid = 0L;
         try {
-            nowStatus = data.getSingleNumber("EquipStatus");
             ceid = (long) data.get("CEID");
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
+        findDeviceRecipe();
         if (equipStatus.equalsIgnoreCase("Run")) {
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备设置为锁机，设备将被锁！");

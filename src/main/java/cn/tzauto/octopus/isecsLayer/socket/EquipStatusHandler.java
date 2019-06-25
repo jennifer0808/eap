@@ -46,6 +46,10 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
         buf.readBytes(req);
 
         String message = new String(req, "UTF-8");
+        if(message.startsWith("alarm")) {
+            ctx.fireChannelRead(msg);
+            return;
+        }
         if (message.contains("done")) {
             logger.debug("接收到alert信息:" + message);
 

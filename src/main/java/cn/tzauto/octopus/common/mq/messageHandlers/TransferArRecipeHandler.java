@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
  */
 public class TransferArRecipeHandler implements MessageHandler {
 
-    private static final Logger logger = Logger.getLogger(TransferArRecipeHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(TransferArRecipeHandler.class);
     private List<Recipe> recipes;
     private String deviceCode;
 //    private List<RecipePara> recipeParas;

@@ -36,7 +36,7 @@ import org.apache.log4j.MDC;
  */
 public class HorizonHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(HorizonHost.class.getName());
+    private static Logger logger = Logger.getLogger(HorizonHost.class);
 
     public HorizonHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);

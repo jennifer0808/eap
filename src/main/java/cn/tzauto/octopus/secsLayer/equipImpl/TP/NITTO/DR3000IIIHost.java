@@ -24,7 +24,7 @@ import java.util.*;
 public class DR3000IIIHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(DR3000IIIHost.class.getName());
+    private static final Logger logger = Logger.getLogger(DR3000IIIHost.class);
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
     public DR3000IIIHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

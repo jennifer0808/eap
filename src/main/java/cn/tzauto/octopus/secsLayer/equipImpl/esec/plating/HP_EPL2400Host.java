@@ -36,7 +36,7 @@ import java.util.*;
 public class HP_EPL2400Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(HP_EPL2400Host.class.getName());
+    private static final Logger logger = Logger.getLogger(HP_EPL2400Host.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;

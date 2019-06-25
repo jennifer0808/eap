@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class IOUtil {
 
-    private static final Logger logger = Logger.getLogger(IOUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(IOUtil.class);
 
     /**
          * 关闭一个或多个流对象

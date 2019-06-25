@@ -40,7 +40,7 @@ import java.util.Map;
 public class SigmaPlusHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(SigmaPlusHost.class.getName());
+    private static final Logger logger = Logger.getLogger(SigmaPlusHost.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;

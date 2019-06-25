@@ -29,7 +29,7 @@ import java.util.*;
 public class NY20Host extends EquipHost {
 
 
-    private static final Logger logger = Logger.getLogger(NY20Host.class.getName());
+    private static final Logger logger = Logger.getLogger(NY20Host.class);
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
     private long runCount = 0;

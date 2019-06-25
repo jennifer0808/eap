@@ -29,7 +29,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class GlobalConstants {
-    private static final Logger logger = Logger.getLogger(GlobalConstants.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalConstants.class);
     private static Properties prop;
     public static boolean SYNC_CONIFG = false;
     public static boolean MONITOR_CONIFG = false;
@@ -74,8 +74,11 @@ public class GlobalConstants {
     public static MessageUtils S2CDataTopic = new MessageUtils("S2C.T.DATA_TRANSFER");
     public static MessageUtils S2CDataTopicTest = new MessageUtils("S2C.T.DATA_TRANSFERTest");
     public static MessageUtils S2CEQPT_PARATopic = new MessageUtils("S2C.T.EQPT_PARAMETER");
+    public static MessageUtils S2CEQPT_TSDSTopic = new MessageUtils("S2C.T.EQPT_TSDS");
+    public static MessageUtils C2SEQPT_TSDSTopic = new MessageUtils("C2S.Q.EQPT_TSDS");
+    public static long DELAY_BEFORE_RESTART = 20000;
     public static SysUser sysUser;
-    public static Logger sysLogger = Logger.getLogger(GlobalConstants.class.getName());
+    public static Logger sysLogger = Logger.getLogger(GlobalConstants.class);
     public static String clientId;
     //    public static String clientFtpPath;
     public static ClientInfo clientInfo;
@@ -238,6 +241,23 @@ public class GlobalConstants {
         if (getProperty("ISECS_STATUS_CONFIRM") != null) {
             ISECS_STATUS_CONFIRM = getProperty("ISECS_STATUS_CONFIRM");
         }
+
+        if (getProperty("MQ_MSG_WAIT_TIME") != null) {
+            try {
+                MQ_MSG_WAIT_TIME = Long.parseLong(getProperty("MQ_MSG_WAIT_TIME"));
+            } catch (Exception e) {
+                MQ_MSG_WAIT_TIME = 30000L;
+            }
+
+        }
+        if (getProperty("DELAY_BEFORE_RESTART") != null) {
+            try {
+                DELAY_BEFORE_RESTART = Long.parseLong(getProperty("DELAY_BEFORE_RESTART"));
+            } catch (Exception e) {
+                DELAY_BEFORE_RESTART = 30000L;
+            }
+
+        }
         return true;
     }
 
@@ -294,6 +314,8 @@ public class GlobalConstants {
                 sqlSession.close();
                 String clientVersion = getProperty("CLIENT_VERSION") == null ? "" : GlobalConstants.getProperty("CLIENT_VERSION").toString();
                 if (deviceInfos != null && !deviceInfos.isEmpty()) {
+                    Properties clientProp = GlobalConstants.updateVersionNo();
+                    clientVersion = String.valueOf(clientProp.getProperty("VERSION"));
                     for (DeviceInfo deviceInfo : deviceInfos) {
                         Map mqMap = new HashMap();
                         mqMap.put("msgName", "MqSaveLog");

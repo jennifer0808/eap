@@ -33,7 +33,7 @@ import java.util.*;
 public class EsecDB2009Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(EsecDB2009Host.class.getName());
+    private static final Logger logger = Logger.getLogger(EsecDB2009Host.class);
     public String Installation_Date;
     public String Lot_Id;
     public String Left_Epoxy_Id;

@@ -30,7 +30,7 @@ import java.util.*;
 @SuppressWarnings("serial")
 public class T640Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(T640Host.class.getName());
+    private static final Logger logger = Logger.getLogger(T640Host.class);
     private boolean startCheckOver = false;
     private boolean needCheck = false;
 
@@ -84,12 +84,13 @@ public class T640Host extends EquipHost {
                     sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
-                    super.findDeviceRecipe();
+
                     rptDefineNum++;
                     sendS5F3out(true);
+                    findDeviceRecipe();
                 }
 //                if (!holdSuccessFlag) {
-//                    holdDevice();
+//                    holdDevice();unknown
 //                }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
@@ -128,7 +129,7 @@ public class T640Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
                 setCommState(COMMUNICATING);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
@@ -287,21 +288,14 @@ public class T640Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long preStatus = 0L;
-        long nowStatus = 0;
         long ceid = 0L;
-
         try {
-
-            preStatus = data.getSingleNumber("PreStatus");
-            nowStatus = data.getSingleNumber("EquipStatus");
             ceid = (long) data.get("CEID");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
+        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
         if (AxisUtility.isEngineerMode(deviceCode)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             sqlSession.close();

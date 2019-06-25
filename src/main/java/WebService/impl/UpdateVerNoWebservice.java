@@ -22,7 +22,7 @@ import java.util.Map;
  * Created by 12631 on 2019/3/1.
  */
 public class UpdateVerNoWebservice implements BaseWebservice {
-    private static final Logger logger = Logger.getLogger(UpdateVerNoWebservice.class.getName());
+    private static final Logger logger = Logger.getLogger(UpdateVerNoWebservice.class);
     String eventId = "";
     String recipeName = "";
     String lotId = "";

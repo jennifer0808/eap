@@ -51,15 +51,15 @@
             <Font size="14.0" />
          </font></Label>
       <Button fx:id="button" layoutX="226.0" layoutY="289.0" mnemonicParsing="false" prefHeight="33.0" prefWidth="69.0" style="-fx-background-color: #0069CC;" text="%ok" AnchorPane.bottomAnchor="28.0" AnchorPane.rightAnchor="205.0" />
-      <TextField fx:id="officeName" layoutX="85.0" layoutY="84.0" prefHeight="23.0" prefWidth="146.0" />
-      <TextField fx:id="recipeName" layoutX="85.0" layoutY="122.0" prefHeight="23.0" prefWidth="146.0" />
-      <TextField fx:id="recipeVersionNo" layoutX="85.0" layoutY="160.0" prefHeight="23.0" prefWidth="146.0" />
-      <TextField fx:id="lotNo" layoutX="85.0" layoutY="198.0" prefHeight="23.0" prefWidth="146.0" />
-      <TextField fx:id="clientCode" layoutX="321.0" layoutY="84.0" prefHeight="23.0" prefWidth="151.0" />
-      <TextField fx:id="deviceCodeField" layoutX="321.0" layoutY="122.0" prefHeight="23.0" prefWidth="151.0" />
-      <TextField fx:id="equipStatus" layoutX="321.0" layoutY="160.0" prefHeight="23.0" prefWidth="151.0" />
-      <TextField fx:id="deviceType" layoutX="321.0" layoutY="198.0" prefHeight="23.0" prefWidth="151.0" />
-      <RadioButton fx:id="JRB_EngineerMode" layoutX="82.0" layoutY="241.0" mnemonicParsing="false" text="%engineerMode">
+      <TextField fx:id="officeName" editable="false" layoutX="85.0" layoutY="84.0" prefHeight="23.0" prefWidth="146.0" />
+      <TextField fx:id="recipeName" editable="false" layoutX="85.0" layoutY="122.0" prefHeight="23.0" prefWidth="146.0" />
+      <TextField fx:id="recipeVersionNo" editable="false" layoutX="85.0" layoutY="160.0" prefHeight="23.0" prefWidth="146.0" />
+      <TextField fx:id="lotNo" editable="false" layoutX="85.0" layoutY="198.0" prefHeight="23.0" prefWidth="146.0" />
+      <TextField fx:id="clientCode" editable="false" layoutX="321.0" layoutY="84.0" prefHeight="23.0" prefWidth="151.0" />
+      <TextField fx:id="deviceCodeField" editable="false" layoutX="321.0" layoutY="122.0" prefHeight="23.0" prefWidth="151.0" />
+      <TextField fx:id="equipStatus" editable="false" layoutX="321.0" layoutY="160.0" prefHeight="23.0" prefWidth="151.0" />
+      <TextField fx:id="deviceType" editable="false" layoutX="321.0" layoutY="198.0" prefHeight="23.0" prefWidth="151.0" />
+      <RadioButton fx:id="JRB_EngineerMode" layoutX="82.0" layoutY="241.0" mnemonicParsing="false" text="%engineerMode" visible="false">
          <font>
             <Font size="14.0" />
          </font></RadioButton>

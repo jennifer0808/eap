@@ -8,7 +8,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -35,7 +34,7 @@ import java.util.*;
 public class DiscoDGP8761Host extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(DiscoDGP8761Host.class.getName());
+    private static final Logger logger = Logger.getLogger(DiscoDGP8761Host.class);
     private Map<String, Boolean> cassUseMap = new HashMap<>();
     private String portARcpName = "";
     private String portBRcpName = "";
@@ -174,7 +173,7 @@ public class DiscoDGP8761Host extends EquipHost {
         DataMsgMap s1f3out = new DataMsgMap("s1f3CassUse", activeWrapper.getDeviceId());
         s1f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap data = null;
-        List cassIdlist = new ArrayList();
+        List<Long> cassIdlist = new ArrayList();
         cassIdlist.add(1004L);
         cassIdlist.add(1005L);
         try {
@@ -205,14 +204,7 @@ public class DiscoDGP8761Host extends EquipHost {
 
     @Override
     public Map sendS2F41outPPselect(String recipeName) {
-        DataMsgMap PPselectA = new DataMsgMap("s2f41outPPSelectA", activeWrapper.getDeviceId());
-        PPselectA.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectA.put("PPID", ppExecName);
-        PPselectA.put("LotId", lotId);
-        DataMsgMap PPselectB = new DataMsgMap("s2f41outPPSelectB", activeWrapper.getDeviceId());
-        PPselectB.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectB.put("PPID", ppExecName);
-        PPselectB.put("LotId", lotId);
+
         try {
             if ("setup".equalsIgnoreCase(equipStatus)) {
                 if (cassUseMap.get("A")) {
@@ -246,10 +238,7 @@ public class DiscoDGP8761Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselectA() {
-        DataMsgMap PPselectA = new DataMsgMap("s2f41outPPSelectA", activeWrapper.getDeviceId());
-        PPselectA.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectA.put("PPID", ppExecName);
-        PPselectA.put("LotId", lotId);
+
         Map resultMap = new HashMap();
         try {
             if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus)) {
@@ -290,10 +279,7 @@ public class DiscoDGP8761Host extends EquipHost {
 
     @SuppressWarnings("unchecked")
     public Map sendS2F41outPPselectB() {
-        DataMsgMap PPselectB = new DataMsgMap("s2f41outPPSelectB", activeWrapper.getDeviceId());
-        PPselectB.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        PPselectB.put("PPID", ppExecName);
-        PPselectB.put("LotId", lotId);
+
         Map resultMap = new HashMap();
         try {
             if ("setup".equalsIgnoreCase(equipStatus) || "run".equalsIgnoreCase(equipStatus)) {

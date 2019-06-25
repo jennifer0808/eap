@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class AsmAD8312Host extends EquipHost {
 
-    private static final Logger logger = Logger.getLogger(AsmAD8312Host.class.getName());
+    private static final Logger logger = Logger.getLogger(AsmAD8312Host.class);
 
 
     public AsmAD8312Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {

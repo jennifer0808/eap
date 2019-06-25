@@ -25,7 +25,7 @@ import java.util.*;
 public class OcrHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
-    private static final Logger logger = Logger.getLogger(OcrHost.class.getName());
+    private static final Logger logger = Logger.getLogger(OcrHost.class);
 
 
     public OcrHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
@@ -158,6 +158,7 @@ public class OcrHost extends EquipHost {
             } else if (ceid == 1003) {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
+            updateCommStateInExt();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -172,7 +173,8 @@ public class OcrHost extends EquipHost {
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName+".ini");
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-        //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
+        logger.info("recipe path : "+recipePath);
+        //        logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {

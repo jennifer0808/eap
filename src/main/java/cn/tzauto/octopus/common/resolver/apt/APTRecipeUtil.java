@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
  */
 public class APTRecipeUtil {
 
-    private static final Logger logger = Logger.getLogger(APTRecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(APTRecipeUtil.class);
 
     public static void main(String[] args) {
         String filePath = "C:\\Users\\wjy\\Desktop\\压力烤箱\\P121";

@@ -9,9 +9,11 @@ import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -85,11 +87,11 @@ public class C6800SECSHost extends EquipHost {
                     initRptPara();
                     rptDefineNum++;
                 }
-                DataMsgMap msg = null;
+                DataMsgMap msg;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = (long) msg.get("CEID");
                     if (ceid == 3 || ceid == 7) {
                         setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
@@ -102,8 +104,8 @@ public class C6800SECSHost extends EquipHost {
                             + " which I do not want to process! ");
                 }
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 logger.fatal("Caught Interruption", e);
+                return;//destory the blocked thread
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
             }
@@ -166,7 +168,7 @@ public class C6800SECSHost extends EquipHost {
     public void initRptPara() {
     }
 
-    public void processEquipStatusChange(DataMsgMap msg) {
+    private void processEquipStatusChange(DataMsgMap msg) {
         long ceid = 0l;
         try {
             ceid = (long) msg.get("CEID");
@@ -204,7 +206,7 @@ public class C6800SECSHost extends EquipHost {
         }
     }
 
-    protected void processPressStartButton(DataMsgMap data) {
+    private void processPressStartButton(DataMsgMap data) {
         long ceid = 0l;
         logger.info("[" + deviceCode + "]" + "Start按钮被按下，设备开始作业！");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -220,6 +222,7 @@ public class C6800SECSHost extends EquipHost {
                 //锁机
                 holdDevice();
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
+                return;
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceInfoExt.setConnectionStatus(controlState);
@@ -229,10 +232,10 @@ public class C6800SECSHost extends EquipHost {
 //            //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
-//            if (AxisUtility.isEngineerMode(deviceCode)) {
-//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-//                return;
-//            }
+            if (AxisUtility.isEngineerMode(deviceCode)) {
+               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                return;
+            }
             //获取设备状态为ready时检查领料记录
             if (true) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
@@ -476,10 +479,9 @@ public class C6800SECSHost extends EquipHost {
         boolean checkParaFlag = false;
         Map resultMap = new HashMap();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        List<RecipePara> recipeParasdiff = checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
             mqMap.put("msgName", "eqpt.StartCheckWI");
@@ -548,5 +550,100 @@ public class C6800SECSHost extends EquipHost {
             resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
         }
         return resultMap;
+    }
+
+    private List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String masterCompareType) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService service = new RecipeService(sqlSession);
+        //获取Gold版本的参数(只有gold才有wi信息)
+        List<RecipePara> goldRecipeParas = service.searchRecipeParaByRcpRowId(recipeRowid);
+        //确定管控参数
+        List<RecipeTemplate> recipeTemplates = service.searchRecipeTemplateMonitor(deviceCode);
+        for (RecipeTemplate recipeTemplate : recipeTemplates) {
+            for (RecipePara recipePara : goldRecipeParas) {
+                if (recipePara.getParaCode() != null && recipePara.getParaCode().equals(recipeTemplate.getParaCode())) {
+                    recipeTemplate.setMinValue(recipePara.getMinValue());
+                    recipeTemplate.setMaxValue(recipePara.getMaxValue());
+                    recipeTemplate.setSetValue(recipePara.getSetValue());
+                }
+            }
+        }
+        //找出设备当前recipe参数中超出wi范围的参数
+        List<RecipePara> wirecipeParaDiff = new ArrayList<>();
+        for (RecipePara equipRecipePara : equipRecipeParas) {
+            for (RecipeTemplate recipeTemplate : recipeTemplates) {
+                if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode())) {
+                    equipRecipePara.setRecipeRowId(recipeRowid);
+                    String currentRecipeValue = equipRecipePara.getSetValue();
+                    String setValue = recipeTemplate.getSetValue();
+                    String minValue = recipeTemplate.getMinValue();
+                    String maxValue = recipeTemplate.getMaxValue();
+                    equipRecipePara.setDefValue(setValue);//默认值，recipe参数设定值
+                    boolean paraIsNumber = false;
+                    try {
+                        Double.parseDouble(currentRecipeValue);
+                        paraIsNumber = true;
+                    } catch (Exception e) {
+                    }
+                    try {
+                        if ("abs".equals(masterCompareType)) {
+                            if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
+                                continue;
+                            }
+                            equipRecipePara.setMinValue(setValue);
+                            equipRecipePara.setMaxValue(setValue);
+                            if (paraIsNumber) {
+                                if (Double.parseDouble(currentRecipeValue) != Double.parseDouble(setValue)) {
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            } else if (!currentRecipeValue.equals(setValue)) {
+                                wirecipeParaDiff.add(equipRecipePara);
+                            }
+                        } else//spec
+                            if ("1".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                                //abs
+                            } else if ("2".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
+                                    continue;
+                                }
+                                try {
+                                    if (!Double.valueOf(currentRecipeValue).equals(Double.valueOf(setValue))) {
+                                        equipRecipePara.setMinValue(setValue);
+                                        equipRecipePara.setMaxValue(setValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
+                                }catch (Exception e) {
+                                    if (!currentRecipeValue.equals(setValue)) {
+                                        equipRecipePara.setMinValue(setValue);
+                                        equipRecipePara.setMaxValue(setValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
+                                }
+
+                            } else {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            }
+                    } catch (Exception e) {
+                        logger.error("Exception:", e);
+                    }
+                }
+            }
+        }
+        return wirecipeParaDiff;
     }
 }

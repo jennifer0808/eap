@@ -741,7 +741,7 @@ public class ACKDescription {
             } else if (ack.equals("7")) {
                 description = "RUN";
             }
-        } else if (deviceType.contains("C6800")) {
+        } else if (deviceType.contains("C6800") || deviceType.contains("C6430") || deviceType.contains("C6Q420")) {
             switch (ack) {
                 case "1":
                     description = "Power On";

@@ -22,10 +22,12 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.common.ws.WSUtility;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
@@ -34,8 +36,10 @@ import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.*;
 import com.alibaba.fastjson.JSONArray;
+
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -44,11 +48,13 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static cn.tzauto.octopus.common.resolver.TransferUtil.getIDValue;
+
 
 public abstract class EquipHost extends Thread implements MsgListener {
 
     private static final long serialVersionUID = -8008553978164121001L;
-    private static Logger logger = Logger.getLogger(EquipHost.class.getName());
+    private static Logger logger = Logger.getLogger(EquipHost.class);
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
     public int commState = NOT_COMMUNICATING;
@@ -435,7 +441,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         logger.info("START CHECK: ready to upload recipe:" + new Date());
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException upe) {
             logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
         }
@@ -574,9 +580,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
         if (listtmp != null && !listtmp.isEmpty()) {
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-            ppExecName = String.valueOf(listtmp.get(1));
-            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+                equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+                ppExecName = String.valueOf(listtmp.get(1));
+                controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
@@ -602,6 +608,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
         }
         if (data == null || data.get("SV") == null) {
             return null;
@@ -611,9 +618,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     }
 
-    public Map sendS1F3SingleCheck(String svid) {
-        List svidlist = new ArrayList();
-        svidlist.add(Long.parseLong(svid));
+    public Map sendS1F3SingleCheck(Long svid) {
+        List<Long> svidlist = new ArrayList();
+        svidlist.add(svid);
         DataMsgMap data = null;
         logger.info("设备" + deviceCode + "开始发送S1F3SingleCheck");
         try {
@@ -637,7 +644,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 resultMap.put("Value", listsvValue);
                 logger.info("SV查询得值svValue:" + resultMap);
             } else {
-                resultMap.put("Value", obj);
+                String s = getSpecificSVEC(obj, 0);
+                resultMap.put("Value", s);
             }
         }
 
@@ -826,10 +834,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void sendS2F15out(String ecid, String ecv) {
+    public void sendS2F15out(long ecid, String ecv) {
         DataMsgMap s2f15out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());
         s2f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long tmpL = Long.parseLong(ecid);
+        long tmpL = ecid ;
         long l[] = new long[1];
         l[0] = tmpL;
         float tmpF = Float.parseFloat(ecv);
@@ -1184,7 +1192,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
+                ceid = (long)data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 //            if (equipSecsBean.collectionReports.get(ceid) != null) {
@@ -1861,10 +1869,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
         List recipeParaCodeList = new ArrayList();
         for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
             if ("SV".equalsIgnoreCase(entry.getValue())) {
-                svIdList.add(entry.getKey());
+                svIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("EC".equalsIgnoreCase(entry.getValue())) {
-                ecIdList.add(entry.getKey());
+                ecIdList.add(Long.parseLong(entry.getKey()));
             }
             if ("RecipePara".equalsIgnoreCase(entry.getValue())) {
                 recipeParaCodeList.add(entry.getKey());
@@ -1873,7 +1881,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map svValue = this.getSpecificSVData(svIdList);
         Map ecValue = this.getSpecificECData(ecIdList);
         Map recipeParaValue = this.getSpecificRcpParaData(recipeParaCodeList);
-        resultMap = svValue;
+        resultMap.putAll(svValue);
         resultMap.putAll(ecValue);
         resultMap.putAll(recipeParaValue);
         return resultMap;
@@ -1887,26 +1895,37 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map getSpecificSVData(List dataIdList) {
         Map resultMap = new HashMap();
-        List svidList = dataIdList;
+        List<Long> svidList = new ArrayList();
+        for(Object dataId:dataIdList){
+            svidList.add(Long.parseLong(String.valueOf(dataId)));
+        }
         List svValueList = new ArrayList();
         //发送查询SV命令，并取值
         if (svidList.size() > 0) {
 
             try {
                 DataMsgMap data = null;
-                data = activeWrapper.sendS1F3out(dataIdList, svFormat);
+                data = activeWrapper.sendS1F3out(svidList, svFormat);
 
                 if (data != null && data.get("SV") != null) {
-                    //todo 取值的問題，有可能是String
-                    svValueList = (ArrayList) (data.get("SV"));
-                    for (int i = 0; i < svValueList.size(); i++) {
-                        String sv = String.valueOf(svValueList.get(i));
-                        if (sv != null && sv.contains("@")) {
-                            sv = "";
+
+                    Object obj = data.get("SV");
+                    if (obj != null) {
+                        if (obj instanceof ArrayList) {
+                            svValueList = (ArrayList) (data.get("SV"));
+
+                            for (int i = 0; i < svValueList.size(); i++) {
+                                String sv = getSpecificSVEC(svValueList.get(i), i);
+                                resultMap.put(dataIdList.get(i), sv);
+                            }
+                        } else {
+                            String s = getSpecificSVEC(obj, 0);
+                            resultMap.put(dataIdList.get(0), s);
                         }
-                        resultMap.put(svidList.get(i), sv);
-                        logger.info("resultMap:" + resultMap);
                     }
+
+                    //todo 取值的問題，有可能是String
+
                     logger.info("Get SV value list:[" + JsonMapper.toJsonString(data) + "]");
                 }
                 if (data == null || data.isEmpty()) {
@@ -1919,6 +1938,111 @@ public abstract class EquipHost extends Thread implements MsgListener {
             }
         }
         return resultMap;
+    }
+
+    public String getSpecificSVEC(Object object, int i) {
+
+        if (object instanceof long[]) {
+            long[] longs = ((long[]) object);
+            if (longs.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(longs[0]);
+            }
+
+        }
+        if (object instanceof int[]) {
+            int[] ints = ((int[]) object);
+            if (ints.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(ints[0]);
+            }
+
+        }
+
+        if (object instanceof String) {
+            String s = (String) object;
+            return s;
+
+        }
+        if (object instanceof String[]) {
+            String[] strings = ((String[]) object);
+            if (strings.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(strings[0]);
+            }
+
+        }
+        if (object instanceof float[]) {
+            float[] floats = ((float[]) object);
+            if (floats.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(floats[0]);
+            }
+
+        }
+        if (object instanceof byte[]) {
+            byte[] bytes = ((byte[]) object);
+            if (bytes.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(bytes[0]);
+            }
+
+        }
+        if (object instanceof boolean[]) {
+            boolean[] booleans = ((boolean[]) object);
+            if (booleans.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(booleans[0]);
+            }
+
+        }
+        if (object instanceof double[]) {
+            double[] doubles = ((double[]) object);
+            if (doubles.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(doubles[0]);
+            }
+
+        }
+        if (object instanceof char[]) {
+            char[] chars = ((char[]) object);
+            if (chars.length == 0) {
+                return "";
+
+            } else {
+                return String.valueOf(chars[0]);
+            }
+
+        }
+
+        if (object instanceof List) {
+            List list = (List) object;
+            if (((List) object).isEmpty()) {
+                return "";
+
+            } else {
+                ArrayList obj = new ArrayList<>();
+                ArrayList tmp = getIDValue((ArrayList) list.get(i));
+                return String.valueOf(tmp.get(0));
+            }
+
+        }
+
+        return String.valueOf(object);
     }
 
     /**
@@ -1938,9 +2062,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
                 if (data != null && data.get("EC") != null) {
                     //判断返回值String/ArrayList
-                    ecValueList = (ArrayList) data.get("EC");
-                    for (int i = 0; i < ecValueList.size(); i++) {
-                        resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+
+                    Object obj = data.get("EC");
+                    if (obj != null) {
+                        if (obj instanceof ArrayList) {
+                            ecValueList = (ArrayList) (data.get("EC"));
+                            for (int i = 0; i < ecValueList.size(); i++) {
+                                resultMap.put(ecidList.get(i), String.valueOf(ecValueList.get(i)));
+                            }
+                        } else {
+                            resultMap.put(ecidList.get(0), String.valueOf(obj));
+                        }
                     }
 
                     logger.info("Get EC value list:[" + JsonMapper.toJsonString(data) + "]");
@@ -2726,7 +2858,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+//        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
         if (recipeTemplates == null || recipeTemplates.isEmpty()) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备未设置参数实时监控,开机前实时值检查取消...");
             return;
@@ -2735,7 +2868,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         for (int i = 0; i < recipeTemplates.size(); i++) {
             svIdList.add(recipeTemplates.get(i).getDeviceVariableId());
         }
-        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceId(), svIdList);
+        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceCode(), svIdList);
         try {
             List<DeviceRealtimePara> deviceRealtimeParas = putSV2DeviceRealtimeParas(recipeTemplates, resultMap);
             if (deviceRealtimeParas != null && !deviceRealtimeParas.isEmpty()) {

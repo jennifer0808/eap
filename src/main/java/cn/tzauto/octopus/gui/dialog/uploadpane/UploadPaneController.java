@@ -18,10 +18,13 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -36,15 +39,14 @@ import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
+import static cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession.sqlSession;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
+import static org.apache.axis.management.ServiceAdmin.start;
 
 /**
  * FXML Controller class
@@ -178,97 +180,150 @@ public class UploadPaneController implements Initializable {
 
     @FXML
     void fillTabView() {
-        String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
-        System.out.println(deviceCodeTmp);
-        List<String> eppd = new ArrayList<>();
 
-        for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
+
+
+        String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
+            System.out.println(deviceCodeTmp);
+
+
+            for (DeviceInfo deviceInfo : GlobalConstants.deviceInfos) {
             if (deviceInfo.getDeviceCode().equals(deviceCodeTmp)) {
                 this.deviceType = deviceInfo.getDeviceType();
                 deviceId = deviceInfo.getDeviceCode();
-                Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
-                if (resultMap == null) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
-                    return;
-                }
-                eppd = (ArrayList) resultMap.get("eppd");
-                recipeNames = FXCollections.observableArrayList();
-                for (int i = 0; i < eppd.size(); i++) {
-                    recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
-                }
+                Task task = new Task<Map>() {
+                    @Override
+                    public Map call() {
+
+                        Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
+                        setDataCombox(resultMap);
+                        return resultMap;
+                    }
+                };
+                new Thread(task).start();
                 dataTable.setItems(recipeNames);
                 break;
             }
         }
     }
 
+
+    public  void setDataCombox(Map resultMap){
+        if ( resultMap== null || resultMap.size()==0) {
+            Platform.runLater(() -> {
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+            });
+        }else{
+            List<String> eppd = new ArrayList<>();
+            eppd = (ArrayList) resultMap.get("eppd");
+            recipeNames = FXCollections.observableArrayList();
+            for (int i = 0; i < eppd.size(); i++) {
+                recipeNames.add(new RecipeName(deviceId, eppd.get(i), i + 1));
+            }
+            dataTable.setItems(recipeNames);
+        }
+    }
     private void btnOKClick() {
-
         int flag = 0;
-
         for (int i = 0; i < recipeNames.size(); i++) {
             RecipeName rn = recipeNames.get(i);
             if (rn.getCheckBox().isSelected()) {
                 flag++;
             }
         }
-
         if (flag == 0) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！",stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "请选中一条或多条Recipe！", stage);
             return;
         }
-
         if (flag > 20) {
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！",stage);
+            CommonUiUtil.alert(Alert.AlertType.WARNING, "批量上传一次不得多于20条，请重试！", stage);
             return;
         }
-
         List rns = new ArrayList<>();
-        SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
+
         try {
             for (int i = 0; i < recipeNames.size(); i++) {
-            RecipeName rn = recipeNames.get(i);
-            if (rn.getCheckBox().isSelected()) {
-                String recipeName = rn.getRecipeName().getValue();
-                rns.add(recipeName);
-                if (CMB_deviceCode.getSelectionModel().getSelectedItem() != null) {
-                    String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
-                    if ("--请选择--".equals(deviceCodeTmp) || deviceCodeTmp.equals(deviceCode)) {
-                        deviceCode = "";
+                RecipeName rn = recipeNames.get(i);
+                if (rn.getCheckBox().isSelected()) {
+                    String recipeName = rn.getRecipeName().getValue();
+                    rns.add(recipeName);
+                    if (CMB_deviceCode.getSelectionModel().getSelectedItem() != null) {
+                        String deviceCodeTmp = CMB_deviceCode.getSelectionModel().getSelectedItem().toString();
+                        if ("--请选择--".equals(deviceCodeTmp) || deviceCodeTmp.equals(deviceCode)) {
+                            deviceCode = "";
+                        }
+                        deviceCode = deviceCodeTmp;
                     }
-                    deviceCode = deviceCodeTmp;
-                }
-
-                if (deviceCode.equals("")) {
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！",loginStage);
-                    GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
-                    return;
-                }
-                Map recipeMap = null;
-                try {
-                    recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
-                    if (recipeMap == null) {
-                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
-                        return;
-                    } else if (recipeMap.get("checkResult") != null) {
-                        JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+                    if (deviceCode.equals("")) {
+//                        CommonUiUtil.alert(Alert.AlertType.WARNING, "请输入正确的用户名和密码！", loginStage);
+                        GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                         return;
                     }
-                } catch (UploadRecipeErrorException upe) {
-                    JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
-                    return;
-                }
+                    Task task = new Task<Map>() {
+                        @Override
+                        public Map call() {
+                            Map recipeMap = null;
+                            try {
+                                recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
+                                upload(recipeMap,recipeName);
+                            } catch (UploadRecipeErrorException e) {
+                                Platform.runLater(() -> {
+                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！", stage);
+                                });
+                                e.printStackTrace();
+                            }
+                            return recipeMap;
+                        }
+                    };
+                    new Thread(task).start();
 
+                }}
+            }catch(Exception e){
+                sqlSession.rollback();
+                logger.error("Exception:", e);
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！", stage);
+                return;
+            }finally{
+                sqlSession.close();
+            }
+
+//            stage.close();
+//            isUpload = false;
+//            onlyOnePageUpload = false;
+
+
+    }
+
+    public void upload(Map recipeMap,String recipeName){
+        try {
+        SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+            if (recipeMap == null) {
+                Platform.runLater(() -> {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+                });
+                return;
+//                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
+            } else if (recipeMap.get("checkResult") != null) {
+                Platform.runLater(() -> {
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, (String) recipeMap.get("checkResult"),stage);
+                });
+//                       JOptionPane.showMessageDialog(null, recipeMap.get("checkResult"));
+              return;
+            }
                 //此处从map中获取
                 Recipe recipe = null;
                 if (recipeMap.get("recipe") != null) {
                     recipe = (Recipe) recipeMap.get("recipe");
                 }
                 if ("N".equals(recipeMap.get("shortNameOK"))) {
-                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
-                    return;
+                    Platform.runLater(()->{
+                        CommonUiUtil.alert(Alert.AlertType.WARNING, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！", stage);
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "短号：[" + recipeName + "]已被使用，请重新命名后上传！");
+                        return;
+                    });
+//                    JOptionPane.showMessageDialog(null, "短号：[" + recipeName + "]在设备 " + deviceCode + " 上已被使用，请重新命名后上传！！");
+
                 }
                 //T640如果三个文件没有全部上传成功，即可认定为上传失败，不走上传流程，rcpAnalyseSucceed为N表示上传失败
                 if (recipeMap.get("rcpAnalyseSucceed") == null || "Y".equals(String.valueOf(recipeMap.get("rcpAnalyseSucceed")))) {
@@ -276,17 +331,20 @@ public class UploadPaneController implements Initializable {
                     RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
                     //保存数据
                     boolean re;
-                        if (recipeNameMapping != null) {
-                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
-                        } else {
-                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
-                        }
+                    if (recipeNameMapping != null) {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
+                    } else {
+                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                    }
 
                     //打日志
                     if (!re) {
-                        CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传",stage);
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"上传失败，ftp文件传送失败，请重新上传");
-                        isAlert = false ;
+                        Platform.runLater(()->{
+                            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败，ftp文件传送失败，请重新上传", stage);
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败，ftp文件传送失败，请重新上传");
+                            isAlert = false;
+                        });
+
                     } else {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传成功！");
                     }
@@ -294,24 +352,28 @@ public class UploadPaneController implements Initializable {
                 } else {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe[" + recipeName + "]上传失败，请重试！");
                 }
-              }
-           }
-            if(isAlert){
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传结束，请到Recipe管理界面进行查看！",stage);
-                return;
-            }
 
+        if (isAlert) {
+            Platform.runLater(()->{
+                Optional<ButtonType> result = CommonUiUtil.alert(Alert.AlertType.WARNING, "上传 结束，请到Recipe管理界面进行查看！", stage);
+                if (result.get() == ButtonType.OK) {
+                    stage.close();
+                    isUpload = false;
+                    onlyOnePageUpload = false;
+                    return;
+                }
+            });
+        }
         }catch(Exception e){
             sqlSession.rollback();
             logger.error("Exception:", e);
-            CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！",stage);
+            Platform.runLater(()->{
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "上传失败！请重试！", stage);
+                    });
             return;
-        }finally {
+        }finally{
             sqlSession.close();
         }
-        stage.close();
-        isUpload = false;
-        onlyOnePageUpload = false;
 
     }
 

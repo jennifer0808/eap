@@ -7,6 +7,7 @@ import cn.tzauto.octopus.gui.equipevent.CommFailureEvent;
 import cn.tzauto.octopus.gui.equipevent.CommStatusEvent;
 import cn.tzauto.octopus.gui.equipevent.ControlEvent;
 import cn.tzauto.octopus.gui.equipevent.ReceivedSeparateEvent;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
@@ -29,7 +30,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     //(1) CommStatusEvent; (2) ReceivedSeparateEvent (3) CommFailureEvent (4) ServiceStatusEvent
     //(5) BehaviorStatusEvent
     private int sync = 0;
-    private static final Logger logger = Logger.getLogger(EquipmentEventDealer.class.getName());
+    private static final Logger logger = Logger.getLogger(EquipmentEventDealer.class);
     private static boolean hostIsShutDown = false;
     private EapClient stage;
 
@@ -80,11 +81,12 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                         newState.transitServiceState(EquipState.OUT_OF_SERVICE_STATE);
 //                        hostsManager.terminateSECS(this.equipNodeBean.getDeviceIdProperty());
                     }
-                    sync++;
-                    publish(newState);
                     if (cev.isComm()) {
+                        newState.setNetConnect(true);
                         hostsManager.notifyHostOfJsipReady(this.equipNodeBean.getDeviceCode());
                     }
+                    sync++;
+                    publish(newState);
                     logger.info("Equip State is changed. publish is called");
                     hostsManager.startHostThread(this.equipNodeBean.getDeviceCode());
 //                    hostsManager.getAllEquipHosts().get(this.equipNodeBean.getDeviceCode()).start();
@@ -148,6 +150,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void notificationOfSecsDriverReady(int deviceId) {
         logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
+        UiLogUtil.getInstance().appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(true);
         stage.equipHosts.get(equipNodeBean.getDeviceCode()).setIsRestarting(false);
