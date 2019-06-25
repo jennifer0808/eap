@@ -11,6 +11,7 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -132,6 +133,8 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
             if (ceid == 40033L || ceid == 40039L || ceid == 40040L) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 40101L) {
+                processS6F11stripIdRead(data);
+            } else if (ceid == 40102L) {
                 processS6F11stripIdRead(data);
             }
 //            || ceid == 40102L 出料时的CEID
@@ -389,47 +392,55 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
 
         if (ceid == 40101L) {
             msgMap.put("msgName", "ceStripLoad");
-            funcType = "load";
+            funcType = "MesAolotLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+//        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+            String result = "";
+//        result = "Y";
+            try {
+                result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
+            }
+//        sendS2f41Cmd("REMOTE");
+            if (result.equalsIgnoreCase("Y")) {
+                //todo 测试 if(true){
+                holdFlag = false;
+                this.sends2f41stripReply(true);
+            } else {
+                holdFlag = true;
+                this.sends2f41stripReply(false);
+                sendS2f41Cmd("STOP");
+                if ("".equals(result)) {
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                }
+            }
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+//        sendS2f41Cmd("LOCAL");
+//        changeEqptControlStateAndShowDetailInfo("LOCAL");
         }
         if (ceid == 40102L) {
             msgMap.put("msgName", "ceStripUnload");
-            funcType = "unload";
-        }
-        logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
-//        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+            funcType = "MesAolotUnLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+//            String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
 
-        msgMap.put("deviceCode", deviceCode);
-        msgMap.put("stripId", stripId);
-        String result = "";
-//        result = "Y";
-        try {
-            Message message = GlobalConstants.C2SPlasma2DQueue.sendMessageWithReplay(msgMap);
-            if (message != null) {
-                MapMessage mapMessage = (MapMessage) message;
-                result = mapMessage.getString("message");
-            } else {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
-            }
-        } catch (Exception ex) {
-            logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
-        }
-//        sendS2f41Cmd("REMOTE");
-        if (result.equalsIgnoreCase("Y")) {
-            //todo 测试 if(true){
-            holdFlag = false;
-            this.sends2f41stripReply(true);
-        } else {
-            holdFlag = true;
-            this.sends2f41stripReply(false);
-            sendS2f41Cmd("STOP");
-            if ("".equals(result)) {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+            String result = "";
+            try {
+                if (!"".equals(stripId)){
+                    result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+                }
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
             }
         }
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
-//        sendS2f41Cmd("LOCAL");
-//        changeEqptControlStateAndShowDetailInfo("LOCAL");
     }
 
     protected void sends2f41stripReply(boolean isOk) {

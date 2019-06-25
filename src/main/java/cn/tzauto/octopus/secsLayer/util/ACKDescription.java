@@ -925,11 +925,11 @@ public class ACKDescription {
             } else if (ack.equals("3")) {
                 description = "Engineering";
             } else if (ack.equals("4")) {
-                description = "Standby ";
+                description = "Standby";
             } else if (ack.equals("5")) {
-                description = "Productive ";
+                description = "RUN";
             }
-        } else if (deviceType.contains("IPIS380")) {
+        } else if (deviceType.contains("IPIS-380Z1")) {
             if (ack.equals("0")) {
                 description = "EQUIP_STATE_IDLE";
             } else if (ack.equals("1")) {
@@ -966,7 +966,7 @@ public class ACKDescription {
             } else if (ack.equals("3")) {
                 description = "Ready";
             } else if (ack.equals("4")) {
-                description = "Execute";
+                description = "RUN";
             } else if (ack.equals("5")) {
                 description = "Pausing";
             } else if (ack.equals("6")) {
@@ -1411,7 +1411,7 @@ public class ACKDescription {
                     descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
-        } else if (deviceType.contains("IPIS380")) {
+        } else if (deviceType.contains("IPIS-380Z1")) {
             switch (String.valueOf(obj)) {
                 case "1":
                     descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline
@@ -1465,13 +1465,16 @@ public class ACKDescription {
         } else if (deviceType.contains("HTM")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
-                    break;
-                case "2":
                     descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
-                case "3":
+                case "2":
                     descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    break;
+                case "3":
+                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
+                    break;
+                default:
+                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
             }
         }
