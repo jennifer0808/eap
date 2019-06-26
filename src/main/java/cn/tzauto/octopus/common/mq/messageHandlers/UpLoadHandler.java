@@ -54,10 +54,15 @@ public class UpLoadHandler implements MessageHandler {
             logger.info("recipeMap------>"+recipeMap.size());
             if (recipeMap != null) {
                 logger.info("成功获取到recipe信息，开始上传");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode,"成功获取到recipe信息，开始上传");
                 recipe = (Recipe) recipeMap.get("recipe");
                 recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
             }
             recipeParaList = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList);
+
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode,"recipeParaList解析参数"+recipeParaList.get(0).getSetValue());
+            logger.info("recipeParaList解析参数"+recipeParaList.get(0).getSetValue());
+            System.out.println(recipeParaList.get(0).getSetValue());
             sqlSession.commit();
             Map mqMap = new HashMap();
             mqMap.put("msgName", "UpLoad");
@@ -83,8 +88,8 @@ public class UpLoadHandler implements MessageHandler {
            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
-        } catch (UploadRecipeErrorException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error("UploadRecipeErrorException:", e);
         } finally {
             sqlSession.close();
         }

@@ -50,13 +50,11 @@ public class AsmAD8312RecipeUtil {
             ZipFile zipFile = new ZipFile(filePath);
             zis = new ZipInputStream(new FileInputStream(filePath));
 
-            ZipEntry ze  = zis.getNextEntry();
-
-            logger.info("ze:"+zis.getNextEntry()+";"+ze.getName());
-
-            while (ze != null) {
+            ZipEntry ze = null;
+            while ((ze = zis.getNextEntry()) != null) {
+                logger.info("ze:"+zis.getNextEntry()+";"+ze.getName()+"进来了");
                 if (ze.getName().contains("McPara_Export.txt")) {
-
+                    logger.info("ze.getName().contains(McPara_Export.txt)========================>"+ze.getName().contains("McPara_Export.txt"));
                     SqlSession sqlSession = MybatisSqlSession.getSqlSession();
                     RecipeService recipeService = new RecipeService(sqlSession);
                     List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
@@ -74,7 +72,10 @@ public class AsmAD8312RecipeUtil {
                         String line = "";
                         String currentGroup = "";
                         while ((line = br.readLine()) != null) {
+
                             currentLineNO++;
+                            logger.info("currentLineNO===================================================>"+line);
+
                             //排除“------”
                             if (line.contains("----") || line.equals("")) {
                                 continue;
@@ -108,6 +109,7 @@ public class AsmAD8312RecipeUtil {
                                         }
                                     }
                                     value = tempStr;
+
                                 }
 //                                if(paraName.trim().equals("GlobalAngle")) {
 //                                    String var38 = "";
@@ -123,8 +125,9 @@ public class AsmAD8312RecipeUtil {
 //
 //                                    value = var38;
 //                                }
-                                logger.info(groupName + paraName + "***" + value + "****" + i + "******" + recipeTemplates.get(i).getParaCode() + "***total:" + recipeTemplates.size());
-                                recipePara.setSetValue(value);
+
+                                logger.info(groupName + paraName + "***" +  value.replace(",", "") + "****" + i + "******" + recipeTemplates.get(i).getParaCode() + "***total:" + recipeTemplates.size());
+                                recipePara.setSetValue( value.replace(",", ""));
                                 recipePara.setParaName(recipeTemplates.get(i).getParaName());
                                 recipePara.setParaCode(recipeTemplates.get(i).getParaCode());
                                 recipePara.setParaMeasure(recipeTemplates.get(i).getParaUnit());
@@ -138,6 +141,7 @@ public class AsmAD8312RecipeUtil {
                         }
                     }
                 }
+
             }
 
         } catch (Exception ex) {
@@ -313,8 +317,9 @@ public class AsmAD8312RecipeUtil {
 
     public static void main(String[] args) {
 
-        transferRcpFromDB("D:\\htauto\\YYA13FCQ016012_V0.txt", "ASMAD8312FC");
-// Pattern pattern = Pattern.compile("-?[0-9]+\\\\.s?[0-9]*");  
+        List<RecipePara>   recipeParas=    transferRcpFromDB("D:\\htauto\\YXJ88QFN032015-D1-1B-8312_V0.zip", "ASMAD8312Z1");
+        System.out.println(recipeParas.size());
+        // Pattern pattern = Pattern.compile("-?[0-9]+\\\\.s?[0-9]*");
 //         System.out.println(StringUtils.isNumeric("1"));;  
 
     }

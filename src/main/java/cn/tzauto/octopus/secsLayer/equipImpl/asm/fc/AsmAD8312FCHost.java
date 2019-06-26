@@ -377,7 +377,7 @@ public class AsmAD8312FCHost extends EquipHost {
             TransferUtil.setPPBody(ppbody, 1, recipePath);
             logger.info("Recive S7F6 解析 recipe");
             //Recipe解析      
-            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
+            recipeParaList =  AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
             logger.info("Recive S7F6 解析 recipe " + recipeParaList);
 
         }catch (UploadRecipeErrorException e) {
