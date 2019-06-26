@@ -255,6 +255,26 @@ public class HitachiWaferUtil {
         temp = 0;
         flag = false;
         /**
+         * 判断xml 匹配几个字符
+         */
+        int charNum = 1;
+        if (list.get(index - count + 1).startsWith("<Row><![CDATA[")) {
+            for (int i = 0; i <= (index - count + 1); i++) {
+                String s = list.get(i);
+                if (s.startsWith("<Bin")) {
+                    int index1 = s.indexOf("BinCode=\"");
+                    String substring = s.substring(index1 + 9);
+                    String substring1 = substring.substring(0, substring.indexOf("\""));
+                    charNum = substring1.length();
+                    if (charNum == 0) {
+                        charNum = 1;
+                        logger.error("xml 多字符解析错误");
+                    }
+                    break;
+                }
+            }
+        }
+        /**
          *       111111111111111111111111111111111111111111111111111111111100
          *       555555554444444444333333333322222222221111111111000000000099
          *       765432109876543210987654321098765432109876543210987654321098
@@ -310,11 +330,40 @@ public class HitachiWaferUtil {
         for (int i = (index - count + 1); i <= index; i++) {
             resultList.add(list.get(i));
         }
-        handleMultiCharacter(resultList);
+        handleMultiCharacter(resultList, charNum);
+        handleSpaceToSpot(resultList);
         return resultList;
     }
 
-    private static void handleMultiCharacter(List<String> list) {
+    private static void handleSpaceToSpot(List<String> resultList) {
+//        for (int i = 0; i < resultList.size(); i++) {
+//            String s = resultList.get(i);
+//            String temp = s.replaceAll(" ", ".");
+//            resultList.set(i, temp);
+//        }
+        String spaceBin = ".";
+        String s1 = resultList.get(0);
+        String substring1 = s1.substring(0, 1);
+        if (spaceBin.equals(substring1)) {
+            return;
+        }
+        String substring2 = s1.substring(s1.length() - 1);
+
+        String s2 = resultList.get(resultList.size() - 1);
+        String substring3 = s2.substring(0, 1);
+        String substring4 = s2.substring(s2.length() - 1);
+
+        if (substring1.equals(substring2) && substring2.equals(substring3) && substring3.equals(substring4)) {
+            for (int i = 0; i < resultList.size(); i++) {
+                String s = resultList.get(i);
+                String temp = s.replaceAll(substring1, spaceBin);
+                resultList.set(i, temp);
+            }
+        }
+
+    }
+
+    private static void handleMultiCharacter(List<String> list, int charNum) {
         Map<String, String> binMap = new HashMap();
         binMap = transferKey2Map(String.valueOf(prop.get("ANY")));
         int index = list.size() / 2 - 2;
@@ -378,7 +427,8 @@ public class HitachiWaferUtil {
             } else if (set.size() > 1) {
                 logger.error("处理多字符出错" + set);
             } else {
-                logger.info("单字符，无需处理");
+                num = charNum;//xml 处理多字符
+                logger.info("单字符");
             }
         }
         for (int i = 0; i < list.size(); i++) {
