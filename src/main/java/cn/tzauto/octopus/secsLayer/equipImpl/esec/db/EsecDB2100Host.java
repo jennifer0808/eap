@@ -146,8 +146,8 @@ public class EsecDB2100Host extends EquipHost {
 //                processS6F11inStripMapUpload(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
-//                this.inputMsgQueue.put(data);
+//                processS6F11in(data);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
