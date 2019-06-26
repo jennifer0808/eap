@@ -1,9 +1,7 @@
 package cn.tzauto.octopus.common.util.scheduler.job;
 
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.biz.monitor.domain.DeviceRealtimePara;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
@@ -12,17 +10,15 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import java.util.UUID;
-import org.apache.ibatis.session.SqlSession;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  *
@@ -48,7 +44,7 @@ public class MonitorECTask implements Job {
                     continue;
                 }
                 String busniessMod = deviceInfoExt.getBusinessMod();
-                if ("Engineer".equals(busniessMod)) {
+                if (busniessMod.contains("E")) {
                     logger.info("设备[" + deviceCode + "]工程模式，取消实时Check卡控！");
                     continue;
                 }
@@ -118,7 +114,6 @@ public class MonitorECTask implements Job {
      *
      * @param recipeTemplates 实时参数受到管控信息
      * @param equipHost
-     * @param svList
      * @param deviceRealtimeParas
      * @return
      */

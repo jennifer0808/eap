@@ -66,32 +66,38 @@ public class DeviceInfoPaneController implements Initializable {
 
     @FXML
     private RadioButton JRB_EngineerMode;
+    @FXML
+    private RadioButton JRB_LocalMode;
 
-    public   Stage stage= new Stage();
-    public static Map<String,Boolean>  flag = new HashMap<>();
+    public Stage stage = new Stage();
+    public static Map<String, Boolean> flag = new HashMap<>();
+    private boolean isEngineerMode;
+    private boolean isLocalMode;
     /**
      * Initializes the controller class.
      */
     private final String deviceCode;
-    public DeviceInfoPaneController( ) {
+
+    public DeviceInfoPaneController() {
         this.deviceCode = null;
         stage.setTitle("设备详情");
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                flag.put(deviceCode,false) ;
+                flag.put(deviceCode, false);
             }
         });
     }
-    public DeviceInfoPaneController( String dc) {
+
+    public DeviceInfoPaneController(String dc) {
         this.deviceCode = dc;
         stage.setTitle("设备详情");
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                flag.put(deviceCode,false) ;
+                flag.put(deviceCode, false);
             }
         });
     }
@@ -111,12 +117,19 @@ public class DeviceInfoPaneController implements Initializable {
 
 
     private void buttonOKClick(Stage stage) {
+        //
+        if (JRB_EngineerMode.isSelected() != isEngineerMode) {
+            isEngineerMode = JRB_EngineerMode.isSelected();
+        }
+        if (JRB_LocalMode.isSelected() != isLocalMode) {
+            isLocalMode = JRB_LocalMode.isSelected();
+        }
         stage.close();
-        flag.put(deviceCode,false) ;
+        flag.put(deviceCode, false);
     }
 
     public void init() {
-        flag.put(deviceCode,true) ;
+        flag.put(deviceCode, true);
 //        this.deviceCode = deviceCode;
         // TODO   
         Pane root = new Pane();
@@ -136,7 +149,6 @@ public class DeviceInfoPaneController implements Initializable {
         stage.setResizable(false);
         Button button = (Button) root.lookup("#button");
         button.setOnAction((value) -> buttonOKClick(stage));
-
     }
 
     private void initData(String deviceCode, Pane root) {
@@ -154,16 +166,16 @@ public class DeviceInfoPaneController implements Initializable {
             deviceType = (TextField) root.lookup("#deviceType");
             deviceType.setText(deviceInfo.getDeviceType());
 
-            lotNo = (TextField)root.lookup("#lotNo");
-            recipeVersionNo = (TextField)root.lookup("#recipeVersionNo");
+            lotNo = (TextField) root.lookup("#lotNo");
+            recipeVersionNo = (TextField) root.lookup("#recipeVersionNo");
             JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
-            officeName = (TextField)root.lookup("#officeName");
+            officeName = (TextField) root.lookup("#officeName");
 //            Map map = new HashMap();
             try {
 //                map = (Map) statusMap.get(tempDeviceDode);
                 Map map = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
                 if (map == null || map.get("PPExecName") == null || map.isEmpty()) {
-                   UiLogUtil.getInstance().appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceInfo.getDeviceCode(), "获取设备当前状态信息失败，请检查设备状态.");
                     JOptionPane.showMessageDialog(null, "获取设备当前状态信息失败，请检查设备状态.");
 //                    CommonUtil.alert("获取设备当前状态信息失败，请检查设备状态.");
                     recipeName.setText(deviceInfoExt.getRecipeName());
@@ -190,10 +202,19 @@ public class DeviceInfoPaneController implements Initializable {
                     }
                     //工程模式
                     String businessMod = deviceInfoExt.getBusinessMod();
-                    if ("Engineer".equals(businessMod)) {
+                    if (businessMod.contains("E")) {
                         JRB_EngineerMode.setSelected(true);
+                        isEngineerMode = true;
                     } else {
                         JRB_EngineerMode.setSelected(false);
+                        isEngineerMode = false;
+                    }
+                    if (businessMod.contains("L")) {
+                        JRB_LocalMode.setSelected(true);
+                        isLocalMode = true;
+                    } else {
+                        JRB_LocalMode.setSelected(false);
+                        isLocalMode = false;
                     }
                 }
                 SysService sysService = new SysService(sqlSession);
@@ -211,4 +232,5 @@ public class DeviceInfoPaneController implements Initializable {
         }
 
     }
+
 }

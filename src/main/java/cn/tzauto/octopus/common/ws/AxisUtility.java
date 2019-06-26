@@ -4,24 +4,15 @@
  */
 package cn.tzauto.octopus.common.ws;
 
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
-import org.apache.axis.encoding.XMLType;
-import org.apache.axis.types.Schema;
 import org.apache.log4j.Logger;
 
-import javax.xml.namespace.QName;
-import javax.xml.rpc.ParameterMode;
-import javax.xml.rpc.ServiceException;
-import java.net.MalformedURLException;
-import java.rmi.RemoteException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +27,7 @@ public class AxisUtility {
 
     public static boolean checkBusinessMode(String eqptId) {
         DeviceInfoExt deviceInfoExt = getEqptStatus("SysAuto", eqptId);
-        return "Y".equals(deviceInfoExt.getBusinessMod());
+        return deviceInfoExt.getBusinessMod().contains("E");
     }
 
     public static String getReplyMessage() {
@@ -61,7 +52,7 @@ public class AxisUtility {
     public static String getLockFlag(String userID, String eqptId) {
         DeviceInfoExt deviceInfoExt = getEqptStatus(userID, eqptId);
         if ("Y".equals(deviceInfoExt.getLockFlag())) {
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceInfoExt.getDeviceRowid(), "由于[" + deviceInfoExt.getRemarks() + "],设备将被锁机...");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceInfoExt.getDeviceRowid(), "由于[" + deviceInfoExt.getRemarks() + "],设备将被锁机...");
         }
         return deviceInfoExt.getLockFlag();
     }
@@ -184,7 +175,7 @@ public class AxisUtility {
         } catch (Exception ex) {
             logger.error("Exception:", ex);
             logger.debug("获取服务端数据失败，使用本地数据进行启动");
-           UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
+            UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
             resultMap = null;
         }
         return resultMap;
@@ -204,7 +195,7 @@ public class AxisUtility {
         } catch (Exception e) {
             logger.error("Exception:", e);
             logger.debug("获取服务端数据失败，使用本地数据进行启动");
-           UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
+            UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
             paraMap = null;
         }
         return paraMap;
@@ -638,6 +629,7 @@ public class AxisUtility {
         }
         return resultMap.get("flag").toString();
     }
+
     /**
      * 调用webservice，获取锁机标志
      *
@@ -653,8 +645,6 @@ public class AxisUtility {
         }
         return lockFlag;
     }
-
-
 
 
 }

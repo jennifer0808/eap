@@ -30,7 +30,6 @@ import org.slf4j.MDC;
 import java.util.*;
 
 /**
- *
  * @author njtz
  */
 public class MonitorTask implements Job {
@@ -58,8 +57,8 @@ public class MonitorTask implements Job {
                         continue;
                     }
                     String busniessMod = deviceInfoExt.getBusinessMod();
-                    if ("Engineer".equals(busniessMod)) {
-                       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消实时Check卡控！");
+                    if (busniessMod.contains("E")) {
+                        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消实时Check卡控！");
                         continue;
                     }
                     if (!"Y".equals(deviceInfoExt.getRecipeAutoCheckFlag())) {
@@ -84,7 +83,7 @@ public class MonitorTask implements Job {
                         recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
                     }
                     if (recipeTemplates == null || recipeTemplates.isEmpty()) {
-                       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备没有实时参数受到管控！");
+                        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备没有实时参数受到管控！");
                         continue;
                     }
                     recipeTemplatesAll = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
@@ -114,10 +113,10 @@ public class MonitorTask implements Job {
                         paraMap.put("msgName", "TransferArDeviceRealtimePara");
                         paraMap.put("deviceRealtimePara", JsonMapper.toJsonString(deviceRealtimeParas));
                         sendMessage2Server(paraMap);
-                       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的sv参数实时信息到服务端");
+                        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的sv参数实时信息到服务端");
                         //保存实时参数信息
                         // monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-                       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取到该设备的SV参数实时信息！");
+                        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取到该设备的SV参数实时信息！");
                         Map mqMap = new HashMap();
                         mqMap.put("msgName", "eqpt.MonitorCheckWI");
                         mqMap.put("deviceCode", deviceCode);
@@ -133,7 +132,7 @@ public class MonitorTask implements Job {
                         mqMap.put("eventDesc", "获取设备:" + deviceCode + " 的管控信息失败。");
                         sendMessage2Server(mqMap);
                         logger.debug("获取设备:" + deviceCode + " 的管控信息失败。");
-                       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取该设备的SV参数实时信息，获取失败！");
+                        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取该设备的SV参数实时信息，获取失败！");
                     }
                     sqlSession.commit();
                 } catch (Exception e) {
@@ -191,7 +190,7 @@ public class MonitorTask implements Job {
                         if ((Double.parseDouble(realTimeValue) < Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) > Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                             eventDescEng = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
@@ -215,7 +214,7 @@ public class MonitorTask implements Job {
                             if (Double.parseDouble(realTimeValue) != Double.parseDouble(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                                 eventDescEng = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue();
@@ -227,7 +226,7 @@ public class MonitorTask implements Job {
                             if (!realTimeValue.equals(setValue)) {
                                 realtimePara.setRemarks("RealTimeErro");
                                 holdFlag = true;
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                                 eventDescEng = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue();
@@ -245,7 +244,7 @@ public class MonitorTask implements Job {
                         if ((Double.parseDouble(realTimeValue) < Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) > Double.parseDouble(maxValue))) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
                             eventDescEng = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
@@ -281,7 +280,7 @@ public class MonitorTask implements Job {
         if ("Y".equals(deviceInfoExt.getLockSwitch())) {
             if (holdFlag) {
                 AxisUtility.setInlineLock(deviceInfo.getDeviceCode(), "Y", "RealTimeValueErrorLock");
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实时参数检查不通过，设备将被锁");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实时参数检查不通过，设备将被锁");
                 GlobalConstants.stage.hostManager.stopDevice(deviceInfo.getDeviceCode());
 //            GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()()).sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
 
@@ -406,7 +405,7 @@ public class MonitorTask implements Job {
                     try {
                         String deviceCode = equipModel.deviceCode;
                         if (equipModel.checkLockFlagFromServerByWS(deviceCode)) {
-                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                             equipModel.stopEquip();
                             return;
                         }
@@ -417,14 +416,14 @@ public class MonitorTask implements Job {
                         }
                         equipModel.getCurrentRecipeName();
                         if (!equipModel.ppExecName.equals("--") && !equipModel.ppExecName.equals(deviceInfoExt.getRecipeName())) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + deviceInfoExt.getRecipeName() + " 已选程序:" + equipModel.ppExecName);
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + deviceInfoExt.getRecipeName() + " 已选程序:" + equipModel.ppExecName);
                             equipModel.sendMessage2Eqp("The current recipe <" + equipModel.ppExecName + "> in equipment is different from CIM system <" + deviceInfoExt.getRecipeName() + ">,equipment will be locked.");
                             equipModel.stopEquip();
                             return;
                         }
                         String busniessMod = deviceInfoExt.getBusinessMod();
-                        if ("Engineer".equals(busniessMod)) {
-                           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消实时Check卡控！");
+                        if (busniessMod.contains("E")) {
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "工程模式，取消实时Check卡控！");
                             continue;
                         }
                         if (!"Y".equals(deviceInfoExt.getRecipeAutoCheckFlag())) {
@@ -444,7 +443,7 @@ public class MonitorTask implements Job {
 
                         recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipePara");
                         if (recipeTemplates == null || recipeTemplates.isEmpty()) {
-                           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备没有实时参数受到管控！");
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备没有实时参数受到管控！");
                             continue;
                         }
 
@@ -460,10 +459,10 @@ public class MonitorTask implements Job {
                             paraMap.put("msgName", "TransferArDeviceRealtimePara");
                             paraMap.put("deviceRealtimePara", JsonMapper.toJsonString(deviceRealtimeParas));
                             sendMessage2Server(paraMap);
-                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的sv参数实时信息到服务端");
+                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "成功发送定时检测该设备的sv参数实时信息到服务端");
                             //保存实时参数信息
                             // monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-                           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取到该设备的SV参数实时信息！");
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取到该设备的SV参数实时信息！");
                             Map mqMap = new HashMap();
                             mqMap.put("msgName", "eqpt.MonitorCheckWI");
                             mqMap.put("deviceCode", deviceCode);
@@ -479,7 +478,7 @@ public class MonitorTask implements Job {
                             mqMap.put("eventDesc", "获取设备:" + deviceCode + " 的管控信息失败。");
                             sendMessage2Server(mqMap);
                             logger.debug("获取设备:" + deviceCode + " 的管控信息失败。");
-                           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取该设备的SV参数实时信息，获取失败！");
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取该设备的SV参数实时信息，获取失败！");
                         }
                         sqlSession.commit();
                     } catch (Exception e) {

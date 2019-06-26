@@ -1388,6 +1388,8 @@ public class MultipleEquipHostManager {
                     equip.deviceName = deviceName;
                     equip.partNo = deviceInfoExt.getPartNo();
                     equip.lotId = deviceInfoExt.getLotId();
+                    equip.isEngineerMode = deviceInfoExt.getBusinessMod().contains("E");
+                    equip.isLocalMode = deviceInfoExt.getBusinessMod().contains("L");
                     equipModels.put(deviceCode, equip);
                 } catch (ClassNotFoundException cnfe) {
                     logger.error("Device " + deviceCode + " config error,(ClassNotFoundException) can't be initialized ");
