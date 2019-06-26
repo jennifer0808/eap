@@ -9,8 +9,8 @@ import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
+
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -36,7 +36,7 @@ import java.text.SimpleDateFormat;
 public class JsonMapper extends ObjectMapper {
 
     private static final long serialVersionUID = 1L;
-    private static Logger logger = LoggerFactory.getLogger(JsonMapper.class);
+    private static Logger logger = Logger.getLogger(JsonMapper.class);
     private static JsonMapper mapper;
 
     public JsonMapper() {

@@ -6,8 +6,8 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import org.apache.ibatis.session.SqlSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
+
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GinRecipeUtil {
-    private static final Logger logger = LoggerFactory.getLogger(GinRecipeUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(GinRecipeUtil.class.getName());
 
     public static List<RecipePara> getRecipePara(String filePath, String deviceType) {
         BufferedReader br = null;
@@ -34,7 +34,7 @@ public class GinRecipeUtil {
                     if (line.contains(recipeTemplate.getParaName())) {
                         line = line.replace(recipeTemplate.getParaName(), "");
                         String[] values = line.trim().split("\\s+");
-                        System.out.println(values[0]+":"+values[1]);
+                        System.out.println(values[0] + ":" + values[1]);
                         RecipePara recipePara = new RecipePara();
                         recipePara.setParaCode(recipeTemplate.getParaCode());
                         recipePara.setParaName(recipeTemplate.getParaName());
@@ -46,7 +46,7 @@ public class GinRecipeUtil {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            logger.debug("解析recipe文件出错!文件路径：{}", filePath);
+            logger.debug("解析recipe文件出错!文件路径：" + filePath);
         } finally {
             if (sqlSession != null) {
                 sqlSession.close();
@@ -67,9 +67,9 @@ public class GinRecipeUtil {
 
     public static void main(String[] args) {
         String filePath = "D:\\桌面文件\\长电\\DD\\GIN\\DEVICE\\SSOP 16LD (8ROWS)\\DeviceData.grd";
-        List<RecipePara> recipeParas= GinRecipeUtil.getRecipePara(filePath,"GINA2255");
-        for(RecipePara recipePara:recipeParas){
-            System.out.println(recipePara.getParaName()+":"+recipePara.getSetValue());
+        List<RecipePara> recipeParas = GinRecipeUtil.getRecipePara(filePath, "GINA2255");
+        for (RecipePara recipePara : recipeParas) {
+            System.out.println(recipePara.getParaName() + ":" + recipePara.getSetValue());
         }
     }
 
