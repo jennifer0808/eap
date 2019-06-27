@@ -85,6 +85,8 @@ public class AsmAD838Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")){
                     processS1F1in(msg);
+                }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")){
+                    processS1F13in(msg);
                 }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
@@ -134,7 +136,7 @@ public class AsmAD838Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("S1F13IN")) {
-                processS1F13in(data);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
