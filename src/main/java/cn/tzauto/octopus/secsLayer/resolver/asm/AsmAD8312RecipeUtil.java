@@ -52,9 +52,8 @@ public class AsmAD8312RecipeUtil {
 
             ZipEntry ze = null;
             while ((ze = zis.getNextEntry()) != null) {
-                logger.info("ze:"+zis.getNextEntry()+";"+ze.getName()+"进来了");
                 if (ze.getName().contains("McPara_Export.txt")) {
-                    logger.info("ze.getName().contains(McPara_Export.txt)========================>"+ze.getName().contains("McPara_Export.txt"));
+
                     SqlSession sqlSession = MybatisSqlSession.getSqlSession();
                     RecipeService recipeService = new RecipeService(sqlSession);
                     List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
@@ -74,7 +73,7 @@ public class AsmAD8312RecipeUtil {
                         while ((line = br.readLine()) != null) {
 
                             currentLineNO++;
-                            logger.info("currentLineNO===================================================>"+line);
+
 
                             //排除“------”
                             if (line.contains("----") || line.equals("")) {
@@ -88,7 +87,7 @@ public class AsmAD8312RecipeUtil {
                             paraName = paraName.replace(groupName + "-", "");
                             if (currentGroup.trim().equals(groupName) && line.contains(paraName)) {
 
-                                logger.info("get paraName at line " + currentLineNO);
+
 
                                 String[] lines = line.split("\\s");
                                 int size = lines.length;
@@ -126,7 +125,6 @@ public class AsmAD8312RecipeUtil {
 //                                    value = var38;
 //                                }
 
-                                logger.info(groupName + paraName + "***" +  value.replace(",", "") + "****" + i + "******" + recipeTemplates.get(i).getParaCode() + "***total:" + recipeTemplates.size());
                                 recipePara.setSetValue( value.replace(",", ""));
                                 recipePara.setParaName(recipeTemplates.get(i).getParaName());
                                 recipePara.setParaCode(recipeTemplates.get(i).getParaCode());
@@ -317,7 +315,7 @@ public class AsmAD8312RecipeUtil {
 
     public static void main(String[] args) {
 
-        List<RecipePara>   recipeParas=    transferRcpFromDB("D:\\htauto\\YXJ88QFN032015-D1-1B-8312_V0.zip", "ASMAD8312Z1");
+        List<RecipePara>   recipeParas=    transferRcpFromDB("E:\\htauto\\YXJ88QFN032015-D1-1B-8312_V0.zip", "ASMAD8312Z1");
         System.out.println(recipeParas.size());
         // Pattern pattern = Pattern.compile("-?[0-9]+\\\\.s?[0-9]*");
 //         System.out.println(StringUtils.isNumeric("1"));;  

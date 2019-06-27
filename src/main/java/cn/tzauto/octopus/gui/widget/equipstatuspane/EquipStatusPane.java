@@ -29,6 +29,9 @@ import javafx.scene.paint.Paint;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author luosy
  */
@@ -90,6 +93,7 @@ public class EquipStatusPane {
         this.equipStatusPane = equipStatusPane;
     }
 
+
     public void setDeviceCode(String deviceCode) {
         this.L_DeviceCode.setText(deviceCode);
     }
@@ -108,13 +112,20 @@ public class EquipStatusPane {
         return this.L_DeviceCode.getText();
     }
 
+    private static HashMap images=new HashMap();
     public void setCommLabelForegroundColorCommOn() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath()));
         String iconPath = equipNodeBean.getIconPath();
+        Image image=null;
         if (iconPath.contains("/")) {
             iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
         }
-        Image image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
+        if(images.get(iconPath)!=null){
+            image=(Image) images.get(iconPath);
+        }else{
+            image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
+            images.put(iconPath, image);
+        }
         logger.info("on"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
@@ -126,13 +137,19 @@ public class EquipStatusPane {
         if (iconPath.contains("/")) {
             iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
         }
+        Image image=null;
         String lastName = iconPath.split("\\.")[1];
         String commofficonpath = iconPath.replaceAll("." + lastName, "-commoff." + lastName);
-        Image image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
+        if(images.get(iconPath)==null){
+            image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
+            images.put(iconPath, image);
+
+        }else if(images.get(iconPath)!=null){
+            image=(Image) images.get(iconPath);
+        }
         logger.info("off"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGray);
-
     }
 
     public void setRunStatus(String eventText) {

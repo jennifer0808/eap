@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class UpLoadHandler implements MessageHandler {
 
-    private static Logger logger = Logger.getLogger(UpLoadHandler.class.getName());
+    private static Logger logger = Logger.getLogger(UpLoadHandler.class);
 
     @Override
     public void handle(Message message) {
@@ -51,17 +51,16 @@ public class UpLoadHandler implements MessageHandler {
             Recipe recipe = new Recipe();
             List<RecipePara> recipeParaList = new ArrayList<>();
             Map recipeMap = hostManager.getRecipeParaFromDevice(deviceId, recipeName);
+
             logger.info("recipeMap------>"+recipeMap.size());
             if (recipeMap != null) {
-                logger.info("成功获取到recipe信息，开始上传");
+
                 UiLogUtil.getInstance().appendLog2SeverTab(deviceCode,"成功获取到recipe信息，开始上传");
                 recipe = (Recipe) recipeMap.get("recipe");
                 recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
             }
             recipeParaList = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList);
 
-            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode,"recipeParaList解析参数"+recipeParaList.get(0).getSetValue());
-            logger.info("recipeParaList解析参数"+recipeParaList.get(0).getSetValue());
             System.out.println(recipeParaList.get(0).getSetValue());
             sqlSession.commit();
             Map mqMap = new HashMap();
