@@ -2555,7 +2555,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     newPanel.setNetState(Integer.parseInt(resultMap.get("CommState").toString()));
                     EquipState equipState = equipNodeBean.getEquipStateProperty();
 
-                    if (1 == (int) resultMap.get("CommState")) {//断网=0，正常=1；
+                    if (1 == (int) resultMap.get("CommState")) {
                         equipState.setCommOn(true);
                     } else {
                         equipState.setCommOn(false);
