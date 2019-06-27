@@ -78,12 +78,14 @@ public class UpLoadHandler implements MessageHandler {
             mqMap.put("attach", JSONArray.toJSONString(attList));
             Destination destination = message.getJMSReplyTo();
             logger.info("destination:================================ " + destination.toString());
+            logger.info("recipe:================================ " + recipe.toString());
             String topicName = "";
             if (destination instanceof Queue) {
                 topicName = ((Queue) destination).getQueueName();
             }
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(topicName, mqMap);
+            logger.info("[ recipeName ]信息为" +mqMap.get("recipe").toString());
             logger.info("向服务端[" + topicName + "]回复获取到的Recipe信息" + JSONArray.toJSONString(mqMap));
            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送获取到的Recipe信息");
         } catch (JMSException ex) {
