@@ -27,6 +27,10 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author luosy
@@ -53,12 +57,13 @@ public class EquipStatusPane {
     @FXML
     private ImageView equipImg;
     public Pane equipStatusPane;
+    private static final Logger logger = Logger.getLogger(EquipStatusPaneController.class);
 
     Background bgYellow = new Background(new BackgroundFill(Paint.valueOf("#e3d81c"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgRed = new Background(new BackgroundFill(Paint.valueOf("#ff4500"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgBlue = new Background(new BackgroundFill(Paint.valueOf("#472EF5"), CornerRadii.EMPTY, Insets.EMPTY));
     Background bgGreen = new Background(new BackgroundFill(Paint.valueOf("#009a44"), CornerRadii.EMPTY, Insets.EMPTY));
-    public static  Background bgGray = new Background(new BackgroundFill(Paint.valueOf("#494c53"), CornerRadii.EMPTY, Insets.EMPTY));
+    public static   Background bgGray = new Background(new BackgroundFill(Paint.valueOf("#494c53"), CornerRadii.EMPTY, Insets.EMPTY));
     Border borderWhite = new Border(new BorderStroke(Paint.valueOf("#ffffff"), BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths.EMPTY));
     Border borderBlue = new Border(new BorderStroke(Paint.valueOf("#472EF5"), BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths.EMPTY));
 
@@ -88,6 +93,7 @@ public class EquipStatusPane {
         this.equipStatusPane = equipStatusPane;
     }
 
+
     public void setDeviceCode(String deviceCode) {
         this.L_DeviceCode.setText(deviceCode);
     }
@@ -106,13 +112,21 @@ public class EquipStatusPane {
         return this.L_DeviceCode.getText();
     }
 
+    private static HashMap images=new HashMap();
     public void setCommLabelForegroundColorCommOn() {
 //        Icon eqpIcon = new ImageIcon(EquipStatusPanel.class.getResource(equipNodeBean.getIconPath()));
         String iconPath = equipNodeBean.getIconPath();
+        Image image=null;
         if (iconPath.contains("/")) {
             iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
         }
-        Image image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
+        if(images.get(iconPath)!=null){
+            image=(Image) images.get(iconPath);
+        }else{
+            image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
+            images.put(iconPath, image);
+        }
+        logger.info("on"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }
@@ -123,18 +137,32 @@ public class EquipStatusPane {
         if (iconPath.contains("/")) {
             iconPath = iconPath.substring(iconPath.lastIndexOf("/") + 1);
         }
+        Image image=null;
         String lastName = iconPath.split("\\.")[1];
         String commofficonpath = iconPath.replaceAll("." + lastName, "-commoff." + lastName);
-        Image image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
+        if(images.get(iconPath)==null){
+            image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
+            images.put(iconPath, image);
+
+        }else if(images.get(iconPath)!=null){
+            image=(Image) images.get(iconPath);
+        }
+        logger.info("off"+deviceCode +"图片为"+image);
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGray);
-
     }
 
     public void setRunStatus(String eventText) {
+//        if (eventText != null && eventText.length() > 15) {
+//            this.L_RunStatus.setText(eventText.substring(0, 12) + "...");
+//        } else {
+//            this.L_RunStatus.setText(eventText);
+//        }
         Platform.runLater(()
                 -> this.L_RunStatus.setText(eventText)
         );
+
+
 
     }
 
@@ -143,16 +171,23 @@ public class EquipStatusPane {
     }
 
     public void setLotId(String lotId) {
-        this.L_LotId.setTooltip(new Tooltip(lotId));
-        if (lotId != null && lotId.length() > 15) {
-            Platform.runLater(()
-                    -> this.L_LotId.setText(lotId.substring(0, 12) + "...")
-            );
-        } else {
-            Platform.runLater(()
-                    -> this.L_LotId.setText(lotId)
-            );
-        }
+        L_LotId = (Label) equipStatusPane.lookup("#L_LotId");
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                L_LotId.setTooltip(new Tooltip(lotId));
+                if (lotId != null && lotId.length() > 15) {
+                    L_LotId.setText(lotId.substring(0, 12) + "...");
+                } else {
+
+                    L_LotId.setText(lotId);
+
+                }
+            }
+        });
+
+
+
     }
 
     public String getLotId() {
@@ -206,8 +241,8 @@ public class EquipStatusPane {
         P_EquipPane.setBorder(borderWhite);
         switch (controlState) {
             case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色
-
+//                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色,实现onLocal/offLocal功能按钮
+                Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
                 break;
             case FengCeConstant.CONTROL_REMOTE_ONLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
