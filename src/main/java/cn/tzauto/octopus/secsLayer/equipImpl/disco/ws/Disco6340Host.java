@@ -734,7 +734,7 @@ public class Disco6340Host extends EquipHost {
         MonitorService monitorService = new MonitorService(sqlSession);
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException e) {
             e.printStackTrace();
             return;

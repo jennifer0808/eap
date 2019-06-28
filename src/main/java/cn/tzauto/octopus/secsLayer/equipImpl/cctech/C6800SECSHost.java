@@ -9,6 +9,7 @@ import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -479,10 +480,9 @@ public class C6800SECSHost extends EquipHost {
         boolean checkParaFlag = false;
         Map resultMap = new HashMap();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        List<RecipePara> recipeParasdiff = checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
             mqMap.put("msgName", "eqpt.StartCheckWI");
@@ -550,5 +550,100 @@ public class C6800SECSHost extends EquipHost {
             resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
         }
         return resultMap;
+    }
+
+    private List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String masterCompareType) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService service = new RecipeService(sqlSession);
+        //获取Gold版本的参数(只有gold才有wi信息)
+        List<RecipePara> goldRecipeParas = service.searchRecipeParaByRcpRowId(recipeRowid);
+        //确定管控参数
+        List<RecipeTemplate> recipeTemplates = service.searchRecipeTemplateMonitor(deviceCode);
+        for (RecipeTemplate recipeTemplate : recipeTemplates) {
+            for (RecipePara recipePara : goldRecipeParas) {
+                if (recipePara.getParaCode() != null && recipePara.getParaCode().equals(recipeTemplate.getParaCode())) {
+                    recipeTemplate.setMinValue(recipePara.getMinValue());
+                    recipeTemplate.setMaxValue(recipePara.getMaxValue());
+                    recipeTemplate.setSetValue(recipePara.getSetValue());
+                }
+            }
+        }
+        //找出设备当前recipe参数中超出wi范围的参数
+        List<RecipePara> wirecipeParaDiff = new ArrayList<>();
+        for (RecipePara equipRecipePara : equipRecipeParas) {
+            for (RecipeTemplate recipeTemplate : recipeTemplates) {
+                if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode())) {
+                    equipRecipePara.setRecipeRowId(recipeRowid);
+                    String currentRecipeValue = equipRecipePara.getSetValue();
+                    String setValue = recipeTemplate.getSetValue();
+                    String minValue = recipeTemplate.getMinValue();
+                    String maxValue = recipeTemplate.getMaxValue();
+                    equipRecipePara.setDefValue(setValue);//默认值，recipe参数设定值
+                    boolean paraIsNumber = false;
+                    try {
+                        Double.parseDouble(currentRecipeValue);
+                        paraIsNumber = true;
+                    } catch (Exception e) {
+                    }
+                    try {
+                        if ("abs".equals(masterCompareType)) {
+                            if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
+                                continue;
+                            }
+                            equipRecipePara.setMinValue(setValue);
+                            equipRecipePara.setMaxValue(setValue);
+                            if (paraIsNumber) {
+                                if (Double.parseDouble(currentRecipeValue) != Double.parseDouble(setValue)) {
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            } else if (!currentRecipeValue.equals(setValue)) {
+                                wirecipeParaDiff.add(equipRecipePara);
+                            }
+                        } else//spec
+                            if ("1".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                                //abs
+                            } else if ("2".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
+                                    continue;
+                                }
+                                try {
+                                    if (!Double.valueOf(currentRecipeValue).equals(Double.valueOf(setValue))) {
+                                        equipRecipePara.setMinValue(setValue);
+                                        equipRecipePara.setMaxValue(setValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
+                                }catch (Exception e) {
+                                    if (!currentRecipeValue.equals(setValue)) {
+                                        equipRecipePara.setMinValue(setValue);
+                                        equipRecipePara.setMaxValue(setValue);
+                                        wirecipeParaDiff.add(equipRecipePara);
+                                    }
+                                }
+
+                            } else {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            }
+                    } catch (Exception e) {
+                        logger.error("Exception:", e);
+                    }
+                }
+            }
+        }
+        return wirecipeParaDiff;
     }
 }

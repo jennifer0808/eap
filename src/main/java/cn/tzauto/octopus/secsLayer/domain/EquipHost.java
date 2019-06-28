@@ -441,7 +441,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         logger.info("START CHECK: ready to upload recipe:" + new Date());
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException upe) {
             logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
         }
@@ -608,7 +608,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
-            UiLogUtil.getInstance().appendLog2SecsTab("", "获取设备当前状态信息失败，请检查设备状态.");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
         }
         if (data == null || data.get("SV") == null) {
             return null;
@@ -834,10 +834,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     @SuppressWarnings("unchecked")
-    public void sendS2F15out(String ecid, String ecv) {
+    public void sendS2F15out(long ecid, String ecv) {
         DataMsgMap s2f15out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());
         s2f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long tmpL = Long.parseLong(ecid);
+        long tmpL = ecid ;
         long l[] = new long[1];
         l[0] = tmpL;
         float tmpF = Float.parseFloat(ecv);
@@ -1196,7 +1196,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
+                ceid = (long)data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 //            if (equipSecsBean.collectionReports.get(ceid) != null) {
@@ -1899,14 +1899,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
      */
     public Map getSpecificSVData(List dataIdList) {
         Map resultMap = new HashMap();
-        List svidList = dataIdList;
+        List<Long> svidList = new ArrayList();
+        for(Object dataId:dataIdList){
+            svidList.add(Long.parseLong(String.valueOf(dataId)));
+        }
         List svValueList = new ArrayList();
         //发送查询SV命令，并取值
         if (svidList.size() > 0) {
 
             try {
                 DataMsgMap data = null;
-                data = activeWrapper.sendS1F3out(dataIdList, svFormat);
+                data = activeWrapper.sendS1F3out(svidList, svFormat);
 
                 if (data != null && data.get("SV") != null) {
 
@@ -1914,13 +1917,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     if (obj != null) {
                         if (obj instanceof ArrayList) {
                             svValueList = (ArrayList) (data.get("SV"));
+
                             for (int i = 0; i < svValueList.size(); i++) {
                                 String sv = getSpecificSVEC(svValueList.get(i), i);
-                                resultMap.put(svidList.get(i), sv);
+                                resultMap.put(dataIdList.get(i), sv);
                             }
                         } else {
                             String s = getSpecificSVEC(obj, 0);
-                            resultMap.put(svidList.get(0), s);
+                            resultMap.put(dataIdList.get(0), s);
                         }
                     }
 
@@ -2858,7 +2862,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+//        List<RecipeTemplate> recipeTemplates = recipeService.searchMonitorByMap(deviceType, "SVRecipePara", "Y");
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "RecipeParaCheck");
         if (recipeTemplates == null || recipeTemplates.isEmpty()) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "该设备未设置参数实时监控,开机前实时值检查取消...");
             return;
@@ -2867,17 +2872,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
         for (int i = 0; i < recipeTemplates.size(); i++) {
             svIdList.add(recipeTemplates.get(i).getDeviceVariableId());
         }
-        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceId(), svIdList);
+        Map resultMap = GlobalConstants.stage.hostManager.getMonitorParaBySV(this.getDeviceCode(), svIdList);
+        logger.info("resultMap size : " + resultMap.size());
+        logger.info("resultMap  : " + resultMap);
         try {
             List<DeviceRealtimePara> deviceRealtimeParas = putSV2DeviceRealtimeParas(recipeTemplates, resultMap);
             if (deviceRealtimeParas != null && !deviceRealtimeParas.isEmpty()) {
                 monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
                 sqlSession.commit();
             }
-//            monitorService.saveDeviceRealtimePara(deviceRealtimeParas);
-            // sqlSession.commit();
         } catch (Exception e) {
-            sqlSession.close();
+            logger.error("exception : " + e);
         } finally {
             sqlSession.close();
         }
@@ -2893,19 +2898,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         RecipeService recipeService = new RecipeService(sqlSession);
         //根据ext表中的reciperowid获取recipepara
-        Map<String, RecipePara> monitorMap = recipeService.getMonitorParas(recipeService.searchRecipeParaByRcpRowId(deviceInfoExt.getRecipeId()), deviceType);
-        String eventDesc = "";
-        String eventDescEng = "";
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "eqpt.StartCheckWI");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("recipeName", ppExecName);
-        mqMap.put("EquipStatus", equipStatus);
-        mqMap.put("lotId", lotId);
+        //Map<String, RecipePara> monitorMap = recipeService.getMonitorParas(recipeService.searchRecipeParaByRcpRowId(deviceInfoExt.getRecipeId()), deviceType);
+        //现修改为根据最新版gold的id的reciperowid获取recipepara
+        List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", null);
+        Map<String, RecipePara> monitorMap = recipeService.getMonitorParas(recipeService.searchRecipeParaByRcpRowId(downLoadGoldRecipe.get(0).getId()), deviceType);
+        holdFlag = false;
         for (int i = 0; i < recipeTemplates.size(); i++) {
             String realTimeValue = resultMap.get(recipeTemplates.get(i).getDeviceVariableId()).toString();
             DeviceRealtimePara realtimePara = new DeviceRealtimePara();
             if (monitorMap != null && monitorMap.size() > 0) {
+                boolean isPass = false;
                 RecipePara recipePara = monitorMap.get(recipeTemplates.get(i).getParaCode());
                 if (recipePara != null) {
                     String minValue = recipePara.getMinValue();
@@ -2922,12 +2924,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
-                            eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                    + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                    + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure() + " ";
-                            String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue();
-
-                            eventDescEng = eventDescEng + eventDescEngtmp;
                         }
                         //abs
                     } else if ("2".equals(recipeTemplates.get(i).getSpecType())) {
@@ -2948,44 +2944,13 @@ public abstract class EquipHost extends Thread implements MsgListener {
                                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                         + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                         + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
-                                eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                        + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                        + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure() + " ";
-                                String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue();
-                                eventDescEng = eventDescEng + eventDescEngtmp;
                             }
-                        } else {
-                            if (!realTimeValue.equals(setValue)) {
-                                realtimePara.setRemarks("RealTimeErro");
-                                holdFlag = true;
-                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                        + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                        + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
-                                eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                        + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                        + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure() + " ";
-                                String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue();
-
-                                eventDescEng = eventDescEng + eventDescEngtmp;
-                            }
-                        }
-                    } else if ("3".equals(recipeTemplates.get(i).getSpecType())) {
-                        if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                            logger.info("Para:Name[" + recipeTemplates.get(i).getParaName() + "],Code[" + recipeTemplates.get(i).getParaCode() + "]has not set range! Pass");
-                            continue;
-                        }
-                        if ((Double.parseDouble(realTimeValue) <= Double.parseDouble(minValue)) || (Double.parseDouble(realTimeValue) >= Double.parseDouble(maxValue))) {
+                        } else if (!realTimeValue.equals(setValue)) {
                             realtimePara.setRemarks("RealTimeErro");
                             holdFlag = true;
                             UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                    + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
-                            eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                    + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                    + "设定的范围值[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure() + " ";
-                            String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue();
-
-                            eventDescEng = eventDescEng + eventDescEngtmp;
+                                    + "设定值:[" + recipePara.getSetValue() + "]" + recipePara.getParaMeasure());
                         }
                     } else {
                         if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
@@ -2998,12 +2963,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceInfoExt.getDeviceRowid(), "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
                                     + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
                                     + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure());
-                            eventDesc += "开机前参数实时检查未通过,参数编号:[" + recipePara.getParaCode() + "],"
-                                    + "参数名:[" + recipePara.getParaName() + "]实时值:[" + realTimeValue + "]" + recipePara.getParaMeasure() + ","
-                                    + "设定的范围值:[" + minValue + " - " + maxValue + "]" + recipePara.getParaMeasure() + " ";
-                            String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",RealTime_value:" + realTimeValue + ",Set_value:" + recipePara.getSetValue();
-
-                            eventDescEng = eventDescEng + eventDescEngtmp;
                         }
                     }
                     realtimePara.setMaxValue(maxValue);
@@ -3022,23 +2981,21 @@ public abstract class EquipHost extends Thread implements MsgListener {
                     realtimePara.setRecipeRowId(deviceInfoExt.getRecipeId());
                     realTimeParas.add(realtimePara);
                 }
-
+                if (isPass) {
+                    holdFlag = true;
+                }
             }
         }
         if (holdFlag) {
-            eventDesc = "开机前实时参数检查不通过，设备将被锁." + eventDesc;
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
-            this.holdDeviceAndShowDetailInfo("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:" + eventDescEng);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机前实时参数检查不通过，设备将被锁.");
+            this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
             startSVcheckPass = false;
         } else {
             releaseDevice();
-            eventDesc = "设备：" + deviceCode + " 开机前实时参数检查通过.";
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机前实时参数检查通过.");
             startSVcheckPass = true;
             holdFlag = false;
         }
-        mqMap.put("eventDesc", eventDesc);
-        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
         sqlSession.close();
         return realTimeParas;
     }

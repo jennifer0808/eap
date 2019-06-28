@@ -200,6 +200,7 @@ public class ISecsHost implements ISecsInterface {
      */
     @Override
     public List<String> executePLCCommand(String command) {
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         List<String> result = new ArrayList<String>();
         try {
@@ -232,7 +233,7 @@ public class ISecsHost implements ISecsInterface {
             result.clear();
             logger.error(deviceCode + " 尝试重新连接 ==>" + e.getMessage());
             try {
-                if(iSecsConnection.getSocketClient()!=null){
+                if (iSecsConnection.getSocketClient() != null) {
                     iSecsConnection.getSocketClient().close();
                     iSecsConnection.setSocketClient(null);
                     logger.error(deviceCode + " 关闭连接并置空!==>");
@@ -243,8 +244,8 @@ public class ISecsHost implements ISecsInterface {
                     result.add("ResetFail");
                     return result;
                 }
-                logger.error(deviceCode + " 重新连接完毕 ==>IP:"+iSecsConnection.getSocketClient().getRemoteSocketAddress().toString()
-                        +"PORT:"+iSecsConnection.getSocketClient().getPort());
+                logger.error(deviceCode + " 重新连接完毕 ==>IP:" + iSecsConnection.getSocketClient().getRemoteSocketAddress().toString()
+                        + "PORT:" + iSecsConnection.getSocketClient().getPort());
                 //再次尝试发送指令
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
                 logger.info(deviceCode + "TryAgain; Ready to execute command==>" + command);
@@ -272,8 +273,14 @@ public class ISecsHost implements ISecsInterface {
                 logger.error(deviceCode + " Reset Fail ==>" + e.getMessage());
                 result.add("ResetFail");
                 return result;
-            }finally {
+            } finally {
 
+            }
+        } finally {
+            if (temp == null) {
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            } else {
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
     }
@@ -626,6 +633,7 @@ public class ISecsHost implements ISecsInterface {
         }
         return resultMap;
     }
+
     public byte[] executeCommand2(String command) {
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -644,6 +652,7 @@ public class ISecsHost implements ISecsInterface {
     }
 
     public String executeCommand3(String command) {
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -654,9 +663,16 @@ public class ISecsHost implements ISecsInterface {
             InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
             System.out.println("=======================");
             System.out.println(new String(bytes, "GBK"));
-            logger.info("已经将参数发送至wafer软件:"+command);
+            logger.info("已经将参数发送至wafer软件:" + command);
         } catch (Exception e) {
+            logger.error("Exception", e);
             System.out.print("111111");
+        } finally {
+            if (temp == null) {
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            } else {
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            }
         }
         return null;
     }

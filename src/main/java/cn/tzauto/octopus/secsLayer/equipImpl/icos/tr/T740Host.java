@@ -78,7 +78,7 @@ public class T740Host extends EquipHost {
                     sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
-                    super.findDeviceRecipe();
+
 
                     sendS2F37outClose(14010L);
                     sendS2F35outDelete(14010L, 14010L);
@@ -89,6 +89,7 @@ public class T740Host extends EquipHost {
                     sendS2F37out(14010L);
                     rptDefineNum++;
                     updateLotId();
+                    findDeviceRecipe();
                 }
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
@@ -128,7 +129,7 @@ public class T740Host extends EquipHost {
                 setCommState(COMMUNICATING);
             } else if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
-            } else if (tagName.toLowerCase().contains("s6f11in")) {
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
@@ -195,16 +196,16 @@ public class T740Host extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long preStatus = 0L;
-        long nowStatus = 0;
+
         long ceid = 0L;
 
         try {
             ceid = (long) data.get("CEID");
-            findDeviceRecipe();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         if (AxisUtility.isEngineerMode(deviceCode)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");

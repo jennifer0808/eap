@@ -74,6 +74,9 @@ public class DeviceInfoPaneController implements Initializable {
      * Initializes the controller class.
      */
     private final String deviceCode;
+    private  String statu=null;
+    private  String lotId=null;
+    private  String panerecipeName=null;
     public DeviceInfoPaneController( ) {
         this.deviceCode = null;
         stage.setTitle("设备详情");
@@ -85,8 +88,11 @@ public class DeviceInfoPaneController implements Initializable {
             }
         });
     }
-    public DeviceInfoPaneController( String dc) {
+    public DeviceInfoPaneController( String dc,String statu,String lotId,String recipeName) {
         this.deviceCode = dc;
+        this.statu=statu;
+        this.lotId=lotId;
+        this.panerecipeName=recipeName;
         stage.setTitle("设备详情");
         stage.setAlwaysOnTop(true);
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -182,8 +188,8 @@ public class DeviceInfoPaneController implements Initializable {
            clientCode.setText(deviceInfo.getClientId());
            deviceCodeField = (TextField) root.lookup("#deviceCodeField");
            deviceCodeField.setText(deviceInfo.getDeviceCode());
-           equipStatus = (TextField) root.lookup("#equipStatus");
-           equipStatus.setText(deviceInfo.getDeviceStatus());
+//           equipStatus = (TextField) root.lookup("#equipStatus");
+//           equipStatus.setText(deviceInfo.getDeviceStatus());
            deviceType = (TextField) root.lookup("#deviceType");
            deviceType.setText(deviceInfo.getDeviceType());
 
@@ -198,12 +204,12 @@ public class DeviceInfoPaneController implements Initializable {
 //                    CommonUtil.alert("获取设备当前状态信息失败，请检查设备状态.");
                recipeName = (TextField) root.lookup("#recipeName");
                equipStatus = (TextField) root.lookup("#equipStatus");
-
+               recipeName.setText(panerecipeName);
+               recipeName.setTooltip(new Tooltip(panerecipeName));
+               equipStatus.setText(statu);
+               lotNo.setText(lotId);
                if (deviceInfoExt != null) {
-                   recipeName.setText(deviceInfoExt.getRecipeName());
-                   recipeName.setTooltip(new Tooltip(deviceInfoExt.getRecipeName()));
-                   equipStatus.setText(deviceInfoExt.getDeviceStatus());
-                   lotNo.setText(deviceInfoExt.getLotId());
+
                    if (deviceInfoExt.getRecipeId() != null && !"".equals(deviceInfoExt.getRecipeId())) {
                        Recipe recipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                        if (recipe != null) {

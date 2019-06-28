@@ -50,6 +50,10 @@ public class ISecsConnection {
 
     }
 
+    public Socket setSocketClient(Socket socket) {
+        return socketClient = socket;
+    }
+
     public Socket getSocketClient() {
         if (socketClient != null) {
             return socketClient;

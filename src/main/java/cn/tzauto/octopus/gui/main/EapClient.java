@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
+import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -26,6 +27,7 @@ import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -366,7 +368,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+
             int finalI = i;
             new Thread(new Runnable() {
                 @Override
@@ -447,8 +449,12 @@ public class EapClient extends Application implements JobListener, PropertyChang
     }
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
-        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         String deviceCode = equipNodeBean.getDeviceCode();
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
+        Task task = new Task<String >() {
+            @Override
+            public String  call() {
         try {
             hostManager.startHostThread(deviceCode);
             hostManager.startSECS(deviceCode, eqpEventDealer);
@@ -457,7 +463,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
         } catch (Exception e1) {
             logger.fatal(deviceCode + " has not been initialized!", e1);
         }
-
+        return null;
+            }
+        };
+                new Thread(task).start();
     }
 
 

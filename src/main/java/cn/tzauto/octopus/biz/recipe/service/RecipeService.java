@@ -642,9 +642,8 @@ public class RecipeService extends BaseService {
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
             boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             if (!existFlag) {
-                return false;
+//                return false;
             }
-            System.out.println("开始上传至ftp啦。。。。");
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }
         return true;
@@ -833,13 +832,15 @@ public class RecipeService extends BaseService {
             // 上传ftp
             FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-
+            if (!existFlag) {
+//                return false;
+            }
             //日志
 //       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
-        return existFlag;
+        return true;
     }
 
     /*

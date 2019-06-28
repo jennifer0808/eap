@@ -554,7 +554,7 @@ public class HTDB800Host extends EquipHost {
     @Override
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
-        byte[] ppbody = (byte[]) cn.tzauto.octopus.common.resolver.TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        byte[] ppbody = {1};
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
