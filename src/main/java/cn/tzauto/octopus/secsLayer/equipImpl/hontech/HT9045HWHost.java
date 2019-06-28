@@ -86,18 +86,35 @@ public class HT9045HWHost extends EquipHost {
                     processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
                     long ceid = (long) msg.get("CEID");
-                    if (ceid == 1) {
-                        processPressStartButton(msg);
-                    } else if (ceid == 27) {
-                        setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-                        processEquipStatusChange2(msg);
-                    } else if (ceid == 15) {
-                        //刷新当前机台状态
-                        logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
-                        findDeviceRecipe();
-                        logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
-                    } else if (ceid == 49) {
-                       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Tray Feed Finish!!!需要进行改机！");
+                    switch ((int) ceid){
+                        case 1:
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Start button!");
+                            processPressStartButton(msg);
+                            break;
+                        case 27:
+                            setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                            processEquipStatusChange2(msg);
+                            break;
+                        case 15:
+                            //刷新当前机台状态
+                            logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
+                            findDeviceRecipe();
+                            logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
+                            break;
+                        case  49:
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Tray Feed Finish!!!需要进行改机！");
+                            break;
+                        case 4:
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Clean Out button!");
+                            sendS1F3Check();
+                            logger.info("[" + deviceCode + "]" + "设备处于" + equipStatus + "状态！");
+                            break;
+                        case 43:
+                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Auto Clean Start!");
+                            break;
+                        default:
+                            logger.info("A message in queue with tag = " + msg.getMsgSfName()
+                                    + " which I do not want to process! ");
                     }
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
@@ -146,7 +163,7 @@ public class HT9045HWHost extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("s6f11in")) {
                 long ceid = (long) data.get("CEID");
-                if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49) {
+                if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49||ceid == 4L) {
                     this.inputMsgQueue.put(data);
                 }
                 replyS6F12WithACK(data, (byte) 0);
@@ -407,7 +424,8 @@ public class HT9045HWHost extends EquipHost {
                 if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
                     //查询trackin时的recipe和GoldRecipe
 //                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
+                    Recipe goldRecipe = recipeService.getGoldRecipe(deviceInfoExt.getRecipeName(), deviceCode, deviceType);
+                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe==null?deviceInfoExt.getVerNo():goldRecipe.getVersionNo()));
 //                    boolean hasGoldRecipe = true;
 //                    //查询客户端数据库是否存在GoldRecipe
 //                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
@@ -429,9 +447,9 @@ public class HT9045HWHost extends EquipHost {
                             checkParaFlag = false;
                         } else {
 //                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            String testMode = getEquipTestMode();
-                            logger.info("当前测试模式：" + testMode);
-                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0), testMode);
+//                            String testMode = getEquipTestMode();
+//                            logger.info("当前测试模式：" + testMode);
+                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0), "abs");
                             if (resultMap != null) {
                                 if (resultMap.get("CheckParaFlag") != null) {
                                     checkParaFlag = (boolean) resultMap.get("CheckParaFlag");
@@ -568,7 +586,7 @@ public class HT9045HWHost extends EquipHost {
      * @param equipRecipeParas
      * @return
      */
-    public List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String testMode) {
+    public List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String masterCompareType) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         //获取Gold版本的参数(只有gold才有wi信息)
@@ -591,7 +609,10 @@ public class HT9045HWHost extends EquipHost {
         List<String> codeList = new ArrayList<>();
         for (RecipePara equipRecipePara : equipRecipeParas) {
             for (RecipeTemplate recipeTemplate : recipeTemplates) {
-                if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode()) && (recipeTemplate.getParaDesc() != null && testMode.equals(recipeTemplate.getParaDesc()) || "PR".equals(recipeTemplate.getParaDesc()))) {
+                //FT下比对FT,RT下比对RT
+//               注释掉 if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode()) && (recipeTemplate.getParaDesc() != null && testMode.equals(recipeTemplate.getParaDesc()) || "PR".equals(recipeTemplate.getParaDesc()))) {
+                //管控参数一起比较
+                if (recipeTemplate.getParaCode().equals(equipRecipePara.getParaCode())) {
                     equipRecipePara.setRecipeRowId(recipeRowid);
                     String currentRecipeValue = equipRecipePara.getSetValue();
                     //将数值从ECID查到的数据中提取出来
@@ -604,36 +625,14 @@ public class HT9045HWHost extends EquipHost {
                     String minValue = recipeTemplate.getMinValue();
                     String maxValue = recipeTemplate.getMaxValue();
                     equipRecipePara.setParaShotName(recipeTemplate.getParaShotName());
-                    DecimalFormat decimalFormat = new DecimalFormat("##########.##########");
-                    String numConverted = "";
-                    if (!"".equals(setValue)) {
-                        if (setValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                            if (setValue.contains(".")) {
-                                numConverted = decimalFormat.format(Double.parseDouble(setValue));
-                                setValue = numConverted;
-                            } else {
-                                numConverted = decimalFormat.format(Integer.parseInt(setValue));
-                                setValue = numConverted;
-                            }
-                        }
-                    }
-                    String numConverted1 = "";
-                    if (!"".equals(currentRecipeValue)) {
-                        if (currentRecipeValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                            if (currentRecipeValue.contains(".")) {
-                                numConverted1 = decimalFormat.format(Double.parseDouble(currentRecipeValue));
-                                currentRecipeValue = numConverted1;
-                            } else {
-                                numConverted1 = decimalFormat.format(Integer.parseInt(currentRecipeValue));
-                                currentRecipeValue = numConverted1;
-                            }
-                        } else if ("false".equals(currentRecipeValue)) {
+                    if (setValue != null && !"".equals(currentRecipeValue)) {
+                        if ("false".equals(currentRecipeValue)) {
                             currentRecipeValue = "0";
                         } else if ("true".equals(currentRecipeValue)) {
                             currentRecipeValue = "1";
                         }
                     }
-                    equipRecipePara.setDefValue(numConverted);//默认值，recipe参数设定值
+                    equipRecipePara.setDefValue(setValue);//默认值，recipe参数设定值
                     try {
                         if (recipeTemplate.getParaShotName().contains("-") && codeList.contains(recipeTemplate.getParaShotName().substring(0, recipeTemplate.getParaShotName().lastIndexOf("-")))) {
                             logger.info("此值不需要比对,开关默认关闭:" + recipeTemplate.getParaShotName());
@@ -642,41 +641,54 @@ public class HT9045HWHost extends EquipHost {
                         if ((recipeTemplate.getParaShotName().contains("-EnableRT") || recipeTemplate.getParaShotName().contains("-Enable")) && "0".equals(setValue)) {
                             codeList.add(recipeTemplate.getParaShotName().substring(0, recipeTemplate.getParaShotName().lastIndexOf("-")));
                             logger.info("此值不需要比对,开关默认关闭:" + recipeTemplate.getParaShotName());
-//                            break;
                         }
-                        logger.info("开始对比参数Name:" + recipeTemplate.getParaName() + ",RecipeValue：" + currentRecipeValue + ",goldRecipeValue:" + setValue + ",ECID:" + recipeTemplate.getDeviceVariableId() + "************************************");
+//                        logger.info("开始对比参数Name:" + recipeTemplate.getParaName() + ",RecipeValue：" + currentRecipeValue + ",goldRecipeValue:" + setValue + ",ECID:" + recipeTemplate.getDeviceVariableId() + "************************************");
                         boolean paraIsNumber = false;
                         Double.parseDouble(currentRecipeValue);
                         paraIsNumber = true;
-                        if ("1".equals(recipeTemplate.getSpecType())) {
-                            if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                                continue;
-                            }
-                            if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
-                                equipRecipePara.setMinValue(minValue);
-                                equipRecipePara.setMaxValue(maxValue);
-                                wirecipeParaDiff.add(equipRecipePara);
-                            }
-                            //abs
-                        } else if ("2".equals(recipeTemplate.getSpecType())) {
+                        if ("abs".equals(masterCompareType)) {
                             if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
                                 continue;
                             }
-                            if (!currentRecipeValue.equals(setValue)) {
-                                equipRecipePara.setMinValue(setValue);
-                                equipRecipePara.setMaxValue(setValue);
+                            equipRecipePara.setMinValue(setValue);
+                            equipRecipePara.setMaxValue(setValue);
+                            if (paraIsNumber) {
+                                if (Double.parseDouble(currentRecipeValue) != Double.parseDouble(setValue)) {
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            } else if (!currentRecipeValue.equals(setValue)) {
                                 wirecipeParaDiff.add(equipRecipePara);
                             }
-                        } else {
-                            if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
-                                continue;
+                        } else//spec
+                            if ("1".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                                //abs
+                            } else if ("2".equals(recipeTemplate.getSpecType())) {
+                                if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
+                                    continue;
+                                }
+                                if (!currentRecipeValue.equals(setValue)) {
+                                    equipRecipePara.setMinValue(setValue);
+                                    equipRecipePara.setMaxValue(setValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
+                            } else {
+                                if ("".equals(minValue) || "".equals(maxValue) || minValue == null || maxValue == null) {
+                                    continue;
+                                }
+                                if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
+                                    equipRecipePara.setMinValue(minValue);
+                                    equipRecipePara.setMaxValue(maxValue);
+                                    wirecipeParaDiff.add(equipRecipePara);
+                                }
                             }
-                            if ((Double.parseDouble(equipRecipePara.getSetValue()) < Double.parseDouble(minValue)) || (Double.parseDouble(equipRecipePara.getSetValue()) > Double.parseDouble(maxValue))) {
-                                equipRecipePara.setMinValue(minValue);
-                                equipRecipePara.setMaxValue(maxValue);
-                                wirecipeParaDiff.add(equipRecipePara);
-                            }
-                        }
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }

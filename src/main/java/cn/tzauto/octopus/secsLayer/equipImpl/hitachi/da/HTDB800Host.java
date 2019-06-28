@@ -217,10 +217,11 @@ public class HTDB800Host extends EquipHost {
             sendS2F37outCloseAll();
             logger.info("initRptPara+++++++++++++++++++");
             //重新定义processing INIT·SETUP·READY·EXECUTING·PAUSE·ERROR· status
-            List list = new ArrayList();
-            list.add(50062L);
-            list.add(50070L);
-            sendS2F33out(10002L, 10002L, list);//50062:当前状态,50070：当前recipe
+            List svidlist = new ArrayList();
+            svidlist.add(50062L);
+            svidlist.add(50070L);
+            sendS2F33out(10002L, 10002L, svidlist);//50062:当前状态,50070：当前recipe
+            List ceids2list = new ArrayList();
             long[] ceids2 = new long[7];
             ceids2[0] = 3L;
             ceids2[1] = 4L;
@@ -232,9 +233,11 @@ public class HTDB800Host extends EquipHost {
             //ceids2[7] = 88L;
             for (int i = 0; i < ceids2.length; i++) {
                 sendS2F35out(ceids2[i], 10002L);
+                ceids2list.add(ceids2[i]);
             }
             //todo sendS2F37outMuilt
 //            sendS2F37outMuilt(true, ceids2);
+            activeWrapper.sendS2F37out(true,ceids2list, ceFormat);
             //单独开启CEID=88(参数改变事件)，以防部分机台未升级
             sendS2F35out(88L, 10002L);
             sendS2F37out(88L);

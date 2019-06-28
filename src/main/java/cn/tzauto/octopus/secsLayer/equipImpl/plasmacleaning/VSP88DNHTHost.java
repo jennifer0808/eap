@@ -11,6 +11,7 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -23,10 +24,11 @@ import org.apache.log4j.MDC;
 
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class VSP88DNHTHost extends EquipHost {
 
@@ -38,6 +40,7 @@ public class VSP88DNHTHost extends EquipHost {
     public String Lead_Frame_Type_Id;
     public String Datelength;
     boolean holdFlag = false;
+    public ExecutorService fixPool ;
 
     public VSP88DNHTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -112,7 +115,9 @@ public class VSP88DNHTHost extends EquipHost {
                         processS6F11stripIdRead(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
-                    } else {
+                    } else if (msg.getMsgSfName().equalsIgnoreCase("s1f0in")) {
+                        sendS1F17out();
+                    }else {
                         System.out.println("A message in queue with tag = " + msg.getMsgSfName()
                                 + " which I do not want to process! ");
                     }
@@ -139,7 +144,8 @@ public class VSP88DNHTHost extends EquipHost {
 //                sendS2f41Cmd("REMOTE");
 //            }
             else if (ceid == 1103L || ceid == 1104L) {
-                processS6F11stripIdRead(data);
+                checkStringId(data);
+//                processS6F11stripIdRead(data);
             }
 
         } catch (Exception e) {
@@ -160,6 +166,8 @@ public class VSP88DNHTHost extends EquipHost {
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f1in")) {
                 processS1F1in(data);
+            } else if (tagName.equalsIgnoreCase("s1f0in")) {
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -186,6 +194,58 @@ public class VSP88DNHTHost extends EquipHost {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
+        }
+    }
+
+
+
+//    class FindStripIdThread implements Runnable {
+//        private VSP88DNHTHost currentHost;
+//        private  MsgDataHashtable dataHashtable;
+//
+//        public FindStripIdThread() {
+//
+//        }
+//
+//        public FindStripIdThread(VSP88DNHTHost host, MsgDataHashtable msgDataHashtable) {
+//            this.currentHost = host;
+//            this.dataHashtable = msgDataHashtable;
+//        }
+//
+//        @Override
+//        public void run() {
+//            currentHost.processS6F11EquipStatusChange(dataHashtable);
+//        }
+//    }
+
+    public void checkStringId( DataMsgMap msgDataHashtable){
+        Future future = fixPool.submit(new FindStripIdThread(this,msgDataHashtable));
+        try {
+            future.get(20*1000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+
+
+
+    class FindStripIdThread implements Callable {
+        private VSP88DNHTHost currentHost ;
+        private  DataMsgMap dataHashtable;
+        public FindStripIdThread() {
+        }
+
+        public FindStripIdThread(VSP88DNHTHost host, DataMsgMap msgDataHashtable) {
+            this.currentHost = host;
+            this.dataHashtable = msgDataHashtable;
+        }
+
+
+        @Override
+        public Boolean call()  {
+            currentHost.processS6F11stripIdRead(dataHashtable);
+            return false;
         }
     }
 
@@ -351,18 +411,20 @@ public class VSP88DNHTHost extends EquipHost {
         msgMap.put("deviceCode", deviceCode);
         msgMap.put("stripId", stripId);
         String result = "";
-        try {
-            Message message = GlobalConstants.C2SPlasma2DQueue.sendMessageWithReplay(msgMap);
-            if (message != null) {
-                MapMessage mapMessage = (MapMessage) message;
-                result = mapMessage.getString("message");
-            } else {
-//                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
-                logger.error("等待MQ回复信息超时!TimeOut= " +GlobalConstants.MQ_MSG_WAIT_TIME);
-            }
-        } catch (Exception ex) {
-            logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
-        }
+        logger.info("发送WebService["+funcType+"]信息(" + new Date() + ")" );
+        result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+//        try {
+//            Message message = GlobalConstants.C2SPlasma2DQueue.sendMessageWithReplay(msgMap);
+//            if (message != null) {
+//                MapMessage mapMessage = (MapMessage) message;
+//                result = mapMessage.getString("message");
+//            } else {
+////                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+//                logger.error("等待MQ回复信息超时!TimeOut= " +GlobalConstants.MQ_MSG_WAIT_TIME);
+//            }
+//        } catch (Exception ex) {
+//            logger.error("MQ sendMessageWithReplay error!" + ex.getMessage());
+//        }
         sendS2f41Cmd("REMOTE");
         if (result.equalsIgnoreCase("Y")) {
             holdFlag = false;

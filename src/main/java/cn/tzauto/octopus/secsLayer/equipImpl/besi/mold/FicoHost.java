@@ -270,7 +270,7 @@ public class FicoHost extends EquipHost {
             } else if (ceid == 62) {
                 findDeviceRecipe();
             } else if (ceid == 1555) {
-                processS6F11SVGetFinish(data);
+//                processS6F11SVGetFinish(data);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);

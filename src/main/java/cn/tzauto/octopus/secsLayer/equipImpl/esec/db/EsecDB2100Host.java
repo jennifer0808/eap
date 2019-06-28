@@ -370,14 +370,14 @@ public class EsecDB2100Host extends EquipHost {
 //            if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("stopped RDY")) {
             if (dataReady && equipStatus.equalsIgnoreCase("run")) {
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<String> svlist = new ArrayList<>();
-                svlist.add("252968976");//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (!svValue.get("252968976").equals("41")) {
-                    String dateStr = GlobalConstants.dateFormat.format(new Date());
-                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
-                }
+//                List<String> svlist = new ArrayList<>();
+//                svlist.add("252968976");//2D开关
+//                Map svValue = this.getSpecificSVData(svlist);
+//                if (svValue.get("252968976").equals("0")) {
+//                    String dateStr = GlobalConstants.dateFormat.format(new Date());
+//                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
+//                }
                 if (AxisUtility.isEngineerMode(deviceCode)) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                     sqlSession.close();

@@ -32,6 +32,7 @@ public class T740Host extends EquipHost {
 
     private static final Logger logger = Logger.getLogger(T740Host.class);
     private boolean needCheck = false;
+    private boolean checkParaFlag = true;
 
     public T740Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -178,6 +179,8 @@ public class T740Host extends EquipHost {
                 super.setControlState(FengCeConstant.CONTROL_OFFLINE);
             } else if (ceid == 14032) {
                 needCheck = true;
+            } else if (ceid == 14033 || ceid == 14034) {
+                processS6F11ParaChange(data);
             } else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 10003) {
@@ -208,6 +211,11 @@ public class T740Host extends EquipHost {
             sqlSession.close();
             needCheck = false;
             return;
+        }
+        if(!checkParaFlag){
+            pauseDevice();
+            needCheck = false;
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到参数异常，设备将被锁!");
         }
         if (equipStatus.equalsIgnoreCase("run") && needCheck) {
             //首先从服务端获取机台是否处于锁机状态
@@ -266,6 +274,61 @@ public class T740Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             needCheck = false;
         } catch (Exception e) {
+        } finally {
+            sqlSession.close();
+        }
+    }
+
+    protected void processS6F11ParaChange(DataMsgMap data) {
+        long preStatus = 0L;
+        long nowStatus = 0;
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        if (AxisUtility.isEngineerMode(deviceCode)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+            sqlSession.close();
+            return;
+        }
+        DeviceService deviceService = new DeviceService(sqlSession);
+        RecipeService recipeService = new RecipeService(sqlSession);
+        DeviceInfoExt deviceInfoExt = new DeviceInfoExt();
+        try {
+        deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+        //检查领料程序与设备在用程序是否一致
+        boolean recipeNameOk = checkRecipeName(deviceInfoExt.getRecipeName());
+        //检查程序版本
+        Recipe goldRecipe = checkRecipeHasGoldFlag(deviceInfoExt.getRecipeName());
+        if (recipeNameOk && goldRecipe != null) {
+            Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+            //首先判断下载的Recipe类型
+            //1、如果下载的是Unique版本，那么执行完全比较
+            String downloadRcpVersionType = downLoadRecipe.getVersionType();
+            if ("Unique".equals(downloadRcpVersionType)) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                checkParaFlag = startCheckRecipeParaReturnFlag(downLoadRecipe, "abs");
+            } else {
+                //2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
+                checkParaFlag = startCheckRecipeParaReturnFlag(goldRecipe);
+            }
+        } else {
+            checkParaFlag = false;
+//            holdDevice1();
+        }
+            //更新模型表设备状态
+//            deviceInfoExt.setDeviceStatus(equipStatus);
+//            deviceInfoExt.setLockFlag(null);
+//            deviceService.modifyDeviceInfoExt(deviceInfoExt);
+//            sqlSession.commit();
+//            //保存设备操作记录到数据库
+//            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
+        } catch (Exception e) {
+            logger.info(e);
         } finally {
             sqlSession.close();
         }

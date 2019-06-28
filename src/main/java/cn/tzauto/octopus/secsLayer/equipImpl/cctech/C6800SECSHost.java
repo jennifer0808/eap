@@ -258,7 +258,8 @@ public class C6800SECSHost extends EquipHost {
                 if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
                     //查询trackin时的recipe和GoldRecipe
 //                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
+                    Recipe goldRecipe = recipeService.getGoldRecipe(deviceInfoExt.getRecipeName(), deviceCode, deviceType);
+                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe==null?deviceInfoExt.getVerNo():goldRecipe.getVersionNo()));
 //                    boolean hasGoldRecipe = true;
 //                    //查询客户端数据库是否存在GoldRecipe
 //                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {

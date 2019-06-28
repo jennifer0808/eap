@@ -15,6 +15,8 @@ public interface DeviceInfoExtMapper {
 
     DeviceInfoExt selectByDeviceRowid(String deviceRowid);
 
+    List<DeviceInfoExt>  selectByRecipeName(String recipeName);
+
     int updateByPrimaryKeySelective(DeviceInfoExt record);
 
     int updateByPrimaryKey(DeviceInfoExt record);

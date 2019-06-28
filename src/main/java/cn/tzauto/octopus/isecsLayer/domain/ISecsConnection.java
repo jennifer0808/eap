@@ -58,6 +58,10 @@ public class ISecsConnection {
         }
     }
 
+    public Socket setSocketClient(Socket socket) {
+        return socketClient = socket;
+    }
+
     public Socket getNewSocketClient() {
         return initConnection();
     }

@@ -722,6 +722,38 @@ public abstract class EquipModel extends Thread {
         return attachs;
     }
 
+    /**
+     *跳转至某个界面
+     * @param screen
+     * @param gotoScreen
+     * @param intervel
+     * @return
+     * @throws InterruptedException
+     */
+    public Boolean gotoScreenByOCR(String screen,String gotoScreen,int intervel) throws InterruptedException {
+        Boolean gotoResult = false;
+        //第一次
+        List<String> result = iSecsHost.executeCommand("playback "+gotoScreen+".txt");
+        Thread.sleep(intervel);
+        if("done".equals(result.get(0))){
+            result = iSecsHost.executeCommand("curscreen");
+            if (!screen.equals(result.get(0))) {
+                //跳转失败
+                //尝试第二次跳转
+                result = iSecsHost.executeCommand("playback "+gotoScreen+".txt");
+                result = iSecsHost.executeCommand("curscreen");
+                Thread.sleep(intervel);
+                if (screen.equals(result.get(0))) {
+                    gotoResult = true;
+                }
+            }else{
+                //跳转成功
+                gotoResult = true;
+            }
+        }
+        return gotoResult;
+    }
+
     public List<String> sendMsg2Equip(String command) {
         final String executCommand = command;
         List<String> result = null;

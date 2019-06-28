@@ -563,6 +563,13 @@ public class RecipeService extends BaseService {
             }
         }
         if (type.contains("Select")) {
+            //先删除其余recipe
+            if (type.contains("DeleteAll")&&(deviceInfo.getDeviceType().contains("ICOST340")||deviceInfo.getDeviceType().contains("ICOST380"))) {
+                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
+                //如果删除失败，流程继续
+//                String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
+//                return ppselectResult;
+            }
             //选中Recipe
             String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
             if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")
@@ -572,6 +579,9 @@ public class RecipeService extends BaseService {
             }
             if (!"0".equals(ppselectResult)) {
                 result = "2";
+                if(deviceInfo.getDeviceType().contains("CCTECH")){
+                    result = "Busy , try later";
+                }
                 if (type.contains("DeleteAll")) {
                     String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
                     //如果删除失败，流程继续

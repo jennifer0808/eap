@@ -480,6 +480,10 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                         return "选中失败,未跳至main界面!";
                     }
                 }
+                //登录权限
+                if(!loginEngineer()){
+                    return "选中失败,未机台未登录至Engineer权限!";
+                }
                 List<String> result = iSecsHost.executeCommand("playback select.txt");
                 if ("done".equals(result.get(0))) {
                     //跳转页面成功后，读取recipelist的值
@@ -556,7 +560,78 @@ public class MarchFlexTRAKCDHost extends EquipModel {
         } catch (Exception e) {
             logger.error("Select recipe " + recipeName + " error:" + e.getMessage(), e);
             return "选中失败";
+        }finally {
+            Thread thread = new Thread(new MyThread(this));
+            thread.start();
         }
+    }
+
+    class MyThread implements Runnable {
+        MarchFlexTRAKCDHost marchFlexTRAKCDHost;
+
+        public MyThread() {
+        }
+
+        public MyThread(MarchFlexTRAKCDHost marchFlexTRAKCDHost) {
+            this.marchFlexTRAKCDHost = marchFlexTRAKCDHost;
+        }
+
+        @Override
+        public void run() {
+            marchFlexTRAKCDHost.logoutEngineer();
+        }
+    }
+
+    private boolean loginEngineer() throws InterruptedException {
+        boolean result = true;
+        List<String> userResult = iSecsHost.executeCommand("read user");
+        if (userResult != null && "Engineer".equalsIgnoreCase(userResult.get(0))) {
+            logger.info("当前权限已是Engineer，无需重复登录！");
+            return result;
+        }
+        if (!this.gotoScreenByOCR("login", "click_login", 100)) {
+            logger.info("跳转至login界面失败！");
+            result = false;
+        } else {
+            List<String> loginResult = iSecsHost.executeCommand("playback login.txt");
+            if(!"done".equalsIgnoreCase(loginResult.get(0))){
+                logger.info("执行login失败！");
+                result = false;
+            }else{
+                loginResult = iSecsHost.executeCommand("playback login_ok.txt");
+                if(!"done".equalsIgnoreCase(loginResult.get(0))){
+                    logger.info("执行login_ok失败！");
+                    result = false;
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean logoutEngineer() {
+        boolean result = true;
+        try {
+            List<String> userResult = iSecsHost.executeCommand("read user");
+            if (!this.gotoScreenByOCR("login", "click_login", 100)) {
+                logger.info("跳转至login界面失败！");
+                result = false;
+            } else {
+                List<String> loginResult = iSecsHost.executeCommand("playback login_op.txt");
+                if (!"done".equalsIgnoreCase(loginResult.get(0))) {
+                    logger.info("执行login_op失败！");
+                    result = false;
+                } else {
+                    loginResult = iSecsHost.executeCommand("playback login_ok.txt");
+                    if (!"done".equalsIgnoreCase(loginResult.get(0))) {
+                        logger.info("执行login_ok失败！");
+                        result = false;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            logger.info(ex);
+        }
+        return result;
     }
 
     @Override
