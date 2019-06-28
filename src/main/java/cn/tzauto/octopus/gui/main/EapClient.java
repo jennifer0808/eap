@@ -557,20 +557,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
         } else if (source instanceof UiLogUtil) {
             UiLogUtil src = (UiLogUtil) source;
             if (property.equalsIgnoreCase(UiLogUtil.EVENT_LOG_PROPERTY)) {
-                TextArea temp = (TextArea) EapClient.root.lookup("#eventLog");
-                if (temp != null) {
-                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
-                }
+                    UiLogUtil.appendText("eventLog", newValue.toString() + "\n");
             } else if (property.equalsIgnoreCase(UiLogUtil.SERVER_LOG_PROPERTY)) {
-                TextArea temp = (TextArea) EapClient.root.lookup("#severLog");
-                if (temp != null) {
-                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
-                }
+                    UiLogUtil.appendText("severLog", newValue.toString() + "\n");
             } else if (property.equalsIgnoreCase(UiLogUtil.SECS_LOG_PROPERTY)) {
-                TextArea temp = (TextArea) EapClient.root.lookup("#secsLog");
-                if (temp != null) {
-                    UiLogUtil.appendText(temp, newValue.toString() + "\n");
-                }
+                    UiLogUtil.appendText("secsLog", newValue.toString() + "\n");
             }
         }
     }
