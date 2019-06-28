@@ -68,7 +68,7 @@ public class AsmAD838Host extends EquipHost {
 
                 if (rptDefineNum < 1) {
                     super.findDeviceRecipe();
-//                    initRptPara();
+
                     rptDefineNum++;
 
                     sendS2F37outCloseAll();
@@ -103,23 +103,7 @@ public class AsmAD838Host extends EquipHost {
             }
         }
     }
-    private void initRptPara() {
-//sendS6F23clear();
-        //重写事件 报告
-//            sendS2f33out(50007l, 902l, 906l);
-//            sendS2f35out(50007l, 50007l, 50007l);
-//            sendS2F37out(50007l);
-//        sendS2F37outCloseAll();
-//        sendS2F33clear();
-//        sendS2F35clear();
-//        sendS2F33init();
-//        sendS2F35init();
-        sendS2F37outAll();
-        sendS2F33clear();
-        sendS2F35clear();
 
-        sendStatus2Server(equipStatus);
-    }
 
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {

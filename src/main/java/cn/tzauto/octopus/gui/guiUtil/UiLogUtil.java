@@ -62,31 +62,35 @@ public class UiLogUtil {
         outMsg.append("[").append(GlobalConstants.dateFormat.format(new Date())).append("] ").append(deviceInfoMsg).append(" ").append(msg);
         return outMsg.toString();
     }
-
-
+    private static TextArea serverLog,secsLog,eventLog;
+    static {
+     serverLog = (TextArea) EapClient.root.lookup("#severLog");
+     secsLog = (TextArea) EapClient.root.lookup("#secsLog");
+     eventLog = (TextArea) EapClient.root.lookup("#eventLog");
+    }
     public void appendLog2SeverTab(String deviceCode, String msg) {
-        TextArea serverLog = (TextArea) EapClient.root.lookup("#severLog");
+
         String finalMsg = formateMsg(deviceCode, msg);
 //        secsLog.appendText(finalMsg + "\n");
         logger.info("[ServerLog]" + finalMsg);
 //        setServerMsgProperty(finalMsg);
-        appendText(serverLog, finalMsg);
+        appendText("serverLog", finalMsg);
     }
 
     public void appendLog2SecsTab(String deviceCode, String msg) {
-        TextArea secsLog = (TextArea) EapClient.root.lookup("#secsLog");
+
         String finalMsg = formateMsg(deviceCode, msg);
         logger.info("[SecsLog]" + finalMsg);
 //        setSecsMsgProperty(finalMsg);
-        appendText(secsLog, finalMsg);
+        appendText("secsLog", finalMsg);
     }
 
     public void appendLog2EventTab(String deviceCode, String msg) {
-        TextArea eventLog = (TextArea) EapClient.root.lookup("#eventLog");
+
         String finalMsg = formateMsg(deviceCode, msg);
         logger.info("[EventLog]" + finalMsg);
 //        setEventMsgProperty(finalMsg);
-        appendText(eventLog, finalMsg);
+        appendText("eventLog", finalMsg);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -126,34 +130,82 @@ public class UiLogUtil {
         this.eventmsgProperty = eventmsgProperty;
     }
 
-    public static void appendText(TextArea logArea, String msg) {
-        ObservableList<CharSequence> logs = logArea.getParagraphs();
-        StringBuilder builder = new StringBuilder();
-        if (logs.size() > 100) {
-            ArrayList<CharSequence> tmpLogs = new ArrayList<>();
-            tmpLogs.addAll(logs);
-            tmpLogs.remove(logs.size() - 1);
-            //超过100删30
-            ArrayList<CharSequence> tmpList = new ArrayList<>();
-            for (int i = 0; i < 90; i++) {
-                tmpList.add(logs.get(i));
-            }
-            tmpLogs.removeAll(tmpList);
-            for (CharSequence str : tmpLogs) {
-                builder.append(str.toString() + "\n");
-            }
-            logArea.clear();
+//    public static void appendText(TextArea logArea, String msg) {
+//        ObservableList<CharSequence> logs = logArea.getParagraphs();
+//        StringBuilder builder = new StringBuilder();
+//        if (logs.size() > 100) {
+//            ArrayList<CharSequence> tmpLogs = new ArrayList<>();
+//            tmpLogs.addAll(logs);
+//            tmpLogs.remove(logs.size() - 1);
+//            //超过100删30
+//            ArrayList<CharSequence> tmpList = new ArrayList<>();
+//            for (int i = 0; i < 90; i++) {
+//                tmpList.add(logs.get(i));
+//            }
+//            tmpLogs.removeAll(tmpList);
+//            for (CharSequence str : tmpLogs) {
+//                builder.append(str.toString() + "\n");
+//            }
+//            logArea.clear();
+//        }
+//        builder.append(msg);
+//        Platform.runLater(new Runnable() {
+//            @Override
+//            public void run() {
+//                logArea.appendText(builder.toString()+ "\n");
+//            }
+//        });
+//
+//
+//    }
+ private    static TextArea logTextArea=null;
+    public static void appendText(String logString, String msg) {
+
+        switch (logString) {
+            case "eventLog":
+                logTextArea=eventLog;
+                break;
+            case "severLog":
+                logTextArea=serverLog;
+                break;
+            case "secsLog":
+                logTextArea=secsLog;
+                break;
+            default:
+                break;
         }
-        builder.append(msg);
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                logArea.appendText(builder.toString()+ "\n");
-            }
-        });
+       if(logTextArea!=null){
+           ObservableList<CharSequence> logs = logTextArea.getParagraphs();
+           StringBuilder builder = new StringBuilder();
+           if (logs.size() > 100) {
+               ArrayList<CharSequence> tmpLogs = new ArrayList<>();
+               tmpLogs.addAll(logs);
+               tmpLogs.remove(logs.size() - 1);
+               //超过100删30
+               ArrayList<CharSequence> tmpList = new ArrayList<>();
+               for (int i = 0; i < 90; i++) {
+                   tmpList.add(logs.get(i));
+               }
+               tmpLogs.removeAll(tmpList);
+               for (CharSequence str : tmpLogs) {
+                   builder.append(str.toString() + "\n");
+               }
+               logTextArea.clear();
+           }
+           builder.append(msg);
+           Platform.runLater(new Runnable() {
+               @Override
+               public void run() {
+                   logTextArea.appendText(builder.toString()+ "\n");
+               }
+           });
+
+       }
 
 
     }
+//
+
 
     public String getServermsgProperty() {
         return servermsgProperty;
