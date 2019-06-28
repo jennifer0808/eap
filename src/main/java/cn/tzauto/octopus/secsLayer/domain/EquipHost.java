@@ -766,6 +766,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         try {
             DataMsgMap data = activeWrapper.sendS1F17out();
             byte onlack = (byte) data.get("ONLACK");
+            logger.info("result of s1f17onlack:"+onlack);
             if (onlack == 0 || onlack == 2) {
                 setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }

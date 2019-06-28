@@ -60,16 +60,22 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
+
                 }
 
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
 
+                logger.info("rptDefineNum:"+rptDefineNum);
                 if (rptDefineNum < 1) {
+
+                    //为了能调整为online remote
+                    logger.info("sendS1F17out request online...");
+                    this.sendS1F17out();
+                    logger.info("sendS2f41Cmd online remote...");
+                    //获取设备开机状态
                     super.findDeviceRecipe();
-//                    initRptPara();
-                    rptDefineNum++;
 
                     sendS2F37outCloseAll();
                     sendS2F37out(2);
@@ -81,12 +87,15 @@ public class AsmAD838Host extends EquipHost {
 
                     sendS5F3out(true);
                     sendStatus2Server(equipStatus);
+                    rptDefineNum++;
                 }
                 msg = this.inputMsgQueue.take();
                 if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")){
                     processS1F1in(msg);
                 }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")){
                     processS1F13in(msg);
+                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F14IN")){
+                    processS1F14in(msg);
                 }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
@@ -103,23 +112,7 @@ public class AsmAD838Host extends EquipHost {
             }
         }
     }
-    private void initRptPara() {
-//sendS6F23clear();
-        //重写事件 报告
-//            sendS2f33out(50007l, 902l, 906l);
-//            sendS2f35out(50007l, 50007l, 50007l);
-//            sendS2F37out(50007l);
-//        sendS2F37outCloseAll();
-//        sendS2F33clear();
-//        sendS2F35clear();
-//        sendS2F33init();
-//        sendS2F35init();
-        sendS2F37outAll();
-        sendS2F33clear();
-        sendS2F35clear();
 
-        sendStatus2Server(equipStatus);
-    }
 
     @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
@@ -132,18 +125,20 @@ public class AsmAD838Host extends EquipHost {
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+                processS1F1in(data);
+//                this.inputMsgQueue.put(data);
+            }else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            } else if (tagName.equalsIgnoreCase("S1F13IN")) {
+            }else if (tagName.equalsIgnoreCase("S1F13IN")) {
+                processS1F13in(data);
+//                this.inputMsgQueue.put(data);
+            }else if (tagName.equalsIgnoreCase("s1f14in")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s1f14in")) {
-                processS1F14in(data);
-            } else if (tagName.equalsIgnoreCase("s1f4in")) {
+            }else if (tagName.equalsIgnoreCase("s1f4in")) {
                 putDataIntoWaitMsgValueMap(data);
-            } else if (tagName.equalsIgnoreCase("s2f38in")){
+            }else if (tagName.equalsIgnoreCase("s2f38in")){
                 processS2F38in(data);
-            } else if (tagName.equalsIgnoreCase("S6F11IN")) {
+            }else if (tagName.equalsIgnoreCase("S6F11IN")) {
                 replyS6F12WithACK(data, (byte) 0);
                 if (data.get("CEID") != null) {
                     ceid = Long.parseLong(data.get("CEID").toString());
@@ -194,6 +189,27 @@ public class AsmAD838Host extends EquipHost {
             e.printStackTrace();
         }
     }
+
+
+
+    @SuppressWarnings("unchecked")
+    public void sendS1F17out() {
+
+        try {
+            DataMsgMap data = activeWrapper.sendS1F17out();
+            byte onlack = (byte) data.get("ONLACK");
+            logger.info("result of s1f17onlack:"+onlack);
+            if (onlack == 0 || onlack == 2) {
+                setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+            }else{
+                sendS2f41Cmd("ONLINE_REMOTE");
+            }
+            data = null;
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
 
     @Override
     public Map sendS7F5out(String recipeName) {
@@ -486,7 +502,23 @@ public class AsmAD838Host extends EquipHost {
             sqlSession.close();
         }
     }
+    private void initRptPara() {
+//sendS6F23clear();
+        //重写事件 报告
+//            sendS2f33out(50007l, 902l, 906l);
+//            sendS2f35out(50007l, 50007l, 50007l);
+//            sendS2F37out(50007l);
+//        sendS2F37outCloseAll();
+//        sendS2F33clear();
+//        sendS2F35clear();
+//        sendS2F33init();
+//        sendS2F35init();
+        sendS2F37outAll();
+        sendS2F33clear();
+        sendS2F35clear();
 
+        sendStatus2Server(equipStatus);
+    }
 
     @Override
     public String checkPPExecName(String recipeName) {
