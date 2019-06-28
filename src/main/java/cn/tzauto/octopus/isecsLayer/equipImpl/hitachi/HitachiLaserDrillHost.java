@@ -387,6 +387,7 @@ public class HitachiLaserDrillHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
                 Thread.sleep(900);
                 iSecsHost.executeCommand("write lot " + this.lotId);
+//                iSecsHost.executeCommand("dialog \"Lot No\" write " + lotId);
                 iSecsHost.executeCommand("replay enter.exe");
                 Thread.sleep(1800);
                 iSecsHost.executeCommand("playback clearpartno.txt");

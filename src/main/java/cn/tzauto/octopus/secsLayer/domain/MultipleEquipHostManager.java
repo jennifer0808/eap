@@ -21,7 +21,7 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.sdr4isecs.main.MultipleSDRManager;
+//import cn.tzauto.octopus.sdr4isecs.main.MultipleSDRManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
@@ -1471,7 +1471,7 @@ public class MultipleEquipHostManager {
         List<DeviceInfo> deviceInfoSecs = deviceInfoMap.get("SECS");
         List<DeviceInfo> deviceInfoIsecs = deviceInfoMap.get("ISECS");
         if (GlobalConstants.getProperty("USE_SDR").equals("1")) {
-            initializeSDR(deviceInfoSecs);
+//            initializeSDR(deviceInfoSecs);
         }
         pass = initializeSecs(deviceInfoSecs);
         if (!pass) {
@@ -1688,40 +1688,40 @@ public class MultipleEquipHostManager {
      * @param deviceInfos
      * @return
      */
-    private boolean initializeSDR(List<DeviceInfo> deviceInfos) {
-        boolean pass = false;
-        MultipleSDRManager multipleSDRManager = new MultipleSDRManager();
-        try {
-            pass = multipleSDRManager.initialize(deviceInfos);
-        } catch (ParserConfigurationException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (SAXException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (IOException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            pass = false;
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            pass = false;
-            e.printStackTrace();
-        } finally {
-            return pass;
-        }
+//    private boolean initializeSDR(List<DeviceInfo> deviceInfos) {
+//        boolean pass = false;
+//        MultipleSDRManager multipleSDRManager = new MultipleSDRManager();
+//        try {
+//            pass = multipleSDRManager.initialize(deviceInfos);
+//        } catch (ParserConfigurationException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (SAXException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (ClassNotFoundException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (InstantiationException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            pass = false;
+//            e.printStackTrace();
+//        } finally {
+//            return pass;
+//        }
+//
 
-
-    }
+//    }
 
 }

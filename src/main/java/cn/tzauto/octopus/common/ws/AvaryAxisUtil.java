@@ -162,21 +162,9 @@ public class AvaryAxisUtil {
 //        System.out.println(workLicense("DEXP03000100", "G1483684www"));
 
         //1-2
-        try {
-            List list = getProductionCondition("DEXP03000100", "FSAPY55C2R28");
-            System.out.println(list);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        //1-3
 //        try {
-//            boolean b = isInitialPart("FSAPMN7A2A135","DEXP03000100","3","0");
-//            System.out.println(b);
+//            List list = getProductionCondition("DEXP03000100", "FSAPY55C2R28");
+//            System.out.println(list);
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
 //        } catch (ServiceException e) {
@@ -184,6 +172,19 @@ public class AvaryAxisUtil {
 //        } catch (MalformedURLException e) {
 //            e.printStackTrace();
 //        }
+
+        //1-3
+        try {
+//            boolean b = isInitialPart("FSAPMN7A2A135","DEXP03000100","3");
+            boolean b = isInitialPart("FSAPGG8E2K2","XXX","3");
+            System.out.println(b);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 
 //        1-4
 //        try {
