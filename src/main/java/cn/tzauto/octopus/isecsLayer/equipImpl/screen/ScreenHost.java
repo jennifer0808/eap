@@ -38,7 +38,6 @@ public class ScreenHost extends EquipModel {
 
     private String tableNum = "SFCZ4_ZD_DIExposure";
     private String power = ""; //曝光能量
-    private String lotStartTime = ""; //开始时间
     private boolean addLimit = false; //追加限制，只有做完一批才能追加，true 限制开启，正在做，无法追加    false 限制关闭，可以追加
     private Map<String, List<String>> zsz;//涨缩值
     private static List<String[]> inkInfo; //油墨型号，及能量格范围
@@ -148,46 +147,7 @@ public class ScreenHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
-        int start = 80000;
-        int end = 203000;
         LocalDateTime now = LocalDateTime.now();
-
-        String classInfo = "0"; //白班
-        int nowTime = Integer.parseInt(now.format(AvaryAxisUtil.dtf3));
-        if (start > nowTime || end < nowTime) {
-            classInfo = "1";   //夜班
-        }
-
-        String result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo);
-        if (result1 == null) {
-            String result2 = AvaryAxisUtil.getOrderNum(classInfo);
-            if (result2 == null) {
-                logger.error("报表数据上传中，无法获取到生產單號");
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，无法获取到生產單號");
-                return false;
-            }
-            result1 = result2;
-            String result3 = AvaryAxisUtil.insertMasterTable(result2, "1", deviceCode, tableNum, classInfo, "001", now.format(AvaryAxisUtil.dtf2), "eapsystem");  //system临时代替，  創建工號
-            if (!"".equals(result3)) {
-                logger.error("报表数据上传中，插入主表數據失败" + result3);
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
-                return false;
-            }
-
-        }
-        Map<String, String> map4 = AvaryAxisUtil.getParmByLotNum(lotId);
-        if (map4.size() == 0) {
-            logger.error("报表数据上传中，批號獲料號,層別,數量 为空");
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，批號獲料號,層別,數量 为空");
-            return false;
-        }
-        Map<String, String> map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, map4.get("Layer"));
-        if (map5.size() == 0) {
-            logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-            //報錯:獲取途程信息失敗
-            return false;
-        }
 
         /**
          * PaperNo	表單號
@@ -224,11 +184,19 @@ public class ScreenHost extends EquipModel {
          ModifyTime	最後修改時間----
          userid	作業員------
          */
-
-        String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
-                map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
+        String result1 = getMainTableName();
+        if (result1.equals("1")) {
+            return false;
+        }
+        Map<String, String> productionMap = getProductionMap();
+        String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, productionMap.get("Layer"), productionMap.get("MainSerial"),
+                productionMap.get("PartNum"), productionMap.get("WorkNo"), productionMap.get("Layer"), productionMap.get("LayerName"), productionMap.get("Serial"), productionMap.get("OrderId"), scsl, power,
                 item3, item4, item5, item6, isFirstPro ? "1" : "0"
         );
+//        String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, map4.get("Layer"), map5.get("MainSerial"),
+//                map5.get("PartNum"), map5.get("WorkNo"), map4.get("Layer"), map5.get("LayerName"), map5.get("Serial"), map5.get("OrderId"), scsl, power,
+//                item3, item4, item5, item6, isFirstPro ? "1" : "0"
+//        );
 
 //        String result = AvaryAxisUtil.insertTable();
         if ("".equals(result)) {

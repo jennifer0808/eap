@@ -19,6 +19,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.hitachi.LaserDrillUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.socket.RecipeMapping;
@@ -27,7 +28,11 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import javax.xml.rpc.ServiceException;
 import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -382,6 +387,13 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
+        try {
+            if (!firstLot) {
+                uploadData();
+            }
+        } catch (Exception e) {
+            logger.error("报表上传出错", e);
+        }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
@@ -848,39 +860,6 @@ public class HitachiLaserDrillHost extends EquipModel {
         return lineUseStatus;
     }
 
-    String Date = "";
-    String Axis = "";
-    String AP_No = "";
-    String Power = "";
-    String CrystalNo = "";
-    String Crystal_Time = "";
-
-    public void setPCHK(String date, String axis, String aP_No, String power, String CrystalNo, String Crystal_Time) {
-        if (date != null) {
-            Date = date;
-            logger.info("power check data:Date:" + date);
-        }
-        if (axis != null) {
-            Axis = axis;
-            logger.info("power check data:Axis:" + date);
-        }
-        if (aP_No != null) {
-            AP_No = aP_No;
-            logger.info("power check data:AP_No:" + date);
-        }
-        if (CrystalNo != null) {
-            this.CrystalNo = CrystalNo;
-            logger.info("power check data:CrystalNo:" + CrystalNo);
-        }
-        if (Crystal_Time != null) {
-            this.Crystal_Time = Crystal_Time;
-            logger.info("power check data:Crystal_Time:" + Crystal_Time);
-        }
-        if (power != null) {
-            Power = power;
-            logger.info("power check data:Power:" + power);
-        }
-    }
 
     private void changeRecipe() throws FileNotFoundException {
         if ("1".equals(GlobalConstants.getProperty("HITACHI_LASER_DRILL_AUTO_CHANGE_RECIPE"))) {
@@ -919,5 +898,69 @@ public class HitachiLaserDrillHost extends EquipModel {
         //todo  生產前品質確認
         //todo 掃描線長/代理人/工程師工號條碼登陸
         return true;
+    }
+
+    public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+        if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
+            return true;
+        }
+        LocalDateTime now = LocalDateTime.now();
+
+        /**
+         * PaperNo	表單號
+         MacState	設備狀態          未传入参数以----结尾
+         StartTime	開始時間
+         EndTime	完成時間
+         Lotnum	批號
+         Layer	層別
+         MainSerial	主途程序
+         Partnum	料號
+         WorkNo	工令
+         SfcLayer	SFC層別          与层别一样
+         LayerName	層別名稱
+         Serial	途程序
+         IsMain	是否主件     ----
+         OrderId	第幾次過站
+         Qty	生產數量
+
+         */
+        String result1 = getMainTableName();
+        if (result1.equals("1")) {
+            return false;
+        }
+        Map<String, String> productionMap = getProductionMap();
+
+        List paraValueList = new ArrayList();
+        paraValueList.add(result1);
+        paraValueList.addAll(setNormalData("正常", productionMap));
+
+        String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
+        if ("".equals(uploadReportDetailResult)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
+            return true;
+        }
+        logger.error("报表数据上传中，明細表數據插入失败：" + uploadReportDetailResult);
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，明細表數據插入失败：" + uploadReportDetailResult);
+        return false;
+    }
+
+    private List setNormalData(String MacState, Map<String, String> productionMap) {
+        List paraValueList = new ArrayList();
+        paraValueList.add(MacState);
+        paraValueList.add(lotStartTime);
+        LocalDateTime now = LocalDateTime.now();
+        paraValueList.add(now.format(AvaryAxisUtil.dtf2));
+        paraValueList.add(lotId);
+        paraValueList.add(productionMap.get("Layer"));
+        paraValueList.add(productionMap.get("MainSerial"));
+        paraValueList.add(productionMap.get("PartNum"));
+        paraValueList.add(productionMap.get("WorkNo"));
+        paraValueList.add(productionMap.get("Layer"));
+        paraValueList.add(productionMap.get("LayerName"));
+        paraValueList.add(productionMap.get("Serial"));
+        paraValueList.add(productionMap.get("OrderId"));
+
+        return paraValueList;
+
     }
 }

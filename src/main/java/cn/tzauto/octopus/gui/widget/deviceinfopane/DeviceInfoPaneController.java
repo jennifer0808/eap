@@ -117,6 +117,7 @@ public class DeviceInfoPaneController implements Initializable {
 
 
     private void buttonOKClick(Stage stage) {
+
         //
         if (JRB_EngineerMode.isSelected() != isEngineerMode) {
             isEngineerMode = JRB_EngineerMode.isSelected();
@@ -124,6 +125,23 @@ public class DeviceInfoPaneController implements Initializable {
         if (JRB_LocalMode.isSelected() != isLocalMode) {
             isLocalMode = JRB_LocalMode.isSelected();
         }
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
+        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+        String business = "";
+        if (isEngineerMode) {
+            business = "E";
+        } else {
+            business = "N";
+        }
+        if (isLocalMode) {
+            business = business + "L";
+        } else {
+            business = business + "R";
+        }
+        deviceInfoExt.setBusinessMod(business);
+        sqlSession.commit();
+        sqlSession.close();
         stage.close();
         flag.put(deviceCode, false);
     }
