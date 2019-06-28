@@ -990,7 +990,7 @@ public class AvaryAxisUtil {
         return num;
     }
 
-    public static String uploadReportDetail(String deviceType, String groupId, String functionId, List paraValue) {
+    public static String uploadReportDetail(String deviceType, List paraValue) {
         String paraName = (String) mesInterfaceParaMap.get(deviceType).get("reportDetailParaName");
         String[] paraNames = paraName.split("|");
         if (paraNames.length != paraValue.size()) {
@@ -999,7 +999,7 @@ public class AvaryAxisUtil {
             return "上传明细数据失败";
         }
         Call call = null;
-        String result = null;
+        String result = "上传明细数据失败";
         try {
             call = getCallForSendDataToSerGrp();
             LocalDateTime now = LocalDateTime.now();

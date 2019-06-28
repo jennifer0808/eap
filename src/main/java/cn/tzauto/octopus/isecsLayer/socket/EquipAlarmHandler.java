@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package cn.tzauto.octopus.isecsLayer.socket;
 
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
@@ -19,13 +16,11 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author 陈佳能
- */
 public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 
     //    private static final Logger logger = Logger.getLogger(EquipAlarmHandler.class);
     private static final Logger logger = Logger.getLogger("EquipAlarmHandler");
+    private String crystalPower = "";
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -107,21 +102,26 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                                 logger.info("power check data:Date:" + str.split(",")[1]);
 //                            ((HitachiLaserDrillHost) GlobalConstants.eapView.equipModels.get(deviceInfo.getDeviceCode())).setPCHK(str.split(",")[1], null, null, null);
                             }
-                            if (str.contains("Axis")) {
-                                logger.info("power check data:Axis:" + str.split(",")[1]);
-                            }
-                            if (str.contains("AP_No")) {
-                                logger.info("power check data:AP_No:" + str.split(",")[1]);
-                            }
-                            if (str.contains("Power")) {
-                                logger.info("power check data:Power:" + str.split(",")[1]);
-                            }
                             if (str.contains("Crystal No.")) {
                                 logger.info("power check data:CrystalNo:" + str.split(",")[1]);
                             }
                             if (str.contains("Crystal_Time")) {
                                 logger.info("power check data:Crystal_Time:" + str.split(",")[1]);
                             }
+                            if (str.contains("Axis")) {
+                                crystalPower = str.substring(0, 2);
+                                logger.info("power check data:Axis:" + str.split(",")[1]);
+                            }
+                            if (str.contains("AP_No")) {
+                                crystalPower = crystalPower + "_" + str;
+                                logger.info("power check data:AP_No:" + str.split(",")[1]);
+                            }
+                            if (str.contains("Power")) {
+                                crystalPower = crystalPower + "=" + str;
+                                logger.info("power check data:Power:" + str.split(",")[1]);
+                                crystalPowerCheck(crystalPower);
+                            }
+
                         }
                         if (str.contains(".GLV")) {
                             if (str.contains("RMAX_")) {
@@ -169,6 +169,11 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         return alarmRecords;
     }
 
+    /**
+     * 日立镭射钻孔机水晶头精度校验
+     * @param deviceCode
+     * @param str
+     */
     private void accuracyCheck(String deviceCode, String str) {
         logger.info("HITACHI_LASER_DRILL_ACCURACY=" + GlobalConstants.getProperty("HITACHI_LASER_DRILL_ACCURACY"));
         String[] accuracys = str.split(",");
@@ -186,6 +191,21 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                 } catch (Exception e) {
                 }
             }
+        }
+    }
+
+    /**
+     * 日立镭射钻孔机水晶头能量校验
+     * @param crystalPower
+     */
+    private void crystalPowerCheck(String crystalPower) {
+        String[] crystalPowers = crystalPower.split("");
+        String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[0]));
+        double actualPower = Double.parseDouble(crystalPowers[1]);
+        double UPPER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("UPPER_LIMIT"))) / 100;
+        double LOWER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("LOWER_LIMIT"))) / 100;
+        if (Double.valueOf(standardPower) > actualPower * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower * (1 - LOWER_LIMIT)) {
+            logger.error("Crystal power out of range. actual data " + crystalPower);
         }
     }
 }

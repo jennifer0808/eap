@@ -14,6 +14,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.BigDecimalArithmetic;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -75,7 +77,8 @@ public abstract class EquipModel extends Thread {
     public boolean firstLot = true; // 第一批次，标志位    手动重传数据后标志为重置
     public boolean isEngineerMode = false;
     public boolean isLocalMode = false;
-
+    private String tableNum = "";
+    protected String lotStartTime = ""; //开始时间
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -1021,6 +1024,73 @@ public abstract class EquipModel extends Thread {
     }
 
     public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+//        uploadReportDetail()
         return true;
+    }
+
+    protected Map getParmByLotNum() {
+        try {
+            return AvaryAxisUtil.getParmByLotNum(lotId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    protected String getMainTableName() {
+        int start = 80000;
+        int end = 203000;
+        LocalDateTime now = LocalDateTime.now();
+
+        String classInfo = "0"; //白班
+        int nowTime = Integer.parseInt(now.format(AvaryAxisUtil.dtf3));
+        if (start > nowTime || end < nowTime) {
+            classInfo = "1";   //夜班
+        }
+        String result1 = "";
+        try {
+
+            result1 = AvaryAxisUtil.tableQuery(tableNum, deviceCode, classInfo);
+            if (result1 == null) {
+                String result2 = AvaryAxisUtil.getOrderNum(classInfo);
+                if (result2 == null) {
+                    logger.error("报表数据上传中，无法获取到生產單號");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，无法获取到生產單號");
+                }
+                result1 = result2;
+                String result3 = AvaryAxisUtil.insertMasterTable(result2, "1", deviceCode, tableNum, classInfo, "001", now.format(AvaryAxisUtil.dtf2), "eapsystem");  //system临时代替，  創建工號
+                if (!"".equals(result3)) {
+                    logger.error("报表数据上传中，插入主表數據失败" + result3);
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，插入主表數據失败");
+                }
+
+            }
+        } catch (Exception e) {
+            return "1";
+        }
+        return result1;
+    }
+
+    protected Map<String, String> getProductionMap() {
+        Map<String, String> map4 = new HashMap<>();
+        Map<String, String> map5 = new HashMap<>();
+        try {
+            map4 = AvaryAxisUtil.getParmByLotNum(lotId);
+            if (map4.size() == 0) {
+                logger.error("报表数据上传中，批號獲料號,層別,數量 为空");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，批號獲料號,層別,數量 为空");
+                return null;
+            }
+            map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, map4.get("Layer"));
+            if (map5.size() == 0) {
+                logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
+                //報錯:獲取途程信息失敗
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        map4.putAll(map5);
+        return map4;
     }
 }

@@ -21,11 +21,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
-import javax.xml.rpc.ServiceException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.ResourceBundle;
 
 /**
@@ -72,7 +69,7 @@ public class EquipStatusPaneController implements Initializable {
                 }
             }
 
-            if (equipNodeBean.getEquipStateProperty().isCommOn()) {
+            if (equipNodeBean.getEquipStateProperty().isCommOn() && GlobalConstants.sysUser != null) {
                 contextMenu.hide();
                 MenuItem menuItem = new MenuItem("设备详情");
 
