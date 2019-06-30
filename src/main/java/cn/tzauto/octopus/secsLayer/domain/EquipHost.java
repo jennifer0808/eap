@@ -717,6 +717,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
 
+
     @SuppressWarnings("unchecked")
     public void processS1F13in(DataMsgMap data) {
         try {
@@ -1227,6 +1228,16 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
+    protected void processS6F11EquipStatus(DataMsgMap data) {
+        //回复s6f11消息
+        long ceid = 0l;
+        try {
+            ceid = (long)data.get("CEID");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        showCollectionsEventInfo(ceid);
+    }
 
     protected void processS6F11inStripMapUpload(DataMsgMap data) {
         logger.info("----Received from Equip Strip Map Upload event - S6F11");

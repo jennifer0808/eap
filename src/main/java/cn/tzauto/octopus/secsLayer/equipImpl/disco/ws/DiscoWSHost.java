@@ -118,7 +118,7 @@ public class DiscoWSHost extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-//                            processS6F11EquipStatus(msg);
+                            processS6F11EquipStatus(msg);
                         }
                         if (ceid == 7) {
                             if (!kerfCheck) {
@@ -207,6 +207,15 @@ public class DiscoWSHost extends EquipHost {
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
+        }
+        if("run".equalsIgnoreCase(equipStatus)) {
+            Map resultMap = sendS1F3SingleCheck(3218L);
+            long result = (long) resultMap.get("Value");
+            if(result >= 999) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"UV LAMP TOTAL TIME MORE THAN 999!");
+                holdDevice();
+                return;
+            }
         }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -394,6 +403,15 @@ public class DiscoWSHost extends EquipHost {
         return map;//this.sendS2f41Cmd("RESUME_H");
     }
 
+    @Override
+    public Map startDevice() {
+        Map cmdMap = this.sendS2f41Cmd("START");
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("HCACK", cmdMap.get("HCACK"));
+        return resultMap;
+    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="StartECCheck">
@@ -691,7 +709,7 @@ public class DiscoWSHost extends EquipHost {
     private String getDevIdFromEqp(long DEVID) {
         String devid = "--";
         DataMsgMap data = null;
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(DEVID);
         try {
             data = activeWrapper.sendS2F13out(list, ecFormat);
@@ -709,7 +727,7 @@ public class DiscoWSHost extends EquipHost {
         Map map = new HashMap();
         String z1bladeId = "";
         String z2bladeId = "";
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(4922L);
         list.add(4923L);
         DataMsgMap data = null;
@@ -863,10 +881,10 @@ public class DiscoWSHost extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-            long offset1 = 0;
-//            long offset1 = data.getSingleNumber("Z1");
-//            long offset2 = data.getSingleNumber("Z2");
-            long offset2 = 0;
+            ArrayList reportList = (ArrayList) data.get("REPORT");
+            List idList = (List) reportList.get(1);
+            long offset1 = (long) idList.get(0);
+            long offset2 = (long) idList.get(1);
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");
@@ -893,6 +911,7 @@ public class DiscoWSHost extends EquipHost {
         }
     }
 
+    @Override
     public Map sendS2F41outPPselect(String recipeName) {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");

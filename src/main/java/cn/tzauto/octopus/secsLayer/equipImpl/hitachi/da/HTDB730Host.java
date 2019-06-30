@@ -114,17 +114,8 @@ public class HTDB730Host extends EquipHost {
                     processS14f3in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CollEventID") != null) {
-                        long ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == StripMapUpCeid) {
-                            processS6F11inStripMapUpload(msg);
-                        } else {
-                            this.processS6F11StatusChange(msg);
-                        }
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11StatusChange(msg);
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -167,12 +158,7 @@ public class HTDB730Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                long ceid = (long) data.get("CEID");
-                if (ceid == 26 || ceid == 27) {
-                    processS6F11SpecialEvent(data);
-                } else {
-                    processS6F11in(data);
-                }
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
@@ -369,6 +355,80 @@ public class HTDB730Host extends EquipHost {
 
     // </editor-fold> 
 
+    @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = (long) data.get("CEID");
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+
+            // 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                replyS6F12WithACK(data, (byte) 0);
+                if (ceid == 26 || ceid == 27) {
+                    processS6F11SpecialEvent(data);
+                }
+
+                if (ceid == 0L) {
+                    controlState = FengCeConstant.CONTROL_OFFLINE;
+                    logger.info(deviceCode + "=====Equipment Offline");
+                } else if (ceid == 1L) {
+                    controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    logger.info(deviceCode + "=====Equipment control state change to Local");
+                } else if (ceid == 2L) {
+                    controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    logger.info(deviceCode + "=====Equipment control state change to Remote");
+                } else if (ceid == 3L) {
+                    equipStatus = "INIT";
+                    logger.info(deviceCode + "=====设备开始初始化");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 4L) {
+                    equipStatus = "SETUP";
+                    logger.info(deviceCode + "=====设备Setup");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 5L) {
+                    equipStatus = "READY";
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备READY");
+                    logger.info(deviceCode + "=====设备READY");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 6L) {
+                    equipStatus = "RUN";
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备开机");
+                    logger.info(deviceCode + "=====设备开机");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 7L) {
+                    equipStatus = "PAUSE";
+                    logger.info(deviceCode + "=====设备Pause");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 8L) {
+                    equipStatus = "ERROR";
+                    logger.info(deviceCode + "=====设备Error");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 38L) {
+                    equipStatus = "WAIT LOT";
+                    logger.info(deviceCode + "=====设备WAIT LOT");
+                    processS6F11EquipStatusChange(data);
+                } else if (ceid == 88L || ceid == 98L) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
+                    //reciep参数修改事件
+                    recipeParaChange = true;
+                } else if (ceid == 80L) {
+                    findDeviceRecipe();
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为[" + ppExecName + "]");
+                }
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
 
     private void processS6F11SpecialEvent(DataMsgMap data) {
         long ceid = 0L;
@@ -412,76 +472,13 @@ public class HTDB730Host extends EquipHost {
         }
     }
 
-    public void processS6F11StatusChange(DataMsgMap data) {
-        long ceid = 0l;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            if (ceid == 0L) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
-                logger.info(deviceCode + "=====Equipment Offline");
-            } else if (ceid == 1L) {
-                controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                logger.info(deviceCode + "=====Equipment control state change to Local");
-            } else if (ceid == 2L) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                logger.info(deviceCode + "=====Equipment control state change to Remote");
-            } else if (ceid == 3L) {
-                equipStatus = "INIT";
-                logger.info(deviceCode + "=====设备开始初始化");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 4L) {
-                equipStatus = "SETUP";
-                logger.info(deviceCode + "=====设备Setup");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 5L) {
-                equipStatus = "READY";
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备READY");
-                logger.info(deviceCode + "=====设备READY");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 6L) {
-                equipStatus = "RUN";
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备开机");
-                logger.info(deviceCode + "=====设备开机");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 7L) {
-                equipStatus = "PAUSE";
-                logger.info(deviceCode + "=====设备Pause");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 8L) {
-                equipStatus = "ERROR";
-                logger.info(deviceCode + "=====设备Error");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 38L) {
-                equipStatus = "WAIT LOT";
-                logger.info(deviceCode + "=====设备WAIT LOT");
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 88L || ceid == 98L) {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
-                //reciep参数修改事件
-                recipeParaChange = true;
-            } else if (ceid == 80L) {
-                findDeviceRecipe();
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为[" + ppExecName + "]");
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        //将设备的当前状态显示在界面上
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        map.put("ControlState", controlState);
-        changeEquipPanel(map);
-    }
 
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
-            ceid = data.getSingleNumber("CollEventID");
-            if (ceid == 80) {
-                findDeviceRecipe();
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为[" + ppExecName + "]");
-            }
+            ceid = (long) data.get("CEID");
+            findDeviceRecipe();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -505,11 +502,9 @@ public class HTDB730Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (equipStatus.equalsIgnoreCase("READY")) {
-                //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<Long> svlist = new ArrayList<>();
-                svlist.add(54121L);//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (svValue.get("54121").equals("0")) {
+                // 校验2D的开关是否已经开启，若关闭弹窗显示
+                Map svValue = sendS1F3SingleCheck(54121L);
+                if ("0".equals(String.valueOf(svValue.get("Value")))) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed！！");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");

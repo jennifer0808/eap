@@ -116,7 +116,7 @@ public class HTDB800Host extends EquipHost {
                     processS14F1in(msg);
                 }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")){
                     long ceid = (long) msg.get("CEID");
-                    if (ceid == 26) {
+                    if (ceid == 26 ) {
                         processS6F11SpecialEvent(msg);
                     }else{
                         processS6F11in(msg);
@@ -161,14 +161,7 @@ public class HTDB800Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
-//                long ceid = (long) data.get("CEID");
-//                if (ceid == 26) {
-//                    processS6F11SpecialEvent(data);
-//                } else {
-//                    processS6F11in(data);
-//                }
             } else if (tagName.equalsIgnoreCase("s9f9Timeout")) {
                 //接收到超时，直接不能下载
                 this.canDownladMap = false;
@@ -322,21 +315,47 @@ public class HTDB800Host extends EquipHost {
     }
 
     @Override
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = (long)data.get("CEID");
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+
+            // 根据ceid分发处理事件
+            if (ceid == StripMapUpCeid) {
+                processS6F11inStripMapUpload(data);
+            } else {
+                replyS6F12WithACK(data,(byte)0);
+                if (ceid == 80) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
+                }
+                if (ceid == 88L) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
+                    //reciep参数修改事件
+                    recipeParaChange = true;
+                }
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }
+            }
+
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
+    @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long)data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
             super.findDeviceRecipe();
-            if (ceid == 80) {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
-            }
-            if (ceid == 88L) {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到recipe参数被修改,开机时将执行参数检查...");
-                //reciep参数修改事件
-                recipeParaChange = true;
-            }
+
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -368,11 +387,9 @@ public class HTDB800Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (equipStatus.equalsIgnoreCase("run")) {
-                //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<String> svlist = new ArrayList<>();
-                svlist.add("54121");//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (svValue.get("54121").equals("0")) {
+                //校验2D的开关是否已经开启，若关闭弹窗显示
+                Map svValue = sendS1F3SingleCheck(54121L);
+                if ("0".equals(String.valueOf(svValue.get("Value")))) {
                     String dateStr = GlobalConstants.dateFormat.format(new Date());
                     this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
