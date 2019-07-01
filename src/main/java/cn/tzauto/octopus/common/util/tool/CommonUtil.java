@@ -269,6 +269,16 @@ public class CommonUtil {
             logger.error("Exception", e);
         }
     }
+    public static void startHtFtpJob(JobListener jobListener) {
+        DataCleanTask cleanDataTask = new DataCleanTask();
+        try {
+            QuartzManager.addJob(GlobalConstants.FTP_FILE_JOB, cleanDataTask, "0 0 0/1 * * ?"); //每小时执行一次
+            JobKey jobKey = new JobKey(GlobalConstants.FTP_FILE_JOB, QuartzManager.JOB_GROUP_NAME);
+            QuartzManager.addJobListner(jobListener, jobKey);
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        }
+    }
 
     public static void startMonitorAlarmJob(JobListener jobListener) {
         MonitorAlarmTask monitorAlarmTask = new MonitorAlarmTask();

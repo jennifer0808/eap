@@ -1,6 +1,7 @@
 package cn.tzauto.octopus.biz.device.dao;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -32,4 +33,8 @@ public interface DeviceInfoMapper {
     List<DeviceInfo> getDeviceInfo(String clientId);
 
     int delete(String id);
+
+    String queryWaferPath(String waferId);
+
+    void insertWaferMappingPath(@Param("name") String name, @Param("filePath")String filePath, @Param("month")String month);
 }

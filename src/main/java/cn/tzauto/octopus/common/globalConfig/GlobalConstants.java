@@ -44,6 +44,7 @@ public class GlobalConstants {
     public static final String COMM_CHECK_JOB_NAME = "COMM_CHECK_JOB";
     public static final String SESSION_CONTROL_JOB_NAME = "SESSION_CONTROL_JOB";
     public static final String DATA_CLEAN_JOB_NAME = "DATA_CLEAN_JOB";
+    public static final String FTP_FILE_JOB = "FTP_FILE_JOB";
     public static final String MONITOR_ALARM_JOB_NAME = "MONITOR_ALARM_JOB";
     public static final String MONITOR_ALARM_LOCK_JOB_NAME = "MONITOR_ALARM_LOCK_JOB";
     public static final String UPLOAD_MTBA_JOB_NAME = "UPLOAD_MTBA_JOB";
@@ -136,6 +137,10 @@ public class GlobalConstants {
     public static List<DeviceInfo> deviceInfos;
     public static DynamicClientFactory factory = null;
     public static Client mapBinClient = null;
+    public static String htFtpUrl;
+    public static String htFtpUser;
+    public static String htFtpPwd;
+    public static String winRarPath;
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -187,6 +192,14 @@ public class GlobalConstants {
         GlobalConstants.ftpUser = getProperty("ftpUser");
         GlobalConstants.ftpPwd = getProperty("ftpPwd");
         GlobalConstants.ftpPath = getProperty("ftpPath");
+
+        //读取华天FTP配置
+        GlobalConstants.htFtpUrl = getProperty("htFtpUrl");
+        GlobalConstants.htFtpUser = getProperty("htFtpUser");
+        GlobalConstants.htFtpPwd = getProperty("htFtpPwd");
+
+        GlobalConstants.winRarPath = getProperty("winRarPath");
+
 
         //读取Hold锁机标志
         // GlobalConstants. = prop.getProperty("HOLD_DEVICE");

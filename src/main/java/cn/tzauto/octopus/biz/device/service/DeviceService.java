@@ -37,7 +37,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author gavin
  */
 public class DeviceService extends BaseService {
@@ -599,5 +598,13 @@ public class DeviceService extends BaseService {
 
     public List<DeviceInfoExt> getAllDeviceInfoExts() {
         return deviceInfoExtMapper.getAllDeviceInfoExts();
+    }
+
+    public String queryWaferPath(String waferId) {
+        return deviceInfoMapper.queryWaferPath(waferId);
+    }
+
+    public void insertWaferMappingPath(String name, String filePath, String month) {
+        deviceInfoMapper.insertWaferMappingPath(name, filePath, month);
     }
 }

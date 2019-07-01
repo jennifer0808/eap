@@ -293,4 +293,14 @@
       'System',sysdate(), #{item.remarks,jdbcType=VARCHAR},'0' from dual
         </foreach>
     </insert>
+    <insert id="insertWaferMappingPath">
+        insert into wafer_mapping_path
+        (waferid,path,month)
+         value
+        (#{name},#{filePath},#{month})
+    </insert>
+
+    <select id="queryWaferPath" resultType="java.lang.String">
+        select path from wafer_mapping_path where waferid = #{waferId}
+    </select>
 </mapper>

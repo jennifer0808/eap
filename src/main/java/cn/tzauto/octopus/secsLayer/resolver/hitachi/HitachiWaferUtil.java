@@ -5,8 +5,13 @@
  */
 package cn.tzauto.octopus.secsLayer.resolver.hitachi;
 
+import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import cn.tzauto.octopus.common.util.ftp.HtFtpUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.*;
@@ -18,6 +23,8 @@ import java.util.*;
  */
 public class HitachiWaferUtil {
 
+    static String tempPath = "D://tempFiles/";
+
     static String waferMappingPath = "D:\\WAFERMAPPING";
     static String waferSavePath = "D:\\WAFERMAPPING_RESULT";
     private static final Logger logger = Logger.getLogger(HitachiWaferUtil.class);
@@ -25,88 +32,133 @@ public class HitachiWaferUtil {
 //    private static String maxColumnCount = "0";
 
     public static Map getWaferFileInfo(String waferId, String angle, String deviceCode) {
-        loadBinConfig();
         Map resultMap = new HashMap();
-//        String lotID = "lotID";
-//        String waferNo = "waferID";
-//        if (waferId.contains("-")) {
-//            lotID = waferId.split("-")[0];
-//        }
-
-        String[] arr = getPath(waferId, deviceCode);
-        String waferFilePath = arr[0];
-        String savePath = arr[1];
-        BufferedWriter bw = null;
+        InputStream in = null;
         BufferedReader br = null;
+        List<String> list = new ArrayList<>();
+        SqlSession sqlSession = null;
+        UUID uuid = UUID.randomUUID();
+        String random = uuid.toString();
         try {
-            String cfgline = null;
-
-            int rowCount = 0;
-            String columnCount = "";
-
-            File cfgfile = new File(waferFilePath);
-            if (!cfgfile.exists()) {
-                logger.error("文件不存在：" + waferFilePath);
-                return null;
+            sqlSession = MybatisSqlSession.getSqlSession();
+            DeviceService deviceService = new DeviceService(sqlSession);
+            String remotePath = deviceService.queryWaferPath(waferId);
+            logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
+            String localPath = tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
+            HtFtpUtil.downloadFile(localPath, remotePath);
+            boolean unrar = HtFtpUtil.unrar(localPath, tempPath + random);
+            if (unrar) {
+                File file = HtFtpUtil.getFile(new File(tempPath + random), waferId);
+                in = new FileInputStream(file);
+                br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                String tmpString = null;
+                br.readLine();
+                br.readLine();
+                br.readLine();
+                while ((tmpString = br.readLine()) != null) {
+                    list.add(tmpString);
+                }
             }
-            bw = new BufferedWriter(new OutputStreamWriter(FileUtils.openOutputStream(new File(savePath))));
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "UTF-8"));
-            List<String> list = new ArrayList<>();
-            while ((cfgline = br.readLine()) != null) {
-                list.add(cfgline);
-            }
-            if (list.size() == 0) {
-                logger.error("文件里面没有内容");
-                return null;
-            }
-            list = parseList(list);
-
-            rowCount = list.size();
-            int col = list.get(0).length();
-            columnCount = columnCount + col;
-            String[] bins = new String[list.size()];
-            for (int i = 0; i < list.size(); i++) {
-                bins[i] = list.get(i);
-            }
-            String[] results = transferAngle(bins, angle, rowCount, col);
-            resultMap.put("BinList", results);
-            bw.write("Wafer_ID : " + waferId + "\n");
-            bw.write("Flat_Notch : Bottom" + "\n");
-            bw.write("" + "\n");
-            for (int i = 0; i < results.length; i++) {
-                bw.write(results[i] + "\n");
-            }
-            bw.flush();
-            if ("90".equals(angle) || "270".equals(angle)) {
-                int tmp = rowCount;
-                rowCount = Integer.valueOf(columnCount);
-                columnCount = String.valueOf(tmp);
-            }
-            resultMap.put("RowCountInDieIncrements", rowCount);
-            resultMap.put("ColumnCountInDieIncrements", columnCount);
-            resultMap.put("ProcessDieCount", bins.length);
-
         } catch (Exception e) {
-            logger.error("waferMap加载失败", e);
-            return null;
+            logger.error("获取mapping文件失败", e);
         } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            try {
+                FileUtils.deleteDirectory(new File(tempPath + random));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            if (bw != null) {
-                try {
-                    bw.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+            sqlSession.close();
         }
+
+        String[] results = (String[]) list.toArray();
+        resultMap.put("BinList", results);
+        resultMap.put("RowCountInDieIncrements", results.length);
+        resultMap.put("ColumnCountInDieIncrements", results[0].length());
+        resultMap.put("ProcessDieCount", list.size());
         return resultMap;
+//
+//        loadBinConfig();
+//
+////        String lotID = "lotID";
+////        String waferNo = "waferID";
+////        if (waferId.contains("-")) {
+////            lotID = waferId.split("-")[0];
+////        }
+//
+//        String[] arr = getPath(waferId, deviceCode);
+//        String waferFilePath = arr[0];
+//        String savePath = arr[1];
+//        BufferedWriter bw = null;
+//        BufferedReader br = null;
+//        try {
+//            String cfgline = null;
+//
+//            int rowCount = 0;
+//            String columnCount = "";
+//
+//            File cfgfile = new File(waferFilePath);
+//            if (!cfgfile.exists()) {
+//                logger.error("文件不存在：" + waferFilePath);
+//                return null;
+//            }
+//            bw = new BufferedWriter(new OutputStreamWriter(FileUtils.openOutputStream(new File(savePath))));
+//            br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "UTF-8"));
+//            List<String> list = new ArrayList<>();
+//            while ((cfgline = br.readLine()) != null) {
+//                list.add(cfgline);
+//            }
+//            if (list.size() == 0) {
+//                logger.error("文件里面没有内容");
+//                return null;
+//            }
+//            list = parseList(list);
+//
+//            rowCount = list.size();
+//            int col = list.get(0).length();
+//            columnCount = columnCount + col;
+//            String[] bins = new String[list.size()];
+//            for (int i = 0; i < list.size(); i++) {
+//                bins[i] = list.get(i);
+//            }
+//            String[] results = transferAngle(bins, angle, rowCount, col);
+//            resultMap.put("BinList", results);
+//            bw.write("Wafer_ID : " + waferId + "\n");
+//            bw.write("Flat_Notch : Bottom" + "\n");
+//            bw.write("" + "\n");
+//            for (int i = 0; i < results.length; i++) {
+//                bw.write(results[i] + "\n");
+//            }
+//            bw.flush();
+//            if ("90".equals(angle) || "270".equals(angle)) {
+//                int tmp = rowCount;
+//                rowCount = Integer.valueOf(columnCount);
+//                columnCount = String.valueOf(tmp);
+//            }
+//            resultMap.put("RowCountInDieIncrements", rowCount);
+//            resultMap.put("ColumnCountInDieIncrements", columnCount);
+//            resultMap.put("ProcessDieCount", bins.length);
+//
+//        } catch (Exception e) {
+//            logger.error("waferMap加载失败", e);
+//            return null;
+//        } finally {
+//            if (br != null) {
+//                try {
+//                    br.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//            if (bw != null) {
+//                try {
+//                    bw.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//        }
+//        return resultMap;
     }
 
     public static List<String> parseList(List<String> list) {
