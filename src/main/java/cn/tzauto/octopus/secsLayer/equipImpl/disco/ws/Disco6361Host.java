@@ -22,6 +22,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
@@ -31,6 +32,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
+
+import static cn.tzauto.octopus.secsLayer.resolver.TransferUtil.setPPBody;
 
 /**
  * @author njtz
@@ -114,7 +117,7 @@ public class Disco6361Host extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-//                            processS6F11EquipStatus(msg);
+                            processS6F11EquipStatus(msg);
                         }
                         if (ceid == 7) {
                             if (!kerfCheck) {
@@ -206,6 +209,15 @@ public class Disco6361Host extends EquipHost {
             logger.error("Exception:", e);
         }
 
+        if("run".equalsIgnoreCase(equipStatus)) {
+            Map resultMap = sendS1F3SingleCheck(3218L);
+            long result = (long) resultMap.get("Value");
+            if(result >= 999) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"UV LAMP TOTAL TIME MORE THAN 999!");
+                holdDevice();
+                return;
+            }
+        }
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -275,8 +287,10 @@ public class Disco6361Host extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-            long offset1 = data.getSingleNumber("Z1");
-            long offset2 = data.getSingleNumber("Z2");
+            ArrayList reportList = (ArrayList) data.get("REPORT");
+            List idList = (List) reportList.get(1);
+            long offset1 = (long) idList.get(0);
+            long offset2 = (long) idList.get(1);
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");
@@ -307,26 +321,13 @@ public class Disco6361Host extends EquipHost {
     @Override
     public Map sendS7F5out(String eqpRecipeName) {
         Map resultMap = new HashMap();
-        DataMsgMap s7f5out = new DataMsgMap("s7f5out", activeWrapper.getDeviceId());
-        s7f5out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s7f5out.put("ProcessprogramID", eqpRecipeName);
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s7f5out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        List<RecipePara> recipeParaList = null;
-        if (data == null || data.isEmpty()) {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "上传请求被设备拒绝，请查看设备状态。");
-            return null;
-        }
-        byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
-        //Recipe解析     
         try {
             Recipe recipeTmp = setRecipe(eqpRecipeName);
-            String recipePathTmp = super.getRecipePathByConfig(recipeTmp);
-            TransferUtil.setPPBody(ppbody, recipeType, recipePathTmp);
+            String recipePathTmp = getRecipePathByConfig(recipeTmp);
+            List<RecipePara> recipeParaList = null;
+            byte[] ppbody  = (byte[]) getPPBODY(eqpRecipeName);
+            TransferUtil.setPPBody(ppbody, recipeType, recipePath);
+            //Recipe解析
             Map paraMap = DiscoRecipeUtil.transferFromFile(recipePathTmp);
             recipeParaList = DiscoRecipeUtil.transferFromDB(paraMap, deviceType);
             for (RecipePara recipePara : recipeParaList) {
@@ -385,19 +386,11 @@ public class Disco6361Host extends EquipHost {
 
     @Override
     public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41start", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+        Map cmdMap = this.sendS2f41Cmd("START");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
+        resultMap.put("HCACK", cmdMap.get("HCACK"));
         return resultMap;
     }
 
@@ -467,16 +460,8 @@ public class Disco6361Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="BladeEdge">
     public long[] getBladeEdge() {
-        DataMsgMap s1f3BladeEdge = new DataMsgMap("s1f3BladeEdge", activeWrapper.getDeviceId());
-        s1f3BladeEdge.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long[] z1BladeEdgeId = new long[1];
-        z1BladeEdgeId[0] = 1302l;
-        s1f3BladeEdge.put("Z1BladeEdge", z1BladeEdgeId);
-        long[] z2BladeEdgeId = new long[1];
-        z2BladeEdgeId[0] = 1303l;
-        s1f3BladeEdge.put("Z2BladeEdge", z2BladeEdgeId);
         DataMsgMap bladeEdgeDataHashtable = null;
-        List bladeidList = new ArrayList();
+        List<Long> bladeidList = new ArrayList();
         bladeidList.add(1302L);
         bladeidList.add(1303L);
         try {
@@ -484,7 +469,6 @@ public class Disco6361Host extends EquipHost {
         } catch (Exception e) {
         }
         List listtmp = (ArrayList) bladeEdgeDataHashtable.get("SV");
-
         long[] bladeEdges = new long[2];
         bladeEdges[0] = Long.valueOf(String.valueOf(listtmp.get(0)));
         bladeEdges[1] = Long.valueOf(String.valueOf(listtmp.get(1)));
@@ -676,7 +660,7 @@ public class Disco6361Host extends EquipHost {
         Map map = new HashMap();
         String z1bladeId = "";
         String z2bladeId = "";
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(4922L);
         list.add(4923L);
         DataMsgMap data = null;

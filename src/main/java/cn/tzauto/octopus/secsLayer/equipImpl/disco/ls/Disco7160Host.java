@@ -253,7 +253,7 @@ public class Disco7160Host extends EquipHost {
             if (AxisUtility.isEngineerMode(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else //开机check
-                if (equipStatus.equalsIgnoreCase("run") && ceid == 150L) {
+                if ("run".equalsIgnoreCase(equipStatus) && ceid == 150L) {
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
                         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                         this.holdDevice();

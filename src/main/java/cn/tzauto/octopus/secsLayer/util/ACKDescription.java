@@ -5,7 +5,6 @@
 package cn.tzauto.octopus.secsLayer.util;
 
 /**
- *
  * @author njtz
  */
 public class ACKDescription {
@@ -319,7 +318,7 @@ public class ACKDescription {
             } else {
                 description = "Reserved";
             }
-        } else if (deviceType.contains("DB730") || deviceType.contains("DB800") || deviceType.contains("DB810")|| deviceType.contains("DB-800") ) {
+        } else if (deviceType.contains("DB730") || deviceType.contains("DB800") || deviceType.contains("DB810") || deviceType.contains("DB-800")) {
             if (ack.equals("1")) {
                 description = "INIT";
             } else if (ack.equals("2")) {
@@ -692,7 +691,7 @@ public class ACKDescription {
             } else {
                 description = "Undefined";
             }
-        }else if (deviceType.contains("MP-TAB")) {
+        } else if (deviceType.contains("MP-TAB")) {
             if (ack.equals("1")) {
                 description = "RUN";
             } else if (ack.equals("2")) {
@@ -706,7 +705,7 @@ public class ACKDescription {
             } else if (ack.equals("6")) {
                 description = "NonSch Down";
             }
-        }else if(deviceType.contains("DT550A")){
+        } else if (deviceType.contains("DT550A")) {
             if (ack.equals("0")) {
                 description = " INIT";
             } else if (ack.equals("1")) {
@@ -724,7 +723,7 @@ public class ACKDescription {
             } else if (ack.equals("11")) {
                 description = "EXECUTE-RUN LOT";
             }
-        }else if(deviceType.contains("EPL2400")){
+        } else if (deviceType.contains("EPL2400")) {
             if (ack.equals("0")) {
                 description = " Starting";
             } else if (ack.equals("1")) {
@@ -742,64 +741,64 @@ public class ACKDescription {
             } else if (ack.equals("7")) {
                 description = "RUN";
             }
-        }else if(deviceType.contains("C6800") || deviceType.contains("C6430") || deviceType.contains("C6Q420")) {
+        } else if (deviceType.contains("C6800") || deviceType.contains("C6430") || deviceType.contains("C6Q420")) {
             switch (ack) {
-                case "1" :
+                case "1":
                     description = "Power On";
                     break;
-                case "2" :
+                case "2":
                     description = "PowerOff";
                     break;
-                case "3" :
+                case "3":
                     description = "Stop";
                     break;
-                case "4" :
+                case "4":
                     description = "Reset";
                     break;
-                case "5" :
+                case "5":
                     description = "Alarm Stop";
                     break;
-                case "6" :
+                case "6":
                     description = "Home";
                     break;
-                case "7" :
+                case "7":
                     description = "Pause";
                     break;
-                case "8" :
+                case "8":
                     description = "OneCycle";
                     break;
-                case "9" :
+                case "9":
                     description = "Clean Out";
                     break;
-                case "10" :
+                case "10":
                     description = "Run";
                     break;
-                case "11" :
+                case "11":
                     description = "Stopping";
                     break;
-                case "12" :
+                case "12":
                     description = "TrayFeed";
                     break;
-                case "13" :
+                case "13":
                     description = "Clean";
                     break;
-                case "14" :
+                case "14":
                     description = "Heat";
                     break;
-                case "15" :
+                case "15":
                     description = "Heat WaitTime s";
                     break;
-                case "16" :
+                case "16":
                     description = "Emergency Stop";
                     break;
-                case "17" :
+                case "17":
                     description = "TrayEnd";
                     break;
-                case "18" :
+                case "18":
                     description = "MergeTray";
                     break;
             }
-        }else if(deviceType.contains("2009")){
+        } else if (deviceType.contains("2009")) {
             if (ack.equals("1")) {
                 description = "SETUP";
             } else if (ack.equals("2")) {
@@ -809,46 +808,46 @@ public class ACKDescription {
             } else if (ack.equals("4")) {
                 description = "RUN";
             }
-        }else if(deviceType.contains("LINTECUV")) {
-            switch (ack){
+        } else if (deviceType.contains("LINTECUV")) {
+            switch (ack) {
                 case "50":
-                    description="IDLE";
+                    description = "IDLE";
                     break;
                 case "51":
-                    description="MANUAL ERROR";
+                    description = "MANUAL ERROR";
                     break;
                 case "52":
-                    description="COMMAND EXCUTING";
+                    description = "COMMAND EXCUTING";
                     break;
                 case "53":
-                    description="MAINTENANCE COMMAND";
+                    description = "MAINTENANCE COMMAND";
                     break;
                 case "54":
-                    description="ENGINEER COMMAND EXECUTING ";
+                    description = "ENGINEER COMMAND EXECUTING ";
                     break;
                 case "55":
-                    description="SETUP";
+                    description = "SETUP";
                     break;
                 case "56":
-                    description="READY ";
+                    description = "READY ";
                     break;
                 case "57":
-                    description="END OF CASSETTE";
+                    description = "END OF CASSETTE";
                     break;
                 case "58":
-                    description="ERROR";
+                    description = "ERROR";
                     break;
                 case "60":
-                    description="STOPPING ";
+                    description = "STOPPING ";
                     break;
                 case "61":
-                    description="ABORTED";
+                    description = "ABORTED";
                     break;
                 case "62":
-                    description="EXECUTING";
+                    description = "EXECUTING";
                     break;
             }
-        }else if (deviceType.contains("TS-PRO")) {
+        } else if (deviceType.contains("TS-PRO")) {
             if (ack.equals("1")) {
                 description = "Setup";
             } else if (ack.equals("2")) {
@@ -863,10 +862,63 @@ public class ACKDescription {
                 description = "Planned Maintenance";
             } else if (ack.equals("7")) {
                 description = "Engineering Occupied";
-            }else if (ack.equals("8")) {
+            } else if (ack.equals("8")) {
                 description = "Meal time/Break";
-            }else if (ack.equals("9")) {
+            } else if (ack.equals("9")) {
                 description = "Wait for Material(Ready)";
+            }
+        } else if (deviceType.contains("HT9045") || deviceType.contains("HTFI")) {
+            if ("0".equals(ack)) {
+                description = "INIT";
+            } else if ("1".equals(ack)) {
+                description = "RUN";
+            } else if ("2".equals(ack)) {
+                description = "IDLE";
+            } else if ("3".equals(ack)) {
+                description = "SETUP";
+            }
+        } else if (deviceType.contains("VSP88DNHT")) {
+            if (ack.equals("0")) {
+                description = FengCeConstant.STATUS_IDLE;
+            } else if (ack.equals("1")) {
+                description = FengCeConstant.STATUS_RUN;
+            } else if (ack.equals("2")) {
+                description = FengCeConstant.STATUS_PAUSE;
+            } else if (ack.equals("3")) {
+                description = FengCeConstant.STATUS_END;
+            }
+        } else if (deviceType.contains("HELLER")) {
+
+            if (ack.equals("0")) {
+                description = "Init";
+            } else if (ack.equals("1")) {
+                description = "Setup";
+            } else if (ack.equals("2")) {
+                description = "Ready";
+            } else if (ack.equals("3")) {
+                description = "Run";
+            } else if (ack.equals("4")) {
+                description = "Run no load";
+            } else if (ack.equals("5")) {
+                description = "CoolDown";
+            }
+        } else if (deviceType.contains("Ismeca")) {
+            if (ack.equals("0")) {
+                description = "Init";
+            } else if (ack.equals("1")) {
+                description = "Idle";
+            } else if (ack.equals("2")) {
+                description = "Ready";
+            } else if (ack.equals("3")) {
+                description = "Alarm";
+            } else if (ack.equals("4")) {
+                description = "Run";
+            } else if (ack.equals("5")) {
+                description = "Last Cycle";
+            } else if (ack.equals("6")) {
+                description = "Purge";
+            } else {
+                description = "Undefined";
             }
         }
         return description;

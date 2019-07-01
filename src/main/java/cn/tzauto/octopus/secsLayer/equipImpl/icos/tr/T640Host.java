@@ -275,7 +275,7 @@ public class T640Host extends EquipHost {
             } else {
                 super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
             }
-            if (ceid == 14032) {
+            if (ceid == 14032||ceid == 14033||ceid == 14034) {
                 needCheck = true;
             } else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);

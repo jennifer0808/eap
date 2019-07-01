@@ -563,6 +563,13 @@ public class RecipeService extends BaseService {
             }
         }
         if (type.contains("Select")) {
+            //先删除其余recipe
+            if (type.contains("DeleteAll")&&(deviceInfo.getDeviceType().contains("ICOST340")||deviceInfo.getDeviceType().contains("ICOST380"))) {
+                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
+                //如果删除失败，流程继续
+//                String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
+//                return ppselectResult;
+            }
             //选中Recipe
             String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
             if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")
@@ -572,6 +579,9 @@ public class RecipeService extends BaseService {
             }
             if (!"0".equals(ppselectResult)) {
                 result = "2";
+                if(deviceInfo.getDeviceType().contains("CCTECH")){
+                    result = "Busy , try later";
+                }
                 if (type.contains("DeleteAll")) {
                     String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
                     //如果删除失败，流程继续
@@ -632,9 +642,8 @@ public class RecipeService extends BaseService {
             uploadRcpFile2FTP(recipeLocalPath, recipeRemotePath, recipe);
             boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             if (!existFlag) {
-                return false;
+//                return false;
             }
-            System.out.println("开始上传至ftp啦。。。。");
             sendUploadInfo2Server(deviceCode, recipes, recipeParas, recipeOperationLogs, attachs);
         }
         return true;
@@ -823,13 +832,15 @@ public class RecipeService extends BaseService {
             // 上传ftp
             FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-
+            if (!existFlag) {
+//                return false;
+            }
             //日志
 //       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
-        return existFlag;
+        return true;
     }
 
     /*

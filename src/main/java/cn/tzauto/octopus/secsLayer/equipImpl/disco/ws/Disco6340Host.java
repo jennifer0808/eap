@@ -55,6 +55,7 @@ public class Disco6340Host extends EquipHost {
         CPN_PPID = "DEV_NO";
     }
 
+    @Override
     public Object clone() {
         Disco6340Host newEquip = new Disco6340Host(deviceId,
                 this.iPAddress,
@@ -70,15 +71,16 @@ public class Disco6340Host extends EquipHost {
         return newEquip;
     }
 
+    @Override
     public void run() {
         threadUsed = true;
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
-                    this.sleep(200);
+                    sleep(200);
                 }
-                if (this.getCommState() != this.COMMUNICATING) {
+                if (this.getCommState() != COMMUNICATING) {
                     this.sendS1F13out();
                 }
                 if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
@@ -108,7 +110,7 @@ public class Disco6340Host extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11kerfCheck")) {
                     processS6F11KerfCheck(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    long ceid = 0l;
+                    long ceid = 0L;
                     try {
                         ceid = (long) msg.get("CEID");
                         Map panelMap = new HashMap();
@@ -119,7 +121,7 @@ public class Disco6340Host extends EquipHost {
                                 panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
-//                            processS6F11EquipStatus(msg);
+                            processS6F11EquipStatus(msg);
                         }
                         if (ceid == 7) {
                             if (!kerfCheck) {
@@ -156,13 +158,14 @@ public class Disco6340Host extends EquipHost {
         }
     }
 
+    @Override
     public void inputMessageArrived(MsgArrivedEvent event) {
         String tagName = event.getMessageTag();
         if (tagName == null) {
             return;
         }
         try {
-            LastComDate = new Date().getTime();
+            LastComDate = System.currentTimeMillis();
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("s1f13in")) {
@@ -199,7 +202,7 @@ public class Disco6340Host extends EquipHost {
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data
     ) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
             findDeviceRecipe();
@@ -232,7 +235,7 @@ public class Disco6340Host extends EquipHost {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
             } else {
                 //开机check
-                if (equipStatus.equalsIgnoreCase("run") && ceid == 150l) {
+                if (equipStatus.equalsIgnoreCase("run") && ceid == 150L) {
                     //如果设备应该是锁机，那么首先发送锁机命令给机台
                     if (this.checkLockFlagFromServerByWS(deviceCode)) {
                         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
@@ -356,19 +359,11 @@ public class Disco6340Host extends EquipHost {
 
     @Override
     public Map startDevice() {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41start", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        DataMsgMap data = null;
-        try {
-            data = activeWrapper.sendAwaitMessage(s2f41out);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        byte[] hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+        Map cmdMap = this.sendS2f41Cmd("START");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
+        resultMap.put("HCACK", cmdMap.get("HCACK"));
         return resultMap;
     }
     // </editor-fold>
@@ -448,7 +443,7 @@ public class Disco6340Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="BladeEdge">
     public long[] getBladeEdge() {
         DataMsgMap bladeEdgeDataHashtable = null;
-        List bladeidList = new ArrayList();
+        List<Long> bladeidList = new ArrayList();
         bladeidList.add(1302L);
         bladeidList.add(1303L);
         try {
@@ -466,12 +461,12 @@ public class Disco6340Host extends EquipHost {
         long[] bladeEdges = getBladeEdge();
         long z1BladeEdge = bladeEdges[0];
         long z2BladeEdge = bladeEdges[1];
-        long WORK_THICK = 0l;
-        long TAPE_THICK = 0l;
-        long CH1_HEI1 = 0l;
-        long CH2_HEI1 = 0l;
-        long CH1_HEI21 = 0l;
-        long CH2_HEI21 = 0l;
+        long WORK_THICK = 0L;
+        long TAPE_THICK = 0L;
+        long CH1_HEI1 = 0L;
+        long CH2_HEI1 = 0L;
+        long CH1_HEI21 = 0L;
+        long CH2_HEI21 = 0L;
         String cut_mode = "";
         String cut_proc = "";
         for (RecipePara recipePara : recipeParas) {
@@ -527,8 +522,8 @@ public class Disco6340Host extends EquipHost {
             long CH2_HEI21 = Long.valueOf(elementsMap.get("CH2_HEI21").toString());
             String cut_mode = String.valueOf(elementsMap.get("CUT_MODE"));
             String cut_proc = String.valueOf(elementsMap.get("CUT_PROC"));
-            long z1BladeEdgeCountResult = 0l;
-            long z2BladeEdgeCountResult = 0l;
+            long z1BladeEdgeCountResult = 0L;
+            long z2BladeEdgeCountResult = 0L;
             //管控阀值(svid: z1 1302 z2 1303 ) = 加工物厚度(WORK_THICK code 48) + 胶膜厚度(TAPE_THICK 49) -刀高(高度1【z1 code 57；z2 code 67】 高度2【z1 code 97； z2 code 107】) + 100000nm
             if ("A".equals(cut_mode)) {
                 if ("Z1".equalsIgnoreCase(cut_proc)) {
@@ -671,7 +666,7 @@ public class Disco6340Host extends EquipHost {
         Map map = new HashMap();
         String z1bladeId = "";
         String z2bladeId = "";
-        List list = new ArrayList();
+        List<Long> list = new ArrayList();
         list.add(4922L);
         list.add(4923L);
         DataMsgMap data = null;
@@ -734,7 +729,7 @@ public class Disco6340Host extends EquipHost {
         MonitorService monitorService = new MonitorService(sqlSession);
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException e) {
             e.printStackTrace();
             return;
@@ -833,11 +828,13 @@ public class Disco6340Host extends EquipHost {
     }
 
     protected void processS6F11KerfCheck(DataMsgMap data) {
-        long ceid = 0l;
+        long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            long offset1 = data.getSingleNumber("Z1");
-            long offset2 = data.getSingleNumber("Z2");
+            ArrayList reportList = (ArrayList) data.get("REPORT");
+            List idList = (List) reportList.get(1);
+            long offset1 = (long) idList.get(0);
+            long offset2 = (long) idList.get(1);
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");
@@ -863,6 +860,7 @@ public class Disco6340Host extends EquipHost {
         }
     }
 
+    @Override
     public Map sendS2F41outPPselect(String recipeName) {
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");

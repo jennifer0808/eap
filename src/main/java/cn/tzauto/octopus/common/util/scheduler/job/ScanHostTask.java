@@ -34,6 +34,7 @@ public class ScanHostTask implements Job {
         MultipleEquipHostManager hostsManager = GlobalConstants.stage.hostManager;
 //        hostsManager.testComm();
         // Todo 扫描所有Host线程，如果中断，重新启动
+        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                                    
@@ -70,6 +71,11 @@ public class ScanHostTask implements Job {
                 continue;
             }
 
+        }
+        if(temp ==null){
+            MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        }else{
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
         }
 
     }

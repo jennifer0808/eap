@@ -385,6 +385,7 @@ public class HT7045HISIHost extends EquipModel {
 
     /**
      * 通过ocr点击至对应界面读取参数，上传recipe时使用
+     *
      * @param recipeName
      * @return
      */
@@ -545,6 +546,7 @@ public class HT7045HISIHost extends EquipModel {
 
     /**
      * 通过PLC控制软件弹出对应窗口，读取界面参数，用于开机check时读取参数
+     *
      * @return
      */
     public List<RecipePara> getRecipeParasFromMonitorMap() {
@@ -1115,7 +1117,6 @@ public class HT7045HISIHost extends EquipModel {
 //
 ////        return getRecipeParaFromScrren();
 //    }
-
 
 
     public Map<String, String> getScrrenParaByPlc(String ctrlCommand, String ocrCommand) throws InterruptedException {

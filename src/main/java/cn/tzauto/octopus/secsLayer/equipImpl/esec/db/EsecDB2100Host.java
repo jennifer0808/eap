@@ -146,8 +146,8 @@ public class EsecDB2100Host extends EquipHost {
 //                processS6F11inStripMapUpload(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
-//                this.inputMsgQueue.put(data);
+//                processS6F11in(data);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -201,27 +201,27 @@ public class EsecDB2100Host extends EquipHost {
             sendS2F35out(3L, 3L, 3L);
             sendS2F37out(3L);
             //发送s2f33
-            String ack = "";
-            long rptid = 1001l;
-            long vid = 269352993l;
-            long ceid = 15338l;
-            sendS2F33out(1001l, vid);//15339
 
+            List list1 = new ArrayList();
+            list1.add(269352993L);
+            sendS2F33out(1001L,1001L, list1);//15339
 
-            sendS2F33out(1002l, vid);//15338
+            List list2 = new ArrayList();
+            list2.add(269352993L);
+            sendS2F33out(1001L,1002L, list1);//15338
 
-
-            sendS2F33out(1003l, 269352995l);//15328
+            List list3 = new ArrayList();
+            list3.add(269352995L);
+            sendS2F33out(1001L,1003L, list3);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(15339l, 1001l);//15339 1001
+            sendS2F35out(1001L,15339L, 1001L);//15339 1001
 
-            sendS2F35out(15338l, 1002l);//15339 1001
+            sendS2F35out(1001L,15338L, 1002L);//15339 1001
 
-
-            sendS2F35out(15328l, 1003l);//15339 1001
+            sendS2F35out(1001L,15328L, 1003L);//15339 1001
 
             List list = new ArrayList();
             list.add(2031L);
@@ -239,7 +239,6 @@ public class EsecDB2100Host extends EquipHost {
             return "1";
 
         } catch (Exception ex) {
-//            java.util.logging.Logger.getLogger(EsecDB2100Host.class.getName()).log(Level.SEVERE, null, ex);
             logger.error("Exception:", ex);
             return "0";
         }
@@ -249,17 +248,20 @@ public class EsecDB2100Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {
+
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = String.valueOf(listtmp.get(1));
-        ppExecName = ppExecName.replaceAll(".dbrcp", "");
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        if (listtmp != null && !listtmp.isEmpty()) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            ppExecName = ppExecName.replaceAll(".dbrcp", "");
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+        }
+
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
         panelMap.put("PPExecName", ppExecName);
         panelMap.put("ControlState", controlState);
         changeEquipPanel(panelMap);
-        // sendS2F15outLearnDevice(151126402L, "disabled");
         return panelMap;
     }
 
@@ -334,7 +336,7 @@ public class EsecDB2100Host extends EquipHost {
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
-                replyS6F12WithACK(data,(byte) 0);
+                replyS6F12WithACK(data, (byte) 0);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }else if(ceid == 3L){
@@ -349,12 +351,15 @@ public class EsecDB2100Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            preEquipStatus = equipStatus;
-            findDeviceRecipe();
-
+            sendS1F3Check();
             ppExecName = ppExecName.replace(".dbrcp", "");
 
         } catch (Exception e) {
@@ -390,17 +395,18 @@ public class EsecDB2100Host extends EquipHost {
             String busniessMod = deviceInfoExt.getBusinessMod();
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑&&
-//            if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("stopped RDY")) {
-            if (dataReady && equipStatus.equalsIgnoreCase("run")) {
+            logger.info("equipStatus: "+  equipStatus);
+            if (dataReady && "run".equalsIgnoreCase(equipStatus)) {
+                logger.info("校验2D");
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<String> svlist = new ArrayList<>();
-                svlist.add("252968976");//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (!svValue.get("252968976").equals("41")) {
-                    String dateStr = GlobalConstants.dateFormat.format(new Date());
-                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
-                }
+//                List<String> svlist = new ArrayList<>();
+//                svlist.add("252968976");//2D开关
+//                Map svValue = this.getSpecificSVData(svlist);
+//                if (svValue.get("252968976").equals("0")) {
+//                    String dateStr = GlobalConstants.dateFormat.format(new Date());
+//                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
+//                }
                 if (AxisUtility.isEngineerMode(deviceCode)) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                     sqlSession.close();
@@ -564,13 +570,16 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-
+        DataMsgMap s7f1out = new DataMsgMap("s7f1out", activeWrapper.getDeviceId());
+        s7f1out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+        s7f1out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
+        s7f1out.put("Length", length);
         DataMsgMap data = null;
         byte ppgnt = 0;
         try {
             data = activeWrapper.sendS7F1out(targetRecipeName + ".dbrcp", length, lengthFormat);
             ppgnt = (byte) data.get("PPGNT");
-            logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -589,6 +598,7 @@ public class EsecDB2100Host extends EquipHost {
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName + ".dbrcp", ppbody, FormatCode.SECS_BINARY);
+            logger.info("send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

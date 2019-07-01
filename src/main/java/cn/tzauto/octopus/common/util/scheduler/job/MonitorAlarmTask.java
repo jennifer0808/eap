@@ -38,6 +38,7 @@ public class MonitorAlarmTask implements Job {
         logger.info("MonitorAlarmTask start...");
         // ConcurrentHashMap<String, EquipModel> equipModels = GlobalConstants.stage.equipModels;
         if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
+            String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
                 MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (equipModel.getPassport(30)) {
@@ -92,6 +93,11 @@ public class MonitorAlarmTask implements Job {
                     }
                     equipModel.returnPassport();
                 }
+            }
+            if(temp ==null){
+                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            }else{
+                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
 

@@ -346,4 +346,11 @@
         from md_device_info_ext
         where del_flag='0'    
     </select>
+    <select id="selectByRecipeName" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select
+        <include refid="Base_Column_List" />
+        from md_device_info_ext
+        where del_flag='0'
+        and  recipe_name = #{recipeName}
+    </select>
 </mapper>

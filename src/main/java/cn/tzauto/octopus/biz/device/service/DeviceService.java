@@ -140,6 +140,10 @@ public class DeviceService extends BaseService {
         return this.deviceInfoExtMapper.selectByPrimaryKey(id);
     }
 
+    public List<DeviceInfoExt> getDeviceInfoExtByRecipeName(String recipeName) {
+        return this.deviceInfoExtMapper.selectByRecipeName(recipeName);
+    }
+
     /**
      * 更新设备模板表里面的信息
      *

@@ -59,7 +59,6 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
-                    sendS1F1out();
                 }
 
                 if (rptDefineNum < 1) {

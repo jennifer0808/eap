@@ -367,6 +367,11 @@ public class DiscoDGP8761Host extends EquipHost {
                 this.holdDevice();
                 return;
             }
+            if(this.checkBladeLife()){
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备刀具寿命异常，设备将被锁!");
+                this.holdDevice();
+                return;
+            }
             if (!"".equals(portARcpName) && !"".equals(portBRcpName)) {
                 if (!ppExecName.equals(portARcpName) || !ppExecName.equals(portBRcpName)) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与Port口程序不一致，设备被锁定！请联系ME处理！");
@@ -384,6 +389,37 @@ public class DiscoDGP8761Host extends EquipHost {
             this.startCheckRecipePara(checkRecipe);
         }
         sqlSession.close();
+    }
+
+    private boolean checkBladeLife() {
+        String z1SVID ="2012";
+        String z2SVID ="2013";
+        String z3SVID ="2014";
+        boolean checkResult = true;
+        try {
+            List svidList = new ArrayList();
+            svidList.add(z1SVID);
+            svidList.add(z2SVID);
+            svidList.add(z3SVID);
+            Map<String,String> svValue = this.getSpecificSVData(svidList);
+            if(Long.parseLong(svValue.get(z1SVID))<=8000000){
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"检测Z1刀具寿命低于800um,当前值为:"+(Long.parseLong(svValue.get(z1SVID))/1000l)+"um");
+                checkResult = false;
+            }
+            if(Long.parseLong(svValue.get(z2SVID))<=8000000){
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"检测Z2刀具寿命低于800um,当前值为:"+(Long.parseLong(svValue.get(z2SVID))/1000l)+"um");
+                checkResult = false;
+            }
+            if(Long.parseLong(svValue.get(z3SVID))<1000000){
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"检测Z3刀具寿命低于1000um,当前值为:"+(Long.parseLong(svValue.get(z3SVID))/1000l)+"um");
+                checkResult = false;
+            }
+            return checkResult;
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return checkResult;
+        }
+
     }
 
     private void processS6F11AlarmClear(DataMsgMap data) {
