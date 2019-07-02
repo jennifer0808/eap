@@ -39,6 +39,7 @@ import java.util.*;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
+import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.sysProperties;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -56,7 +57,10 @@ public class DownloadPaneController implements Initializable {
 
     @FXML
     private Label RcpName;
-
+    @FXML
+    private ProgressIndicator progressIndicatorLoad;
+    @FXML
+    private AnchorPane mainPane;
     private Recipe recipe;
     public static  Stage stage= new Stage();
     static {
@@ -97,7 +101,10 @@ public class DownloadPaneController implements Initializable {
             downloadPane = FXMLLoader.load(getClass().getClassLoader().getResource("DownloadPane.fxml"), resourceBundle);
 
         } catch (IOException ex) {
+
         }
+        progressIndicatorLoad=(ProgressIndicator) downloadPane.lookup("#progressIndicatorLoad");
+        mainPane=(AnchorPane)downloadPane.lookup("#mainPane");
         stage.setResizable(false);
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("logoTaiZhi.png"));
         stage.getIcons().add(image);
@@ -182,6 +189,7 @@ public class DownloadPaneController implements Initializable {
         }
         Optional<ButtonType> alert = CommonUiUtil.alert(Alert.AlertType.CONFIRMATION, "将Recipe下载到已选设备?",stage);
         if (alert.get() == ButtonType.OK) {
+
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             DeviceService deviceService = new DeviceService(sqlSession);
@@ -204,58 +212,70 @@ public class DownloadPaneController implements Initializable {
                 if (deviceInfoExt != null && deviceInfoExt.getRecipeDownloadMod() != null && !"".equals(deviceInfoExt.getRecipeDownloadMod())) {
                     GlobalConstants.sysLogger.info("设备模型表中配置设备" + deviceInfo.getDeviceCode() + "的Recipe下载方式为" + deviceInfoExt.getRecipeDownloadMod());
                     RecipeOperationLog recipeOperationLog = recipeService.setRcpOperationLog(recipe, "download");
-                    Task task=new Task<String >() {
+                    EquipHost equipHost =   GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+                    Task task = new Task<Map>() {
                         @Override
-                        public String  call()  {
-                            try{
-                            String downloadResult = recipeService.downLoadRcp2DeviceByType(deviceInfo, recipe, "", deviceInfoExt.getRecipeDownloadMod());
+                        public Map call() {
+
+                            try {
+                                if (equipHost.getDeviceType().equals(sysProperties.get("ProgressFlag"))) {
+                                    progressIndicatorLoad.setVisible(true);
+                                    mainPane.setDisable(true);
+                                }
+                                String downloadResult = recipeService.downLoadRcp2DeviceByType(deviceInfo, recipe, "", deviceInfoExt.getRecipeDownloadMod());
 //                                String downloadResult ="0";
                                 if ("0".equals(downloadResult)) {
-                                deviceInfoExt.setRecipeId(recipe.getId());
-                                deviceInfoExt.setRecipeName(recipe.getRecipeName());
-                                deviceInfoExt.setVerNo(recipe.getVersionNo());
-                                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                                sqlSession.commit();
-                                mqMap.put("eventDesc", "下载成功！");
-                                recipeOperationLog.setOperationResult("Y");
+                                    deviceInfoExt.setRecipeId(recipe.getId());
+                                    deviceInfoExt.setRecipeName(recipe.getRecipeName());
+                                    deviceInfoExt.setVerNo(recipe.getVersionNo());
+                                    deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                                    sqlSession.commit();
+                                    mqMap.put("eventDesc", "下载成功！");
+                                    recipeOperationLog.setOperationResult("Y");
 //                                手动下成功给服务端发mq
-                                sendDownloadResult2Server(deviceInfo.getDeviceCode());
-                                Platform.runLater(()->{
-                                    Optional<ButtonType> result=  CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！",stage);
-                                    if (result.get() == ButtonType.OK){
-                                        stage.close();
-                                        isDownload = false;
-                                        onlyOnePageDownload = false;
-                                    }
-                                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
-                                });
+                                    sendDownloadResult2Server(deviceInfo.getDeviceCode());
+                                    Platform.runLater(() -> {
+                                        progressIndicatorLoad.setVisible(false);
+                                        mainPane.setDisable(false);
+                                        Optional<ButtonType> result = CommonUiUtil.alert(Alert.AlertType.INFORMATION, "下载成功！", stage);
+                                        if (result.get() == ButtonType.OK) {
+                                            stage.close();
+                                            isDownload = false;
+                                            onlyOnePageDownload = false;
+                                        }
+                                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载成功");
+                                    });
 
-                            } else {
-                                Platform.runLater(()->{
-                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
-                                    UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
-                                    mqMap.put("eventDesc", downloadResult);
-                                    recipeOperationLog.setOperationResult("N");
-                                    recipeOperationLog.setOperationResultDesc(downloadResult);
-                                });
+                                } else {
+                                    Platform.runLater(() -> {
+                                        progressIndicatorLoad.setVisible(false);
+                                        mainPane.setDisable(false);
+                                        CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！", stage);
+                                        UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "Recipe[" + recipe.getRecipeName() + "]下载失败，" + downloadResult);
+                                        mqMap.put("eventDesc", downloadResult);
+                                        recipeOperationLog.setOperationResult("N");
+                                        recipeOperationLog.setOperationResultDesc(downloadResult);
+                                    });
 
-                            }
-                            //保存下载结果至数据库并发送至服务端
-                            recipeService.saveRecipeOperationLog(recipeOperationLog);
-                            GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
+                                }
+                                //保存下载结果至数据库并发送至服务端
+                                recipeService.saveRecipeOperationLog(recipeOperationLog);
+                                GlobalConstants.C2SRcpDownLoadQueue.sendMessage(mqMap);
 
-                        } catch (Exception e) {
-                                Platform.runLater(()->{
-                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！",stage);
+                            } catch (Exception e) {
+                                Platform.runLater(() -> {
+                                    progressIndicatorLoad.setVisible(false);
+                                    mainPane.setDisable(false);
+                                    CommonUiUtil.alert(Alert.AlertType.WARNING, "下载失败，请重试！", stage);
                                     GlobalConstants.sysLogger.error(e.toString());
                                     sqlSession.rollback();
                                     logger.error("Exception:", e);
                                 });
 
-                        } finally {
-                            sqlSession.close();
-                        }
-                            return "";
+                            } finally {
+                                sqlSession.close();
+                            }
+                            return null;
                         }
                     };
                     new Thread(task).start();

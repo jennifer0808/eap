@@ -15,6 +15,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -33,6 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -95,6 +97,10 @@ public class UploadPaneController implements Initializable {
     private ComboBox CMB_deviceCode;
     @FXML
     private Button BTN_ok;
+    @FXML
+    private ProgressIndicator progressIndicatorLoad;
+    @FXML
+    private AnchorPane mainPane;
 //  private TableColumn<SimpleRecipeProperty, String> numberCol = new TableColumn<>();
 
     ObservableList<RecipeName> recipeNames = FXCollections.observableArrayList();
@@ -161,6 +167,8 @@ public class UploadPaneController implements Initializable {
         button.setOnAction((value) -> btnOKClick());
         Button buttonC = (Button) rcpMngPane.lookup("#BTN_cancel");
         buttonC.setOnAction((value) -> btnCancelClick());
+        progressIndicatorLoad=(ProgressIndicator) rcpMngPane.lookup("#progressIndicatorLoad");
+        mainPane=(AnchorPane)rcpMngPane.lookup("#mainPane");
         CMB_deviceCode = (ComboBox) rcpMngPane.lookup("#CMB_deviceCode");
 
         CMB_deviceCode.getSelectionModel().selectedItemProperty().addListener(
@@ -259,14 +267,23 @@ public class UploadPaneController implements Initializable {
                         GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                         return;
                     }
+                    EquipHost equipHost =   GlobalConstants.stage.equipHosts.get(deviceCode);
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {
+                            if( equipHost.getDeviceType().equals(sysProperties.get("ProgressFlag"))){
+                                progressIndicatorLoad.setVisible(true);
+                                mainPane.setDisable(true);
+                            }
                             Map recipeMap = null;
                             try {
                                 recipeMap = GlobalConstants.stage.hostManager.getRecipeParaFromDevice(deviceCode, recipeName);
                                 upload(recipeMap,recipeName);
+                                progressIndicatorLoad.setVisible(false);
+                                mainPane.setDisable(false);
                             } catch (UploadRecipeErrorException e) {
+                                progressIndicatorLoad.setVisible(false);
+                                mainPane.setDisable(false);
                                 Platform.runLater(() -> {
                                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！", stage);
                                 });
@@ -298,7 +315,8 @@ public class UploadPaneController implements Initializable {
         try {
         SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
-            if (recipeMap == null) {
+
+            if (recipeMap == null || recipeMap.get("uploadResult").equals(false)) {
                 Platform.runLater(() -> {
                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                 });
