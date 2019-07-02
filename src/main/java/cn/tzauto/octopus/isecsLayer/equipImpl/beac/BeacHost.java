@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.logging.Level;
 
 /**
- *
  * @author luosy
  */
 public class BeacHost extends EquipModel {
@@ -277,7 +276,7 @@ public class BeacHost extends EquipModel {
     @Override
     public String getEquipStatus() {
         preEquipStatus = equipStatus;
-        Map< Boolean, String> equipStatusMapTemp = new HashMap<>();
+        Map<Boolean, String> equipStatusMapTemp = new HashMap<>();
         for (Map.Entry<String, String> entry : equipStatusPointMap.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
@@ -360,7 +359,7 @@ public class BeacHost extends EquipModel {
     }
 
     @Override
-    public String organizeRecipe(String partNo,String lotNo) {
+    public String organizeRecipe(String partNo, String lotNo) {
         Map recipeNameMap = RecipeMapping.loadRecipeLotMapping(GlobalConstants.getProperty("BEAC_LASER_EXPOSURE_RECIPE_MAPPING_PATH"));
         String recipeName = "";
         if (recipeNameMap != null) {

@@ -4,6 +4,7 @@ package cn.tzauto.octopus.isecsLayer.socket;
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -21,6 +22,8 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
     //    private static final Logger logger = Logger.getLogger(EquipAlarmHandler.class);
     private static final Logger logger = Logger.getLogger("EquipAlarmHandler");
     private String crystalPower = "";
+    private String crystalAccuracy = "";
+    private boolean isCrystalAccuracy = false;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -124,9 +127,23 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 
                         }
                         if (str.contains(".GLV")) {
-                            if (str.contains("RMAX_")) {
-                                logger.info("power check data:Crystal_Time:" + str);
-                                accuracyCheck(deviceInfo.getDeviceCode(), str);
+                            if (str.contains("GCHK,")) {
+                                isCrystalAccuracy = true;
+                            }
+                            if (str.contains("GCOMP,")) {
+                                isCrystalAccuracy = false;
+                            }
+                            if (isCrystalAccuracy) {
+                                if (str.contains(",XY,")) {
+                                    String[] stringss = str.split(",");
+                                    crystalAccuracy = stringss[1];
+                                }
+                                if (str.contains("RMAX_")) {
+                                    String crystalAccuracyTemp = crystalAccuracy + "-" + str;
+                                    logger.info("power check data:Crystal_Time:" + str);
+                                    accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
+                                    crystalAccuracy = "";
+                                }
                             }
                         }
                         break;
@@ -171,6 +188,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 
     /**
      * 日立镭射钻孔机水晶头精度校验
+     *
      * @param deviceCode
      * @param str
      */
@@ -179,7 +197,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         String[] accuracys = str.split(",");
         for (String accuracy : accuracys) {
             if (accuracy.contains("=") && accuracy.contains("RMAX_")) {
-                String[] accuracysTemp = accuracy.split(",");
+                String[] accuracysTemp = accuracy.split("=");
                 try {
                     Double.parseDouble(accuracysTemp[1]);
                     double accuracyD = Double.parseDouble(GlobalConstants.getProperty("HITACHI_LASER_DRILL_ACCURACY"));
@@ -190,12 +208,24 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                     }
                 } catch (Exception e) {
                 }
+                List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+                if (fileBodyAsStrList == null || fileBodyAsStrList.isEmpty()) {
+                    fileBodyAsStrList = new ArrayList();
+                    fileBodyAsStrList.add(str);
+                    FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+                } else {
+                    if (strHasBeenWrite(fileBodyAsStrList, str)) {
+                        fileBodyAsStrList = removeRepetitionStr(fileBodyAsStrList, str);
+                    }
+                    FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+                }
             }
         }
     }
 
     /**
      * 日立镭射钻孔机水晶头能量校验
+     *
      * @param crystalPower
      */
     private void crystalPowerCheck(String crystalPower) {
@@ -207,5 +237,38 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         if (Double.valueOf(standardPower) > actualPower * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower * (1 - LOWER_LIMIT)) {
             logger.error("Crystal power out of range. actual data " + crystalPower);
         }
+        List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+        if (fileBodyAsStrList == null || fileBodyAsStrList.isEmpty()) {
+            fileBodyAsStrList = new ArrayList();
+            fileBodyAsStrList.add(crystalPower);
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+        } else {
+            if (strHasBeenWrite(fileBodyAsStrList, crystalPower)) {
+                fileBodyAsStrList = removeRepetitionStr(fileBodyAsStrList, crystalPower);
+            }
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+        }
+        this.crystalPower = "";
+    }
+
+    private boolean strHasBeenWrite(List<String> strlist, String str) {
+        for (String strTemp : strlist) {
+            if (strTemp.contains(str.split("=")[0])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List removeRepetitionStr(List<String> strlist, String str) {
+        List<String> newStrs = new ArrayList<>();
+        for (String strTemp : strlist) {
+            if (strTemp.contains(str.split("=")[0])) {
+                newStrs.add(str);
+            } else {
+                newStrs.add(strTemp);
+            }
+        }
+        return newStrs;
     }
 }

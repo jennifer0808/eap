@@ -5,7 +5,6 @@
 package test;
 
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
-import cn.tzauto.octopus.common.rabbit.MessageUtils;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 
 import java.io.*;
@@ -14,21 +13,26 @@ import java.util.*;
 public class MainTest {
 
     public static void main(String[] args) {
-        String textPath= "D:\\tzauto\\inkInfo.txt";
+        String ss = "123|4564";
+        System.out.print(ss.contains("|"));
+        String sss[] = ss.split("|");
+        System.out.print(ss.split("|")[0]);
+        System.out.print(ss.split("\\|")[0]);
+        String textPath = "D:\\tzauto\\inkInfo.txt";
         List<String[]> list = new ArrayList<>();
         try {
 
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(textPath), "UTF-8"));
             String tmpString = "";
             while ((tmpString = br.readLine()) != null) {
-                String [] arr = tmpString.split(";");
+                String[] arr = tmpString.split(";");
                 list.add(arr);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println(list);
-        String recipeName="TTM2FQAPKL1A4A-2PNL";
+        String recipeName = "TTM2FQAPKL1A4A-2PNL";
 
         File file = new File("D:\\data\\PNLPG012#TZ-TEST\\TTM2FQAPKL1A4A-2PNLtemp\\TZ-TEST\\TZ-TEST\\Img");
         if (file.listFiles().length > 1) {

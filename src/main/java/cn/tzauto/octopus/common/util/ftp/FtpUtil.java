@@ -41,7 +41,7 @@ public class FtpUtil {
 
     public static boolean uploadFile(String localFilePath, String remoteFilePath, String fileName, String serverIp, String serverPort, String userName, String password) {
         if (GlobalConstants.isLocalMode) {
-            ;
+            return true;
         }
 
         if (!connectFtp(serverIp, serverPort, userName, password)) {

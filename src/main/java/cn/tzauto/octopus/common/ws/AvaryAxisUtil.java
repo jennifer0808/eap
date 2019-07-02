@@ -767,7 +767,7 @@ public class AvaryAxisUtil {
     }
 
 
-    private static Call getCallForGetDataFromSer() throws ServiceException, MalformedURLException {
+    protected static Call getCallForGetDataFromSer() throws ServiceException, MalformedURLException {
         String actionUri = "getDataFromSer"; //Action路径
         String op = "getDataFromSer"; //要调用的方法名
         Service service = new Service();
@@ -818,7 +818,7 @@ public class AvaryAxisUtil {
     }
 
 
-    private static String createParm(String... parms) {
+    protected static String createParm(String... parms) {
         StringBuilder sb = new StringBuilder();
         int length = parms.length;
         for (int i = 0; i < length - 1; i++) {
@@ -838,7 +838,7 @@ public class AvaryAxisUtil {
         return sb.toString();
     }
 
-    private static List<Map<String, String>> parseXml(Schema schema) {
+    protected static List<Map<String, String>> parseXml(Schema schema) {
         List<Map<String, String>> list = new ArrayList<>();
         MessageElement[] elements = schema.get_any();
 //        List elementHead = elements[0].getChildren();//消息头
@@ -965,13 +965,13 @@ public class AvaryAxisUtil {
      * @param mainSerial
      * @return string bom
      */
-    public static String getBom(String deviceCode, String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
+    public static String getBom(String deviceType, String partNum, String mainSerial) throws MalformedURLException, ServiceException, RemoteException {
         Call call = getCallForGetDataFromSer();
-        String[] arr = parmsNames.get("getBom");
-        Object[] params = new Object[]{"test", "test", deviceCode, arr[0], arr[1], createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
+        String[] arr = (String[]) mesInterfaceParaMap.get(deviceType).get("getBom");
+        Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
-        logger.info("根據料號，主途程序獲取曝光底片信息," + deviceCode + ";" + partNum + ";" + mainSerial + ",结果为：" + list);
+        logger.info("根據料號，主途程序獲取曝光底片信息;" + partNum + ";" + mainSerial + ",结果为：" + list);
         if (list.size() == 0) {
             return null;
         }
@@ -1022,4 +1022,58 @@ public class AvaryAxisUtil {
         }
         return result;
     }
+
+    public static boolean checkMaterial(String deviceType, String lotNo, String materialNo) {
+        String bom = getMaterialInfo(deviceType, lotNo);
+
+        return materialNo.equals(bom);
+
+    }
+
+    public static String getMaterialInfo(String deviceType, String lotNo) {
+        String bom = null;
+        try {
+            Call call = getCallForGetDataFromSer();
+
+            String[] arr = (String[]) mesInterfaceParaMap.get(deviceType).get("getMaterial");
+            Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(lotNo), LocalDateTime.now().format(dtf)};
+            Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+            List<Map<String, String>> list = parseXml(result);
+            logger.info("根據批号信息,获取材料信息" + lotNo + ";结果为：" + list);
+            if (list.size() == 0) {
+                return "";
+            }
+            bom = list.get(0).get("LASTVALUE");
+        } catch (Exception e) {
+            logger.error("get Material failed Material:" + bom);
+            return "";
+        }
+        return bom;
+    }
+
+    public static boolean checkTooling(String deviceType, String lotNo, String toolingNo) {
+        String bom = null;
+        try {
+            Call call = getCallForGetDataFromSer();
+
+            String[] arr = (String[]) mesInterfaceParaMap.get(deviceType).get("getTooling");
+            Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(lotNo), LocalDateTime.now().format(dtf)};
+            Schema result = (Schema) call.invoke(params); //方法执行后的返回值
+            List<Map<String, String>> list = parseXml(result);
+            logger.info("根據批号信息,获取治具信息" + lotNo + ";结果为：" + list);
+            if (list.size() == 0) {
+                return false;
+            }
+            bom = list.get(0).get("LASTVALUE");
+            if (bom.contains("(")) {
+                bom = bom.split("\\(")[0];
+            }
+        } catch (Exception e) {
+            logger.error("get bom failed bom:" + bom);
+            return false;
+        }
+        return toolingNo.equals(bom);
+
+    }
+
 }
