@@ -1,9 +1,7 @@
 package cn.tzauto.octopus.isecsLayer.equipImpl.hta;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.biz.recipe.domain.*;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
@@ -17,10 +15,6 @@ import cn.tzauto.octopus.isecsLayer.resolver.hta.FI7300Resolver;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.util.tool.FileUtil;
-import cn.tzauto.octopus.isecsLayer.resolver.hta.FI7300Resolver;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
