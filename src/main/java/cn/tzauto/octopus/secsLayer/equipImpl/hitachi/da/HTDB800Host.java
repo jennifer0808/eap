@@ -64,7 +64,7 @@ public class HTDB800Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
-        EquipStateChangeCeid = 4L;
+        EquipStateChangeCeid = 5L;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
@@ -336,7 +336,7 @@ public class HTDB800Host extends EquipHost {
                     //reciep参数修改事件
                     recipeParaChange = true;
                 }
-                if (ceid == EquipStateChangeCeid) {
+                if (ceid == 4L || ceid == 5L || ceid == 6L ) {
                     processS6F11EquipStatusChange(data);
                 }
             }

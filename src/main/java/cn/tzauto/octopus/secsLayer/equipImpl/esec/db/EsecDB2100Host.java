@@ -244,7 +244,23 @@ public class EsecDB2100Host extends EquipHost {
         }
     }
 
+
+
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
+
+    @Override
+    public void processS1F13in(DataMsgMap data) {
+        super.processS1F13in(data);
+        if(rptDefineNum>0) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    initRptPara();
+                }
+            }).start();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS1F3Check() {

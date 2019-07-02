@@ -88,7 +88,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
     public boolean holdSuccessFlag = true;
     public int secsMsgTimeoutTime = 0;//check通信超时次数
-    protected int rptDefineNum = 0;
+    public int rptDefineNum = 0;
     public int checkNotComm = 0;
     public int checkNotReady = 0;
     public boolean isCleanMode = false;

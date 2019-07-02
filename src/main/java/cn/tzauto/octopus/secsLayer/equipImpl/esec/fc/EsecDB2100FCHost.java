@@ -182,6 +182,19 @@ public class EsecDB2100FCHost extends EquipHost {
         }
     }
 
+    @Override
+    public void processS1F13in(DataMsgMap data) {
+        super.processS1F13in(data);
+        if(rptDefineNum>0) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    initRptPara();
+                }
+            }).start();
+        }
+    }
+
     public String initRptPara() {
         try {
 //            sendS2F33clear();
@@ -191,25 +204,25 @@ public class EsecDB2100FCHost extends EquipHost {
             long rptid = 1001l;
             long vid = 269352993l;
             long ceid = 15338l;
-            sendS2F33out(1001l, 269352993l);//15339
+            sendS2F33out(1001L, 269352993L);//15339
 
 
-            sendS2F33out(1002l, 269352993l);//15338
+            sendS2F33out(1002L, 269352993L);//15338
 
 
-            sendS2F33out(1003l, 269352995l);//15328
+            sendS2F33out(1003L, 269352995L);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(100L, 15339l, 1001l);//15339 1001
+            sendS2F35out(100L, 15339L, 1001L);//15339 1001
 
 
-            sendS2F35out(100L, 15338l, 1002l);//15339 1001
+            sendS2F35out(100L, 15338L, 1002L);//15339 1001
 
-            sendS2F35out(100L, 15328l, 1003l);//15339 1001
+            sendS2F35out(100L, 15328L, 1003L);//15339 1001
 
-//            sendS2F37out(4l);
+//            sendS2F37out(4L);
             List list = new ArrayList();
             list.add(2031L);
             list.add(2009L);
