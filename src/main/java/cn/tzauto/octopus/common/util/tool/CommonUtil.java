@@ -5,20 +5,9 @@
 package cn.tzauto.octopus.common.util.tool;
 
 import cn.tzauto.octopus.common.util.scheduler.QuartzManager;
-import cn.tzauto.octopus.common.util.scheduler.job.MonitorTask;
-import cn.tzauto.octopus.common.util.scheduler.job.ScanHostTask;
-import cn.tzauto.octopus.common.util.scheduler.job.SyncConfigTask;
+import cn.tzauto.octopus.common.util.scheduler.job.*;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.scheduler.job.DataCleanTask;
-import cn.tzauto.octopus.common.util.scheduler.job.CommCheckTask;
-import cn.tzauto.octopus.common.util.scheduler.job.LogSaveTask;
-import cn.tzauto.octopus.common.util.scheduler.job.MonitorAlarmLockTask;
-import cn.tzauto.octopus.common.util.scheduler.job.MonitorAlarmTask;
-import cn.tzauto.octopus.common.util.scheduler.job.MonitorECTask;
-import cn.tzauto.octopus.common.util.scheduler.job.NetCheckTask;
-import cn.tzauto.octopus.common.util.scheduler.job.RefreshEquipStatusTask;
-import cn.tzauto.octopus.common.util.scheduler.job.SessionControlTask;
-import cn.tzauto.octopus.common.util.scheduler.job.UploadMTBATask;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -270,9 +259,9 @@ public class CommonUtil {
         }
     }
     public static void startHtFtpJob(JobListener jobListener) {
-        DataCleanTask cleanDataTask = new DataCleanTask();
+        FtpFileTask ftpFileTask = new FtpFileTask();
         try {
-            QuartzManager.addJob(GlobalConstants.FTP_FILE_JOB, cleanDataTask, "0 0 0/1 * * ?"); //每小时执行一次
+            QuartzManager.addJob(GlobalConstants.FTP_FILE_JOB, ftpFileTask, "0 0 0/1 * * ?"); //每小时执行一次
             JobKey jobKey = new JobKey(GlobalConstants.FTP_FILE_JOB, QuartzManager.JOB_GROUP_NAME);
             QuartzManager.addJobListner(jobListener, jobKey);
         } catch (Exception e) {

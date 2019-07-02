@@ -11,6 +11,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,8 +20,10 @@ import java.util.concurrent.TimeUnit;
 public class HtFtpUtil {
 
     private final static Logger logger = Logger.getLogger(HtFtpUtil.class);
-    public static String tempPath = "E://tempFiles/";
+    //生成的临时文件存取地址
+    public static String tempPath = "E://tempFile/";
     public static String pathFile = "E://pathFile";
+    public static String controlEncoding = "gbk";
 
     public static boolean unrar(String localPath, String targetPath) {
         String command = GlobalConstants.winRarPath + " x \"" + localPath + "\" \"" + targetPath + "\"";
@@ -36,7 +39,7 @@ public class HtFtpUtil {
     private static FTPClient connectFtpServer() {
         FTPClient ftpClient = new FTPClient();
         ftpClient.setConnectTimeout(1000 * 30);//设置连接超时时间
-        ftpClient.setControlEncoding("utf-8");//设置ftp字符集
+        ftpClient.setControlEncoding(controlEncoding);//设置ftp字符集
         ftpClient.enterLocalPassiveMode();//设置被动模式，文件传输端口设置
         try {
             ftpClient.connect(GlobalConstants.htFtpUrl);
@@ -201,13 +204,16 @@ public class HtFtpUtil {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         FTPClient ftpClient = connectFtpServer();
+        long now = Instant.now().toEpochMilli();
+        long start = now + 1800000L;
+        logger.info("开始路径为：" + path + "的ftp定时任务：" + now);
         try {
             ftpClient.changeWorkingDirectory(path);
 //            ftpClient.changeWorkingDirectory("/");
             FTPFile[] ftpFiles = ftpClient.listFiles();
             for (int i = 0; i < ftpFiles.length; i++) {
                 FTPFile ftpFile = ftpFiles[i];
-                recodeFile(ftpFile, ftpClient, path, deviceService);
+                recodeFile(ftpFile, ftpClient, path, deviceService, start);
             }
         } catch (IOException e) {
             logger.error("htftp文件定时任务失败", e);
@@ -226,14 +232,18 @@ public class HtFtpUtil {
     }
 
 
-    private void recodeFile(FTPFile ftpFile, FTPClient ftpClient, String path, DeviceService deviceService) {
+    private void recodeFile(FTPFile ftpFile, FTPClient ftpClient, String path, DeviceService deviceService, long start) {
+
         if (ftpFile.isDirectory()) {
-//            logger.info(pre + ftpFile.getName());
+            if (Instant.now().toEpochMilli() > start) {
+                logger.error("ftp 定时任务超时");
+                return;
+            }
             try {
                 ftpClient.changeWorkingDirectory(path + ftpFile.getName() + "/");
                 FTPFile[] ftpFiles = ftpClient.listFiles();
                 for (int i = 0; i < ftpFiles.length; i++) {
-                    recodeFile(ftpFiles[i], ftpClient, path + ftpFile.getName() + "/", deviceService);
+                    recodeFile(ftpFiles[i], ftpClient, path + ftpFile.getName() + "/", deviceService, start);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -244,15 +254,13 @@ public class HtFtpUtil {
                 return;
             }
             //文件不存在,添加记录进数据库
-            logger.info("waferMapping路径加入数据库：" + path + ftpFile.getName());
-
             String name = ftpFile.getName();
-            name = name.substring(0,name.lastIndexOf("."));
+            name = name.substring(0, name.lastIndexOf("."));
             String filePath = path + ftpFile.getName();
             String[] split = path.split("/");
             String month = "";
-
-            deviceService.insertWaferMappingPath(name,filePath,month);
+            logger.info("waferMapping路径加入数据库：" + name + ";" + filePath + ";" + month);
+            deviceService.insertWaferMappingPath(name, filePath, month);
             FileOutputStream o = null;
             try {
                 o = FileUtils.openOutputStream(out);

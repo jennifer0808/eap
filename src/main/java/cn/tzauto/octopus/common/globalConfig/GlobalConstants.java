@@ -11,6 +11,7 @@ import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.mq.MessageUtils;
+import cn.tzauto.octopus.common.util.ftp.HtFtpUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
@@ -197,6 +198,9 @@ public class GlobalConstants {
         GlobalConstants.htFtpUrl = getProperty("htFtpUrl");
         GlobalConstants.htFtpUser = getProperty("htFtpUser");
         GlobalConstants.htFtpPwd = getProperty("htFtpPwd");
+
+        HtFtpUtil.tempPath = getProperty("htFtpTempPath");
+        HtFtpUtil.pathFile = getProperty("htFtpPathFile");
 
         GlobalConstants.winRarPath = getProperty("winRarPath");
 

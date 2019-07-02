@@ -11,6 +11,10 @@ import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 /**
  * @author luosy
@@ -23,7 +27,12 @@ public class FtpFileTask implements Job {
     public void execute(JobExecutionContext jec) {
         logger.info("FtpFileTask=====>任务执行....");
         HtFtpUtil htFtpUtil = new HtFtpUtil();
-        htFtpUtil.recordFile("/");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy年MM月");
+        LocalDateTime now = LocalDateTime.now();  //这一个月
+        LocalDateTime ldt = now.minusMonths(1);   //上一个月
+
+        htFtpUtil.recordFile("/" + ldt.format(dtf) + "/");
+        htFtpUtil.recordFile("/" + now.format(dtf) + "/");
 
         logger.info("FtpFileTask任务执行结束...");
 
