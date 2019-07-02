@@ -1530,7 +1530,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     protected Object getPPBODY(String recipeName) throws UploadRecipeErrorException {
         try {
-            return activeWrapper.sendS7F5out(recipeName).get("PPBODY");
+            Object result = activeWrapper.sendS7F5out(recipeName).get("PPBODY");
+            if("".equalsIgnoreCase(String.valueOf(result))){
+                return null;
+            }
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             throw new UploadRecipeErrorException("Get recipe body from equip " + deviceCode + " failed.");

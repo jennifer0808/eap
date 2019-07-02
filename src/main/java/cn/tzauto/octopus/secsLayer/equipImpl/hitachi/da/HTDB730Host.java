@@ -229,14 +229,14 @@ public class HTDB730Host extends EquipHost {
             }
             //发送s2f33
             String ack = "";
-            long rptid = 10001l;
-            long vid = 50200l;
-            long ceid = 115l;
+            long rptid = 10001L;
+            long vid = 50200L;
+            long ceid = 115L;
             sendS2F33out(rptid, vid);//115
 
             //SEND S2F35
 
-            sendS2F35out(115l, 10001l);//115 10001
+            sendS2F35out(115L, 10001L);//115 10001
 
 
             //SEND S2F37
@@ -703,6 +703,7 @@ public class HTDB730Host extends EquipHost {
 
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
+        Map resultMap = new HashMap();
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
@@ -714,15 +715,16 @@ public class HTDB730Host extends EquipHost {
             recipeParaList = DB730Util.transferFromDB(paraMap, deviceType);
         } catch (Exception ex) {
             ex.printStackTrace();
+            resultMap.put("uploadResult", false);
         }
-        //TODO 实现存储，机台发来的recipe要存储到文件数据库要有记录，区分版本
-        Map resultMap = new HashMap();
+
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("recipe", recipe);
         resultMap.put("recipeParaList", recipeParaList);
         resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
         resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+
         return resultMap;
     }
 
