@@ -6,7 +6,6 @@
 package cn.tzauto.octopus.isecsLayer.equipImpl.hitachi;
 
 
-import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -19,17 +18,16 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.hitachi.LaserDrillUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.isecsLayer.socket.RecipeMapping;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import javax.xml.rpc.ServiceException;
-import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
@@ -43,6 +41,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     private static Logger logger = Logger.getLogger(HitachiLaserDrillHost.class.getName());
     private String toolName = "";
     private boolean hasAutoChangeRecipe = false;
+    private String tableNum = "";
 
     public HitachiLaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
@@ -211,7 +210,7 @@ public class HitachiLaserDrillHost extends EquipModel {
                 if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP", GlobalConstants.ftpPath + deviceCode + recipeName + "temp/", "TMP", ftpip, ftpPort, ftpUser, ftpPwd)) {
 
                 }
-//                List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
+                //                List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
 //                        + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
 //                        + recipeName + "\"");
                 List<String> result = sendCmdMsg2Equip("ftp " + localftpip + " "
@@ -532,40 +531,24 @@ public class HitachiLaserDrillHost extends EquipModel {
                     if (string.length() > 3) {
                         alarmKey = string.substring(0, 4);
                     }
-                    if (GlobalConstants.getProperty("HITACHI_LASER_DRILL_AUTO_CHANGE_RECIPE_ALARM").contains(string)
-                            || alarmKey.equals("0234") || alarmKey.equals("0257")) {
-                        String panelcount = iSecsHost.executeCommand("read panelcount").get(0);
-                        try {
-                            Double.parseDouble(panelcount);
-                        } catch (NumberFormatException e) {
-                            logger.error("read panelcount error,panelcount=" + panelcount);
-                        }
-                        if (Double.parseDouble(panelcount) == 0) {
-                            getCurrentRecipeName();
-                            logger.info("getCurrentRecipeName:" + ppExecName);
-                            if (ppExecName.equals("--")) {
-                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "无法自动切换反面程式,请先保证EAP能获取到准确的程式名");
-                                sendMessage2Eqp("Can not get the Current RecipeName,please check it");
-                            } else {
-                                if (!hasAutoChangeRecipe) {
-                                    iSecsHost.executeCommand("playback resetalarm.txt");
-                                    changeRecipe();
-                                }
-                            }
-                        }
-                    }
 //                    if (string.length() > 200) {
 //                        string = string.substring(0, 200);
 //                    }
-//                    alarmStrings.add(string);
+                    if (alarmKey.equals("-----")) {
+                        continue;
+                    }
+                    alarmStrings.add(alarmKey);
                     logger.info("Get alarm ALID=[" + string + "]");
                 }
             } catch (Exception e) {
                 logger.error("Get EquipAlarm error:" + e.getMessage());
             }
         }
-//        return alarmStrings;
-        return null;
+        if (alarmStrings.size() < 1) {
+            return null;
+        }
+        return alarmStrings;
+//        return null;
     }
 
     @Override
@@ -860,36 +843,28 @@ public class HitachiLaserDrillHost extends EquipModel {
         return lineUseStatus;
     }
 
-
-    private void changeRecipe() throws FileNotFoundException {
-        if ("1".equals(GlobalConstants.getProperty("HITACHI_LASER_DRILL_AUTO_CHANGE_RECIPE"))) {
-            String recipeName = String.valueOf(RecipeMapping.loadRecipeLotMapping(GlobalConstants.getProperty("HITACHI_LASER_DRILL_RECIPE_MAPPING_PATH")).get(partNo));
-            String[] recipeNames = recipeName.split(",");
-            for (String recipeNameTemp : recipeNames) {
-                if (!recipeNameTemp.equals(ppExecName)) {
-                    SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-                    RecipeService recipeService = new RecipeService(sqlSession);
-                    DeviceService deviceService = new DeviceService(sqlSession);
-                    List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipeNameTemp, deviceCode, "Engineer");
-                    DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-                    DeviceInfo deviceInfo = deviceService.getDeviceInfoByDeviceCode(deviceCode).get(0);
-                    String downloadResult = recipeService.downLoadRcp2ISECSDeviceByTypeAutomatic(deviceInfo, recipes.get(0), deviceInfoExt.getRecipeDownloadMod());
-                    if ("0".equals(downloadResult)) {
-                        hasAutoChangeRecipe = true;
-                    }
-                    logger.info("Auto change recipe：" + ppExecName + " to " + recipeNameTemp);
-                    sqlSession.close();
-                    break;
-                }
-            }
-        }
-    }
-
+    /**
+     * laser设备需要传入批号和面别
+     * 面别放在partno位置传入
+     *
+     * @param partNo
+     * @param lotNo
+     * @return
+     */
     @Override
     public String organizeRecipe(String partNo, String lotNo) {
 
-        String recipeName = "";
-
+        String frontOrBack = partNo;
+        String bom = null;
+        try {
+            bom = AvaryAxisUtil.getBom(deviceType, lotNo, frontOrBack);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (bom == null) {
+            return "Can not find any bom info by partNum:" + partNo;
+        }
+        String recipeName = bom;
 
         return recipeName;
     }
@@ -933,6 +908,11 @@ public class HitachiLaserDrillHost extends EquipModel {
         List paraValueList = new ArrayList();
         paraValueList.add(result1);
         paraValueList.addAll(setNormalData("正常", productionMap));
+        //todo 添加治具 原材料 水晶头能量和精度
+        //添加治具
+        paraValueList.add(this.toolings.get(0).getCode());
+        //添加原材料
+        paraValueList.add(this.materials.get(0).getCode());
 
         String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
         if ("".equals(uploadReportDetailResult)) {
@@ -962,5 +942,24 @@ public class HitachiLaserDrillHost extends EquipModel {
 
         return paraValueList;
 
+    }
+
+    private Map getCrystalPowerList() {
+
+        Map powerMap = new HashMap();
+        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("D:\\EAP\\hitachiCrystalPower.log"));
+        for (String str : CrystalPowerList) {
+
+        }
+        return powerMap;
+    }
+
+    private Map getCrystalAccuracyList() {
+        Map accuracyMap = new HashMap();
+        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("D:\\EAP\\hitachiCrystalAccuracy.log"));
+        for (String str : CrystalAccuracyList) {
+
+        }
+        return accuracyMap;
     }
 }

@@ -4,19 +4,7 @@
  */
 package cn.tzauto.octopus.common.util.tool;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,7 +17,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- *
  * @author gavin
  */
 public class FileUtil {
@@ -39,12 +26,11 @@ public class FileUtil {
     /**
      * save file accroding to physical directory infomation
      *
-
      * @param istream input stream of destination file
      * @return
      */
     public static boolean SaveFileByPhysicalDir(String physicalPath,
-            InputStream istream) {
+                                                InputStream istream) {
 
         boolean flag = false;
         try {
@@ -151,7 +137,7 @@ public class FileUtil {
      * COPY文件夹
      *
      * @param sourceDir String
-     * @param destDir String
+     * @param destDir   String
      * @return boolean
      */
     public boolean copyDir(String sourceDir, String destDir) {
@@ -297,7 +283,7 @@ public class FileUtil {
     /**
      * File Unzip
      *
-     * @param sToPath Unzip Directory path
+     * @param sToPath  Unzip Directory path
      * @param sZipFile Unzip File Name
      */
     @SuppressWarnings("rawtypes")
@@ -319,7 +305,7 @@ public class FileUtil {
 
             OutputStream os
                     = new BufferedOutputStream(
-                            new FileOutputStream(getRealFileName(sToPath, ze.getName())));
+                    new FileOutputStream(getRealFileName(sToPath, ze.getName())));
             InputStream is = new BufferedInputStream(zfile.getInputStream(ze));
             int readLen = 0;
             while ((readLen = is.read(buf, 0, 1024)) != -1) {
@@ -334,7 +320,7 @@ public class FileUtil {
     /**
      * getRealFileName
      *
-     * @param baseDir Root Directory
+     * @param baseDir     Root Directory
      * @param absFileName absolute Directory File Name
      * @return java.io.File Return file
      */
@@ -363,7 +349,7 @@ public class FileUtil {
     /**
      * copyFile
      *
-     * @param srcFile Source File
+     * @param srcFile    Source File
      * @param targetFile Target file
      */
     @SuppressWarnings("resource")
@@ -395,7 +381,7 @@ public class FileUtil {
     /**
      * renameFile
      *
-     * @param srcFile Source File
+     * @param srcFile    Source File
      * @param targetFile Target file
      */
     static public void renameFile(String srcFile, String targetFile) throws IOException {
@@ -479,7 +465,7 @@ public class FileUtil {
         path.delete();
     }
 
-    public static void writeRecipeFile(List<String> list, String filepath) {
+    public static void writeStrListFile(List<String> list, String filepath) {
 
         File file = new File(filepath);
         try {
@@ -529,7 +515,7 @@ public class FileUtil {
         return flag;
     }
 
-//删除文件夹  
+    //删除文件夹
     public static void delFolder(String folderPath) {
         try {
             delAllTempFile(folderPath); //删除完里面所有内容  
@@ -574,4 +560,36 @@ public class FileUtil {
 
         return flag;
     }
+
+    public static List getFileBodyAsStrList(String recipePath) {
+
+        ArrayList list = new ArrayList();
+        try {
+            String ppbody = null;
+            File file = new File(recipePath);
+            if (file.isFile() && file.exists()) {
+                InputStreamReader reader = new InputStreamReader(new FileInputStream(file));
+                BufferedReader br = new BufferedReader(reader);
+                String tmpString = "";
+                while ((tmpString = br.readLine()) != null) {
+                    ppbody = ppbody + tmpString;
+                    ppbody = ppbody.replaceAll("null", "");
+                }
+                br.close();
+                reader.close();
+            } else {
+                return null;
+            }
+
+            if (ppbody == null || ppbody.isEmpty() || "".equals(ppbody)) {
+                return list;
+            } else {
+                list.add(ppbody);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 }

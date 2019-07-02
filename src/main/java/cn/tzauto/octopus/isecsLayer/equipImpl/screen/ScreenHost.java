@@ -658,7 +658,7 @@ public class ScreenHost extends EquipModel {
 
         String bom = null;
         try {
-            bom = AvaryAxisUtil.getBom(deviceCode, partNo, mainserial);
+            bom = AvaryAxisUtil.getBom(deviceType, partNo, mainserial);
         } catch (Exception e) {
             e.printStackTrace();
         }

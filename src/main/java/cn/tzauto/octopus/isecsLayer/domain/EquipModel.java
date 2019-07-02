@@ -5,11 +5,14 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.domain.UnitFormula;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.material.Material;
+import cn.tzauto.octopus.biz.pm.PMState;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.biz.tooling.Tooling;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.BigDecimalArithmetic;
@@ -79,6 +82,9 @@ public abstract class EquipModel extends Thread {
     public boolean isLocalMode = false;
     private String tableNum = "";
     protected String lotStartTime = ""; //开始时间
+    public List<Material> materials = new ArrayList<>();
+    public List<Tooling> toolings = new ArrayList<>();
+    public PMState pmState;
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -96,6 +102,7 @@ public abstract class EquipModel extends Thread {
         candidates.put("WaitTime", "");
         candidates.put("UserLevel", "99");
         candidates.put("Waiter", "");
+        pmState = new PMState("system");
     }
 
     public abstract String getCurrentRecipeName();

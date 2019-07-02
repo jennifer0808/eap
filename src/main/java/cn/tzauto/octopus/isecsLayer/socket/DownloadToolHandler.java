@@ -4,8 +4,10 @@ package cn.tzauto.octopus.isecsLayer.socket;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.material.Material;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.biz.tooling.Tooling;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
@@ -14,7 +16,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.ibatis.session.SqlSession;
@@ -38,19 +39,20 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
         logger.info("DownloadTool message =====> " + message);
         LinkedHashMap downloadMessageMap = (LinkedHashMap) JsonMapper.fromJsonString(message, Map.class);
         String command = String.valueOf(downloadMessageMap.get("command"));
+        String deviceCode = String.valueOf(downloadMessageMap.get("machineno"));
         if (command.equals("download")) {
             SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             DeviceService deviceService = new DeviceService(sqlSession);
 
             String downloadresult = "";
-            message = message.replaceAll("download", "");
-            String[] temps = message.split(";");
-            String deviceCode = String.valueOf(downloadMessageMap.get("machineno"));
             String userId = String.valueOf(downloadMessageMap.get("userid"));
             String partNo = String.valueOf(downloadMessageMap.get("partno"));
             String lotNo = String.valueOf(downloadMessageMap.get("lotno"));
             String lottype = String.valueOf(downloadMessageMap.get("lottype"));
+            String fixtureno = String.valueOf(downloadMessageMap.get("fixtureno"));
+            String materialno = String.valueOf(downloadMessageMap.get("materialno"));
+
 
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
@@ -63,32 +65,52 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("上岗证验证失败!!work permit not been grant");
                     return;
                 }
+                //验证原材料
+                if (AvaryAxisUtil.checkMaterial(deviceInfo.getDeviceType(), lotNo, materialno)) {
+                    String mstr = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo);
+                    if (mstr.contains("|")) {
+                        String[] mstrs = mstr.split("\\|");
+                        Material material = new Material();
+                        material.setCode(materialno);
+                        material.setId(mstrs[0]);
+                        material.setName(mstrs[1]);
+                        GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
+                    }
+                }
+                //验证治具
+                if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo, fixtureno)) {
+                    Tooling tooling = new Tooling();
+                    tooling.setId(fixtureno);
+                    tooling.setCode(fixtureno);
+                    GlobalConstants.stage.equipModels.get(deviceCode).toolings.add(tooling);
+                }
+
                 String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
-                if (deviceInfo.getDeviceType().contains("SCREEN")) {
-                    try {
-                        EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
-                        equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
-                        equipModel.lotId = lotNo;
-                        equipModel.isFirstPro = "0".equals(lottype);
-                        equipModel.equipState.setWorkLot(lotNo);
-                        if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
-                            if ("1".equals(lottype)) {
-                                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "需要开初件!!");
-                                new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("Need check isfirst!");
-                                return;
-                            }
-                        }
-                        if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
-                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
-                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("初件检查未通过");
+//                if (deviceInfo.getDeviceType().contains("SCREEN")) {
+                try {
+                    EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
+                    equipModel.lotCount = AvaryAxisUtil.getLotQty(lotNo);
+                    equipModel.lotId = lotNo;
+                    equipModel.isFirstPro = "0".equals(lottype);
+                    equipModel.equipState.setWorkLot(lotNo);
+                    if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
+                        if ("1".equals(lottype)) {
+                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "需要开初件!!");
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("Need check isfirst!");
                             return;
                         }
-                    } catch (Exception e) {
-                        logger.error("Exception", e);
-                        e.printStackTrace();
                     }
-
+                    if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("初件检查未通过");
+                        return;
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception", e);
+                    e.printStackTrace();
                 }
+
+
                 recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
                 if (recipeName.contains("Can not")) {
                     downloadresult = recipeName;
@@ -158,23 +180,17 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
 
         }
-        if (command.equals("getRecipeName")) {
-            message = message.replaceAll("getRecipeName", "");
-            String deviceCode = message.trim();
-            String CurrentRecipeName = GlobalConstants.stage.hostManager.getEquipCurrentRecipeName(deviceCode) + "getRecipeName" + "done";
-            Channel channel = ctx.channel();
-            buf = channel.alloc().buffer(CurrentRecipeName.getBytes().length);
-            buf.writeBytes(CurrentRecipeName.getBytes());
-            channel.writeAndFlush(buf);
+        if (command.equals("startmiantain")) {
+            String time = String.valueOf(downloadMessageMap.get("time"));
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(true);
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setStartTime(time);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
         }
-        if (command.equals("getEquipStatus")) {
-            message = message.replaceAll("getEquipStatus", "");
-            String deviceCode = message.trim();
-            String EquipStatus = GlobalConstants.stage.hostManager.getEquipStatus(deviceCode) + "getEquipStatus" + "done";
-            Channel channel = ctx.channel();
-            buf = channel.alloc().buffer(EquipStatus.getBytes().length);
-            buf.writeBytes(EquipStatus.getBytes());
-            channel.writeAndFlush(buf);
+        if (command.equals("endmiantain")) {
+            String time = String.valueOf(downloadMessageMap.get("time"));
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(false);
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setEndTime(time);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "结束保养.");
         }
     }
 
