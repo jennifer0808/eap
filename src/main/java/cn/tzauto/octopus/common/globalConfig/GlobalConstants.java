@@ -138,10 +138,10 @@ public class GlobalConstants {
     public static List<DeviceInfo> deviceInfos;
     public static DynamicClientFactory factory = null;
     public static Client mapBinClient = null;
-    public static String htFtpUrl;
-    public static String htFtpUser;
-    public static String htFtpPwd;
-    public static String winRarPath;
+    public static String htFtpUrl = "192.168.1.146";
+    public static String htFtpUser = "ftpuser1";
+    public static String htFtpPwd = "ftp123456";
+    public static String winRarPath = "C:/Program Files/WinRAR/WinRAR.exe";
 
     public static boolean loadPropertyFromDB() {
         try {
