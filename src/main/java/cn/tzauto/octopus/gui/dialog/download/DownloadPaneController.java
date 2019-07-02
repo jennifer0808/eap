@@ -212,13 +212,13 @@ public class DownloadPaneController implements Initializable {
                 if (deviceInfoExt != null && deviceInfoExt.getRecipeDownloadMod() != null && !"".equals(deviceInfoExt.getRecipeDownloadMod())) {
                     GlobalConstants.sysLogger.info("设备模型表中配置设备" + deviceInfo.getDeviceCode() + "的Recipe下载方式为" + deviceInfoExt.getRecipeDownloadMod());
                     RecipeOperationLog recipeOperationLog = recipeService.setRcpOperationLog(recipe, "download");
-                    EquipHost equipHost =   GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
+
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {
 
                             try {
-                                if (equipHost.getDeviceType().equals(sysProperties.get("ProgressFlag"))) {
+                                if( sysProperties.get("ProgressFlag")!=null && "true".equals(sysProperties.get("ProgressFlag"))){
                                     progressIndicatorLoad.setVisible(true);
                                     mainPane.setDisable(true);
                                 }

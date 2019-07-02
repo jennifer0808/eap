@@ -267,11 +267,11 @@ public class UploadPaneController implements Initializable {
                         GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                         return;
                     }
-                    EquipHost equipHost =   GlobalConstants.stage.equipHosts.get(deviceCode);
+
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {
-                            if( equipHost.getDeviceType().equals(sysProperties.get("ProgressFlag"))){
+                            if( sysProperties.get("ProgressFlag")!=null && "true".equals(sysProperties.get("ProgressFlag"))){
                                 progressIndicatorLoad.setVisible(true);
                                 mainPane.setDisable(true);
                             }
