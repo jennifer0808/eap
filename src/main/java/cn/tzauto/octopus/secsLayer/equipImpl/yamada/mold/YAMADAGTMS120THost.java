@@ -125,7 +125,7 @@ public class YAMADAGTMS120THost extends EquipHost {
                 processS6F11EquipStatusChange(data);
             }if(ceid==1L ||ceid==2L||ceid==3L||ceid==102L||ceid==105L||ceid==115L||ceid==601L){
                 processS6F11EquipStatus(data);
-            }if(ceid==601L){
+            }if(ceid==-1L){
                 //toDO  ppselectid
                 ppExecName = (String) data.get("PPExecName");
                 Map map = new HashMap();
@@ -220,42 +220,24 @@ public class YAMADAGTMS120THost extends EquipHost {
     }
 
 
-    //toDo  没改完
+
     public List sendS1F3PressCheckout() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3pressout", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
         List svidlist = new ArrayList<>();
-        long[] press1SV = new long[1];
-        press1SV[0] = 5101l;
-        s1f3out.put("Press1", press1SV);
-        long[] press2SV = new long[1];
-        press2SV[0] = 5201l;
-        s1f3out.put("Press2", press2SV);
-        long[] press3SV = new long[1];
-        press3SV[0] = 5301l;
-        s1f3out.put("Press3", press3SV);
-        long[] press4SV = new long[1];
-        press4SV[0] = 5401l;
-        s1f3out.put("Press4", press4SV);
-        svidlist.add(0, 5101l);
-        svidlist.add(1, 5201l);
-        svidlist.add(2, 5301l);
-        svidlist.add(3, 5401l);
+        svidlist.add(5101L);
+        svidlist.add(5201L);
+        svidlist.add(5301L);
+        svidlist.add(5401L);
         DataMsgMap data = null;
         try {
              data = activeWrapper.sendS1F3out(svidlist, svFormat);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        if (data == null || data.get("RESULT") == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null) {
+
+        if (data == null || data.isEmpty()) {
             return null;
         }
-        ArrayList list = (ArrayList)  data.get("RESULT");
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+        ArrayList listtmp = (ArrayList) data.get("SV");
         return listtmp;
     }
 
@@ -572,11 +554,10 @@ public class YAMADAGTMS120THost extends EquipHost {
             cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
             data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
 
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
-          byte  hcack = (byte) ( data.get("HCACK"));
+          byte  hcack = (byte)  data.get("HCACK");
             logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             resultMap.put("HCACK", hcack);
             resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
