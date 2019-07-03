@@ -68,7 +68,9 @@ public class AsmAD832iHost extends EquipHost {
                 }
                 if (rptDefineNum < 1) {
                     //为了能调整为online remote
-//                    sendS1F17out();
+                    sendS1F17out();
+                    sendS2f41Cmd("ONLINE_REMOTE");
+
                     logger.info("go to initial s1f3....");
                     super.findDeviceRecipe();
                     logger.info("go to initial s1f3 end....");
@@ -129,13 +131,18 @@ public class AsmAD832iHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                replyS6F12WithACK(data,(byte)0);
+
                 if (data.get("CEID") != null) {
                     ceid = Long.parseLong(data.get("CEID").toString());
                     logger.debug("Received a s6f11in with CEID = " + ceid);
                 }
-                if (ceid == StripMapUpCeid || ceid == EquipStateChangeCeid || ceid ==1) {
+                if ( ceid == EquipStateChangeCeid || ceid ==2|| ceid ==3 || ceid ==4) {
+                    replyS6F12WithACK(data,(byte)0);
                     this.inputMsgQueue.put(data);
+                }else if(ceid == StripMapUpCeid){
+                    this.inputMsgQueue.put(data);
+                }else{
+                    replyS6F12WithACK(data,(byte)0);
                 }
 
             }else if (tagName.equalsIgnoreCase("s5f1in")) {
@@ -155,42 +162,19 @@ public class AsmAD832iHost extends EquipHost {
     }
 
 
+
     public void processS6F11in(DataMsgMap data) {
         try {
-//            if (data.get("CEID") != null) {
-//                ceid = Long.parseLong(data.get("CEID").toString());
-//                logger.info("Received a s6f11in with CEID = " + ceid);
-//            }
-            long controlStateTmp = 0L;
-            try {
-                controlStateTmp = (long) data.get("REPORT");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else  if (ceid == EquipStateChangeCeid) {
-               processS6F11EquipStatusChange(data);
-            }else if(ceid ==1 ){
-                Map panelMap = new HashMap();
-                if (controlStateTmp == 0) {
-                    controlState = FengCeConstant.CONTROL_OFFLINE;
-                    panelMap.put("ControlState", controlState);
-                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
+            } else{
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }else if(ceid ==2 || ceid ==3 || ceid ==4){
+                    processS6F11ControlStateChange(data);
                 }
-                if (controlStateTmp == 1) {
-                    controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                    panelMap.put("ControlState", controlState);
-                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-                }
-                if (controlStateTmp == 2) {
-                    controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                    panelMap.put("ControlState", controlState);
-                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-                }
-                equipState.setControlState(controlState);
-                changeEquipPanel(panelMap);
             }
 
             if (commState != 1) {
@@ -439,6 +423,27 @@ public class AsmAD832iHost extends EquipHost {
 
 
     // </editor-fold>
+
+
+    private void processS6F11ControlStateChange(DataMsgMap data) {
+        Map panelMap = new HashMap();
+        if (ceid ==2){
+            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+            panelMap.put("ControlState", controlState);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
+        }else if(ceid ==3){
+            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+            panelMap.put("ControlState", controlState);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
+        }else if(ceid ==4){
+            controlState = FengCeConstant.CONTROL_OFFLINE;
+            panelMap.put("ControlState", controlState);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
+        }
+        changeEquipPanel(panelMap);
+
+    }
+
 
 
     @Override
