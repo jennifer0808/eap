@@ -605,6 +605,10 @@ public class DeviceService extends BaseService {
     }
 
     public void insertWaferMappingPath(String name, String filePath, String month) {
-        deviceInfoMapper.insertWaferMappingPath(name, filePath, month);
+        try {
+            deviceInfoMapper.insertWaferMappingPath(name, filePath, month);
+        } catch (Exception e) {
+            logger.error("ftp文件路径记录出错:", e);
+        }
     }
 }

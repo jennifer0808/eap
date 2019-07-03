@@ -23,7 +23,6 @@ import java.util.*;
  */
 public class HitachiWaferUtil {
 
-    static String tempPath = "D://tempFiles/";
 
     static String waferMappingPath = "D:\\WAFERMAPPING";
     static String waferSavePath = "D:\\WAFERMAPPING_RESULT";
@@ -42,13 +41,21 @@ public class HitachiWaferUtil {
         try {
             sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
-            String remotePath = deviceService.queryWaferPath(waferId);
+            String waferName = waferId.split("-")[0];
+            String remotePath = deviceService.queryWaferPath(waferName);
+            if (StringUtils.isEmpty(remotePath)) {
+                logger.error(waferId + "在数据库中没有对应的文件地址！！！");
+                remotePath = HtFtpUtil.getMapping(waferName);
+            }
+            if (remotePath == null) {
+                return null;
+            }
             logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
-            String localPath = tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
+            String localPath = HtFtpUtil.tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
             HtFtpUtil.downloadFile(localPath, remotePath);
-            boolean unrar = HtFtpUtil.unrar(localPath, tempPath + random);
+            boolean unrar = HtFtpUtil.unrar(localPath, HtFtpUtil.tempPath + random);
             if (unrar) {
-                File file = HtFtpUtil.getFile(new File(tempPath + random), waferId);
+                File file = HtFtpUtil.getFile(new File(HtFtpUtil.tempPath + random), waferId);
                 in = new FileInputStream(file);
                 br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                 String tmpString = null;
@@ -61,16 +68,33 @@ public class HitachiWaferUtil {
             }
         } catch (Exception e) {
             logger.error("获取mapping文件失败", e);
+            return null;
         } finally {
+            if(in!=null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(br!=null){
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             try {
-                FileUtils.deleteDirectory(new File(tempPath + random));
+                FileUtils.deleteDirectory(new File(HtFtpUtil.tempPath + random));
             } catch (IOException e) {
                 e.printStackTrace();
             }
             sqlSession.close();
         }
 
-        String[] results = (String[]) list.toArray();
+        String[] results = new String[list.size()];
+        list.toArray(results);
+
         resultMap.put("BinList", results);
         resultMap.put("RowCountInDieIncrements", results.length);
         resultMap.put("ColumnCountInDieIncrements", results[0].length());
@@ -642,7 +666,7 @@ public class HitachiWaferUtil {
 
     public static void main(String[] args) {
         long l = Instant.now().toEpochMilli();
-        Map map = getWaferFileInfo("BPR296-18.wfp", "270", "DA-123-M");
+        Map map = getWaferFileInfo("HYKP12-15.xml", "270", "DA-123-M");
         System.out.println(map);
         String[] binList = (String[]) map.get("BinList");
         String BinList = "";

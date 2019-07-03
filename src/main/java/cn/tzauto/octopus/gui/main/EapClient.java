@@ -319,6 +319,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 if ("1".equals(GlobalConstants.getProperty("DATACLEAN"))) {
                     CommonUtil.startCleanDataJob(this);
                 }
+                if ("1".equals(GlobalConstants.getProperty("FTP_TASK"))) {
+                    CommonUtil.startHtFtpJob(this);
+                }
+
 
                 //netty监控
                 if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN"))) {

@@ -12,9 +12,8 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 public class HtFtpUtil {
@@ -22,6 +21,7 @@ public class HtFtpUtil {
     private final static Logger logger = Logger.getLogger(HtFtpUtil.class);
     //生成的临时文件存取地址
     public static String tempPath = "E://tempFile/";
+    //ftp路径记录地址
     public static String pathFile = "E://pathFile";
     public static String controlEncoding = "gbk";
 
@@ -57,42 +57,69 @@ public class HtFtpUtil {
         return ftpClient;
     }
 
-    public List<String> getMapping(String waferId) {
-        String fileName = waferId.substring(0, waferId.lastIndexOf("-"));
-        UUID uuid = UUID.randomUUID();
-        String random = uuid.toString();
+    public static String getMapping(String waferId) {
+
         FTPClient ftpClient = connectFtpServer();
-        InputStream in = null;
-        BufferedReader br = null;
-        List<String> list = new ArrayList<>();
         try {
-            String remotePath = listPre("2019年04月", fileName, ftpClient);
-            logger.info(waferId + "的远程文件地址为：" + remotePath);
+
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy年MM月");
+            LocalDateTime now = LocalDateTime.now();  //这一个月
+            LocalDateTime ldt = now.minusMonths(1);   //上一个月
+            String temp = null;
+            String nowStr = "/" + now.format(dtf) + "/";
+            String ldtStr = "/" + ldt.format(dtf) + "/";
+
+            String remotePath = listPre(nowStr, waferId, ftpClient);
             if (remotePath == null) {
+                remotePath = listPre(ldtStr, waferId, ftpClient);
+            } else {
+                temp = now.format(dtf);
+            }
+
+            if (remotePath == null) {
+                logger.error(now.format(dtf) + "和" + ldt.format(dtf) + "ftp上没有找到该压缩文件");
                 return null;
+            } else if (temp == null) {
+                temp = ldt.format(dtf);
             }
 
-//        System.out.println(random);
-//        String remotePath = "/test/A20309.24.rar";
+            //入库
+            File out = new File(pathFile + remotePath);   //文件名中包含? 无法识别
+            if (out.exists()) {
+                return remotePath;
+            }
+            //文件不存在,添加记录进数据库
+            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            DeviceService deviceService = new DeviceService(sqlSession);
+            String name = out.getName();
+            int index = name.lastIndexOf(".");
+            if (index > 0) {
+                name = name.substring(0, name.lastIndexOf("."));
+            }
+            String filePath = remotePath;
+            String[] split = remotePath.split("/");
+            String month = split[1];
+            logger.info("waferMapping路径加入数据库：" + name + ";" + filePath + ";" + month);
 
-            String localPath = tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
-
-            downloadFile(localPath, remotePath);
-
-            boolean unrar = unrar(localPath, tempPath + random);
-            if (unrar) {
-                File file = getFile(new File(tempPath + random), waferId);
-                in = new FileInputStream(file);
-                br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                String tmpString = null;
-                br.readLine();
-                br.readLine();
-                br.readLine();
-                while ((tmpString = br.readLine()) != null) {
-                    list.add(tmpString);
+            FileOutputStream o = null;
+            try {
+                o = FileUtils.openOutputStream(out);
+                deviceService.insertWaferMappingPath(name, filePath, month);
+                sqlSession.commit();
+            } catch (IOException e) {
+                logger.error("输出文件错误", e);
+            } finally {
+                sqlSession.close();
+                if (o != null) {
+                    try {
+                        o.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
-
             }
+            return remotePath;
+
         } catch (Exception e) {
             logger.error("getMapping发生错误", e);
         } finally {
@@ -103,34 +130,18 @@ public class HtFtpUtil {
                     e.printStackTrace();
                 }
             }
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                FileUtils.deleteDirectory(new File(tempPath + random));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-        return list;
+        return null;
     }
 
     public static File getFile(File file, String name) {
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             for (int i = 0; i < files.length; i++) {
-                getFile(files[i], name);
+                File result = getFile(files[i], name);
+                if (result != null) {
+                    return result;
+                }
             }
         } else {
             if (file.getName().endsWith(name)) {
@@ -147,9 +158,8 @@ public class HtFtpUtil {
      * @param pre      文件名前部分
      * @throws IOException
      */
-    public String listPre(String pathName, String pre, FTPClient ftpClient) throws IOException {
+    public static String listPre(String pathName, String pre, FTPClient ftpClient) throws IOException {
         if (pathName.startsWith("/") && pathName.endsWith("/")) {
-            System.out.println(pathName);
             //更换目录到当前目录
             ftpClient.changeWorkingDirectory(pathName);
             FTPFile[] files = ftpClient.listFiles();
@@ -161,7 +171,10 @@ public class HtFtpUtil {
                     }
                 } else if (file.isDirectory()) {
                     if (!".".equals(file.getName()) && !"..".equals(file.getName())) {
-                        listPre(pathName + file.getName() + "/", pre, ftpClient);
+                        String s = listPre(pathName + file.getName() + "/", pre, ftpClient);
+                        if (s != null) {
+                            return s;
+                        }
                     }
                 }
             }
@@ -215,6 +228,7 @@ public class HtFtpUtil {
                 FTPFile ftpFile = ftpFiles[i];
                 recodeFile(ftpFile, ftpClient, path, deviceService, start);
             }
+            sqlSession.commit();
         } catch (IOException e) {
             logger.error("htftp文件定时任务失败", e);
         } finally {
@@ -249,21 +263,29 @@ public class HtFtpUtil {
                 e.printStackTrace();
             }
         } else {
-            File out = new File(pathFile + path + ftpFile.getName());   //文件名中包含? 无法识别
+            String name = ftpFile.getName();
+            if (!(name.endsWith(".rar") || name.endsWith(".zip"))) {
+                return;
+            }
+            File out = new File(pathFile + path + name);   //文件名中包含? 无法识别
             if (out.exists()) {
                 return;
             }
             //文件不存在,添加记录进数据库
-            String name = ftpFile.getName();
-            name = name.substring(0, name.lastIndexOf("."));
+
+            int index = name.lastIndexOf(".");
+            if (index > 0) {
+                name = name.substring(0, name.lastIndexOf("."));
+            }
             String filePath = path + ftpFile.getName();
             String[] split = path.split("/");
-            String month = "";
+            String month = split[1];
             logger.info("waferMapping路径加入数据库：" + name + ";" + filePath + ";" + month);
-            deviceService.insertWaferMappingPath(name, filePath, month);
+
             FileOutputStream o = null;
             try {
                 o = FileUtils.openOutputStream(out);
+                deviceService.insertWaferMappingPath(name, filePath, month);
             } catch (IOException e) {
                 logger.error("输出文件错误", e);
             } finally {

@@ -261,6 +261,7 @@ public class CommonUtil {
     public static void startHtFtpJob(JobListener jobListener) {
         FtpFileTask ftpFileTask = new FtpFileTask();
         try {
+//            QuartzManager.addJob(GlobalConstants.FTP_FILE_JOB, ftpFileTask, "0 0/2 * * * ? *"); //每两分钟执行一次
             QuartzManager.addJob(GlobalConstants.FTP_FILE_JOB, ftpFileTask, "0 0 0/1 * * ?"); //每小时执行一次
             JobKey jobKey = new JobKey(GlobalConstants.FTP_FILE_JOB, QuartzManager.JOB_GROUP_NAME);
             QuartzManager.addJobListner(jobListener, jobKey);
