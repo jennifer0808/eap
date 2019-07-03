@@ -187,6 +187,8 @@ public class DeviceInfoPaneController implements Initializable {
             lotNo = (TextField) root.lookup("#lotNo");
             recipeVersionNo = (TextField) root.lookup("#recipeVersionNo");
             JRB_EngineerMode = (RadioButton) root.lookup("#JRB_EngineerMode");
+            JRB_LocalMode = (RadioButton) root.lookup("#JRB_LocalMode");
+
             officeName = (TextField) root.lookup("#officeName");
 //            Map map = new HashMap();
             try {

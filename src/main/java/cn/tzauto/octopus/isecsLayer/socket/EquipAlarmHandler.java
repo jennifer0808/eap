@@ -79,7 +79,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             alarm = str;
                         }
                         break;
-                    case "HITACHI-LaserDrill":
+                    case "HITACHI-LASERDRILL":
                         if (str.contains("._PC")) {
                             if (str.contains("Alarm =")) {
                                 String[] HITACHILaserDrillalarms = str.split(",");

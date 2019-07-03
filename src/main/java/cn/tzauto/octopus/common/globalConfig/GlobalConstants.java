@@ -257,12 +257,13 @@ public class GlobalConstants {
     private static void loadCrystalPowerConfig() {
         Properties crystalPowerProp = new Properties();
         try {
-            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream("esiCrystal.properties");
+            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream("LaserCrystal.properties");
             crystalPowerProp.load(in);
         } catch (Exception e) {
             sysLogger.error("Exception:", e);
         }
         for (Map.Entry entry : crystalPowerProp.entrySet()) {
+            crystalPowerMap = new HashMap();
             crystalPowerMap.put(entry.getKey(), entry.getValue());
         }
     }

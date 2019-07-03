@@ -71,7 +71,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     if (mstr.contains("|")) {
                         String[] mstrs = mstr.split("\\|");
                         Material material = new Material();
-                        material.setCode(materialno);
+                        material.setCode(mstrs[0]);
                         material.setId(mstrs[0]);
                         material.setName(mstrs[1]);
                         GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);

@@ -40,13 +40,14 @@ public class AvaryAxisUtil {
 
     static {
         parmsNames = new HashMap<>();
-        Map<String, Object> parmsNamesTemp = new HashMap<>();
+
         mesInterfaceParaMap = new HashMap<>();
         String textPath = GlobalConstants.getProperty("WEBSERVICE_CONFIG_FILE_PATH");
         File file = new File(textPath);
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             for (File fileTemp : files) {
+                Map<String, Object> parmsNamesTemp = new HashMap<>();
                 //要求配置文件名称为：devicetype_wbconfig.properties格式
                 String deviceType = fileTemp.getName().split("_")[0];
 
@@ -163,7 +164,7 @@ public class AvaryAxisUtil {
 
         //1-2
 //        try {
-//            List list = getProductionCondition("DEXP03000100", "FSAPY55C2R28");
+//            List list = getProductionCondition("DDRI05R00003", "FSAPY55C2R28");
 //            System.out.println(list);
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
@@ -173,18 +174,18 @@ public class AvaryAxisUtil {
 //            e.printStackTrace();
 //        }
 
-        //1-3
-        try {
-//            boolean b = isInitialPart("FSAPMN7A2A135","DEXP03000100","3");
-            boolean b = isInitialPart("FSAPGG8E2K2","XXX","3");
-            System.out.println(b);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (ServiceException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+//        //1-   try {
+//          boolean b = isInitialPart("FSAPMN7A2A135","DEXP03000100","3");
+//        boolean b = isInitialPart("FSAPGG8E2K2","DDRI05R00003","3");
+//        System.out.println(b);
+//    } catch (RemoteException e) {
+//        e.printStackTrace();
+//    } catch (ServiceException e) {
+//        e.printStackTrace();
+//    } catch (MalformedURLException e) {
+//        e.printStackTrace();
+//    }3
+
 
 //        1-4
 //        try {
@@ -213,7 +214,7 @@ public class AvaryAxisUtil {
 
         //2-1
 //        try {
-//           String list = tableQuery("SFCZ4_ZD_DIExposure","PNLPG007#","0");
+//           String list = tableQuery("SFCZ1_ZD_RTRUV","XXX","0");
 //            System.out.println(list);
 //        } catch (RemoteException e) {
 //            e.printStackTrace();
@@ -246,42 +247,42 @@ public class AvaryAxisUtil {
 //        }
 
 //2-4
-//        String lotNum = "M905210831";
-//        Map<String,String> map = null;
-//        try {
-//             map = getParmByLotNum(lotNum);
-//            System.out.println();
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
+        String lotNum = "M907020571";
+        Map<String, String> map = null;
+        try {
+            map = getParmByLotNum(lotNum);
+            System.out.println();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 //
 ////        2-5
-//        try {
-//            map = getParmByLotNumAndLayer(lotNum, "SFCZ4_ZD_DIExposure", map.get("Layer"));
-//            System.out.println(map);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            map = getParmByLotNumAndLayer(lotNum, "SFCZ1_ZD_RTRUV", map.get("Layer"));
+            System.out.println(map);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
 //
         //getBom
-//        try {
+        try {
 //            getBom("#01", "FSAPJC7B4B", "47");
-////            getBom("#01",map.get("PartNum"),map.get("MainSerial"));
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        } catch (ServiceException e) {
-//            e.printStackTrace();
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
+            getBom("HITACHI-LASERDRILL", lotNum, "0");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (ServiceException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
 //        System.out.print(getLotQty("M905291741"));
 //        ;
 
@@ -978,17 +979,7 @@ public class AvaryAxisUtil {
         }
         String bom = list.get(0).get("LASTVALUE");
 //        String bom = list.get(0).get("V_WSADDVALUE");
-        int j = bom.indexOf(" ");
-        String num = "";
-        try {
-            String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
-            String range2 = bom.substring(bom.indexOf("REV:") + 4);
-            num = range1.replace("-", "") + range2;
-        } catch (Exception e) {
-            logger.error("get bom failed bom:" + bom);
-            return null;
-        }
-        return num;
+        return bom;
     }
 
     public static String uploadReportDetail(String deviceType, List paraValue) {

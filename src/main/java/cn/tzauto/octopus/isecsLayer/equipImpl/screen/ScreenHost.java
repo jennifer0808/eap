@@ -662,7 +662,17 @@ public class ScreenHost extends EquipModel {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (bom == null) {
+        if (bom == null || bom.equals("NA")) {
+            return "Can not find any bom info by partNum:" + partNo;
+        }
+        int j = bom.indexOf(" ");
+        String num = "";
+        try {
+            String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
+            String range2 = bom.substring(bom.indexOf("REV:") + 4);
+            num = range1.replace("-", "") + range2;
+        } catch (Exception e) {
+            logger.error("get bom failed bom:" + bom);
             return "Can not find any bom info by partNum:" + partNo;
         }
         String recipeName = partNo.substring(0, 7) + "/" + bom + "-2PNL";
