@@ -1,6 +1,5 @@
 package cn.tzauto.octopus.biz.monitor.domain;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 public class DeviceRealtimePara {

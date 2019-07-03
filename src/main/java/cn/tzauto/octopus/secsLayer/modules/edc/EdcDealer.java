@@ -2,7 +2,6 @@ package cn.tzauto.octopus.secsLayer.modules.edc;
 
 
 import cn.tzauto.generalDriver.exceptions.*;
-import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.secsLayer.domain.JudgeDealer;
 import cn.tzauto.octopus.secsLayer.domain.ProcessFunction;
@@ -14,7 +13,6 @@ import cn.tzauto.octopus.secsLayer.modules.JudgeResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by luosy on 2019/4/3.

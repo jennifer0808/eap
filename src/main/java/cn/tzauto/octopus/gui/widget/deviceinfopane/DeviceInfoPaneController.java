@@ -15,8 +15,6 @@ import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -31,14 +29,11 @@ import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.*;
 
 
 /**

@@ -30,7 +30,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author luosy
