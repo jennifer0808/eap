@@ -5,26 +5,20 @@
 package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 
 import java.util.Date;
-import java.util.ResourceBundle;
 
 import cn.tzauto.octopus.gui.main.EapClient;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import cn.tzauto.octopus.gui.main.EapMainController;
 
-import static cn.tzauto.octopus.gui.main.EapMainController.rcpMngtTab;
 
 /**
  *

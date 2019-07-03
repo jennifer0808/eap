@@ -4,16 +4,13 @@
  */
 package cn.tzauto.octopus.common.ws;
 
-import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
-import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
