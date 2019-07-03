@@ -64,7 +64,7 @@ public class UiLogUtil {
     }
     private static TextArea serverLog,secsLog,eventLog;
     static {
-     serverLog = (TextArea) EapClient.root.lookup("#severLog");
+     serverLog = (TextArea) EapClient.root.lookup("#serverLog");
      secsLog = (TextArea) EapClient.root.lookup("#secsLog");
      eventLog = (TextArea) EapClient.root.lookup("#eventLog");
     }
@@ -165,7 +165,7 @@ public class UiLogUtil {
             case "eventLog":
                 logTextArea=eventLog;
                 break;
-            case "severLog":
+            case "serverLog":
                 logTextArea=serverLog;
                 break;
             case "secsLog":
