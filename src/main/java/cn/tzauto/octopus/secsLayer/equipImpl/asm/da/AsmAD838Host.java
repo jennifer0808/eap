@@ -74,6 +74,7 @@ public class AsmAD838Host extends EquipHost {
                     logger.info("sendS1F17out request online...");
                     this.sendS1F17out();
                     logger.info("sendS2f41Cmd online remote...");
+                    sendS2f41Cmd("ONLINE_REMOTE");
                     //获取设备开机状态
                     super.findDeviceRecipe();
 
@@ -139,14 +140,20 @@ public class AsmAD838Host extends EquipHost {
             }else if (tagName.equalsIgnoreCase("s2f38in")){
                 processS2F38in(data);
             }else if (tagName.equalsIgnoreCase("S6F11IN")) {
-                replyS6F12WithACK(data, (byte) 0);
+
                 if (data.get("CEID") != null) {
                     ceid = Long.parseLong(data.get("CEID").toString());
                     logger.debug("Received a s6f11in with CEID = " + ceid);
                 }
-                if (ceid == StripMapUpCeid || ceid == EquipStateChangeCeid || ceid ==2 ||ceid ==3||ceid ==4||ceid ==7) {
+                if (ceid == StripMapUpCeid ){
                     this.inputMsgQueue.put(data);
+                }else if(ceid == EquipStateChangeCeid || ceid ==2 ||ceid ==3||ceid ==4||ceid ==7){
+                    replyS6F12WithACK(data, (byte) 0);
+                    this.inputMsgQueue.put(data);
+                }else{
+                    replyS6F12WithACK(data, (byte) 0);
                 }
+
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
             }  else if (tagName.equalsIgnoreCase("S5F1IN")) {
@@ -191,24 +198,6 @@ public class AsmAD838Host extends EquipHost {
     }
 
 
-
-    @SuppressWarnings("unchecked")
-    public void sendS1F17out() {
-
-        try {
-            DataMsgMap data = activeWrapper.sendS1F17out();
-            byte onlack = (byte) data.get("ONLACK");
-            logger.info("result of s1f17onlack:"+onlack);
-            if (onlack == 0 || onlack == 2) {
-                setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-            }else{
-                sendS2f41Cmd("ONLINE_REMOTE");
-            }
-            data = null;
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
 
     @Override
@@ -538,10 +527,13 @@ public class AsmAD838Host extends EquipHost {
 //            }
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else if (ceid == EquipStateChangeCeid) {
-                processS6F11EquipStatusChange(data);
-            }else  if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
-                processS6F11ControlStateChange(data);
+            } else{
+                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                if (ceid == EquipStateChangeCeid) {
+                    processS6F11EquipStatusChange(data);
+                }else  if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
+                    processS6F11ControlStateChange(data);
+                }
             }
 
             if (commState != 1) {
