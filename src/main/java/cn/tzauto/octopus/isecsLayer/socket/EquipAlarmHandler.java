@@ -116,7 +116,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                                 logger.info("power check data:Axis:" + str.split(",")[1]);
                             }
                             if (str.contains("AP_No")) {
-                                crystalPower = crystalPower + "_" + str;
+                                crystalPower = crystalPower + "_" + str + "_POWER";
                                 logger.info("power check data:AP_No:" + str.split(",")[1]);
                             }
                             if (str.contains("Power")) {
@@ -132,14 +132,23 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             }
                             if (str.contains("GCOMP,")) {
                                 isCrystalAccuracy = false;
+                                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
                             }
                             if (isCrystalAccuracy) {
                                 if (str.contains(",XY,")) {
                                     String[] stringss = str.split(",");
                                     crystalAccuracy = stringss[1];
                                 }
-                                if (str.contains("RMAX_")) {
-                                    String crystalAccuracyTemp = crystalAccuracy + "-" + str;
+                                if (str.contains("RMAX_1")) {
+                                    str = str.replace("RMAX_1", "");
+                                    String crystalAccuracyTemp = "Z1" + crystalAccuracy + "_" + "ACCURACY" + str;
+                                    logger.info("power check data:Crystal_Time:" + str);
+                                    accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
+                                    crystalAccuracy = "";
+                                }
+                                if (str.contains("RMAX_2")) {
+                                    str = str.replace("RMAX_2", "");
+                                    String crystalAccuracyTemp = "Z2" + crystalAccuracy + "_" + "ACCURACY" + str;
                                     logger.info("power check data:Crystal_Time:" + str);
                                     accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
                                     crystalAccuracy = "";

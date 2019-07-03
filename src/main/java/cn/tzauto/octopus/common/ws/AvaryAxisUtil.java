@@ -1076,4 +1076,9 @@ public class AvaryAxisUtil {
 
     }
 
+    public static Map<String, String> getCrystalItemMapping(String deviceType) {
+        Map<String, String> resultMap = new HashMap<>();
+        Map<String, String> map = mesInterfaceParaMap.get(deviceType);
+        return map;
+    }
 }
