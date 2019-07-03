@@ -74,10 +74,8 @@ public class EapMainController implements Initializable {
         Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
         Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
         Button localMode = (Button) EapClient.root.lookup("#localMode");
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"), resourceBundle);
-        userName = (TextField) root.lookup("#userName");
-       UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
+//        ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
+        UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" +  GlobalConstants.sysUser.getLoginName() + "注销登录...");
         JB_MainPage.setVisible(false);
         JB_RcpMng.setVisible(false);
         JB_Login.setVisible(true);
