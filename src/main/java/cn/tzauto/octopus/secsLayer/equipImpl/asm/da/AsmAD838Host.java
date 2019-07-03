@@ -496,7 +496,6 @@ public class AsmAD838Host extends EquipHost {
 
     @Override
     public void processS6F11in(DataMsgMap data) {
-        long ceid = 0L;
         if (data.get("CEID") != null) {
             ceid = (long) data.get("CEID");
             logger.info("Received a s6f11in with CEID = " + ceid);
