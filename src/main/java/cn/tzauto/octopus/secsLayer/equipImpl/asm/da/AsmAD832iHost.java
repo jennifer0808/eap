@@ -131,22 +131,8 @@ public class AsmAD832iHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-
-                if (data.get("CEID") != null) {
-                    ceid = Long.parseLong(data.get("CEID").toString());
-                    logger.debug("Received a s6f11in with CEID = " + ceid);
-                }
-                if ( ceid == EquipStateChangeCeid || ceid ==2|| ceid ==3 || ceid ==4) {
-                    replyS6F12WithACK(data,(byte)0);
-                    this.inputMsgQueue.put(data);
-                }else if(ceid == StripMapUpCeid){
-                    this.inputMsgQueue.put(data);
-                }else{
-                    replyS6F12WithACK(data,(byte)0);
-                }
-
+                this.inputMsgQueue.put(data);
             }else if (tagName.equalsIgnoreCase("s5f1in")) {
-                replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
@@ -164,12 +150,17 @@ public class AsmAD832iHost extends EquipHost {
 
 
     public void processS6F11in(DataMsgMap data) {
+
+        if (data.get("CEID") != null) {
+            ceid = Long.parseLong(data.get("CEID").toString());
+            logger.debug("Received a s6f11in with CEID = " + ceid);
+        }
         try {
             //TODO 根据ceid分发处理事件
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else{
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
+                replyS6F12WithACK(data,(byte)0);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
                 }else if(ceid ==2 || ceid ==3 || ceid ==4){
@@ -189,12 +180,7 @@ public class AsmAD832iHost extends EquipHost {
 
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-//
-//        try {
-//            ceid = (long) data.get("CEID");
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
+
         //将设备的当前状态显示在界面上
         logger.info("s6f11:go to s1f3 ....");
         findDeviceRecipe();

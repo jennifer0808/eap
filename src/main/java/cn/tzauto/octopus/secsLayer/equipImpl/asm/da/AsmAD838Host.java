@@ -127,12 +127,10 @@ public class AsmAD838Host extends EquipHost {
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
                 processS1F1in(data);
-//                this.inputMsgQueue.put(data);
             }else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             }else if (tagName.equalsIgnoreCase("S1F13IN")) {
                 processS1F13in(data);
-//                this.inputMsgQueue.put(data);
             }else if (tagName.equalsIgnoreCase("s1f14in")) {
                 this.inputMsgQueue.put(data);
             }else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -140,20 +138,7 @@ public class AsmAD838Host extends EquipHost {
             }else if (tagName.equalsIgnoreCase("s2f38in")){
                 processS2F38in(data);
             }else if (tagName.equalsIgnoreCase("S6F11IN")) {
-
-                if (data.get("CEID") != null) {
-                    ceid = Long.parseLong(data.get("CEID").toString());
-                    logger.debug("Received a s6f11in with CEID = " + ceid);
-                }
-                if (ceid == StripMapUpCeid ){
-                    this.inputMsgQueue.put(data);
-                }else if(ceid == EquipStateChangeCeid || ceid ==2 ||ceid ==3||ceid ==4||ceid ==7){
-                    replyS6F12WithACK(data, (byte) 0);
-                    this.inputMsgQueue.put(data);
-                }else{
-                    replyS6F12WithACK(data, (byte) 0);
-                }
-
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
             }  else if (tagName.equalsIgnoreCase("S5F1IN")) {
@@ -231,9 +216,7 @@ public class AsmAD838Host extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="processS6FXin Code">
     @Override
     protected void processS6F11EquipStatusChange(DataMsgMap data) {
-      //  long ceid = 0L;
         try {
-           // ceid = (long) data.get("CEID");
             preEquipStatus = equipStatus;
             findDeviceRecipe();
         } catch (Exception e) {
@@ -383,12 +366,6 @@ public class AsmAD838Host extends EquipHost {
     }
 
     private void processS6F11ControlStateChange(DataMsgMap data) {
-//        long ceid = 0L;
-//        try {
-//            ceid = (long) data.get("CEID");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
         Map panelMap = new HashMap();
         if (ceid == 4) {
             controlState = FengCeConstant.CONTROL_OFFLINE;
@@ -519,12 +496,14 @@ public class AsmAD838Host extends EquipHost {
 
     @Override
     public void processS6F11in(DataMsgMap data) {
-//        long ceid = 0L;
+        long ceid = 0L;
+        if (data.get("CEID") != null) {
+            ceid = (long) data.get("CEID");
+            logger.info("Received a s6f11in with CEID = " + ceid);
+        }
+
         try {
-//            if (data.get("CEID") != null) {
-//                ceid = (long) data.get("CEID");
-//                logger.info("Received a s6f11in with CEID = " + ceid);
-//            }
+
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else{
