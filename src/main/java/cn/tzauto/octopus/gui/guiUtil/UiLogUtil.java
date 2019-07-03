@@ -64,10 +64,10 @@ public class UiLogUtil {
     }
     private static TextArea serverLog,secsLog,eventLog;
     static {
-     serverLog = (TextArea) EapClient.root.lookup("#severLog");
-     secsLog = (TextArea) EapClient.root.lookup("#secsLog");
-     eventLog = (TextArea) EapClient.root.lookup("#eventLog");
-    }
+     serverLog = (TextArea) EapClient.root.lookup("#serverLog");
+    secsLog = (TextArea) EapClient.root.lookup("#secsLog");
+    eventLog = (TextArea) EapClient.root.lookup("#eventLog");
+}
     public void appendLog2SeverTab(String deviceCode, String msg) {
 
         String finalMsg = formateMsg(deviceCode, msg);
@@ -165,7 +165,7 @@ public class UiLogUtil {
             case "eventLog":
                 logTextArea=eventLog;
                 break;
-            case "severLog":
+            case "serverLog":
                 logTextArea=serverLog;
                 break;
             case "secsLog":
