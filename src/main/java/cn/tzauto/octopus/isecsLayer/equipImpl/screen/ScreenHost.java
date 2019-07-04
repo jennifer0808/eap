@@ -662,6 +662,15 @@ public class ScreenHost extends EquipModel {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        int j = bom.indexOf(" ");
+        try {
+            String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
+            String range2 = bom.substring(bom.indexOf("REV:") + 4);
+            bom = range1.replace("-", "") + range2;
+        } catch (Exception e) {
+            logger.error("get bom failed bom:" + bom);
+            return "Can not find any bom info by partNum:" + partNo;
+        }
         if (bom == null) {
             return "Can not find any bom info by partNum:" + partNo;
         }

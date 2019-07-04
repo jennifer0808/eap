@@ -953,8 +953,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add("");
         paraValueList.add("");
         //晶体使用个数
-        paraValueList.add(accuracyMap.size()
-         );
+        paraValueList.add(accuracyMap.size());
         //镭射头寿命
         paraValueList.add("");
 

@@ -40,13 +40,14 @@ public class AvaryAxisUtil {
 
     static {
         parmsNames = new HashMap<>();
-        Map<String, Object> parmsNamesTemp = new HashMap<>();
+
         mesInterfaceParaMap = new HashMap<>();
         String textPath = GlobalConstants.getProperty("WEBSERVICE_CONFIG_FILE_PATH");
         File file = new File(textPath);
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             for (File fileTemp : files) {
+                Map<String, Object> parmsNamesTemp = new HashMap<>();
                 //要求配置文件名称为：devicetype_wbconfig.properties格式
                 String deviceType = fileTemp.getName().split("_")[0];
 
@@ -977,17 +978,7 @@ public class AvaryAxisUtil {
         }
         String bom = list.get(0).get("LASTVALUE");
 //        String bom = list.get(0).get("V_WSADDVALUE");
-        int j = bom.indexOf(" ");
-        String num = "";
-        try {
-            String range1 = bom.substring(bom.indexOf("-") + 1, bom.indexOf(" "));
-            String range2 = bom.substring(bom.indexOf("REV:") + 4);
-            num = range1.replace("-", "") + range2;
-        } catch (Exception e) {
-            logger.error("get bom failed bom:" + bom);
-            return null;
-        }
-        return num;
+        return bom;
     }
 
     public static String uploadReportDetail(String deviceType, List paraValue) {

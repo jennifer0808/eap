@@ -256,8 +256,9 @@ public class GlobalConstants {
 
     private static void loadCrystalPowerConfig() {
         Properties crystalPowerProp = new Properties();
+        crystalPowerMap = new HashMap();
         try {
-            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream("esiCrystal.properties");
+            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream("LaserCrystal.properties");
             crystalPowerProp.load(in);
         } catch (Exception e) {
             sysLogger.error("Exception:", e);

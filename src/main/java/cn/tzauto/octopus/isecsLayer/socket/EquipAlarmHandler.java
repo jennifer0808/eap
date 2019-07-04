@@ -79,7 +79,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             alarm = str;
                         }
                         break;
-                    case "HITACHI-LaserDrill":
+                    case "HITACHI-LASERDRILL":
                         if (str.contains("._PC")) {
                             if (str.contains("Alarm =")) {
                                 String[] HITACHILaserDrillalarms = str.split(",");
@@ -141,15 +141,14 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                                 }
                                 if (str.contains("RMAX_1")) {
                                     str = str.replace("RMAX_1", "");
-                                    String crystalAccuracyTemp = "Z1" + crystalAccuracy + "_" + "ACCURACY" + str;
-                                    logger.info("power check data:Crystal_Time:" + str);
+                                    String crystalAccuracyTemp = "Z1_" + crystalAccuracy + "_" + "ACCURACY" + str;
+                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_1:" + str);
                                     accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
-                                    crystalAccuracy = "";
                                 }
                                 if (str.contains("RMAX_2")) {
                                     str = str.replace("RMAX_2", "");
-                                    String crystalAccuracyTemp = "Z2" + crystalAccuracy + "_" + "ACCURACY" + str;
-                                    logger.info("power check data:Crystal_Time:" + str);
+                                    String crystalAccuracyTemp = "Z2_" + crystalAccuracy + "_" + "ACCURACY" + str;
+                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_2:" + str);
                                     accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
                                     crystalAccuracy = "";
                                 }
@@ -238,12 +237,12 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
      * @param crystalPower
      */
     private void crystalPowerCheck(String crystalPower) {
-        String[] crystalPowers = crystalPower.split("");
+        String[] crystalPowers = crystalPower.split("=");
         String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[0]));
         double actualPower = Double.parseDouble(crystalPowers[1]);
         double UPPER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("UPPER_LIMIT"))) / 100;
         double LOWER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("LOWER_LIMIT"))) / 100;
-        if (Double.valueOf(standardPower) > actualPower * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower * (1 - LOWER_LIMIT)) {
+        if (Double.valueOf(standardPower) > actualPower / 1000 * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower / 1000 * (1 - LOWER_LIMIT)) {
             logger.error("Crystal power out of range. actual data " + crystalPower);
         }
         List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
