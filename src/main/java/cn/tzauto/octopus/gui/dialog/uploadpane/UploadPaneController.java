@@ -324,7 +324,7 @@ public class UploadPaneController implements Initializable {
         SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
 
-            if (recipeMap == null || recipeMap.get("uploadResult").equals(false)) {
+            if (recipeMap == null || (recipeMap.get("uploadResult")!=null && !((Boolean) recipeMap.get("uploadResult")))) {
                 Platform.runLater(() -> {
                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                 });
