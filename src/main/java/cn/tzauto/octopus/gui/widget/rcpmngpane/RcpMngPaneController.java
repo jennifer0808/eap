@@ -288,14 +288,7 @@ public class RcpMngPaneController implements Initializable {
     DeviceInfoPaneController  deviceInfoPaneController= new    DeviceInfoPaneController();
     @FXML
     private void btnUploadClick() throws IOException {
-        Task taskCheckComm=new Task() {
-            @Override
-            protected Object call() throws Exception {
-         deviceInfoPaneController.checkCommState();
-                return null;
-            }
-        };
-        new Thread(taskCheckComm).start();
+
         if(!GlobalConstants.isUpload){
             GlobalConstants.isUpload = true;
             new EapMainController().loginInterface();
@@ -305,14 +298,7 @@ public class RcpMngPaneController implements Initializable {
 
     @FXML
     private void btnDownloadClick() throws IOException {
-        Task taskCheckComm=new Task() {
-            @Override
-            protected Object call() throws Exception {
-                deviceInfoPaneController.checkCommState();
-                return null;
-            }
-        };
-        new Thread(taskCheckComm).start();
+
         int flag = 0;
 
         for (int i = 0; i < list.size(); i++) {

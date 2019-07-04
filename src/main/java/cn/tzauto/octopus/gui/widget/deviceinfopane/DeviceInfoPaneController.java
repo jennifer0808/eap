@@ -183,11 +183,9 @@ public class DeviceInfoPaneController implements Initializable {
         };
         new Thread(taskCheckComm).start();
 
-
-        boolean isCommon= equipHost.getEquipState().isCommOn();
         int commState= equipHost.commState;
-        logger.info("isCommon=====>"+isCommon+";commState=====>"+commState+";testInitLink=====>");
-        if(commState==COMMUNICATING ||isCommon==true ){
+        logger.info("commState=====>"+commState);
+        if(commState==COMMUNICATING  ){
             Task task = new Task<Map>() {
                 @Override
                 public Map call() {
@@ -198,10 +196,10 @@ public class DeviceInfoPaneController implements Initializable {
                 }
             };
             new Thread(task).start();
-        }else if(commState==NOT_COMMUNICATING||isCommon==false ){
+        }else if(commState==NOT_COMMUNICATING ){
 //            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
             equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
 
         }
         getData(deviceInfoExt , deviceInfo, root, recipeService, sysService);
@@ -211,6 +209,7 @@ public class DeviceInfoPaneController implements Initializable {
     public void checkCommState(){
                 EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
                 String state = equipHost.checkCommState();
+                logger.info("state===============>"+state);
                 if (!"0".equals(state)) {
                     equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
                     UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
