@@ -880,11 +880,13 @@ public class DiscoWSHost extends EquipHost {
     protected void processS6F11KerfCheck(DataMsgMap data) {
         long ceid = 0l;
         try {
-            ceid = (long) data.get("CEID");
-            ArrayList reportList = (ArrayList) data.get("REPORT");
-            List idList = (List) reportList.get(1);
-            long offset1 = (long) idList.get(0);
-            long offset2 = (long) idList.get(1);
+//            ceid = (long) data.get("CEID");
+//            ArrayList reportList = (ArrayList) data.get("REPORT");
+//            List idList = (List) reportList.get(1);
+//            long offset1 = (long) idList.get(0);
+//            long offset2 = (long) idList.get(1);
+            long offset1 =0l;
+            long offset2 = 0L;
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");

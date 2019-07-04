@@ -34,7 +34,8 @@ public class TowaHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(TowaHost.class);
-//    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TowaHost.class);
+    //    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TowaHost.class);
+    private boolean lineAutoHasbeenPressed = false;
 
     public TowaHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -188,6 +189,8 @@ public class TowaHost extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == 50007) {
                 processS6F11EquipStatusChange(data);
+            } else if (ceid == 2080) {
+                lineAutoHasbeenPressed = true;
             } else if (ceid == 271 && "TOWAYPM".equalsIgnoreCase(deviceType)) {
                 processS6F11EquipStatusChange(data);
             } else if (ceid == 50013) {
@@ -370,7 +373,12 @@ public class TowaHost extends EquipHost {
             ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
 //            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-            findDeviceRecipe();
+            if (lineAutoHasbeenPressed) {
+                equipStatus = "run";
+                lineAutoHasbeenPressed = false;
+            } else {
+                findDeviceRecipe();
+            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

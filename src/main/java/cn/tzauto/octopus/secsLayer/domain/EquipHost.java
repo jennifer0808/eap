@@ -1167,6 +1167,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("Exception:", e);
         }
         byte ALCD = (byte) data.get("ALCD");
+        if(ALCD>-1&&(deviceType.contains("6361")||deviceType.contains("HANMI"))){
+            return null;
+        }
         long ALID = (long) data.get("ALID");
         String ALTX = (String) data.get("ALTX");
         UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到报警信息 " + " 报警ID:" + ALID + " 报警详情: " + ALTX);
