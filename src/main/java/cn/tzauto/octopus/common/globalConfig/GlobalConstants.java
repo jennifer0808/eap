@@ -5,6 +5,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.sys.domain.SysUser;
 import cn.tzauto.octopus.biz.sys.service.SysService;
+import cn.tzauto.octopus.biz.tooling.LaserCrystal;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.rabbit.MessageUtils;
 import cn.tzauto.octopus.gui.main.EapClient;
@@ -116,6 +117,8 @@ public class GlobalConstants {
     public static List<DeviceInfo> deviceInfos;
     public static Map<String, Map> mesInferfaceParaMap;
     public static Map crystalPowerMap;
+    public static LaserCrystal laserCrystalPower = new LaserCrystal();
+    public static LaserCrystal laserCrystalAccuracy = new LaserCrystal();
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -256,6 +259,7 @@ public class GlobalConstants {
 
     private static void loadCrystalPowerConfig() {
         Properties crystalPowerProp = new Properties();
+        crystalPowerMap = new HashMap();
         try {
             InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream("LaserCrystal.properties");
             crystalPowerProp.load(in);
@@ -263,7 +267,6 @@ public class GlobalConstants {
             sysLogger.error("Exception:", e);
         }
         for (Map.Entry entry : crystalPowerProp.entrySet()) {
-            crystalPowerMap = new HashMap();
             crystalPowerMap.put(entry.getKey(), entry.getValue());
         }
     }

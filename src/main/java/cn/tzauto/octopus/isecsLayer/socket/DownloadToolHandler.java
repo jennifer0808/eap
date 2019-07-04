@@ -52,8 +52,9 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             String lottype = String.valueOf(downloadMessageMap.get("lottype"));
             String fixtureno = String.valueOf(downloadMessageMap.get("fixtureno"));
             String materialno = String.valueOf(downloadMessageMap.get("materialno"));
+            String faceno = String.valueOf(downloadMessageMap.get("faceno"));
 
-
+            lotNo = "M907030791";
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
             logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " lotNo:" + lotNo + " lottype:" + lottype);
@@ -66,23 +67,29 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     return;
                 }
                 //验证原材料
-                if (AvaryAxisUtil.checkMaterial(deviceInfo.getDeviceType(), lotNo, materialno)) {
-                    String mstr = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo);
-                    if (mstr.contains("|")) {
-                        String[] mstrs = mstr.split("\\|");
-                        Material material = new Material();
-                        material.setCode(mstrs[0]);
-                        material.setId(mstrs[0]);
-                        material.setName(mstrs[1]);
-                        GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
+                String mstr = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo);
+                if (mstr.contains("|")) {
+                    String[] mstrs = mstr.split("\\|");
+                    Material material = new Material();
+                    material.setCode(mstrs[0]);
+                    material.setId(mstrs[0]);
+                    material.setName(mstrs[1]);
+                    GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
+                    if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
+                        return;
                     }
                 }
+
                 //验证治具
                 if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo, fixtureno)) {
                     Tooling tooling = new Tooling();
                     tooling.setId(fixtureno);
                     tooling.setCode(fixtureno);
                     GlobalConstants.stage.equipModels.get(deviceCode).toolings.add(tooling);
+                } else {
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具验证失败!Tooling check error!");
+                    return;
                 }
 
                 String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
@@ -109,9 +116,11 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     logger.error("Exception", e);
                     e.printStackTrace();
                 }
-
-
-                recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
+                if (deviceInfo.getDeviceType().equals("HITACHI-LASERDRILL")) {
+                    recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo);
+                } else {
+                    recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
+                }
                 if (recipeName.contains("Can not")) {
                     downloadresult = recipeName;
                 } else {

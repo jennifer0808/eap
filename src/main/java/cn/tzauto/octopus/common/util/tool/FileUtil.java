@@ -572,8 +572,13 @@ public class FileUtil {
                 BufferedReader br = new BufferedReader(reader);
                 String tmpString = "";
                 while ((tmpString = br.readLine()) != null) {
-                    ppbody = ppbody + tmpString;
-                    ppbody = ppbody.replaceAll("null", "");
+
+                    if (tmpString == null || tmpString.isEmpty() || "".equals(tmpString)) {
+                        return list;
+                    } else {
+                        list.add(tmpString);
+                    }
+
                 }
                 br.close();
                 reader.close();
@@ -581,11 +586,7 @@ public class FileUtil {
                 return null;
             }
 
-            if (ppbody == null || ppbody.isEmpty() || "".equals(ppbody)) {
-                return list;
-            } else {
-                list.add(ppbody);
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

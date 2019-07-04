@@ -1044,6 +1044,9 @@ public class AvaryAxisUtil {
     }
 
     public static boolean checkTooling(String deviceType, String lotNo, String toolingNo) {
+        if (GlobalConstants.getProperty("TOOLING_CHECK").equals("0")) {
+            return true;
+        }
         String bom = null;
         try {
             Call call = getCallForGetDataFromSer();
@@ -1068,4 +1071,9 @@ public class AvaryAxisUtil {
 
     }
 
+    public static Map<String, String> getCrystalItemMapping(String deviceType) {
+        Map<String, String> resultMap = new HashMap<>();
+        Map<String, String> map = mesInterfaceParaMap.get(deviceType);
+        return map;
+    }
 }
