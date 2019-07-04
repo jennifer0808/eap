@@ -16,9 +16,11 @@ import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -196,7 +198,7 @@ public class UploadPaneController implements Initializable {
                     @Override
                     public Map call() {
 
-                        Map resultMap = hostManager.getRecipeListFromDevice(deviceInfo.getDeviceCode());
+                        Map resultMap = hostManager.getRecipeListFromDevice(deviceId);
                         setDataCombox(resultMap);
                         return resultMap;
                     }
@@ -212,6 +214,8 @@ public class UploadPaneController implements Initializable {
     public  void setDataCombox(Map resultMap){
         if ( resultMap== null || resultMap.size()==0) {
             Platform.runLater(() -> {
+                EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
             });
         }else{
@@ -261,16 +265,8 @@ public class UploadPaneController implements Initializable {
                         GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                         return;
                     }
-                    Task taskCheckComm=new Task() {
-                        @Override
-                        protected Object call() throws Exception {
-                            System.out.println("taskCheckComm===============>");
-                            DeviceInfoPaneController deviceInfoPaneController= new    DeviceInfoPaneController();
-                            deviceInfoPaneController.checkCommState();
-                            return null;
-                        }
-                    };
-                    new Thread(taskCheckComm).start();
+
+
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {
@@ -312,6 +308,8 @@ public class UploadPaneController implements Initializable {
         RecipeService recipeService = new RecipeService(sqlSession);
             if (recipeMap == null) {
                 Platform.runLater(() -> {
+                    EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                 });
                 return;

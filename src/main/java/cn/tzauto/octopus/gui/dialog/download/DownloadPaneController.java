@@ -15,6 +15,7 @@ import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,6 +41,8 @@ import java.util.*;
 
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.COMMUNICATING;
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.NOT_COMMUNICATING;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -117,8 +120,11 @@ public class DownloadPaneController implements Initializable {
         for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
 //            if (equipHost != null && AxisUtility.isEngineerMode(deviceInfo.getDeviceCode()) && equipHost.getEquipState().isCommOn()) {
-            if (equipHost != null  && equipHost.getEquipState().isCommOn()) {
+            if (equipHost != null  && equipHost.getEquipState().isCommOn()  &&equipHost.commState==COMMUNICATING ) {
                 deviceInfostmp.add(deviceInfo);
+            }else{
+                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
             }
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode());
             if (equipModel != null) {
@@ -205,15 +211,7 @@ public class DownloadPaneController implements Initializable {
                 if (deviceInfoExt != null && deviceInfoExt.getRecipeDownloadMod() != null && !"".equals(deviceInfoExt.getRecipeDownloadMod())) {
                     GlobalConstants.sysLogger.info("设备模型表中配置设备" + deviceInfo.getDeviceCode() + "的Recipe下载方式为" + deviceInfoExt.getRecipeDownloadMod());
                     RecipeOperationLog recipeOperationLog = recipeService.setRcpOperationLog(recipe, "download");
-                    Task taskCheckComm=new Task() {
-                        @Override
-                        protected Object call() throws Exception {
-                            System.out.println("taskCheckComm===============>");
-                            DeviceInfoPaneController deviceInfoPaneController= new    DeviceInfoPaneController();
-                            deviceInfoPaneController.checkCommState();
-                            return null;
-                        }
-                    };
+
                     Task task=new Task<String >() {
                         @Override
                         public String  call()  {
