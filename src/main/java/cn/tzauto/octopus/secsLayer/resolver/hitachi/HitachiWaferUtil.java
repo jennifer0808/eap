@@ -44,40 +44,56 @@ public class HitachiWaferUtil {
             String waferName = waferId.split("-")[0];
             String remotePath = deviceService.queryWaferPath(waferName);
             if (StringUtils.isEmpty(remotePath)) {
-                logger.error(waferId + "在数据库中没有对应的文件地址！！！");
-                remotePath = HtFtpUtil.getMapping(waferName);
-            }
-            if (remotePath == null) {
-                return null;
-            }
-            logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
-            String localPath = HtFtpUtil.tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
-            HtFtpUtil.downloadFile(localPath, remotePath);
-            boolean unrar = HtFtpUtil.unrar(localPath, HtFtpUtil.tempPath + random);
-            if (unrar) {
-                File file = HtFtpUtil.getFile(new File(HtFtpUtil.tempPath + random), waferId);
-                in = new FileInputStream(file);
-                br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                String tmpString = null;
-                br.readLine();
-                br.readLine();
-                br.readLine();
-                while ((tmpString = br.readLine()) != null) {
-                    list.add(tmpString);
+                logger.warn(waferId + "在数据库中没有对应的文件地址！！！");
+                String path = getPath(waferId, deviceCode);
+                File file = new File(path);
+                if (file.exists()) {
+                    in = new FileInputStream(file);
+                    br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    String tmpString = null;
+                    br.readLine();
+                    br.readLine();
+                    br.readLine();
+                    while ((tmpString = br.readLine()) != null) {
+                        list.add(tmpString);
+                    }
+                } else {
+                    logger.error(path + ",该路径下没有文件");
+                    return null;
+                }
+//                remotePath = HtFtpUtil.getMapping(waferName);
+            } else {
+
+                logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
+                String localPath = HtFtpUtil.tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
+                HtFtpUtil.downloadFile(localPath, remotePath);
+                boolean unrar = HtFtpUtil.unrar(localPath, HtFtpUtil.tempPath + random);
+                if (unrar) {
+                    File file = HtFtpUtil.getFile(new File(HtFtpUtil.tempPath + random), waferId);
+                    in = new FileInputStream(file);
+                    br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    String tmpString = null;
+                    br.readLine();
+                    br.readLine();
+                    br.readLine();
+                    while ((tmpString = br.readLine()) != null) {
+                        list.add(tmpString);
+                    }
                 }
             }
+
         } catch (Exception e) {
             logger.error("获取mapping文件失败", e);
             return null;
         } finally {
-            if(in!=null){
+            if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if(br!=null){
+            if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
@@ -87,7 +103,6 @@ public class HitachiWaferUtil {
             try {
                 FileUtils.deleteDirectory(new File(HtFtpUtil.tempPath + random));
             } catch (IOException e) {
-                e.printStackTrace();
             }
             sqlSession.close();
         }
@@ -632,11 +647,15 @@ public class HitachiWaferUtil {
         return result;
     }
 
-    private static String[] getPath(String waferId, String deviceCode) {
-        String lot = waferId.split("-")[0];
-        String path = waferMappingPath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
-        String savePath = waferSavePath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
-        String[] arr = new String[]{path, savePath};
+    private static String getPath(String waferId, String deviceCode) {
+//        String lot = waferId.split("-")[0];
+        if (!deviceCode.endsWith("-M")) {
+            deviceCode = deviceCode + "-M";
+        }
+        String path = waferMappingPath + "\\" + deviceCode + "\\" + waferId;
+
+//        String savePath = waferSavePath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
+//        String[] arr = new String[]{path, savePath};
 
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\tmb\\NF10A-08.tmb";
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\out\\H00H37-08.out";
@@ -661,7 +680,7 @@ public class HitachiWaferUtil {
 //         path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\6.txt";
 //        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\7.txt";
         logger.info("waferpath：" + path);
-        return arr;
+        return path;
     }
 
     public static void main(String[] args) {
