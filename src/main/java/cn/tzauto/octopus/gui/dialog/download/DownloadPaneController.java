@@ -11,6 +11,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import javafx.application.Platform;
@@ -211,7 +212,16 @@ public class DownloadPaneController implements Initializable {
                 if (deviceInfoExt != null && deviceInfoExt.getRecipeDownloadMod() != null && !"".equals(deviceInfoExt.getRecipeDownloadMod())) {
                     GlobalConstants.sysLogger.info("设备模型表中配置设备" + deviceInfo.getDeviceCode() + "的Recipe下载方式为" + deviceInfoExt.getRecipeDownloadMod());
                     RecipeOperationLog recipeOperationLog = recipeService.setRcpOperationLog(recipe, "download");
-
+                    Task taskCheckComm=new Task() {
+                        @Override
+                        protected Object call() throws Exception {
+                            System.out.println("taskCheckComm===============>");
+                            DeviceInfoPaneController deviceInfoPaneController= new    DeviceInfoPaneController();
+                            deviceInfoPaneController.checkCommState();
+                            return null;
+                        }
+                    };
+                    new Thread(taskCheckComm).start();
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {
