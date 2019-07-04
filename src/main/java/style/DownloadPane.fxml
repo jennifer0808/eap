@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.effect.*?>
 <?import java.lang.*?>
 <?import java.net.*?>
 <?import javafx.scene.control.*?>
@@ -7,32 +8,40 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-
-<AnchorPane id="AnchorPane"  prefHeight="400.0" prefWidth="390.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.dialog.download.DownloadPaneController">
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="390.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.tzauto.octopus.gui.dialog.download.DownloadPaneController">
     <stylesheets>
         <URL value="@download.css" />
     </stylesheets>
    <children>
-      <Label layoutX="10.0" layoutY="25.0" text="%recipeName" />
-      <Label fx:id="RcpName" layoutX="113.0" layoutY="25.0" text="reicpeName" />
-      <TableView fx:id="dataTable" layoutY="65.0" prefHeight="265.0" prefWidth="390.0" >
-         <columns>
-            <TableColumn fx:id="deviceCodeCol" prefWidth="163.0" text="%deviceCode" />
-            <TableColumn fx:id="deviceNameCol" prefWidth="163.0" text="%deviceName" />
-            <TableColumn fx:id="isSelectCol" prefWidth="163.0" text="%isSelected" />
-         </columns>
-         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </TableView>
-      <Label layoutX="6.0" layoutY="50.0" text="%machineInfo">
-         <font>
-            <Font size="10.0" />
-         </font>
-      </Label>
-      <Button fx:id="BTNOK" layoutX="92.0" layoutY="354.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="64.0" text="%ok" />
-      <Button fx:id="BTNCancle" layoutX="233.0" layoutY="354.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="64.0" text="%cancel" />
-      <Label fx:id="recipeName1" layoutX="123.0" layoutY="35.0" />
+      <AnchorPane fx:id="mainPane" prefHeight="400.0" prefWidth="390.0">
+         <children>
+            <Button fx:id="BTNCancle" layoutX="222.0" layoutY="351.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="64.0" text="%cancel" />
+            <Label layoutX="8.0" layoutY="23.0" text="%recipeName" />
+            <Label fx:id="RcpName" layoutX="105.0" layoutY="23.0" text="reicpeName" />
+            <Label layoutX="8.0" layoutY="53.0" text="%machineInfo">
+               <font>
+                  <Font size="10.0" />
+               </font>
+            </Label>
+            <TableView fx:id="dataTable" layoutY="66.0" prefHeight="265.0" prefWidth="390.0">
+               <columns>
+                  <TableColumn fx:id="deviceCodeCol" prefWidth="163.0" text="%deviceCode" />
+                  <TableColumn fx:id="deviceNameCol" prefWidth="163.0" text="%deviceName" />
+                  <TableColumn fx:id="isSelectCol" prefWidth="163.0" text="%isSelected" />
+               </columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </TableView>
+            <Label fx:id="recipeName1" layoutX="105.0" layoutY="47.0" prefHeight="15.0" prefWidth="64.0" />
+            <Button fx:id="BTNOK" layoutX="137.0" layoutY="351.0" mnemonicParsing="false" prefHeight="35.0" prefWidth="64.0" text="%ok" />
+         </children>
+      </AnchorPane>
+      <ProgressIndicator fx:id="progressIndicatorLoad" layoutX="160.0" layoutY="150.0" maxHeight="77.0" maxWidth="80.0" prefHeight="77.0" prefWidth="80.0" visible="false">
+         <effect>
+            <ColorAdjust brightness="-0.62" contrast="1.0" />
+         </effect>
+      </ProgressIndicator>
    </children>
 
 </AnchorPane>

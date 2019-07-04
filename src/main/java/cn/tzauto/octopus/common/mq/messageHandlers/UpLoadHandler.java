@@ -27,7 +27,6 @@ import javax.jms.*;
 import javax.jms.Queue;
 import java.util.*;
 
-//import org.apache.log4j.Logger;
 
 /**
  *

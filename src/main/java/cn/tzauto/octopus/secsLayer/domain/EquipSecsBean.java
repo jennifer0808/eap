@@ -1,7 +1,6 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.secsLayer.secsbody.EventReport;
 import org.apache.log4j.Logger;
 
 import java.io.InputStream;

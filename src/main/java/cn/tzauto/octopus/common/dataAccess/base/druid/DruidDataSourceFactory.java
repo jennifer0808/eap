@@ -6,7 +6,6 @@ package cn.tzauto.octopus.common.dataAccess.base.druid;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import javax.sql.DataSource;
-import org.apache.ibatis.datasource.unpooled.UnpooledDataSource;
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
 
 /**

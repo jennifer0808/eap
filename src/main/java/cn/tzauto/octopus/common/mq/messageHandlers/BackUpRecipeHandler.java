@@ -24,7 +24,6 @@ import javax.jms.Message;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-//import org.apache.log4j.Logger;
 
 public class BackUpRecipeHandler implements MessageHandler {
 

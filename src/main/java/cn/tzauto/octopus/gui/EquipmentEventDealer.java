@@ -148,7 +148,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 
     @Override
     public void notificationOfSecsDriverReady(int deviceId) {
-        logger.info("notificationOfJsipReady Invoked at device id " + deviceId + " equip name "
+        logger.info("notificationOfSecsDriverReady Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
         UiLogUtil.getInstance().appendLog2EventTab(equipNodeBean.getDeviceCode(), "SECS连接正常启动...");
         eventQueue.add(new CommStatusEvent(true, deviceId));
@@ -193,7 +193,6 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
         logger.info("notificationOfCloseNetwork Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
         eventQueue.add(new CommFailureEvent(null, deviceId));
-
     }
 
     @Override

@@ -14,7 +14,6 @@ import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
@@ -560,7 +559,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
             if (property.equalsIgnoreCase(UiLogUtil.EVENT_LOG_PROPERTY)) {
                     UiLogUtil.appendText("eventLog", newValue.toString() + "\n");
             } else if (property.equalsIgnoreCase(UiLogUtil.SERVER_LOG_PROPERTY)) {
-                    UiLogUtil.appendText("severLog", newValue.toString() + "\n");
+                    UiLogUtil.appendText("serverLog", newValue.toString() + "\n");
             } else if (property.equalsIgnoreCase(UiLogUtil.SECS_LOG_PROPERTY)) {
                     UiLogUtil.appendText("secsLog", newValue.toString() + "\n");
             }

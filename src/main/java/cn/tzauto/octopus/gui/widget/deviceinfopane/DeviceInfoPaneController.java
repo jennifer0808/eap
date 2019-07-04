@@ -15,8 +15,9 @@ import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -31,14 +32,14 @@ import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.*;
+
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.COMMUNICATING;
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.NOT_COMMUNICATING;
 
 
 /**
@@ -125,7 +126,7 @@ public class DeviceInfoPaneController implements Initializable {
     public void init() {
         flag.put(deviceCode,true) ;
 //        this.deviceCode = deviceCode;
-        // TODO   
+        // TODO
         Pane root = new Pane();
         try {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
@@ -155,19 +156,45 @@ public class DeviceInfoPaneController implements Initializable {
         RecipeService recipeService = new RecipeService(sqlSession);
         SysService sysService = new SysService(sqlSession);
 
-        Map    map=new HashMap();
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
 
+//        boolean  testInitLink=false;
+//        try {
+//              testInitLink=equipHost.testInitLink();
+//        } catch (BrokenProtocolException e) {
+//            e.printStackTrace();
+//        } catch (HsmsProtocolNotSelectedException e) {
+//            e.printStackTrace();
+//        }
+        Task taskCheckComm=new Task() {
+            @Override
+            protected Object call() throws Exception {
+                checkCommState();
+                return null;
+            }
+        };
+        new Thread(taskCheckComm).start();
+
+        int commState= equipHost.commState;
+        logger.info("commState=====>"+commState);
+        if(commState==COMMUNICATING  ){
                 Task task = new Task<Map>() {
             @Override
             public Map call() {
                 Map map1 = new HashMap();
                 map1 = GlobalConstants.stage.hostManager.getEquipInitState(deviceInfo.getDeviceCode());
                setData(map1, root);
-               return map;
+               return null;
             }
         };
         new Thread(task).start();
-        getData(deviceInfoExt,map , deviceInfo, root, recipeService, sysService);
+        }else if(commState==NOT_COMMUNICATING ){
+//            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
+            equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
+
+        }
+        getData(deviceInfoExt , deviceInfo, root, recipeService, sysService);
         sqlSession.close();
     }
     public void setData(Map map,Pane root){
@@ -182,7 +209,16 @@ public class DeviceInfoPaneController implements Initializable {
         }
 
     }
-   public void  getData(DeviceInfoExt deviceInfoExt,Map map, DeviceInfo    deviceInfo,Pane root ,RecipeService recipeService,SysService sysService){
+     public void checkCommState(){
+                EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
+                String state = equipHost.checkCommState();
+                logger.info("state===============>"+state);
+                if (!"0".equals(state)) {
+                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
+                }
+    }
+   public void  getData(DeviceInfoExt deviceInfoExt, DeviceInfo    deviceInfo,Pane root ,RecipeService recipeService,SysService sysService){
        if (deviceInfo != null) {
            clientCode = (TextField) root.lookup("#clientCode");
            clientCode.setText(deviceInfo.getClientId());

@@ -10,7 +10,6 @@ import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ContextMenu;
@@ -23,7 +22,6 @@ import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import static cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane.bgGray;

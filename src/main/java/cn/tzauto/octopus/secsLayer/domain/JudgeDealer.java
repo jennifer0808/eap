@@ -1,6 +1,5 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
-import cn.tzauto.octopus.secsLayer.modules.Dealer;
 
 /**
  * Created by luosy on 2019/4/3.

@@ -30,7 +30,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.text.DecimalFormat;
 import java.util.*;
 
 /**

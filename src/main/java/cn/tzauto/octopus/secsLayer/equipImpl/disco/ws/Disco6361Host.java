@@ -33,7 +33,6 @@ import org.apache.log4j.MDC;
 
 import java.util.*;
 
-import static cn.tzauto.octopus.secsLayer.resolver.TransferUtil.setPPBody;
 
 /**
  * @author njtz

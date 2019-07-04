@@ -841,29 +841,29 @@ public class FicoHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         List<String> svidlist = recipeService.searchShotSVByDeviceType(deviceType);
-        List<Long> svidListLong = new ArrayList<>();
-        for (String str : svidlist) {
-            svidListLong.add(Long.parseLong(str));
-        }
         sqlSession.close();
-        //获取前一状态与当前状态
-//todo z这里处理的逻辑不正确
-        Map shotCountMap = activeWrapper.sendS1F3out(svidListLong, svFormat);
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "UphDataTransfer");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("equipStatus", equipStatus);
-        mqMap.put("preEquipStatus", preEquipStatus);
-        mqMap.put("currentRecipe", ppExecName);
-        mqMap.put("lotId", lotId);
-        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
-        mqMap.put("output", output);
-        mqMap.put("unit", "");
-        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
-        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
-        logger.info("设备" + deviceCode + " UPH参数为:" + mqMap);
-//       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
+//        List<Long> svidListLong = new ArrayList<>();
+//        for (String str : svidlist) {
+//            svidListLong.add(Long.parseLong(str));
+//        }
+//        //获取前一状态与当前状态
+////todo z这里处理的逻辑不正确
+//        Map shotCountMap = activeWrapper.sendS1F3out(svidListLong, svFormat);
+//        Map mqMap = new HashMap();
+//        mqMap.put("msgName", "UphDataTransfer");
+//        mqMap.put("deviceCode", deviceCode);
+//        mqMap.put("equipStatus", equipStatus);
+//        mqMap.put("preEquipStatus", preEquipStatus);
+//        mqMap.put("currentRecipe", ppExecName);
+//        mqMap.put("lotId", lotId);
+//        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
+//        mqMap.put("output", output);
+//        mqMap.put("unit", "");
+//        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
+//        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+//        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+//        logger.info("设备" + deviceCode + " UPH参数为:" + mqMap);
+////       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
     /**
@@ -999,7 +999,7 @@ public class FicoHost extends EquipHost {
         List list1 = new ArrayList();
         list1.add(15L);
         list1.add(97L);
-        sendS2F33out(10L, 15L, list1);
+        sendS2F33out(10L, 10L, list1);
         sendS2F35out(10L, 10L, 10L);
 //        sendS2F37out(10l);
 
@@ -1007,7 +1007,7 @@ public class FicoHost extends EquipHost {
         List list = new ArrayList();
         list.add(97L);
 
-        sendS2F33out(4L, 60L, list);
+        sendS2F33out(60L, 60L, list);
 //        sendS2F33out(60l, 97l);
         sendS2F35out(60L, 60L, 60L);
 //        sendS2F37out(60l);
@@ -1042,7 +1042,7 @@ public class FicoHost extends EquipHost {
             ceidList.add(ceids[i]);
         }
         try {
-            activeWrapper.sendS2F37out(true, ceidList, ceFormat);
+            activeWrapper.sendS2F37out(true, ceidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
         } catch (HsmsProtocolNotSelectedException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
