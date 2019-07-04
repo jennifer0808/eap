@@ -293,6 +293,8 @@ public class UploadPaneController implements Initializable {
                                 progressIndicatorLoad.setVisible(false);
                                 mainPane.setDisable(false);
                                 Platform.runLater(() -> {
+                                    EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
+                                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
                                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！", stage);
                                 });
                                 e.printStackTrace();
