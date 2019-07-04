@@ -99,7 +99,8 @@ public class EsecDB2100Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-                    processS6F11LearnDevice(msg);
+                   super.processS6F11in(msg);
+//                    processS6F11LearnDevice(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     processS6F11inStripMapUpload(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
@@ -143,13 +144,9 @@ public class EsecDB2100Host extends EquipHost {
                 processS2F36in(data);
             } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                processS6F11inStripMapUpload(data);
+            }  else if (tagName.equalsIgnoreCase("s6f11in")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                processS6F11in(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
-//                processS14F1in(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -247,41 +244,6 @@ public class EsecDB2100Host extends EquipHost {
         }
     }
 
-    @Override
-    public void processS6F11in(DataMsgMap data) {
-        long ceid = -12345679;
-        try {
-            if (data.get("CEID") != null) {
-                ceid = Long.parseLong(data.get("CEID").toString());
-                logger.info("Received a s6f11in with CEID = " + ceid);
-            }
-//            if (equipSecsBean.collectionReports.get(ceid) != null) {
-//                Process process = equipSecsBean.collectionReports.get(ceid);
-            //todo 这里看是重定义事件报告，还是查一遍sv数据把数据放到data里方便后面使用
-            //
-//                if (process.getProcessKey().equals("STATE_CHANGE")) {
-//
-//                }
-//                EventDealer.deal(data, deviceCode, process, activeWrapper);
-
-//            }
-            //TODO 根据ceid分发处理事件
-            if (ceid == StripMapUpCeid) {
-                processS6F11inStripMapUpload(data);
-            } else {
-                activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
-                if (ceid == EquipStateChangeCeid) {
-                    processS6F11EquipStatusChange(data);
-                }
-            }
-
-            if (commState != 1) {
-                this.setCommState(1);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
 
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
@@ -394,16 +356,16 @@ public class EsecDB2100Host extends EquipHost {
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑&&
 //            if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("stopped RDY")) {
-            if (dataReady && equipStatus.equalsIgnoreCase("run")) {
-                //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<String> svlist = new ArrayList<>();
-                svlist.add("252968976");//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (!svValue.get("252968976").equals("41")) {
-                    String dateStr = GlobalConstants.dateFormat.format(new Date());
-                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
-                }
+            if (dataReady && equipStatus.equalsIgnoreCase("run") && preEquipStatus.equalsIgnoreCase("stopped RDY") ) {
+//                //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
+//                List<String> svlist = new ArrayList<>();
+//                svlist.add("252968976");//2D开关
+//                Map svValue = this.getSpecificSVData(svlist);
+//                if (!svValue.get("252968976").equals("41")) {
+//                    String dateStr = GlobalConstants.dateFormat.format(new Date());
+//                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed!!");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
+//                }
                 if (AxisUtility.isEngineerMode(deviceCode)) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                     sqlSession.close();
