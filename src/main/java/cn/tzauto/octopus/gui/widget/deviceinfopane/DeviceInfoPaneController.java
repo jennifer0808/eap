@@ -174,14 +174,7 @@ public class DeviceInfoPaneController implements Initializable {
 //        } catch (HsmsProtocolNotSelectedException e) {
 //            e.printStackTrace();
 //        }
-        Task taskCheckComm=new Task() {
-            @Override
-            protected Object call() throws Exception {
-                checkCommState();
-                return null;
-            }
-        };
-        new Thread(taskCheckComm).start();
+
 
         int commState= equipHost.commState;
         logger.info("commState=====>"+commState);
@@ -206,15 +199,7 @@ public class DeviceInfoPaneController implements Initializable {
         sqlSession.close();
     }
 
-    public void checkCommState(){
-                EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
-                String state = equipHost.checkCommState();
-                logger.info("state===============>"+state);
-                if (!"0".equals(state)) {
-                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
-                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
-                }
-    }
+
     public void setData(Map map,Pane root){
        if(map!=null){
 //                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "测试 SwingWorker......");
