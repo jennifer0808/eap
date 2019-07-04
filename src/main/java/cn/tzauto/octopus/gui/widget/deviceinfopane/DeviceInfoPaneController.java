@@ -5,6 +5,8 @@
  */
 package cn.tzauto.octopus.gui.widget.deviceinfopane;
 
+import cn.tzauto.generalDriver.exceptions.BrokenProtocolException;
+import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -20,6 +22,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -162,10 +165,27 @@ public class DeviceInfoPaneController implements Initializable {
         RecipeService recipeService = new RecipeService(sqlSession);
         SysService sysService = new SysService(sqlSession);
         EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
-       boolean isCommon= equipHost.getEquipState().isCommOn();
-       int com= equipHost.commState;
-        logger.info("isCommon=====>"+isCommon+";com=====>"+com);
-        if(com==COMMUNICATING ||isCommon==true ){
+
+//        boolean  testInitLink=false;
+//        try {
+//              testInitLink=equipHost.testInitLink();
+//        } catch (BrokenProtocolException e) {
+//            e.printStackTrace();
+//        } catch (HsmsProtocolNotSelectedException e) {
+//            e.printStackTrace();
+//        }
+        Task taskCheckComm=new Task() {
+            @Override
+            protected Object call() throws Exception {
+                checkCommState();
+                return null;
+            }
+        };
+        new Thread(taskCheckComm).start();
+
+        int commState= equipHost.commState;
+        logger.info("commState=====>"+commState);
+        if(commState==COMMUNICATING  ){
             Task task = new Task<Map>() {
                 @Override
                 public Map call() {
@@ -176,14 +196,24 @@ public class DeviceInfoPaneController implements Initializable {
                 }
             };
             new Thread(task).start();
-        }else if(com==NOT_COMMUNICATING||isCommon==false){
+        }else if(commState==NOT_COMMUNICATING ){
 //            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
             equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
 
         }
         getData(deviceInfoExt , deviceInfo, root, recipeService, sysService);
         sqlSession.close();
+    }
+
+    public void checkCommState(){
+                EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
+                String state = equipHost.checkCommState();
+                logger.info("state===============>"+state);
+                if (!"0".equals(state)) {
+                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
+                }
     }
     public void setData(Map map,Pane root){
        if(map!=null){

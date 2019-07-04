@@ -225,114 +225,141 @@ public class T340Host extends EquipHost {
 
 
     public Map sendS1F15outByT640() {
-        DataMsgMap s1f15out = new DataMsgMap("s1f15out", activeWrapper.getDeviceId());
-        s1f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         DataMsgMap msgdata = null;
         try {
-            // TODO: 2019/6/10   msgdata = activeWrapper.sendPrimaryWsetMessage(s1f15out);
+            msgdata = activeWrapper.sendS1F15out();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        byte[] ack = (byte[]) ((SecsItem) msgdata.get("OFLACK")).getData();
+        byte ack = (byte)  msgdata.get("OFLACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s1f16");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ack", ack[0]);
+        resultMap.put("ack", ack);
         return resultMap;
     }
 
     public Map sendS1F17outByT640() {
-        DataMsgMap s1f17out = new DataMsgMap("s1f17out", activeWrapper.getDeviceId());
-        s1f17out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
+
         DataMsgMap msgdata = null;
         try {
-            // TODO: 2019/6/10   msgdata = activeWrapper.sendPrimaryWsetMessage(s1f17out);
+            msgdata = activeWrapper.sendS1F17out();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        byte[] ack = (byte[]) ((SecsItem) msgdata.get("AckCode")).getData();
+
+//        byte ack = (byte) msgdata.get("AckCode");
+        byte ack = (byte) msgdata.get("ONLACK");
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s1f18");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("ack", ack[0]);
+        resultMap.put("ack", ack);
         return resultMap;
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public Map sendS1F3Check() {
-        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
-        long transactionId = activeWrapper.getNextAvailableTransactionId();
-        s1f3out.setTransactionId(transactionId);
-        long[] equipStatuss = new long[1];
-        long[] pPExecNames = new long[1];
-        long[] controlStates = new long[1];
-        DataMsgMap data = null;
-        try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            RecipeService recipeService = new RecipeService(sqlSession);
-            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
-            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
-            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
-            sqlSession.close();
-            s1f3out.put("EquipStatus", equipStatuss);
-            s1f3out.put("PPExecName", pPExecNames);
-            s1f3out.put("ControlState", controlStates);
-            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
-//            data = activeWrapper.sendPrimaryWsetMessage(s1f3out);
-            // TODO: 2019/6/10        data = sendMsg2Equip(s1f3out);
-
-        } catch (Exception e) {
-            logger.error("Wait for get meessage directly error：" + e);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
-        }
-        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
-            if ("SECS-OFFLINE".equalsIgnoreCase(equipStatus)) {
-                Map panelMap = new HashMap();
-                panelMap.put("EquipStatus", equipStatus);
-                panelMap.put("PPExecName", ppExecName);
-                panelMap.put("ControlState", controlState);
-                changeEquipPanel(panelMap);
-            }
-            return null;
-        }
-        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
-        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
-    }
+//    @Override
+//    public Map sendS1F3Check() {
+//        DataMsgMap s1f3out = new DataMsgMap("s1f3statecheck", activeWrapper.getDeviceId());
+//        long transactionId = activeWrapper.getNextAvailableTransactionId();
+//        s1f3out.setTransactionId(transactionId);
+//        long[] equipStatuss = new long[1];
+//        long[] pPExecNames = new long[1];
+//        long[] controlStates = new long[1];
+//        DataMsgMap data = null;
+//        try {
+//            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+//            RecipeService recipeService = new RecipeService(sqlSession);
+//            equipStatuss[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
+//            pPExecNames[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
+//            controlStates[0] = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "ControlState").get(0).getDeviceVariableId());
+//            sqlSession.close();
+//            s1f3out.put("EquipStatus", equipStatuss);
+//            s1f3out.put("PPExecName", pPExecNames);
+//            s1f3out.put("ControlState", controlStates);
+//            logger.info("Ready to send Message S1F3==============>" + JSONArray.toJSON(s1f3out));
+////            data = activeWrapper.sendPrimaryWsetMessage(s1f3out);
+//
+//
+//        } catch (Exception e) {
+//            logger.error("Wait for get meessage directly error：" + e);
+//        }
+//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
+//        }
+//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//            if ("SECS-OFFLINE".equalsIgnoreCase(equipStatus)) {
+//                Map panelMap = new HashMap();
+//                panelMap.put("EquipStatus", equipStatus);
+//                panelMap.put("PPExecName", ppExecName);
+//                panelMap.put("ControlState", controlState);
+//                changeEquipPanel(panelMap);
+//            }
+//            return null;
+//        }
+//        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
+//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        List listtmp = getNcessaryData();
+//        if (listtmp != null && !listtmp.isEmpty()) {
+//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+//            ppExecName = String.valueOf(listtmp.get(1));
+//            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+//            logger.info("controlState 为：" + controlState + ":" + deviceType + ";" + listtmp.get(2));
+//        }
+//        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
+//        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+//        ppExecName = (String) listtmp.get(1);
+//        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+//        Map panelMap = new HashMap();
+//        panelMap.put("EquipStatus", equipStatus);
+//        panelMap.put("PPExecName", ppExecName);
+//        panelMap.put("ControlState", controlState);
+//        changeEquipPanel(panelMap);
+//        return panelMap;
+//    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S2FX Code"> 
     public Map sendS2F41outStart(String batchName) {
-        DataMsgMap s2f41out = new DataMsgMap("s2f41outstart", activeWrapper.getDeviceId());
-        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        s2f41out.put("BatchName", batchName);
-        byte[] hcack = new byte[1];
-        DataMsgMap data = null;
+        String rcmd = "START";
+
+        Map<String, String> cpMap = new HashMap();
+        cpMap.put("BATCH-NAME", batchName);
+        cpMap.put("ACTION", "NEW");
+        cpMap.put("BATCH-TO-PROCESS", "");
+        cpMap.put("CARRIER-COUNT", "");
+        cpMap.put("INPUT-TRAY-MAP", "");
+        cpMap.put("TRAY-REPORTING", "NO");
+
+        Map cpNameFormatMap = new HashMap();
+        cpNameFormatMap.put("BATCH-NAME", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-TO-PROCESS", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("CARRIER-COUNT", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("INPUT-TRAY-MAP", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("TRAY-REPORTING", FormatCode.SECS_ASCII);
+
+
+        Map cpValueFormatMap = new HashMap();
+        cpNameFormatMap.put(batchName, FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("NEW", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("NO", FormatCode.SECS_ASCII);
+        byte hcack = -1;
         try {
-            // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
-            logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+            DataMsgMap data = activeWrapper.sendS2F41out(rcmd, null, cpMap, cpNameFormatMap, cpValueFormatMap);
+            hcack = (byte) data.get("HCACK");
+            logger.debug("Recieve s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK = " + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         } catch (Exception e) {
-            logger.error("Exception occur,Exception info:" + e.getMessage());
+            e.printStackTrace();
         }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
         resultMap.put("deviceCode", deviceCode);
-        resultMap.put("HCACK", hcack[0]);
-        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
+        resultMap.put("HCACK", hcack);
+        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
         return resultMap;
     }
     // </editor-fold>

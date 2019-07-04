@@ -15,6 +15,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
@@ -260,6 +261,16 @@ public class UploadPaneController implements Initializable {
                         GlobalConstants.stage.hostManager.isecsUploadMultiRecipe(deviceId, recipeNames);
                         return;
                     }
+                    Task taskCheckComm=new Task() {
+                        @Override
+                        protected Object call() throws Exception {
+                            System.out.println("taskCheckComm===============>");
+                            DeviceInfoPaneController deviceInfoPaneController= new    DeviceInfoPaneController();
+                            deviceInfoPaneController.checkCommState();
+                            return null;
+                        }
+                    };
+                    new Thread(taskCheckComm).start();
                     Task task = new Task<Map>() {
                         @Override
                         public Map call() {

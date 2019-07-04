@@ -13,11 +13,13 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.main.EapMainController;
+import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.paraviewpane.ParaViewPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -283,9 +285,10 @@ public class RcpMngPaneController implements Initializable {
         dataTable.getItems().clear();
         showData();
     }
-
+    DeviceInfoPaneController  deviceInfoPaneController= new    DeviceInfoPaneController();
     @FXML
     private void btnUploadClick() throws IOException {
+
         if(!GlobalConstants.isUpload){
             GlobalConstants.isUpload = true;
             new EapMainController().loginInterface();
@@ -295,6 +298,7 @@ public class RcpMngPaneController implements Initializable {
 
     @FXML
     private void btnDownloadClick() throws IOException {
+
         int flag = 0;
 
         for (int i = 0; i < list.size(); i++) {
