@@ -608,6 +608,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
+            setControlState(FengCeConstant.CONTROL_OFFLINE);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
         }
         if (data == null || data.get("SV") == null) {
