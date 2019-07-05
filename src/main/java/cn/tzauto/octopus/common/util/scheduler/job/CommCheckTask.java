@@ -6,6 +6,8 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 
 
 import cn.tzauto.generalDriver.exceptions.BrokenProtocolException;
+import cn.tzauto.generalDriver.utils.DriverConfig;
+import cn.tzauto.generalDriver.utils.DriverConstants;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
@@ -55,7 +57,7 @@ public class CommCheckTask implements Job {
         } else {
             logger.info("未正确配置通信检测次数，使用默认值");
         }
-        // Todo 扫描所有Host线程，如果超过1分钟未通信，发送S1F1信号
+        // Todo 扫描所有Host线程，如果超过10分钟未通信，发送S1F1信号
         String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
             MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
@@ -351,7 +353,7 @@ public class CommCheckTask implements Job {
         });
         try {
             executor.execute(future);
-            result = future.get(3000, TimeUnit.MILLISECONDS);
+            result = future.get(DriverConfig.T3, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             future.cancel(true);
             result = "2";
