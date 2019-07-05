@@ -410,8 +410,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //            equip.setDeviceCode(value.getEquipName());
             equipStatusPane.setDeviceCodeAndDeviceType(value.getDeviceCode());
             if (value.getEquipStateProperty().isCommOn()) {
+
                 equipStatusPane.setCommLabelForegroundColorCommOn();
             } else {
+
                 equipStatusPane.setCommLabelForegroundColorCommOff();
             }
             equipStatusPane.setRunStatus(value.getEquipStateProperty().getEventString());
@@ -490,9 +492,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     equipStatusPane.setRunningRcp(newPanel.getRunningRcp());
                 }
                 if (newPanel.getNetState() == 1) {
+
                     equipStatusPane.setCommLabelForegroundColorCommOn();
                     if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
                         equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+
                         equipStatusPane.setCommLabelForegroundColorCommOff();
                         logger.info(deviceCode + " getControlState---------------------off-line");
                     } else {
@@ -500,12 +504,15 @@ public class EapClient extends Application implements JobListener, PropertyChang
                             switch (newPanel.getControlState()) {
                                 case FengCeConstant.CONTROL_LOCAL_ONLINE:
                                     equipStatusPane.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+
                                     break;
                                 case FengCeConstant.CONTROL_REMOTE_ONLINE:
                                     equipStatusPane.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+
                                     break;
                                 case FengCeConstant.CONTROL_OFFLINE:
                                     equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+
                                     equipStatusPane.setCommLabelForegroundColorCommOff();
                                     break;
                             }
@@ -522,6 +529,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                         }
                     }
                 } else {
+
                     equipStatusPane.setCommLabelForegroundColorCommOff();
                     logger.error(deviceCode + "---------------------comm-off");
                 }

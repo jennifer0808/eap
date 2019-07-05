@@ -125,7 +125,7 @@ public class EquipStatusPane {
             image = new Image(getClass().getClassLoader().getResource(iconPath).toString());
             images.put(iconPath, image);
         }
-        logger.info("on"+deviceCode +"图片为"+image);
+        logger.info("on"+iconPath +"图片为"+image.toString());
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGreen);
     }
@@ -139,14 +139,14 @@ public class EquipStatusPane {
         Image image=null;
         String lastName = iconPath.split("\\.")[1];
         String commofficonpath = iconPath.replaceAll("." + lastName, "-commoff." + lastName);
-        if(images.get(iconPath)==null){
+        if(images.get(commofficonpath)==null){
             image = new Image(getClass().getClassLoader().getResource(commofficonpath).toString());
-            images.put(iconPath, image);
+            images.put(commofficonpath, image);
 
-        }else if(images.get(iconPath)!=null){
-            image=(Image) images.get(iconPath);
+        }else if(images.get(commofficonpath)!=null){
+            image=(Image) images.get(commofficonpath);
         }
-        logger.info("off"+deviceCode +"图片为"+image);
+        logger.info("off"+commofficonpath +"图片为"+image.toString());
         this.equipImg.setImage(image);
         this.P_EquipPane.setBackground(bgGray);
     }
