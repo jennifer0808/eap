@@ -41,11 +41,14 @@ public class C6800Util {
                         if (line.contains("=")) {
                             String[] kv;
                             if (prefix.startsWith("[ProductParam") || prefix.startsWith("[TestParam")) {
+                                String key = line.split("=")[1];
                                 line = bufferedReader.readLine();
-                                String key = line.split("=")[0] + prefix;
-                                //line = bufferedReader.readLine();
-                                String val = line.split("=")[1];
-                                map.put(key, val);
+                                String[] vals = line.split("=");
+                                if(vals.length == 2) {
+                                    map.put(key,vals[1]);
+                                }else {
+                                    map.put(key, null);
+                                }
                             } else {
                                 kv = line.split("=");
                                 if (kv.length == 1) {

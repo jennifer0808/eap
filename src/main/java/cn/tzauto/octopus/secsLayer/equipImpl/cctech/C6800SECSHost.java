@@ -282,7 +282,7 @@ public class C6800SECSHost extends EquipHost {
                             checkParaFlag = false;
                         } else {
 //                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0));
+                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0),"abs");
                             if (resultMap != null) {
                                 if (resultMap.get("CheckParaFlag") != null) {
                                     checkParaFlag = (boolean) resultMap.get("CheckParaFlag");
@@ -385,7 +385,7 @@ public class C6800SECSHost extends EquipHost {
 
     @Override
     public Map releaseDevice() {
-        setCommState(0);
+        this.setAlarmState(0);
         return null;
     }
 
@@ -429,7 +429,7 @@ public class C6800SECSHost extends EquipHost {
         byte ackc7 = -1;
         try {
             data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_BINARY);
-            ackc7 = (byte) data.get("AckCode");
+            ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
         } catch (Exception e) {
