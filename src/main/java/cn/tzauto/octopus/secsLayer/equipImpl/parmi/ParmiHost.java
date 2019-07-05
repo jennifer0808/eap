@@ -9,6 +9,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
@@ -37,7 +38,7 @@ public class ParmiHost extends EquipHost {
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        EquipStateChangeCeid=1015;
+        EquipStateChangeCeid = 1015;
     }
 
 
@@ -141,35 +142,144 @@ public class ParmiHost extends EquipHost {
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
     public void processS6F11in(DataMsgMap data) {
+        long ceid = -1L;
         try {
-            long ceid = (long) data.get("CEID");
-//                else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData1")) {
-//                    upLoadSPCData(msg, 10);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11SPCData2")) {
-//                    upLoadSPCData(msg, 5);
-//                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-//                    processS6F11EquipStatusChange(msg);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-//                    processS6F11EquipStatusChange(msg);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
-//                    processS6F11EquipStatusChange(msg);
-//                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-//                    findDeviceRecipe();
-//                }
-            // TODO: 2019/4/11  未找到s6f11SPCData1与s6f11SPCData2的ceid
-            // TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待校验（ceid:5,12,1015）
+            ceid = (long) data.get("CEID");
+        } catch (ClassCastException ex) {
+            logger.info("ceid class is array,try again...");
+            long[] ceidArray = (long[]) data.get("CEID");
+            ceid = ceidArray[0];
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+
+        }
+        // TODO: 2019/4/11  未找到s6f11SPCData1与s6f11SPCData2的ceid
+        // TODO: 2019/4/11  s6f11equipstatuschange、s6f11equipstate、s6f11in待校验（ceid:5,12,1015）
 //            if (ceid == 1) {
 //                upLoadSPCData(data, 10);
 //            } else if (ceid == 2) {
 //                upLoadSPCData(data, 5);
 //            } else
-            if (ceid == 5 || ceid == 12 || ceid == 1015) {
-                processS6F11EquipStatusChange(data);
-            } else if (ceid == 998) {
-                findDeviceRecipe();
+
+        if (ceid == 998 || ceid ==22 || ceid ==2004) {
+            findDeviceRecipe();
+        } else if(ceid == 3 || ceid == 5 || ceid == 21 || ceid == 1016){
+            processS6F11EquipStatus(data);
+        } else if(ceid == 150){
+            processS6F11inStripMapUpload(data);
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void processS6F11EquipStatus(DataMsgMap data) {
+        long ceid = 0L;
+        try {
+            ceid = (long) data.get("CEID");
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        //获取当前设备状态
+        findDeviceRecipe();
+
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
+        RecipeService recipeService = new RecipeService(sqlSession);
+
+        try {
+            //从数据库中获取当前设备模型信息
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+            boolean dataReady = false;
+            //判断当前执行程序是否是清模程序 Y代表清模程序
+            boolean isCleanRecipe = false;
+            List<Recipe> cleanRecipes = recipeService.searchRecipeByRcpType(ppExecName, "Y");
+            if (cleanRecipes != null && cleanRecipes.size() > 1) {
+                isCleanRecipe = true;
+            }
+            // 更新设备模型
+            if (deviceInfoExt == null) {
+                logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息，不允许开机！请联系ME处理！");
+            } else {
+                deviceInfoExt.setDeviceStatus(equipStatus);
+                deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                sqlSession.commit();
+                dataReady = true;
+            }
+
+            //保存到设备操作记录数据库
+            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
+            sqlSession.commit();
+
+            boolean checkResult = false;
+            //获取设备当前运行状态，如果是Run，执行开机检查逻辑
+            if (!isCleanRecipe && dataReady && equipStatus.equalsIgnoreCase("run")) {
+                //1、获取设备需要校验的信息类型,
+                String startCheckMod = deviceInfoExt.getStartCheckMod();
+                boolean hasGoldRecipe = true;
+                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
+                    holdDeviceAndShowDetailInfo();
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe，请改机!");
+                    return;
+                }
+                //查询trackin时的recipe和GoldRecipe
+                Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
+
+                //查询客户端数据库是否存在GoldRecipe
+                if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
+                    hasGoldRecipe = false;
+                }
+
+                //首先从服务端获取机台是否处于锁机状态
+                //如果设备应该是锁机，那么首先发送锁机命令给机台
+                if (this.checkLockFlagFromServerByWS(deviceCode)) {
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
+                    holdDeviceAndShowDetailInfo("Equipment has been set and locked by Server");
+                } else {
+                    //根据检查模式执行开机检查逻辑
+                    //1、A1-检查recipe名称是否一致
+                    //2、A-检查recipe名称和参数
+                    //3、B-检查SV
+                    //4、AB都检查
+                    if (startCheckMod != null && !"".equals(startCheckMod)) {
+                        checkResult = checkRecipeName(deviceInfoExt.getRecipeName());
+                        if (!checkResult) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序不一致，核对不通过，设备被锁定！请联系PE处理！");
+                            //不允许开机
+                            holdDeviceAndShowDetailInfo("RecipeName Error! Equipment locked!");
+                        } else {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为：" + ppExecName + "，与改机后程序一致，核对通过！");
+                        }
+                    }
+                    if (checkResult && "A".equals(startCheckMod)) {
+                        //首先判断下载的Recipe类型
+                        //1、如果下载的是Unique版本，那么执行完全比较
+                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
+                        if ("Unique".equals(downloadRcpVersionType)) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数绝对值Check");
+                            this.startCheckRecipePara(downLoadRecipe, "abs");
+                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe[" + ppExecName + "]参数WICheck");
+                            if (!hasGoldRecipe) {
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在： " + ppExecName + " 的Gold版本，无法执行开机检查，设备被锁定！请联系PE处理！");
+                                //不允许开机
+                                this.holdDeviceAndShowDetailInfo("Host has no gold recipe, equipment locked!");
+                            } else {
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ppExecName + "开始WI参数Check");
+                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
+                            }
+                        }
+                    } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
+                    }
+                }
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
+            sqlSession.rollback();
+        } finally {
+            sqlSession.close();
         }
     }
 
@@ -203,13 +313,13 @@ public class ParmiHost extends EquipHost {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度：" + snt);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度：" + snt);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
             logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
             Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
         if (count == 10) {
             try {
@@ -234,17 +344,17 @@ public class ParmiHost extends EquipHost {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度1：" + snt);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度2：" + snt1);
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues1);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "ppid =" + ppid + ";stripId =" + stripId);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度1：" + snt);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "钢网厚度2：" + snt1);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "实测厚度：" + pSampleValues1);
             logger.info("ppid =" + ppid + ";stripId =" + stripId + ";time =" + time);
             logger.info("snt =" + snt + "pSampleValues =" + pSampleValues);
             logger.info("snt1 =" + snt1 + "pSampleValues1 =" + pSampleValues1);
             Map resultMap = AxisUtility.getSPCdata(stripId, pSampleValues, pUserName, pUserNo, snt, deviceCode);
             Map resultMap1 = AxisUtility.getSPCdata(stripId, pSampleValues1, pUserName, pUserNo, snt1, deviceCode);
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备发送SPC数据至服务端！");
         }
     }
 
@@ -322,7 +432,7 @@ public class ParmiHost extends EquipHost {
             }
             return map;
         } else {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
         }
     }
