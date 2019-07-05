@@ -41,11 +41,11 @@ public class HitachiLaserDrillHost extends EquipModel {
     private static Logger logger = Logger.getLogger(HitachiLaserDrillHost.class.getName());
     private String toolName = "";
     private boolean hasAutoChangeRecipe = false;
-    private String tableNum = "SFCZ1_ZD_RTRUV";
 
     public HitachiLaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
         MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        tableNum = "SFCZ1_ZD_RTRUV";
     }
 
     @Override
@@ -864,7 +864,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (bom == null) {
+        if (bom == null || bom.contains("NA") || bom.contains("&#x")) {
             return "Can not find any bom info by partNum:" + partNo;
         }
         String recipeName = bom;
@@ -910,12 +910,24 @@ public class HitachiLaserDrillHost extends EquipModel {
 
         List paraValueList = new ArrayList();
         paraValueList.add(result1);
-        paraValueList.addAll(setNormalData("正常", productionMap));
+//        paraValueList.addAll(setNormalData("正常", productionMap));
+        List listtemp = setNormalData("正常", productionMap);
+        for (Object o : listtemp) {
+            paraValueList.add(o);
+        }
         //todo 添加治具 原材料 水晶头能量和精度
         //添加治具
-        paraValueList.add(this.toolings.get(0).getCode());
+        if (this.toolings.size() < 1) {
+            paraValueList.add("");
+        } else {
+            paraValueList.add(this.toolings.get(0).getCode());
+        }
         //添加原材料
-        paraValueList.add(this.materials.get(0).getName());
+        if (this.materials.size() < 1) {
+            paraValueList.add("");
+        } else {
+            paraValueList.add(this.materials.get(0).getName());
+        }
         //添加材料lot1 lot2
         paraValueList.add("");
         paraValueList.add("");
@@ -928,22 +940,52 @@ public class HitachiLaserDrillHost extends EquipModel {
             paraValueList.add("0");
         }
         //初件判定
+        paraValueList.add("是");
         //场内编码（材料）
-        paraValueList.add(this.materials.get(0).getCode());
+        if (this.materials.size() < 1) {
+            paraValueList.add("");
+        } else {
+            paraValueList.add(this.materials.get(0).getCode());
+        }
         //治具名称
-        paraValueList.add(this.toolings.get(0).getCode());
+        if (this.toolings.size() < 1) {
+            paraValueList.add("");
+        } else {
+            paraValueList.add(this.toolings.get(0).getCode());
+        }
         //能量
         Map<String, String> powerMap = getCrystalPowerMap();
-        for (Map.Entry entry : powerMap.entrySet()) {
-            paraValueList.add(powerMap.get(entry.getKey()));
-        }
+//        for (Map.Entry entry : powerMap.entrySet()) {
+//            paraValueList.add(powerMap.get(entry.getKey()));
+//        }
+        paraValueList.add(powerMap.get("Z1_18_POWER") == null ? "" : powerMap.get("Z1_18_POWER"));
+        paraValueList.add(powerMap.get("Z2_18_POWER") == null ? "" : powerMap.get("Z2_18_POWER"));
+        paraValueList.add(powerMap.get("Z1_20_POWER") == null ? "" : powerMap.get("Z1_20_POWER"));
+        paraValueList.add(powerMap.get("Z2_20_POWER") == null ? "" : powerMap.get("Z2_20_POWER"));
+        paraValueList.add(powerMap.get("Z1_36_POWER") == null ? "" : powerMap.get("Z1_36_POWER"));
+        paraValueList.add(powerMap.get("Z2_36_POWER") == null ? "" : powerMap.get("Z2_36_POWER"));
+        paraValueList.add(powerMap.get("Z1_39_POWER") == null ? "" : powerMap.get("Z1_39_POWER"));
+        paraValueList.add(powerMap.get("Z2_39_POWER") == null ? "" : powerMap.get("Z2_39_POWER"));
+        paraValueList.add(powerMap.get("Z1_40_POWER") == null ? "" : powerMap.get("Z1_40_POWER"));
+        paraValueList.add(powerMap.get("Z2_40_POWER") == null ? "" : powerMap.get("Z2_40_POWER"));
         //精度
         Map<String, String> accuracyMap = getCrystalAccuracyMap();
-        for (Map.Entry entry : accuracyMap.entrySet()) {
-            paraValueList.add(accuracyMap.get(entry.getKey()));
-        }
+//        for (Map.Entry entry : accuracyMap.entrySet()) {
+//            paraValueList.add(accuracyMap.get(entry.getKey()));
+//        }
+        paraValueList.add(accuracyMap.get("Z1_18_ACCURACY") == null ? "" : accuracyMap.get("Z1_18_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z2_18_ACCURACY") == null ? "" : accuracyMap.get("Z2_18_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z1_20_ACCURACY") == null ? "" : accuracyMap.get("Z1_20_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z2_20_ACCURACY") == null ? "" : accuracyMap.get("Z2_20_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z1_36_ACCURACY") == null ? "" : accuracyMap.get("Z1_36_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z2_36_ACCURACY") == null ? "" : accuracyMap.get("Z2_36_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z1_39_ACCURACY") == null ? "" : accuracyMap.get("Z1_39_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z2_39_ACCURACY") == null ? "" : accuracyMap.get("Z2_39_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z1_40_ACCURACY") == null ? "" : accuracyMap.get("Z1_40_ACCURACY"));
+        paraValueList.add(accuracyMap.get("Z2_40_ACCURACY") == null ? "" : accuracyMap.get("Z2_40_ACCURACY"));
+
+
         //孔径信息
-        paraValueList.add("");
         paraValueList.add("");
         paraValueList.add("");
         paraValueList.add("");
@@ -972,21 +1014,24 @@ public class HitachiLaserDrillHost extends EquipModel {
     }
 
     private List setNormalData(String MacState, Map<String, String> productionMap) {
+        if (productionMap == null) {
+            productionMap = new HashMap<>();
+        }
         List paraValueList = new ArrayList();
         paraValueList.add(MacState);
         paraValueList.add(lotStartTime);
         LocalDateTime now = LocalDateTime.now();
         paraValueList.add(now.format(AvaryAxisUtil.dtf2));
         paraValueList.add(lotId);
-        paraValueList.add(productionMap.get("Layer"));
-        paraValueList.add(productionMap.get("MainSerial"));
+        paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+        paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
         paraValueList.add(productionMap.get("PartNum"));
-        paraValueList.add(productionMap.get("WorkNo"));
-        paraValueList.add(productionMap.get("Layer"));
-        paraValueList.add(productionMap.get("LayerName"));
-        paraValueList.add(productionMap.get("Serial"));
-        paraValueList.add(productionMap.get("IsMain"));
-        paraValueList.add(productionMap.get("OrderId"));
+        paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
+        paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+        paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
+        paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
+        paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
+        paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
 
         return paraValueList;
 
@@ -995,7 +1040,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     private Map getCrystalPowerMap() {
 
         Map powerMap = new HashMap();
-        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("D:\\EAP\\hitachiCrystalPower.log"));
+        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
         for (String str : CrystalPowerList) {
             String[] strs = str.split("=");
             powerMap.put(strs[0], strs[1]);
@@ -1005,7 +1050,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     private Map getCrystalAccuracyMap() {
         Map accuracyMap = new HashMap();
-        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("D:\\EAP\\hitachiCrystalAccuracy.log"));
+        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
         for (String str : CrystalAccuracyList) {
             String[] strs = str.split("=");
             accuracyMap.put(strs[0], strs[1]);

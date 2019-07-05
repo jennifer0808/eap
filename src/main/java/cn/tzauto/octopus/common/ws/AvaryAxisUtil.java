@@ -605,14 +605,14 @@ public class AvaryAxisUtil {
      * "test2018030200343|1|20180302|TEST|SFCZ4_ZDCVL|0|001|" + System.DateTime.Now.ToString("yyyyMMddHHmmss") + "|G1479462",
      * System.DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
      */
-    public static String insertMasterTable(String paperNo, String status, String deviceCode, String report, String classInfo, String factory, String createTime, String createEmpid) throws RemoteException, ServiceException, MalformedURLException {
+    public static String insertMasterTable(String paperNo, String status, String deviceCode, String report, String classInfo, String factory, String createTime, String createEmpid, String tableName) throws RemoteException, ServiceException, MalformedURLException {
         Call call = getCallForSendDataToSerGrp();
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime time = now.minusHours(8);
         String[] arr = parmsNames.get("insertMasterTable");
         Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], "PaperNo|Status|Dodate|MachineNo|Report|ClassInfo|Factory|CreateTime|CreateEmpid"
-                , createParm(paperNo, status, time.format(dtf1), deviceCode, "SFCZ4_ZD_DIExposure", classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
+                , createParm(paperNo, status, time.format(dtf1), deviceCode, tableName, classInfo, "001", now.format(dtf2), createEmpid), now.format(dtf)};
         String result = (String) call.invoke(params); //方法执行后的返回值
         logger.info("插入主表數據:" + paperNo + ";" + status + ";" + deviceCode + ";" + classInfo + ";" + createEmpid + ";" + "，结果为：" + result);
         if ("OK".equals(result)) {
@@ -984,7 +984,7 @@ public class AvaryAxisUtil {
 
     public static String uploadReportDetail(String deviceType, List paraValue) {
         String paraName = (String) mesInterfaceParaMap.get(deviceType).get("reportDetailParaName");
-        String[] paraNames = paraName.split("|");
+        String[] paraNames = paraName.split("\\|");
         if (paraNames.length != paraValue.size()) {
             logger.error("传入的参数值个数与需求个数不符,需求个数:" + paraNames.length + " 传入个数:" + paraValue.size());
             logger.error("需求参数:" + paraName + " 传入的参数值:" + paraValue);

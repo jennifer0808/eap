@@ -36,7 +36,7 @@ public class ScreenHost extends EquipModel {
 
     private static Logger logger = Logger.getLogger(ScreenHost.class.getName());
 
-    private String tableNum = "SFCZ4_ZD_DIExposure";
+    protected String tableNum = "SFCZ4_ZD_DIExposure";
     private String power = ""; //曝光能量
     private boolean addLimit = false; //追加限制，只有做完一批才能追加，true 限制开启，正在做，无法追加    false 限制关闭，可以追加
     private Map<String, List<String>> zsz;//涨缩值

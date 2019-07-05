@@ -21,7 +21,10 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import javax.xml.rpc.ServiceException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +57,6 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             String materialno = String.valueOf(downloadMessageMap.get("materialno"));
             String faceno = String.valueOf(downloadMessageMap.get("faceno"));
 
-            lotNo = "M907030791";
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
             logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " lotNo:" + lotNo + " lottype:" + lottype);
@@ -117,6 +119,15 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     e.printStackTrace();
                 }
                 if (deviceInfo.getDeviceType().equals("HITACHI-LASERDRILL")) {
+                    try {
+                        GlobalConstants.stage.equipModels.get(deviceCode).uploadData();
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    } catch (ServiceException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
                     recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo);
                 } else {
                     recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
