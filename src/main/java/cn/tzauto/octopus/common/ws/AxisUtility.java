@@ -55,7 +55,7 @@ public class AxisUtility {
     public static String getLockFlag(String userID, String eqptId) {
         DeviceInfoExt deviceInfoExt = getEqptStatus(userID, eqptId);
         if ("Y".equals(deviceInfoExt.getLockFlag())) {
-           UiLogUtil.getInstance().appendLog2SeverTab(deviceInfoExt.getDeviceRowid(), "由于[" + deviceInfoExt.getRemarks() + "],设备将被锁机...");
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceInfoExt.getDeviceRowid(), "由于[" + deviceInfoExt.getRemarks() + "],设备将被锁机...");
         }
         return deviceInfoExt.getLockFlag();
     }
@@ -178,7 +178,7 @@ public class AxisUtility {
         } catch (Exception ex) {
             logger.error("Exception:", ex);
             logger.debug("获取服务端数据失败，使用本地数据进行启动");
-           UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
+            UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
             resultMap = null;
         }
         return resultMap;
@@ -198,7 +198,7 @@ public class AxisUtility {
         } catch (Exception e) {
             logger.error("Exception:", e);
             logger.debug("获取服务端数据失败，使用本地数据进行启动");
-           UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
+            UiLogUtil.getInstance().appendLog2SeverTab(null, "获取服务端数据失败，使用本地数据进行启动");
             paraMap = null;
         }
         return paraMap;
@@ -376,7 +376,7 @@ public class AxisUtility {
             logger.info("uploadStripMapResult：" + jsonResult);
             return jsonResult;
         } catch (Exception e) {
-            logger.error("Exception", e);
+            logger.error("webService 调用失败," + xmlStr + ";" + deviceCode, e);
             return "Error";
         }
 
@@ -632,6 +632,7 @@ public class AxisUtility {
         }
         return resultMap.get("flag").toString();
     }
+
     /**
      * 调用webservice，获取锁机标志
      *
