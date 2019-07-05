@@ -271,6 +271,38 @@ public class ACKDescription {
             } else {
                 description = "Reserved";
             }
+        }else if (deviceType.contains("ASMAD8312PLUS")) {
+            switch (ack) {
+                case "1":
+                    description = "Unknown Status";
+                    break;
+                case "2":
+                    description = "Idle Local";
+                    break;
+                case "3":
+                    description = "Idle Remote";
+                    break;
+                case "4":
+                    description = "Setup";
+                    break;
+                case "5":
+                    description = "Initializing";
+                    break;
+                case "6":
+                    description = "Execute Local";
+                    break;
+                case "7":
+                    description = "Execute Remote";
+                    break;
+                case "8":
+                    description = "Error";
+                    break;
+                case "9":
+                    description = "Material Waiting";
+                    break;
+                default:
+                    break;
+            }
         } else if (deviceType.contains("ASMAD8312") || deviceType.contains("AD86") || deviceType.contains("9212")) {
             if (ack.equals("1")) {
                 description = "Initial";
@@ -458,7 +490,7 @@ public class ACKDescription {
             } else if (ack.equals("5")) {
                 description = "PAUSE";
             }
-        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832") || deviceType.contains("8312Plus") || deviceType.contains("832Z")) {
+        } else if (deviceType.contains("AD832P") || deviceType.contains("832i") || deviceType.contains("AD838") || deviceType.contains("Twin832")  || deviceType.contains("832Z")) {
             if (ack.equals("1")) {
                 description = "Unknown Status ";
             } else if (ack.equals("2")) {
