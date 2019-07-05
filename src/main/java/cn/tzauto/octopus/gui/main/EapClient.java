@@ -410,10 +410,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
 //            equip.setDeviceCode(value.getEquipName());
             equipStatusPane.setDeviceCodeAndDeviceType(value.getDeviceCode());
             if (value.getEquipStateProperty().isCommOn()) {
-                logger.info("进来1111ON");
+
                 equipStatusPane.setCommLabelForegroundColorCommOn();
             } else {
-                logger.info("进来1111");
+
                 equipStatusPane.setCommLabelForegroundColorCommOff();
             }
             equipStatusPane.setRunStatus(value.getEquipStateProperty().getEventString());
