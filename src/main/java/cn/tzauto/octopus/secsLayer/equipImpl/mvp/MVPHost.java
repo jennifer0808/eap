@@ -147,9 +147,12 @@ public class MVPHost extends EquipHost {
             logger.info("----Received from Equip Strip Map Upload event - S6F11");
             long result = -1L;
             try {
-                result = (long) ((ArrayList) ((ArrayList) data.get("REPORT")).get(1)).get(1);
+                List reportData = (List) data.get("REPORT");
+                ArrayList stripData = (ArrayList) reportData.get(1);
+                result = ((long[])stripData.get(1))[0];
+                logger.info("2d result :" + result);
             } catch (Exception e) {
-
+                logger.error("Exception", e);
             }
             // 判断机台检测结果，如果为0则上传，结果为1 || 2则不上传
             if (result == 0 || result == -1L) {

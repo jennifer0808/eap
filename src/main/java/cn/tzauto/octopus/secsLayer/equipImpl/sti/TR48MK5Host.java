@@ -40,6 +40,7 @@ public class TR48MK5Host extends EquipHost {
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PPSELECT";
+        CPN_PPID = "RecipeName";
     }
 
 
