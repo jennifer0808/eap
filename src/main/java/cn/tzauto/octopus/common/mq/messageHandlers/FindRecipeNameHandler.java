@@ -43,22 +43,18 @@ public class FindRecipeNameHandler implements MessageHandler {
         DeviceInfo deviceInfo = null;
         try {
             deviceCode = mapMessage.getString("deviceCode");
-//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前程序名");
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "服务端请求核对设备的当前程序名");
             deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
             Map equipState = hostManager.getEquipInitState(deviceInfo.getDeviceCode());
             if (equipState == null) {
-                recipeName = deviceInfoExt.getRecipeName();
+                recipeName = "---";
             } else {
                 recipeName = equipState.get("PPExecName").toString();
-            }
-            if (recipeName.equals("--")) {
-                recipeName = deviceInfoExt.getRecipeName();
             }
             if (mapMessage.getString("lotType") != null) {
                 businessMod = mapMessage.getString("lotType");
                 if ("E".equals(businessMod)) {
-
+                    DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                     deviceInfoExt.setBusinessMod("Engineer");
                     deviceService.modifyDeviceInfoExt(deviceInfoExt);
                     sqlSession.commit();
@@ -71,7 +67,7 @@ public class FindRecipeNameHandler implements MessageHandler {
         Recipe recipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());//获取gold类型的版本号最高的recipe
         Map mqMap = new HashMap();
         mqMap.put("msgName", "FindRecipeName");
-        mqMap.put("recipeName", recipeName);
+        mqMap.put("recipeName", recipeName.trim());
         if (recipe != null && recipe.getVersionNo() != null) {
             mqMap.put("verNo", recipe.getVersionNo().toString());
         } else {
@@ -87,7 +83,7 @@ public class FindRecipeNameHandler implements MessageHandler {
             logger.info("topicName:==========================================" + topicName);
             GlobalConstants.C2SCheckRcpNameQueue.sendMessage(topicName, mqMap);
             logger.info("向服务端[" + topicName + "]回复校验程序名消息" + JSONArray.toJSONString(mqMap));
-//           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前程序" + recipeName);
+           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端发送设备的当前程序" + recipeName);
         } catch (JMSException ex) {
             logger.error("Exception:", ex);
         } finally {

@@ -60,5 +60,6 @@ public class CheckRecipePapaHandler implements MessageHandler {
         if (equipHost.getEquipState().isCommOn()) {
             
         }
+        sqlSession.close();
     }
 }
