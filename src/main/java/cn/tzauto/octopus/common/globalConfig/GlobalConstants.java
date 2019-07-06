@@ -13,6 +13,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.mq.MessageUtils;
 import cn.tzauto.octopus.common.util.ftp.HtFtpUtil;
 import cn.tzauto.octopus.gui.main.EapClient;
+import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
 import org.apache.cxf.endpoint.Client;
@@ -28,13 +29,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class GlobalConstants {
-    private static final Logger logger = Logger.getLogger(GlobalConstants.class.getName());
-    private static Properties prop;
-    public static boolean SYNC_CONIFG = false;
-    public static boolean MONITOR_CONIFG = false;
-    public static boolean LOG_UPLOAD = false;
-    public static boolean REQUEST_CONIFG = false;
-    public static String SERVER_ID;
     public static final String SYNC_CONFIG_JOB_NAME = "SYNC_CONFIG_JOB";
     public static final String SCAN_HOST_JOB_NAME = "SCAN_HOST_JOB";
     public static final String SYNC_JOB_DATA_MAP = "SYNC_JOB_DATA_MAP";
@@ -50,6 +44,12 @@ public class GlobalConstants {
     public static final String MONITOR_ALARM_LOCK_JOB_NAME = "MONITOR_ALARM_LOCK_JOB";
     public static final String UPLOAD_MTBA_JOB_NAME = "UPLOAD_MTBA_JOB";
     public static final String REFRESH_EQUIPSTATE_JOB_NAME = "REFRESH_EQUIPSTATE_JOB";
+    private static final Logger logger = Logger.getLogger(GlobalConstants.class.getName());
+    public static boolean SYNC_CONIFG = false;
+    public static boolean MONITOR_CONIFG = false;
+    public static boolean LOG_UPLOAD = false;
+    public static boolean REQUEST_CONIFG = false;
+    public static String SERVER_ID;
     public static String HOST_JSON_FILE;
     public static String CONFIG_FILE_PATH = "config.properties";
     public static MessageUtils C2SRcpQueue = new MessageUtils("C2S.Q.RECIPE_C");
@@ -122,18 +122,13 @@ public class GlobalConstants {
     public static boolean onlyOnePageDownload = false;
     // 配合isSvQuery  控制上传窗口只有一个
     public static boolean onlyOnePageSvQuery = false;
-
     public static Boolean isUpload = false;
     public static Boolean isDownload = false;
     public static TableView table;
-
     public static Boolean isSvQuery = false;
     public static Boolean userFlag = false;
-
     public static Stage loginStage;
-
     public static Map statusMap = new HashMap();
-
     public static String ISECS_STATUS_CONFIRM = "";
     public static List<DeviceInfo> deviceInfos;
     public static DynamicClientFactory factory = null;
@@ -142,6 +137,25 @@ public class GlobalConstants {
     public static String htFtpUser = "ftpuser1";
     public static String htFtpPwd = "ftp123456";
     public static String winRarPath = "C:/Program Files/WinRAR/WinRAR.exe";
+    // 用于保存同模组下的EquipHost
+    public static Map<String, EquipHost> hostMap = new HashMap<>();
+    // 用于确认同模组下的设备中已建立连接的设备(即MsgListener监听的host)
+    public static Map<String, EquipHost> connectHostMap = new HashMap<>();
+
+    private static Properties prop;
+
+    static {
+        prop = new Properties();
+
+        try {
+            factory = DynamicClientFactory.newInstance();
+            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream(CONFIG_FILE_PATH);
+            prop.load(in);
+
+        } catch (Exception e) {
+            sysLogger.error("Exception:", e);
+        }
+    }
 
     public static boolean loadPropertyFromDB() {
         try {
@@ -249,19 +263,6 @@ public class GlobalConstants {
             ISECS_STATUS_CONFIRM = getProperty("ISECS_STATUS_CONFIRM");
         }
         return true;
-    }
-
-    static {
-        prop = new Properties();
-
-        try {
-            factory = DynamicClientFactory.newInstance();
-            InputStream in = GlobalConstants.class.getClassLoader().getResourceAsStream(CONFIG_FILE_PATH);
-            prop.load(in);
-
-        } catch (Exception e) {
-            sysLogger.error("Exception:", e);
-        }
     }
 
     private static void loadFile() {
