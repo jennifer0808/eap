@@ -23,6 +23,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.htm.HtmRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
@@ -111,6 +112,7 @@ public class HtmHost extends EquipHost {
         synchronized (GlobalConstants.connectHostMap) {
             if (null != GlobalConstants.connectHostMap.get(this.deviceType)) {
                 this.activeWrapper = GlobalConstants.connectHostMap.get(this.deviceType).getActiveWrapper();
+                GlobalConstants.hostMap.put(this.deviceCode, HtmHost.this);
 //                logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             } else {
                 activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
@@ -272,13 +274,7 @@ public class HtmHost extends EquipHost {
                         GlobalConstants.hostMap.get(reportDeviceCode).inputMessageArrived(event);
                     } else if (popularCeidList.contains(ceid)) {
                         // 公共事件处理
-//                        this.inputMsgQueue.put(data);
-//                        for (Map.Entry equipHost : GlobalConstants.hostMap.entrySet()) {
-//                            if (this.deviceCode.equals(equipHost.getKey())) {
-//                                continue;
-//                            }
-//                            GlobalConstants.hostMap.get(equipHost.getKey()).inputMessageArrived(event);
-//                        }
+                        this.inputMsgQueue.put(data);
                     }
                 }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
@@ -429,6 +425,14 @@ public class HtmHost extends EquipHost {
                 processS6F11inStripMapUpload(data);
             } else if (ceid == 1 || ceid == 2 || ceid == 3 || ceid == 42 || ceid == 43 || ceid == 44 || ceid == 81) {
                 processS6F11EquipStatusChange(data);
+                if (ceid == 1 || ceid == 2 || ceid == 3) {
+                    for (Map.Entry<String, EquipHost> equipHost : GlobalConstants.hostMap.entrySet()) {
+                        if (this.deviceCode.equals(equipHost.getKey()) || !this.deviceType.equals(equipHost.getValue().getDeviceType())) {
+                            continue;
+                        }
+                        GlobalConstants.hostMap.get(equipHost.getKey()).findDeviceRecipe();
+                    }
+                }
             }
             if (commState != 1) {
                 this.setCommState(1);
@@ -497,8 +501,12 @@ public class HtmHost extends EquipHost {
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         List<RecipePara> recipeParaList = null;
-
-
+        // recipe文件解析
+//        try {
+//            recipeParaList = HtmRecipeUtil.analysisRecipe(recipePath, deviceType, deviceCode);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);

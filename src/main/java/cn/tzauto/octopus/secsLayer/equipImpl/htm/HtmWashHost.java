@@ -10,6 +10,8 @@ import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
+import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -20,6 +22,8 @@ import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
+import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.htm.HtmWashRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
@@ -179,6 +183,7 @@ public class HtmWashHost extends EquipHost {
         synchronized (GlobalConstants.connectHostMap) {
             if (null != GlobalConstants.connectHostMap.get(this.deviceType)) {
                 this.activeWrapper = GlobalConstants.connectHostMap.get(this.deviceType).getActiveWrapper();
+                GlobalConstants.hostMap.put(this.deviceCode, HtmWashHost.this);
 //                logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             } else {
                 activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
@@ -489,6 +494,14 @@ public class HtmWashHost extends EquipHost {
             } else if (ceid == 43 || ceid == 84 || ceid == 109 || ceid == 137 || ceid == 165 || ceid == 193 || ceid == 221
                     || ceid == 54 || ceid == 55 || ceid == 56 || ceid == 57 || ceid == 58 || ceid == 59 || ceid == 60 || ceid == 44) {
                 processS6F11EquipStatusChange(data);
+                if (ceid == 44) {
+                    for (Map.Entry equipHost : GlobalConstants.hostMap.entrySet()) {
+                        if (this.deviceCode.equals(equipHost.getKey())) {
+                            continue;
+                        }
+                        GlobalConstants.hostMap.get(equipHost.getKey()).findDeviceRecipe();
+                    }
+                }
             } else if (null != stripLoadCeidMap.get(ceid)) {
                 processS6F11stripIdRead(data);
             }
@@ -613,6 +626,31 @@ public class HtmWashHost extends EquipHost {
             resultMap.put("ppgnt", 9);
             resultMap.put("Description", e.getMessage());
         }
+        return resultMap;
+    }
+
+    @Override
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = getRecipePathByConfig(recipe);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+        List<RecipePara> recipeParaList = null;
+        // recipe文件解析
+//        try {
+//            recipeParaList = HtmWashRecipeUtil.analysisRecipe(recipePath, deviceType, deviceCode);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f6");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipe", recipe);
+        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
         return resultMap;
     }
 
