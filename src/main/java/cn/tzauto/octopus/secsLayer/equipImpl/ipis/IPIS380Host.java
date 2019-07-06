@@ -634,6 +634,8 @@ public class IPIS380Host extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = getRecipePathByConfig(recipe);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
         List<RecipePara> recipeParaList = null;
         try {
             Map paraMap = Ipis380RecipeUtil.transferFromFile(recipePath);
@@ -641,8 +643,6 @@ public class IPIS380Host extends EquipHost {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
-        TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 
         Map resultMap = new HashMap();

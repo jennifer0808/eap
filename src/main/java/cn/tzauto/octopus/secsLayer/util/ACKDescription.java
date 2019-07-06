@@ -946,7 +946,7 @@ public class ACKDescription {
             } else if (ack.equals("6")) {
                 description = "EQUIP_STATE_OPER_CALL";
             }
-        } else if (deviceType.contains("SHINKAWA")) {
+        } else if (deviceType.contains("UTC-5000 NeocuZ1")) {
             if (ack.equals("1")) {
                 description = "SETUP";
             } else if (ack.equals("3")) {
@@ -980,6 +980,9 @@ public class ACKDescription {
             } else if (ack.equals("3")) {
                 description = "ERROR";
             }
+//            else {
+//                description = "IDLE";
+//            }
         }
         return description;
     }
@@ -1423,7 +1426,7 @@ public class ACKDescription {
                     descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/Remote
                     break;
             }
-        } else if (deviceType.contains("SHINKAWA")) {
+        } else if (deviceType.contains("UTC-5000 NeocuZ1")) {
             switch (String.valueOf(obj)) {
                 case "1":
                     descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
@@ -1473,9 +1476,9 @@ public class ACKDescription {
                 case "3":
                     descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
-                default:
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
-                    break;
+//                default:
+//                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Offline/machine offline
+//                    break;
             }
         }
         return descriControlState;

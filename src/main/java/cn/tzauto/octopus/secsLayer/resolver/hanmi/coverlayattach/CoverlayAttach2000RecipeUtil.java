@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cn.tzauto.octopus.secsLayer.resolver.ipis;
+package cn.tzauto.octopus.secsLayer.resolver.hanmi.coverlayattach;
 
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
@@ -18,7 +18,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 
-public class Ipis380RecipeUtil {
+public class CoverlayAttach2000RecipeUtil {
 
     //filePath 是PPBODY原文件的存储路径(非文件夹)
     public static Map transferFromFile(String filePath) {
@@ -30,23 +30,21 @@ public class Ipis380RecipeUtil {
             String value = "";
             File cfgfile = new File(filePath);
             br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "GBK"));
-            String title = "";
+            boolean flag = false;
             while ((cfgline = br.readLine()) != null) {
-                if (cfgline.contains("[") && cfgline.contains("]")) {
-                    title = cfgline.replace("[", "").replace("]", "");
-                } else if (cfgline.contains("=")) {
+                if (flag){
                     String[] cfg = cfgline.split("=");
                     //因为文件的第一行有乱码，如果读取的是第一行，要把乱码去除
-                    key = title + "_" + cfg[0];
-                    if ("SortingMap".equals(key.trim()) || "SORT_MAP_SortingMap".equals(key.trim())) {
-                        continue;
-                    }
+                    key = cfg[0];
                     if (cfg.length < 2) {
                         value = "";
                     } else {
                         value = cfg[1];
                     }
-                    map.put(key, value);
+                    map.put(key.trim(), value.trim());
+                }
+                if (cfgline.equals("[RecipeParameters]")) {
+                    flag = true;
                 }
             }
             br.close();
@@ -64,7 +62,7 @@ public class Ipis380RecipeUtil {
         sqlSession.close();
         List<String> paraNameList = new ArrayList<>();
         for (int i = 0; i < recipeTemplates.size(); i++) {
-            paraNameList.add(recipeTemplates.get(i).getParaName());
+            paraNameList.add(recipeTemplates.get(i).getParaShotName());
         }
         List<RecipePara> recipeParaList = new ArrayList<>();
         Set<Map.Entry<String, String>> entry = paraMap.entrySet();
@@ -88,9 +86,9 @@ public class Ipis380RecipeUtil {
     public static boolean saveRecipeTemplateList(Map paraMap) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            String deviceTypeId = "4AFD9962300901B4E053AC11AD667855";
-            String deviceTypeCode = "IPIS380";
-            String deviceTypeName = "IPIS380";
+            String deviceTypeId = "4AFD9962300901B4E053AC11AD667893";
+            String deviceTypeCode = "GIGA690";
+            String deviceTypeName = "GIGA690";
             RecipeService recipeService = new RecipeService(sqlSession);
             List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceTypeCode, "RecipePara");
 //        sqlSession.close();
@@ -110,11 +108,11 @@ public class Ipis380RecipeUtil {
                     recipeTemplate.setDeviceTypeName(deviceTypeName);
                     recipeTemplate.setParaCode(String.valueOf(k));
                     recipeTemplate.setParaName(e.getKey());
-                    String value = e.getValue();
-                    if (null != value && !"".equals(value) && value.length() > 99) {
-                        value = value.substring(0, 1);
-                    }
-                    recipeTemplate.setSetValue(value);
+//                    String value = e.getValue();
+//                    if (null != value && !"".equals(value) && value.length() > 99) {
+//                        value = value.substring(0, 100);
+//                    }
+//                    recipeTemplate.setSetValue(value);
                     recipeTemplate.setDeviceVariableType("RecipePara");
                     recipeTemplate.setDelFlag("0");
                     recipeTemplate.setCreateBy("1");
@@ -150,22 +148,22 @@ public class Ipis380RecipeUtil {
         return true;
     }
 
+    public static List analysisRecipe(String recipePath, String deviceType) {
+        Map paraMap = CoverlayAttach2000RecipeUtil.transferFromFile(recipePath);
+        List<RecipePara> recipeParaList = CoverlayAttach2000RecipeUtil.transferFromDB(paraMap, deviceType);
+        return recipeParaList;
+    }
+
     public static void main(String[] args) {
-        Map paraMap = Ipis380RecipeUtil.transferFromFile("D:\\DFN(0404-0.50-0.80)008L-S_V1.txt");
-//        Set<Map.Entry<String, String>> entry = paraMap.entrySet();
-//        for (Map.Entry<String, String> e : entry) {
-////            System.out.println(e.getKey()+"="+e.getValue());
-//            if (e.getValue().length() > 100) {
-//                System.out.println(e.getKey() + "=" + e.getValue());
-//            }
-//        }
+        Map paraMap = CoverlayAttach2000RecipeUtil.transferFromFile("D:\\QFNDFN1B_V0.txt");
+
 //        // 保存recipe参数的方法
 //        boolean flag = saveRecipeTemplateList(paraMap);
 //        if (!flag) {
 //            System.out.println("保存失败");
 //        }
 
-        List<RecipePara> list = Ipis380RecipeUtil.transferFromDB(paraMap, "IPIS-380Z1");
+        List<RecipePara> list = CoverlayAttach2000RecipeUtil.transferFromDB(paraMap, "COVERLAYATTACH-2000Z1");
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
         }

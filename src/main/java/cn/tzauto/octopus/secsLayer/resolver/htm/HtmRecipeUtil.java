@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cn.tzauto.octopus.secsLayer.resolver.ipis;
+package cn.tzauto.octopus.secsLayer.resolver.htm;
 
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
@@ -11,45 +11,24 @@ import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import org.apache.ibatis.session.SqlSession;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 
-public class Ipis380RecipeUtil {
+public class HtmRecipeUtil {
 
     //filePath 是PPBODY原文件的存储路径(非文件夹)
     public static Map transferFromFile(String filePath) {
         Map map = new LinkedHashMap();
         BufferedReader br = null;
         try {
-            String cfgline = null;
-            String key = "";
-            String value = "";
-            File cfgfile = new File(filePath);
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "GBK"));
-            String title = "";
-            while ((cfgline = br.readLine()) != null) {
-                if (cfgline.contains("[") && cfgline.contains("]")) {
-                    title = cfgline.replace("[", "").replace("]", "");
-                } else if (cfgline.contains("=")) {
-                    String[] cfg = cfgline.split("=");
-                    //因为文件的第一行有乱码，如果读取的是第一行，要把乱码去除
-                    key = title + "_" + cfg[0];
-                    if ("SortingMap".equals(key.trim()) || "SORT_MAP_SortingMap".equals(key.trim())) {
-                        continue;
-                    }
-                    if (cfg.length < 2) {
-                        value = "";
-                    } else {
-                        value = cfg[1];
-                    }
-                    map.put(key, value);
-                }
+            FileInputStream in = new FileInputStream(filePath);
+            byte[] temp = new byte[150];
+            in.read(temp);
+            int i = 1;
+            for (byte a : temp) {
+                map.put(String.valueOf(i++), a);
             }
-            br.close();
             return map;
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,14 +36,20 @@ public class Ipis380RecipeUtil {
         }
     }
 
-    public static List transferFromDB(Map paraMap, String deviceType) {
+    public static List transferFromDB(Map paraMap, String deviceType, String deviceCode) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
         sqlSession.close();
         List<String> paraNameList = new ArrayList<>();
-        for (int i = 0; i < recipeTemplates.size(); i++) {
-            paraNameList.add(recipeTemplates.get(i).getParaName());
+        if ("HTM-3661".equals(deviceCode)) {
+            for (int i = 70; i < recipeTemplates.size(); i++) {
+                paraNameList.add(recipeTemplates.get(i).getParaCode());
+            }
+        } else {
+            for (int i = 0; i < 70; i++) {
+                paraNameList.add(recipeTemplates.get(i).getParaCode());
+            }
         }
         List<RecipePara> recipeParaList = new ArrayList<>();
         Set<Map.Entry<String, String>> entry = paraMap.entrySet();
@@ -74,7 +59,7 @@ public class Ipis380RecipeUtil {
                 recipePara.setParaCode(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaCode());
                 recipePara.setParaName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaName());
                 recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
-                recipePara.setSetValue(e.getValue());
+                recipePara.setSetValue(String.valueOf(e.getValue()));
                 recipePara.setMinValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMinValue());
                 recipePara.setMaxValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMaxValue());
                 recipePara.setParaMeasure(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaUnit());
@@ -88,9 +73,9 @@ public class Ipis380RecipeUtil {
     public static boolean saveRecipeTemplateList(Map paraMap) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            String deviceTypeId = "4AFD9962300901B4E053AC11AD667855";
-            String deviceTypeCode = "IPIS380";
-            String deviceTypeName = "IPIS380";
+            String deviceTypeId = "4AFD9962300901B4E053AC11AD668792";
+            String deviceTypeCode = "HTM";
+            String deviceTypeName = "HTM";
             RecipeService recipeService = new RecipeService(sqlSession);
             List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceTypeCode, "RecipePara");
 //        sqlSession.close();
@@ -109,12 +94,13 @@ public class Ipis380RecipeUtil {
                     recipeTemplate.setDeviceTypeCode(deviceTypeCode);
                     recipeTemplate.setDeviceTypeName(deviceTypeName);
                     recipeTemplate.setParaCode(String.valueOf(k));
+
                     recipeTemplate.setParaName(e.getKey());
-                    String value = e.getValue();
-                    if (null != value && !"".equals(value) && value.length() > 99) {
-                        value = value.substring(0, 1);
-                    }
-                    recipeTemplate.setSetValue(value);
+//                    String value = e.getValue();
+//                    if (null != value && !"".equals(value) && value.length() > 99) {
+//                        value = value.substring(0, 100);
+//                    }
+//                    recipeTemplate.setSetValue(value);
                     recipeTemplate.setDeviceVariableType("RecipePara");
                     recipeTemplate.setDelFlag("0");
                     recipeTemplate.setCreateBy("1");
@@ -146,26 +132,27 @@ public class Ipis380RecipeUtil {
         } catch (Exception e) {
             System.out.println("something error while save template recipe!!");
             sqlSession.rollback();
+            return false;
         }
         return true;
     }
 
+    public static List analysisRecipe(String recipePath, String deviceCode, String deviceType) {
+        Map paraMap = HtmRecipeUtil.transferFromFile(recipePath);
+        List<RecipePara> recipeParaList = HtmRecipeUtil.transferFromDB(paraMap, deviceType, deviceCode);
+        return recipeParaList;
+    }
+
     public static void main(String[] args) {
-        Map paraMap = Ipis380RecipeUtil.transferFromFile("D:\\DFN(0404-0.50-0.80)008L-S_V1.txt");
-//        Set<Map.Entry<String, String>> entry = paraMap.entrySet();
-//        for (Map.Entry<String, String> e : entry) {
-////            System.out.println(e.getKey()+"="+e.getValue());
-//            if (e.getValue().length() > 100) {
-//                System.out.println(e.getKey() + "=" + e.getValue());
-//            }
-//        }
-//        // 保存recipe参数的方法
+        Map paraMap = HtmRecipeUtil.transferFromFile("D:\\11_V2.txt");
+
+        // 保存recipe参数的方法
 //        boolean flag = saveRecipeTemplateList(paraMap);
 //        if (!flag) {
 //            System.out.println("保存失败");
 //        }
-
-        List<RecipePara> list = Ipis380RecipeUtil.transferFromDB(paraMap, "IPIS-380Z1");
+//
+        List<RecipePara> list = HtmRecipeUtil.transferFromDB(paraMap, "HTM", "HTM-3661");
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
         }

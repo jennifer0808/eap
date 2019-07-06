@@ -63,13 +63,16 @@ public class AsmAD832iHost extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
+
+                logger.info("AsmAD832iHost getControlState:"+FengCeConstant.CONTROL_REMOTE_ONLINE);
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
+                logger.info("rptDefineNum；"+rptDefineNum);
                 if (rptDefineNum < 1) {
                     //为了能调整为online remote
-                    sendS1F17out();
-                    sendS2f41Cmd("ONLINE_REMOTE");
+//                    sendS1F17out();
+//                    sendS2f41Cmd("ONLINE_REMOTE");
 
                     logger.info("go to initial s1f3....");
                     super.findDeviceRecipe();
@@ -88,6 +91,7 @@ public class AsmAD832iHost extends EquipHost {
 
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
+                logger.info("832i length of inputmsgqueue..:"+inputMsgQueue.size());
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
@@ -114,6 +118,7 @@ public class AsmAD832iHost extends EquipHost {
         if (tagName == null) {
             return;
         }
+        logger.info("length of inputmsgqueue:"+inputMsgQueue.size());
         try {
             LastComDate = new Date().getTime();
             secsMsgTimeoutTime = 0;
