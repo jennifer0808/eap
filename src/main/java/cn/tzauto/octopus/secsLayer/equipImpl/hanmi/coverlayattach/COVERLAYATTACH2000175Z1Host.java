@@ -16,6 +16,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
+import cn.tzauto.octopus.secsLayer.resolver.hanmi.coverlayattach.CoverlayAttach2000RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -434,7 +435,7 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
             msgMap.put("stripId", stripId);
             String result = "";
             try {
-                if (!"".equals(stripId)){
+                if (!"".equals(stripId)) {
                     result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
                 }
             } catch (Exception ex) {
@@ -471,7 +472,8 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
         try {
-            recipeParaList = getRecipeParasByECSV();
+//            recipeParaList = getRecipeParasByECSV();
+            recipeParaList = CoverlayAttach2000RecipeUtil.analysisRecipe(recipePath, deviceType);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

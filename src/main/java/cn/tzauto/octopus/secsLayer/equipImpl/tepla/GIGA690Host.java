@@ -1,33 +1,23 @@
-package cn.tzauto.octopus.secsLayer.equipImpl.giga;
+package cn.tzauto.octopus.secsLayer.equipImpl.tepla;
 
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
-import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
-import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.resolver.giga.GIGA690RecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.ACKDescription;
+import cn.tzauto.octopus.secsLayer.resolver.tepla.GIGA690RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 public class GIGA690Host extends EquipHost {

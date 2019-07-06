@@ -17,6 +17,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.shinkawa.ShinkawaRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.ibatis.session.SqlSession;
@@ -69,7 +70,7 @@ public class SHINKAWAHost extends EquipHost {
                     sendS1F13out();
                 }
                 if (rptDefineNum < 1) {
-//                    sendS1F1out();
+                    sendS1F1out();
                     //为了能调整为online remote
 //                    sendS1F17out();
                     super.findDeviceRecipe();
@@ -362,63 +363,158 @@ public class SHINKAWAHost extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
+//    /**
+//     * 获取下载Recipe的许可，将原有的recipe使用新的名字下载，主要用于测试
+//     *
+//     * @param targetRecipeName
+//     * @return
+//     */
 //    @Override
-//    public void upLoadAllRcp() throws UploadRecipeErrorException {
-//        ArrayList eppd = (ArrayList) sendS7F19out().get("eppd");
-////        List
-//        for (int i = 0; i < eppd.size(); i++) {
-//            String recipeName = eppd.get(i).toString();
-//            String recipeNameToAnalize = recipeName.replace("00P00", "00V00").replace("prd", "csv");
-//            eppd.add(recipeNameToAnalize);
-//        }
-//        for (int i = 0; i < eppd.size(); i++) {
-//            String recipeName = eppd.get(i).toString();
-//            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-//            RecipeService recipeService = new RecipeService(sqlSession);
-//            Map recipeMap = sendS7F5out(recipeName);
-//            Recipe recipe = (Recipe) recipeMap.get("recipe");
-//            List<RecipePara> recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
-//            //保存数据
-//            try {
-//                RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
-//                //保存数据
-//                if (recipeNameMapping != null) {
-//                    recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
-//                } else {
-//                    recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
-//                }
-//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传成功！共 " + eppd.size() + " 第 " + i + " 已完成");
-//                sqlSession.commit();
-//            } catch (Exception e) {
-//                sqlSession.rollback();
-//                logger.error("Exception:", e);
-//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败！请重试！");
-//            } finally {
-//                sqlSession.close();
-//            }
-//        }
-//    }
-
-//    @Override
-//    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
-//        recipeName = recipeName.replace("00P00", "00V00").replace("prd", "csv");
-//        Recipe recipe = setRecipe(recipeName);
-//        recipePath = getRecipePathByConfig(recipe);
-//        List<RecipePara> recipeParaList = null;
-//        byte[] ppbody = (byte[]) getPPBODY(recipeName);
-//        TransferUtil.setPPBody(ppbody, 1, recipePath);
-//        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
-//
+//    public Map sendS7F1out(String localFilePath, String targetRecipeName) {
 //        Map resultMap = new HashMap();
-//        resultMap.put("msgType", "s7f6");
+//        resultMap.put("msgType", "s7f2");
 //        resultMap.put("deviceCode", deviceCode);
-//        resultMap.put("recipe", recipe);
-//        resultMap.put("recipeNameMapping", null);
-//        resultMap.put("recipeParaList", recipeParaList);
-//        resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
-//        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+//        resultMap.put("ppid", targetRecipeName);
+//        if (!targetRecipeName.endsWith("csv")) {
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "csv格式的文件位解析用文件，不需要下载，请下载prd格式的recipe文件");
+//            resultMap.put("ppgnt", 9);
+//            resultMap.put("Description", "csv格式的文件位解析用文件，不需要下载，请下载prd格式的recipe文件");
+//            return resultMap;
+//        }
+//
+//        long length = TransferUtil.getPPLength(localFilePath);
+//        if (length == 0) {
+//            resultMap.put("ppgnt", 9);
+//            resultMap.put("Description", "读取到的Recipe为空,请联系IT处理...");
+//            return resultMap;
+//        }
+//
+//        DataMsgMap data = null;
+//
+//        try {
+//            data = activeWrapper.sendS7F1out(targetRecipeName, length, lengthFormat);
+//            byte ppgnt = (byte) data.get("PPGNT");
+//            logger.info("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
+//            resultMap.put("ppgnt", ppgnt);
+//            resultMap.put("Description", ACKDescription.description(ppgnt, "PPGNT"));
+//        } catch (Exception e) {
+//            logger.error("Exception:", e);
+//            resultMap.put("ppgnt", 9);
+//            resultMap.put("Description", e.getMessage());
+//        }
 //        return resultMap;
 //    }
+
+
+    /**
+     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
+     *
+     * @param localRecipeFilePath
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+        targetRecipeName = targetRecipeName.replace("@", "/");
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        try {
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            byte ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+            if (0 == ackc7) {
+                String targetRecipeName2Analysis = "";
+                if (targetRecipeName.endsWith("csv")) {
+                    targetRecipeName2Analysis = targetRecipeName.replace("00V00", "00P00").replace("csv", "prd");
+                } else {
+                    targetRecipeName2Analysis = targetRecipeName.replace("00P00", "00V00").replace("prd", "csv");
+                }
+
+                String localRecipe2AnalysisFilePath = localRecipeFilePath.replace(targetRecipeName, targetRecipeName2Analysis);
+                Map requestMap = sendS7F1out(localRecipe2AnalysisFilePath, targetRecipeName2Analysis);
+                if ("0".equals(String.valueOf(requestMap.get("ppgnt")))) {
+                    byte[] ppbody2Analysis = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
+                    requestMap = activeWrapper.sendS7F3out(targetRecipeName2Analysis, ppbody2Analysis, FormatCode.SECS_BINARY);
+                    if (requestMap != null) {
+                        if ("0".equals(String.valueOf(requestMap.get("ACKC7")))) {
+                            UiLogUtil.getInstance().appendLog2EventTab(this.getDeviceCode(), "下载成功！PPID=" + targetRecipeName2Analysis);
+                        } else {
+                            UiLogUtil.getInstance().appendLog2EventTab(this.getDeviceCode(), "下载失败，PPID=" + targetRecipeName2Analysis + "；原因：" + String.valueOf(requestMap.get("Description")));
+                        }
+                    } else {
+                        UiLogUtil.getInstance().appendLog2EventTab(this.getDeviceCode(), "下载失败，PPID=" + targetRecipeName2Analysis + "；原因：设备未正常回复消息，请检查通讯");
+                    }
+                } else {
+                    UiLogUtil.getInstance().appendLog2EventTab(this.getDeviceCode(), "获取设备下载许可失败，PPID=" + targetRecipeName2Analysis + "，原因：" + String.valueOf(requestMap.get("Description")));
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
+        return resultMap;
+    }
+
+    @Override
+    public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
+        // 因为csv格式的recipe文件可能不存在，所以先上传csv格式的recipe文件，成功后再上传prd格式的
+        String recipeName2Analysis = recipeName.replace("00P00", "00V00").replace("prd", "csv");
+        byte[] ppbody2Analysis = (byte[]) getPPBODY(recipeName2Analysis);
+        if (null == ppbody2Analysis || ppbody2Analysis.length == 0) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未从设备上获取到" + recipeName + "的参数文件，请确认此参数文件是否已导出");
+            Map resultMap = new HashMap();
+            resultMap.put("msgType", "s7f6");
+            resultMap.put("deviceCode", deviceCode);
+            resultMap.put("rcpAnalyseSucceed", "N");
+//            resultMap.put("recipe", recipe2Analysis);
+//            resultMap.put("recipeParaList", recipeParaList);
+//            resultMap.put("recipeFTPPath", this.getRecipeRemotePath(recipe));
+            resultMap.put("Descrption", " Can't recive the recipe " + recipeName + " from equip " + deviceCode);
+            return null;
+        }
+        Recipe recipe2Analysis = setRecipe(recipeName2Analysis);
+        String recipePath2Analysis = getRecipePathByConfig(recipe2Analysis);
+        TransferUtil.setPPBody(ppbody2Analysis, 1, recipePath2Analysis);
+
+        // 上传prd格式的recipe文件
+        Recipe recipe = setRecipe(recipeName);
+        recipePath = getRecipePathByConfig(recipe);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        TransferUtil.setPPBody(ppbody, 1, recipePath);
+
+        logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+
+        List<RecipePara> recipeParaList = null;
+        try {
+            Map paraMap = ShinkawaRecipeUtil.transferFromFile(recipePath2Analysis);
+            recipeParaList = ShinkawaRecipeUtil.transferFromDB(paraMap, deviceType);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        recipeService.saveUpLoadRcpInfo(recipe2Analysis, recipeParaList, deviceCode);
+
+        String recipeFTPPath = this.getRecipeRemotePath(recipe);
+//        uploadRcpFile2FTP(recipePath2Analysis,recipeFTPPath,recipe);
+
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f6");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("recipe", recipe);
+        resultMap.put("recipeNameMapping", null);
+        resultMap.put("recipeParaList", recipeParaList);
+        resultMap.put("recipeFTPPath", recipeFTPPath);
+        resultMap.put("Descrption", " Recive the recipe " + recipeName + " from equip " + deviceCode);
+        return resultMap;
+    }
 
     // </editor-fold>
 }

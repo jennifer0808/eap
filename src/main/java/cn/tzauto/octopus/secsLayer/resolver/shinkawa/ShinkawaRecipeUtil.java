@@ -2,13 +2,14 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cn.tzauto.octopus.secsLayer.resolver.giga;
+package cn.tzauto.octopus.secsLayer.resolver.shinkawa;
 
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 
 import java.io.BufferedReader;
@@ -18,7 +19,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 
-public class GIGA690RecipeUtil {
+public class ShinkawaRecipeUtil {
 
     //filePath 是PPBODY原文件的存储路径(非文件夹)
     public static Map transferFromFile(String filePath) {
@@ -26,21 +27,67 @@ public class GIGA690RecipeUtil {
         BufferedReader br = null;
         try {
             String cfgline = null;
-            String key = "";
-            String value = "";
             File cfgfile = new File(filePath);
             br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "GBK"));
+            String partTitle = "";
+            String key = "";
+            String value = "";
+            // keyFlag用于标记key值是否读取完毕，valueFlag用于标记value值是否读取完毕
+            boolean keyFlag = false;
+            boolean valueFlag = false;
+            int specialCount = 1;
             while ((cfgline = br.readLine()) != null) {
-                if (cfgline.contains("=")) {
-                    String[] cfg = cfgline.split("=");
-                    //因为文件的第一行有乱码，如果读取的是第一行，要把乱码去除
-                    key = cfg[0];
-                    if (cfg.length < 2) {
-                        value = "";
-                    } else {
-                        value = cfg[1];
+                if (cfgline.startsWith(",")) {
+                    String[] lineStrs = cfgline.split(",");
+                    for (String str : lineStrs) {
+                        if ("".equals(str)) {
+                            continue;
+                        }
+                        if (!keyFlag) {
+                            if (!"Loop".equals(str) && !"2nd Bond".equals(str)) {
+                                key = key + str.trim() + "_";
+                                keyFlag = true;
+                                if ("Wire".equals(str) && "Special".equals(partTitle)) {
+                                    keyFlag = false;
+                                }
+                            } else {
+                                partTitle = partTitle + "_" + str.trim();
+                            }
+                        } else {
+                            value = value + str.trim() + ",";
+                            valueFlag = true;
+                        }
                     }
-                    map.put(key.trim(), value.trim());
+                    if (keyFlag && valueFlag) {
+                        key = key.substring(0, key.length() - 1);
+                        value = value.substring(0, value.length() - 1);
+//                        value = StringUtils.substringBeforeLast(value, "(");
+                        map.put(partTitle + "_" + key, value);
+                        key = "";
+                        value = "";
+                        keyFlag = false;
+                        valueFlag = false;
+                    }
+                } else {
+                    partTitle = cfgline.trim();
+                    if (partTitle.contains(".csv")) {
+                        // Base Parameter标题与recipe文件地址一起放在第一行
+                        partTitle = cfgline.split(".csv")[1].trim();
+                    } else if (partTitle.contains(",") && !partTitle.contains("Group_LOOP")) {
+                        String[] lineStrs = cfgline.split(",");
+                        String lineKey = "";
+                        String lineValue = "";
+                        for (String str : lineStrs) {
+                            if ("".equals(lineKey)) {
+                                lineKey = str.trim();
+                            } else {
+                                lineValue = lineValue + str.trim() + ",";
+                            }
+                        }
+                        map.put(lineKey, lineValue.substring(0, lineValue.length() - 1));
+                    } else if ("Special".equals(partTitle)) {
+                        partTitle = partTitle + specialCount++;
+                    }
                 }
             }
             br.close();
@@ -82,9 +129,9 @@ public class GIGA690RecipeUtil {
     public static boolean saveRecipeTemplateList(Map paraMap) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            String deviceTypeId = "4AFD9962300901B4E053AC11AD667893";
-            String deviceTypeCode = "GIGA690";
-            String deviceTypeName = "GIGA690";
+            String deviceTypeId = "4AFD9962300901B4E053AC11AD667892";
+            String deviceTypeCode = "SHINKAWA";
+            String deviceTypeName = "SHINKAWA";
             RecipeService recipeService = new RecipeService(sqlSession);
             List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceTypeCode, "RecipePara");
 //        sqlSession.close();
@@ -104,11 +151,11 @@ public class GIGA690RecipeUtil {
                     recipeTemplate.setDeviceTypeName(deviceTypeName);
                     recipeTemplate.setParaCode(String.valueOf(k));
                     recipeTemplate.setParaName(e.getKey());
-//                    String value = e.getValue();
-//                    if (null != value && !"".equals(value) && value.length() > 99) {
-//                        value = value.substring(0, 100);
-//                    }
-//                    recipeTemplate.setSetValue(value);
+                    String value = e.getValue();
+                    if (value.contains("(") && value.contains(")")) {
+                        String unit = StringUtils.substringBeforeLast(StringUtils.substringAfterLast(value, "("), ")");
+                        recipeTemplate.setParaUnit(unit);
+                    }
                     recipeTemplate.setDeviceVariableType("RecipePara");
                     recipeTemplate.setDelFlag("0");
                     recipeTemplate.setCreateBy("1");
@@ -145,15 +192,31 @@ public class GIGA690RecipeUtil {
     }
 
     public static void main(String[] args) {
-        Map paraMap = GIGA690RecipeUtil.transferFromFile("D:\\RECIPE\\A3\\DieAttach\\GIGA690\\Engineer\\GIGA690\\QFN\\QFN_V0.txt");
-
-        // 保存recipe参数的方法
-        boolean flag = saveRecipeTemplateList(paraMap);
-        if (!flag) {
-            System.out.println("保存失败");
-        }
-
-        List<RecipePara> list = GIGA690RecipeUtil.transferFromDB(paraMap, "GIGA690");
+        Map paraMap = ShinkawaRecipeUtil.transferFromFile("D:\\RECIPE\\A3\\DieAttach\\SHINKAWA\\Engineer\\SHINKAWA\\00V00YKR012QFN060004-PC20-28080355-04-C.csv\\00V00YKR012QFN060004-PC20-28080355-04-C.csv_V0.csv");
+//        Set<Map.Entry<String, String>> entry = paraMap.entrySet();
+//        int maxLength = 0;
+//        for (Map.Entry<String, String> e : entry) {
+//            if (e.getKey().length() > maxLength) {
+//                maxLength = e.getKey().length();
+//            }
+//        }
+//        for (Map.Entry<String, String> e : entry) {
+//            String key = e.getKey();
+//            if (key.length() < maxLength) {
+//                int length = maxLength - key.length();
+//                for (int i = 0; i < length; i++) {
+//                    key = key + " ";
+//                }
+//            }
+//            System.out.println(key + "=" + e.getValue());
+//        }
+//        // 保存recipe参数的方法
+//        boolean flag = saveRecipeTemplateList(paraMap);
+//        if (!flag) {
+//            System.out.println("保存失败");
+//        }
+//
+        List<RecipePara> list = ShinkawaRecipeUtil.transferFromDB(paraMap, "SHINKAWA");
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
         }
