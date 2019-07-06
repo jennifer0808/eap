@@ -118,6 +118,12 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     logger.error("Exception", e);
                     e.printStackTrace();
                 }
+                //串联sfc系统，确认产品在当站
+                if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!");
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
+                    return;
+                }
                 if (deviceInfo.getDeviceType().equals("HITACHI-LASERDRILL")) {
                     try {
                         GlobalConstants.stage.equipModels.get(deviceCode).uploadData();

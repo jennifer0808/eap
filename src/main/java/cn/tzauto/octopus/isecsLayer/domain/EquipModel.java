@@ -80,7 +80,7 @@ public abstract class EquipModel extends Thread {
     public boolean firstLot = true; // 第一批次，标志位    手动重传数据后标志为重置
     public boolean isEngineerMode = false;
     public boolean isLocalMode = false;
-    protected String tableNum = "";
+    public String tableNum = "";
     protected String lotStartTime = ""; //开始时间
     public List<Material> materials = new ArrayList<>();
     public List<Tooling> toolings = new ArrayList<>();
@@ -1077,27 +1077,5 @@ public abstract class EquipModel extends Thread {
         return result1;
     }
 
-    protected Map<String, String> getProductionMap() {
-        Map<String, String> map4 = new HashMap<>();
-        Map<String, String> map5 = new HashMap<>();
-        try {
-            map4 = AvaryAxisUtil.getParmByLotNum(lotId);
-            if (map4.size() == 0) {
-                logger.error("报表数据上传中，批號獲料號,層別,數量 为空");
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，批號獲料號,層別,數量 为空");
-                return null;
-            }
-            map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, map4.get("Layer"));
-            if (map5.size() == 0) {
-                logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-                //報錯:獲取途程信息失敗
-//                return null;
-            }
-        } catch (Exception e) {
-            return null;
-        }
-        map4.putAll(map5);
-        return map4;
-    }
+
 }

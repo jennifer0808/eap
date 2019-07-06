@@ -906,7 +906,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         if (result1.equals("1")) {
             return false;
         }
-        Map<String, String> productionMap = getProductionMap();
+        Map<String, String> productionMap = AvaryAxisUtil.getProductionMap(lotId, tableNum, deviceCode);
 
         List paraValueList = new ArrayList();
         paraValueList.add(result1);

@@ -188,7 +188,7 @@ public class ScreenHost extends EquipModel {
         if (result1.equals("1")) {
             return false;
         }
-        Map<String, String> productionMap = getProductionMap();
+        Map<String, String> productionMap = AvaryAxisUtil.getProductionMap(lotId, tableNum, deviceCode);
         String result = AvaryAxisUtil.insertTable(result1, "正常", lotStartTime, now.format(AvaryAxisUtil.dtf2), lotId, productionMap.get("Layer"), productionMap.get("MainSerial"),
                 productionMap.get("PartNum"), productionMap.get("WorkNo"), productionMap.get("Layer"), productionMap.get("LayerName"), productionMap.get("Serial"), productionMap.get("OrderId"), scsl, power,
                 item3, item4, item5, item6, isFirstPro ? "1" : "0"
