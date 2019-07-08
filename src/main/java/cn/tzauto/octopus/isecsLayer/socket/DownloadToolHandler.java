@@ -57,6 +57,11 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             String materialno = String.valueOf(downloadMessageMap.get("materialno"));
             String faceno = String.valueOf(downloadMessageMap.get("faceno"));
 
+            String lotNo2 = String.valueOf(downloadMessageMap.get("lotno2"));
+            String fixtureno2 = String.valueOf(downloadMessageMap.get("fixtureno2"));
+            String materialno2 = String.valueOf(downloadMessageMap.get("materialno2"));
+
+
             String recipeName = "";
             // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
             logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " lotNo:" + lotNo + " lottype:" + lottype);
@@ -82,7 +87,19 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         return;
                     }
                 }
-
+                String mstr2 = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo2);
+                if (mstr2.contains("|")) {
+                    String[] mstrs = mstr2.split("\\|");
+                    Material material = new Material();
+                    material.setCode(mstrs[0]);
+                    material.setId(mstrs[0]);
+                    material.setName(mstrs[1]);
+                    GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
+                    if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
+                        return;
+                    }
+                }
                 //验证治具
                 if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo, fixtureno)) {
                     Tooling tooling = new Tooling();
@@ -93,7 +110,35 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具验证失败!Tooling check error!");
                     return;
                 }
+                //串联sfc系统，确认产品在当站
+                if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo);
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
+                    return;
+                }
+                if (lotNo2 != null) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo2, fixtureno2)) {
+                        Tooling tooling = new Tooling();
+                        tooling.setId(fixtureno2);
+                        tooling.setCode(fixtureno2);
+                        GlobalConstants.stage.equipModels.get(deviceCode).toolings.add(tooling);
+                    } else {
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具验证失败!Tooling check error!");
+                        return;
+                    }
+                    //串联sfc系统，确认产品在当站
 
+                    if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo2, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo2);
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
+                        return;
+                    }
+                }
                 String partNoTemp = AvaryAxisUtil.getPartNumVersion(lotNo);
 //                if (deviceInfo.getDeviceType().contains("SCREEN")) {
                 try {
@@ -118,23 +163,20 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     logger.error("Exception", e);
                     e.printStackTrace();
                 }
-                //串联sfc系统，确认产品在当站
-                if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!");
-                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
-                    return;
-                }
+
                 if (deviceInfo.getDeviceType().equals("HITACHI-LASERDRILL")) {
+                    recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo);
                     try {
-                        GlobalConstants.stage.equipModels.get(deviceCode).uploadData();
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    } catch (ServiceException e) {
-                        e.printStackTrace();
-                    } catch (MalformedURLException e) {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo);
+                    String recipeName2 = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo2);
+                    if (!recipeName.equals(recipeName2)) {
+                        logger.error("两个批号关联的程序名不一致！");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "LOT1:" + lotNo + "-->" + recipeName + "LOT2:" + lotNo2 + "-->" + recipeName2);
+                        return;
+                    }
                 } else {
                     recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
                 }

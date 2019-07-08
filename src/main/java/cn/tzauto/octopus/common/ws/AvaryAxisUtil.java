@@ -33,8 +33,8 @@ public class AvaryAxisUtil {
     public static DateTimeFormatter dtf3 = DateTimeFormatter.ofPattern("HHmmss");
     public static Map<String, Map> mesInterfaceParaMap = new HashMap<>();
 
-    private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
-    //    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
+    //    private static final String url = "http://szecpw014.eavarytech.com:8001/WebServiceForSZ/Service1.asmx";   //URL地址
+    private static final String url = GlobalConstants.getProperty("AVARY_MES_WS_URL");   //URL地址
     private static final String namespace = "http://tempuri.org/";
 //    private static final String namespace = GlobalConstants.getProperty("AVARY_MES_WS_NAMESPACE");
 
@@ -1064,10 +1064,17 @@ public class AvaryAxisUtil {
                 bom = bom.split("\\(")[0];
             }
         } catch (Exception e) {
-            logger.error("get bom failed bom:" + bom);
+            logger.error("get Tooling failed Tooling:" + bom);
             return false;
         }
-        return toolingNo.equals(bom);
+        if (toolingNo.equals(bom)) {
+            logger.info("check Tooling failed successe:" + bom);
+            return true;
+        } else {
+            logger.error("check Tooling failed Tooling:" + bom);
+            return false;
+        }
+
 
     }
 
