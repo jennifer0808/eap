@@ -54,6 +54,8 @@ public class HT9045HWHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        RCMD_PPSELECT = "PP_SELECT";
+        CPN_PPID = "";
     }
 
     public void run() {
@@ -83,38 +85,8 @@ public class HT9045HWHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s6f11in")) {
-                    long ceid = (long) msg.get("CEID");
-                    switch ((int) ceid){
-                        case 1:
-                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Start button!");
-                            processPressStartButton(msg);
-                            break;
-                        case 27:
-                            setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
-                            processEquipStatusChange2(msg);
-                            break;
-                        case 15:
-                            //刷新当前机台状态
-                            logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
-                            findDeviceRecipe();
-                            logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
-                            break;
-                        case  49:
-                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Tray Feed Finish!!!需要进行改机！");
-                            break;
-                        case 4:
-                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Clean Out button!");
-                            sendS1F3Check();
-                            logger.info("[" + deviceCode + "]" + "设备处于" + equipStatus + "状态！");
-                            break;
-                        case 43:
-                            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Auto Clean Start!");
-                            break;
-                        default:
-                            logger.info("A message in queue with tag = " + msg.getMsgSfName()
-                                    + " which I do not want to process! ");
-                    }
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                    processS6F11in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -160,12 +132,9 @@ public class HT9045HWHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11in")) {
-                long ceid = (long) data.get("CEID");
-                if (ceid == 1 || ceid == 15 || ceid == 27 || ceid == 49||ceid == 4L) {
-                    this.inputMsgQueue.put(data);
-                }
+            } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 replyS6F12WithACK(data, (byte) 0);
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s14f3in")) {
@@ -200,7 +169,7 @@ public class HT9045HWHost extends EquipHost {
         //Press Clean Out button
         sendS2F37out(4L);
         //Auto Clean Start
-        sendS2F37out(34L);
+//        sendS2F37out(34L);
         sendS5F3out(true);
     }
 
@@ -226,6 +195,52 @@ public class HT9045HWHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
+    public void processS6F11in(DataMsgMap data) {
+        long ceid = -12345679;
+        try {
+            if (data.get("CEID") != null) {
+                ceid = (long)data.get("CEID");
+                logger.info("Received a s6f11in with CEID = " + ceid);
+            }
+            //TODO 根据ceid分发处理事件
+            switch ((int) ceid) {
+                case 1:
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Start button!");
+                    this.processPressStartButton(data);
+                    break;
+                case 27:
+                    setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    this.processEquipStatusChange2(data);
+                    break;
+                case 15:
+                    //刷新当前机台状态
+                    logger.info("[" + deviceCode + "]" + "之前Recipe为：{" + ppExecName + "}");
+                    findDeviceRecipe();
+                    logger.info("[" + deviceCode + "]" + "切换Recipe为：{" + ppExecName + "}");
+                    break;
+                case 49:
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Tray Feed Finish!!!需要进行改机！");
+                    break;
+                case 4:
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Press Clean Out button!");
+                    sendS1F3Check();
+                    logger.info("[" + deviceCode + "]" + "设备处于" + equipStatus + "状态！");
+                    break;
+                case 43:
+                    UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "Auto Clean Start!");
+                    break;
+                default:
+                    logger.info("A message in queue with tag = " + data.getMsgSfName()
+                            + " which I do not want to process! ");
+            }
+            if (commState != 1) {
+                this.setCommState(1);
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
     protected void processEquipStatusChange2(DataMsgMap data) {
         //TODO 开机check;
         long ceid = 0l;
@@ -402,29 +417,29 @@ public class HT9045HWHost extends EquipHost {
             //获取设备状态为ready时检查领料记录
             if (true) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
-                    holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
+                    return;
                 }
                 //1、获取设备需要校验的信息类型,
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
                     holdDevice();
                 }
                 //先锁机
 //                holdDevice();
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
                     recipeParasDiffText.append("\r\nRecipe Error!MES Download Recipe:[" + deviceInfoExt.getRecipeName() + "]");
                     checkNameFlag = false;
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
                     checkNameFlag = true;
                 }
                 if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
                     //查询trackin时的recipe和GoldRecipe
 //                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     Recipe goldRecipe = recipeService.getGoldRecipe(deviceInfoExt.getRecipeName(), deviceCode, deviceType);
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe==null?deviceInfoExt.getVerNo():goldRecipe.getVersionNo()));
+                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe == null ? deviceInfoExt.getVerNo() : goldRecipe.getVersionNo()));
 //                    boolean hasGoldRecipe = true;
 //                    //查询客户端数据库是否存在GoldRecipe
 //                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
@@ -435,13 +450,13 @@ public class HT9045HWHost extends EquipHost {
 //                    String downloadRcpVersionType = downLoadRecipe.getVersionType();
                     if (false) {
                         //Unique
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Unique Recipe:[" + ppExecName + "]参数绝对值Check");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Unique Recipe:[" + ppExecName + "]参数绝对值Check");
 //                        this.startCheckRecipePara(downLoadRecipe, "abs");
                     } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
                         //查询客户端数据库是否存在GoldRecipe
                         if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
                             //不允许开机
                             checkParaFlag = false;
                         } else {
@@ -488,23 +503,16 @@ public class HT9045HWHost extends EquipHost {
                 } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
                     //如果未设置参数比对模式，默认参数比对通过
                     checkParaFlag = true;
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check参数模式！");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check参数模式！");
                 }
                 //总结是否需要锁机
 
-                if (!checkNameFlag || !checkParaFlag) {
-                    //锁机
-                    holdFlag = true;
-                } else {
-                    holdFlag = false;
-                }
+                //锁机
+                holdFlag = !(checkNameFlag && checkParaFlag);
                 //更新界面
-                if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
-//                    sendS2f41Cmd("START");
-                    this.setAlarmState(0);
-                } else {
-                    this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
-//                    this.setAlarmState(2);
+                if (holdFlag) {
+                    holdDevice();
+
                 }
             }
         } catch (Exception e) {
@@ -515,9 +523,6 @@ public class HT9045HWHost extends EquipHost {
         }
     }
 
-    public Map startCheckRecipeParaReturnMap(Recipe checkRecipe) {
-        return startCheckRecipeParaReturnMap(checkRecipe, "");
-    }
 
     /**
      * 开机check recipe参数
@@ -531,12 +536,13 @@ public class HT9045HWHost extends EquipHost {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-//        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        logger.info("发送ecid给机台");
-        List<RecipePara> equipRecipeParas = transferECSVValue2RecipePara(recipeService.searchRecipeTemplateMonitor(deviceCode), new ArrayList<RecipeTemplate>());
-
-        List<RecipePara> recipeParasdiff = this.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+//        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.eapView.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas ;
+        List<RecipePara> recipeParasdiff = null ;
         try {
+            logger.info("发送ecid给机台");
+            equipRecipeParas = transferECSVValue2RecipePara(recipeService.searchRecipeTemplateMonitor(deviceCode), new ArrayList<RecipeTemplate>());
+            recipeParasdiff = this.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
             Map mqMap = new HashMap();
             mqMap.put("msgName", "eqpt.StartCheckWI");
             mqMap.put("deviceCode", deviceCode);
@@ -643,8 +649,11 @@ public class HT9045HWHost extends EquipHost {
                         }
 //                        logger.info("开始对比参数Name:" + recipeTemplate.getParaName() + ",RecipeValue：" + currentRecipeValue + ",goldRecipeValue:" + setValue + ",ECID:" + recipeTemplate.getDeviceVariableId() + "************************************");
                         boolean paraIsNumber = false;
-                        Double.parseDouble(currentRecipeValue);
-                        paraIsNumber = true;
+                        try {
+                            Double.parseDouble(currentRecipeValue);
+                            paraIsNumber = true;
+                        } catch (Exception e) {
+                        }
                         if ("abs".equals(masterCompareType)) {
                             if ("".equals(setValue) || " ".equals(setValue) || "".equals(currentRecipeValue) || " ".equals(currentRecipeValue)) {
                                 continue;
@@ -700,6 +709,34 @@ public class HT9045HWHost extends EquipHost {
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
 
+    /**
+     * 下载Recipe，将原有的recipe使用指定的PPID下载到机台
+     *
+     * @param targetRecipeName
+     * @return
+     */
+    @Override
+    public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
+        DataMsgMap data = null;
+        String ppbody = (String) TransferUtil.getPPBody(0, localRecipeFilePath).get(0);
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s7f4");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("ppid", targetRecipeName);
+        byte ackc7 = -1;
+        try {
+            data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_ASCII);
+            ackc7 = (byte) data.get("ACKC7");
+            resultMap.put("ACKC7", ackc7);
+            resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("ACKC7", 9);
+            resultMap.put("Description", e.getMessage());
+        }
+        return resultMap;
+    }
+
     @Override
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
@@ -723,7 +760,39 @@ public class HT9045HWHost extends EquipHost {
     }
 
     // </editor-fold> 
-    // <editor-fold defaultstate="collapsed" desc="S14FX Code"> 
+
+    public Map sendS2F41outPPselect(String recipeName) {
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        try {
+            System.out.println(recipeName);
+            Map cpmap = new HashMap();
+            cpmap.put(recipeName, CPN_PPID);
+            Map cpNameFromatMap = new HashMap();
+            cpNameFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            Map cpValueFromatMap = new HashMap();
+            cpValueFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            List cplist = new ArrayList();
+            cplist.add(recipeName);
+            DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
+            //选中成功标识
+            if (data != null) {
+                ppselectFlag = true;
+            }
+            logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
+            byte hcack = (byte) data.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
+        }
+        return resultMap;
+    }
+
     @Override
     public Object clone() {
         HT9045HWHost newEquip = new HT9045HWHost(deviceId,

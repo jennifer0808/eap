@@ -205,7 +205,7 @@
         and DEVICE_ROWID = #{deviceRowid}
         </if>
         <if test="lockType != null" >
-        and LOCK_TYPE = #{lockType}
+        and LOCK_TYPE LIKE CONCAT('%',#{lockType},'%')
         </if>
         <if test="lockStatus != null" >
         and LOCK_STATUS = #{lockStatus}

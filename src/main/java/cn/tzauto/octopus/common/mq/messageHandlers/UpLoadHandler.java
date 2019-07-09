@@ -70,6 +70,18 @@ public class UpLoadHandler implements MessageHandler {
             mqMap.put("recipe", JSONArray.toJSONString(recipe));
             mqMap.put("recipeParaList", JSONArray.toJSONString(recipeParaList));
             mqMap.put("recipeNameMapping", JSONArray.toJSONString(recipeNameMapping));
+            StringBuilder stringBuilder = new StringBuilder();
+            if(recipe.getDeviceTypeCode().contains("CCTECH")){
+                for(RecipePara recipePara:recipeParaList){
+                    if("N".equals(recipePara.getRemarks())){
+                        stringBuilder.append(recipePara.getParaName()+",");
+                    }
+                }
+                if(!"".equals(stringBuilder.toString())){
+                    logger.info(stringBuilder.toString()+"各个参数值为空");
+                }
+            }
+            mqMap.put("errorRecipePara",stringBuilder.toString());
             logger.info("开始获取Attach信息");
             List<Attach> attList=hostManager.getRecipeAttachInfo(deviceId, recipe);
             if(attList==null){

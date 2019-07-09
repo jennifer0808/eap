@@ -135,6 +135,14 @@ public class ISecsConnection {
         return true;
     }
 
+    public String getIp() {
+        return ip;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
     public static void main(String[] args) {
         ISecsConnection iSecsConnection = new ISecsConnection("192.168.103.128", "12000");
         for (int i = 0; i < 200; i++) {

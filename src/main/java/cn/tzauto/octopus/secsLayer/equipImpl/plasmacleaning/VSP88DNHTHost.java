@@ -22,10 +22,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class VSP88DNHTHost extends EquipHost {
 
@@ -431,7 +428,7 @@ public class VSP88DNHTHost extends EquipHost {
             this.sends2f41stripReply(false);
             sendS2f41Cmd("STOP");
             if ("".equals(result)) {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, msgMap.get("msgName")+"等待MQ回复信息超时!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, msgMap.get("msgName")+"等待回复信息超时!");
             }
         }
         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
@@ -555,6 +552,7 @@ public class VSP88DNHTHost extends EquipHost {
         } else if (equipStatus.equalsIgnoreCase("pause") || equipStatus.equalsIgnoreCase("ldle") || equipStatus.equalsIgnoreCase("end")) {
             sendS2f41Cmd("LOCAL");
         }
+        fixPool = Executors.newFixedThreadPool(9);
     }
 
     @Override

@@ -23,6 +23,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
+import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.ibatis.session.SqlSession;
 import org.slf4j.LoggerFactory;
@@ -708,7 +709,7 @@ public class RecipeService extends BaseService {
      * @param recipeParas
      * @param deviceCode
      */
-    public void saveUpLoadRcpInfoBatch(Recipe recipe, List<RecipePara> recipeParas, String deviceCode) {
+    public boolean saveUpLoadRcpInfoBatch(Recipe recipe, List<RecipePara> recipeParas, String deviceCode) {
 
 //        String rcpNewId = this.getNewId();
         String rcpNewId = UUID.randomUUID().toString();
@@ -724,7 +725,7 @@ public class RecipeService extends BaseService {
         //ftp路径需要到目录
         String recipeRemotePath = organizeUploadRecipePath(recipe);
         //DB800从ftp上传recipe
-        if (recipe.getDeviceTypeCode().contains("DB810")) {
+        if (recipe.getDeviceTypeCode().contains("DB-800HSD")) {
             recipeLocalPath = GlobalConstants.DB800HSDFTPPath + recipe.getRecipeName() + ".tgz";
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe本地FTP路径：" + recipeLocalPath);
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe远程FTP路径：" + recipeRemotePath);
@@ -740,12 +741,12 @@ public class RecipeService extends BaseService {
                 }
             }
             //存储之后查询，得到id
-            // recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+            recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
         }
-        //附件信息  
+        //附件信息
 
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
@@ -757,23 +758,34 @@ public class RecipeService extends BaseService {
             mqMap.put("recipePara", JSON.toJSONString(recipeParas));
             mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
             mqMap.put("attach", JSON.toJSONString(attachs));
-            String eventId = "";
-            try {
-                eventId = AxisUtility.getReplyMessage();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            mqMap.put("eventId", eventId == null?"":eventId);
+            mqMap.put("eventId", AxisUtility.getReplyMessage());
             GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
 
             // 上传ftp
-            FtpUtil.uploadFile(recipeLocalPath, GlobalConstants.getProperty("ftpPath") + recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+            FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
         }
         //日志
-//      UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
+//       UiLogUtil.appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
 
+        boolean re = true;
+        if (recipe.getDeviceTypeCode().contains("ICOS")) {
+            List<String> rcpContent = TrRecipeUtil.readRCP(recipeLocalPath);
+            for (String item : rcpContent) {
+                if (item.contains("@component@") || item.contains("@handler@")) {
+                    String relLocalPath = GlobalConstants.localRecipePath + organizeUploadRecipePath(recipe) + item + "_V" + recipe.getVersionNo() + ".txt";
+                    String relRemotePath = organizeUploadRecipePath(recipe);
+                    FtpUtil.uploadFile(relLocalPath, relRemotePath, item + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+                    if(re) {
+                        boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, item.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
+                        re &= existFlag;
+                    }
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "关联文件存储位置：" + relLocalPath);
+                }
+            }
+        }
+        return re;
     }
 
     /**

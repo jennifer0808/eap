@@ -21,6 +21,7 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import org.apache.ibatis.cache.NullCacheKey;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -206,14 +207,15 @@ public class C6800SECSHost extends EquipHost {
         }
     }
 
-    private void processPressStartButton(DataMsgMap data) {
+    protected void processPressStartButton(DataMsgMap data) {
         long ceid = 0l;
         logger.info("[" + deviceCode + "]" + "Start按钮被按下，设备开始作业！");
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
+        StringBuilder recipeParasDiffText = new StringBuilder("CIM:StartCheck not pass, equipment locked!");
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            //从数据库中\获取当前设备模型信息
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
 //            // 更新设备模型
@@ -222,7 +224,6 @@ public class C6800SECSHost extends EquipHost {
                 //锁机
                 holdDevice();
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
-                return;
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
                 deviceInfoExt.setConnectionStatus(controlState);
@@ -233,14 +234,14 @@ public class C6800SECSHost extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             if (AxisUtility.isEngineerMode(deviceCode)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
                 return;
             }
             //获取设备状态为ready时检查领料记录
             if (true) {
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
-                    holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
+                    return;
                 }
                 //1、获取设备需要校验的信息类型,
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
@@ -251,6 +252,7 @@ public class C6800SECSHost extends EquipHost {
 //                holdDevice();
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
+                    recipeParasDiffText.append("\r\nRecipe Error!MES Download Recipe:[" + deviceInfoExt.getRecipeName() + "]");
                     checkNameFlag = false;
                 } else {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
@@ -260,7 +262,7 @@ public class C6800SECSHost extends EquipHost {
                     //查询trackin时的recipe和GoldRecipe
 //                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
                     Recipe goldRecipe = recipeService.getGoldRecipe(deviceInfoExt.getRecipeName(), deviceCode, deviceType);
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe==null?deviceInfoExt.getVerNo():goldRecipe.getVersionNo()));
+                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(goldRecipe == null ? deviceInfoExt.getVerNo() : goldRecipe.getVersionNo()));
 //                    boolean hasGoldRecipe = true;
 //                    //查询客户端数据库是否存在GoldRecipe
 //                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
@@ -276,13 +278,13 @@ public class C6800SECSHost extends EquipHost {
                     } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
                         //查询客户端数据库是否存在GoldRecipe
-                        if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
+                        if (downLoadGoldRecipe.isEmpty() || downLoadGoldRecipe.get(0) == null) {
                             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
                             //不允许开机
                             checkParaFlag = false;
                         } else {
-//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0),"abs");
+//                            UiLogUtil.appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
+                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0), "abs");
                             if (resultMap != null) {
                                 if (resultMap.get("CheckParaFlag") != null) {
                                     checkParaFlag = (boolean) resultMap.get("CheckParaFlag");
@@ -290,7 +292,7 @@ public class C6800SECSHost extends EquipHost {
                                     List<RecipePara> recipeParasdiff = null;
                                     if (!checkParaFlag && resultMap.get("RecipeParasdiff") != null && ((List<RecipePara>) resultMap.get("RecipeParasdiff")).size() > 0) {
                                         recipeParasdiff = (List<RecipePara>) resultMap.get("RecipeParasdiff");
-                                        StringBuilder recipeParasDiffText = new StringBuilder("StartCheck not pass, equipment locked!");
+
                                         for (RecipePara recipePara : recipeParasdiff) {
                                             recipeParasDiffText.append("\r\nError Para Name:");
                                             recipeParasDiffText.append(recipePara.getParaShotName());
@@ -326,23 +328,15 @@ public class C6800SECSHost extends EquipHost {
                 }
                 //总结是否需要锁机
 
-                if (!checkNameFlag || !checkParaFlag) {
-                    //锁机
-                    holdFlag = true;
-                } else {
-                    holdFlag = false;
-                }
+                //锁机
+                holdFlag = !(checkNameFlag && checkParaFlag);
                 //更新界面
-                if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
-//                    sendS2f41Cmd("START");
-                    this.setAlarmState(0);
-                } else {
+                if (holdFlag) {
                     holdDevice();
-                    this.setAlarmState(2);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception occure:", e);
             sqlSession.rollback();
         } finally {
             sqlSession.close();
@@ -481,9 +475,11 @@ public class C6800SECSHost extends EquipHost {
         Map resultMap = new HashMap();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
-        List<RecipePara> recipeParasdiff = checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        List<RecipePara> equipRecipeParas;
+        List<RecipePara> recipeParasdiff = null;
         try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
+            recipeParasdiff = checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
             Map mqMap = new HashMap();
             mqMap.put("msgName", "eqpt.StartCheckWI");
             mqMap.put("deviceCode", deviceCode);
@@ -541,15 +537,53 @@ public class C6800SECSHost extends EquipHost {
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpNameList, cpmap, cpNameFromatMap, cpValueFromatMap);
             logger.info("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
             byte hcack = (byte) data.get("HCACK");
-            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            logger.info("Receive s2f42in,the equip " + deviceCode + "' requestion get a result with HCACK=" + hcack + " means " + this.description(hcack, "HCACK"));
             resultMap.put("HCACK", hcack);
-            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + this.description(hcack, "HCACK"));
         } catch (Exception e) {
             logger.error("Exception:", e);
-            resultMap.put("HCACK", 9);
+            resultMap.put("HCACK", 1000);
             resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=9 means " + e.getMessage());
         }
         return resultMap;
+    }
+
+    private String description(byte ackcode, String acktype) {
+        String description = "";
+        if (acktype.equals("HCACK")) {
+            if (ackcode == 0) {
+                description = "Command has been performed";//命令已执行
+            } else if (ackcode == 1) {
+                description = "Command does not exist";
+            } else if (ackcode == 2) {
+                description = "Cannot perform now";
+            } else if (ackcode == 3) {
+                description = "At least one parameter is invalid";//至少有一个参数无效
+            } else if (ackcode == 4) {
+                description = "Command will be performed with completion signaled later by an event";//命令将执行完成后由事件发出的信号
+            } else if (ackcode == 5) {
+                description = "Rejected, Already in Desired Condtion";//拒绝，已经在预期的条件
+            } else if (ackcode == 6) {
+                description = "设备档案异常";
+            } else if (ackcode == 7) {
+                description = "进料盘有料盘";
+            } else if (ackcode == 8) {
+                description = "自动盘有料盘";
+            } else if (ackcode == 9) {
+                description = "手工盘有料盘";
+            } else if (ackcode == 10) {
+                description = "取料机械手上有料";
+            } else if (ackcode == 11) {
+                description = "放料机械手上有料";
+            } else if (ackcode == 12) {
+                description = "测压机械手上有料";
+            } else if (ackcode > 12) {
+                description = "设备其他异常";
+            } else {
+                description = "设备其他异常";
+            }
+        }
+        return description;
     }
 
     private List<RecipePara> checkRcpPara(String recipeRowid, String deviceCode, List<RecipePara> equipRecipeParas, String masterCompareType) {
@@ -620,7 +654,7 @@ public class C6800SECSHost extends EquipHost {
                                         equipRecipePara.setMaxValue(setValue);
                                         wirecipeParaDiff.add(equipRecipePara);
                                     }
-                                }catch (Exception e) {
+                                } catch (Exception e) {
                                     if (!currentRecipeValue.equals(setValue)) {
                                         equipRecipePara.setMinValue(setValue);
                                         equipRecipePara.setMaxValue(setValue);
