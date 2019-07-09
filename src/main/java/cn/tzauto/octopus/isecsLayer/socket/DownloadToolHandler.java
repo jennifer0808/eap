@@ -87,19 +87,6 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         return;
                     }
                 }
-                String mstr2 = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo2);
-                if (mstr2.contains("|")) {
-                    String[] mstrs = mstr2.split("\\|");
-                    Material material = new Material();
-                    material.setCode(mstrs[0]);
-                    material.setId(mstrs[0]);
-                    material.setName(mstrs[1]);
-                    GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
-                    if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
-                        return;
-                    }
-                }
                 //验证治具
                 if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo, fixtureno)) {
                     Tooling tooling = new Tooling();
@@ -116,11 +103,24 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
                     return;
                 }
-                if (lotNo2 != null) {
+                if (!lotNo2.equals("")) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                    }
+                    String mstr2 = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo2);
+                    if (mstr2.contains("|")) {
+                        String[] mstrs = mstr2.split("\\|");
+                        Material material = new Material();
+                        material.setCode(mstrs[0]);
+                        material.setId(mstrs[0]);
+                        material.setName(mstrs[1]);
+                        GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
+                        if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
+                            return;
+                        }
                     }
                     if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo2, fixtureno2)) {
                         Tooling tooling = new Tooling();
