@@ -22,10 +22,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class VSP88DNHTHost extends EquipHost {
 
@@ -37,8 +34,7 @@ public class VSP88DNHTHost extends EquipHost {
     public String Lead_Frame_Type_Id;
     public String Datelength;
     boolean holdFlag = false;
-    public ExecutorService fixPool ;
-
+    public ExecutorService fixPool= Executors.newSingleThreadExecutor();
     public VSP88DNHTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -216,6 +212,7 @@ public class VSP88DNHTHost extends EquipHost {
 //    }
 
     public void checkStringId( DataMsgMap msgDataHashtable){
+
         Future future = fixPool.submit(new FindStripIdThread(this,msgDataHashtable));
         try {
             future.get(20*1000, TimeUnit.MILLISECONDS);
