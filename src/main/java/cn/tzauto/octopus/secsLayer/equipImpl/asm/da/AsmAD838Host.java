@@ -65,6 +65,7 @@ public class AsmAD838Host extends EquipHost {
 
                 if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
+                    super.findDeviceRecipe();
                 }
 
                 logger.info("rptDefineNum:"+rptDefineNum);
