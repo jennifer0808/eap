@@ -355,7 +355,7 @@ public class CommCheckTask implements Job {
         });
         try {
             executor.execute(future);
-            result = future.get(3000, TimeUnit.MILLISECONDS);
+            result = future.get(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             future.cancel(true);
             result = "2";

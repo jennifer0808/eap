@@ -132,6 +132,7 @@ public class HT7045HISIHost extends EquipModel {
         }
         Map<String, String> map = new HashMap<>();
         map.put("PPExecName", ppExecName);
+        map.put("ControlState", controlState);
         changeEquipPanel(map);
         return ppExecName;
     }
