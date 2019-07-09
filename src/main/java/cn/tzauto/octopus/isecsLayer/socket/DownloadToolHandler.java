@@ -262,6 +262,15 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(false);
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setEndTime(time);
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "结束保养.");
+            try {
+                GlobalConstants.stage.equipModels.get(deviceCode).uploadData("保养");
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (ServiceException e) {
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         }
     }
 

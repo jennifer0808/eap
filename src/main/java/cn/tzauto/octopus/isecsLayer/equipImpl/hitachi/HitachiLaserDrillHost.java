@@ -391,7 +391,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     public String selectRecipe(String recipeName) {
         try {
             getCurrentRecipeName();
-            uploadData();
+            uploadData("正常");
         } catch (Exception e) {
             logger.error("报表上传出错", e);
         }
@@ -877,7 +877,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         return true;
     }
 
-    public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+    public boolean uploadData(String macstate) throws RemoteException, ServiceException, MalformedURLException {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
@@ -910,7 +910,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         List paraValueList = new ArrayList();
         paraValueList.add(result1);
 //        paraValueList.addAll(setNormalData("正常", productionMap));
-        List listtemp = setNormalData("正常", productionMap);
+        List listtemp = setNormalData(macstate, productionMap);
         for (Object o : listtemp) {
             paraValueList.add(o);
         }
@@ -1026,20 +1026,37 @@ public class HitachiLaserDrillHost extends EquipModel {
         }
         List paraValueList = new ArrayList();
         paraValueList.add(MacState);
-        paraValueList.add(lotStartTime);
-        LocalDateTime now = LocalDateTime.now();
-        paraValueList.add(now.format(AvaryAxisUtil.dtf2));
-        paraValueList.add(lotId);
-        paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-        paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
-        paraValueList.add(productionMap.get("PartNum"));
-        paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
-        paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-        paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
-        paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
-        paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
-        paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
+        if (MacState.equals("保养")) {
+            paraValueList.add(pmState.getStartTime());
+            paraValueList.add(pmState.getEndTime());
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add("");
+            paraValueList.add("");
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add(0);
+            paraValueList.add(0);
 
+        } else {
+            paraValueList.add(lotStartTime);
+            //todo 这个endtime不准确，想办法处理掉
+            LocalDateTime now = LocalDateTime.now();
+            paraValueList.add(now.format(AvaryAxisUtil.dtf2));
+
+            paraValueList.add(lotId);
+            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("PartNum"));
+            paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
+            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
+            paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
+            paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
+            paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
+        }
         return paraValueList;
 
     }

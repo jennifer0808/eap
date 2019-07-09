@@ -1030,7 +1030,7 @@ public abstract class EquipModel extends Thread {
         return result;
     }
 
-    public boolean uploadData() throws RemoteException, ServiceException, MalformedURLException {
+    public boolean uploadData(String macstate) throws RemoteException, ServiceException, MalformedURLException {
 //        uploadReportDetail()
         return true;
     }
