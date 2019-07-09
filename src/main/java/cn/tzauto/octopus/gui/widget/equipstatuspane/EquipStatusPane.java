@@ -241,7 +241,7 @@ public class EquipStatusPane {
         switch (controlState) {
             case FengCeConstant.CONTROL_LOCAL_ONLINE:
 //                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色,实现onLocal/offLocal功能按钮
-                Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
+                Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));
                 break;
             case FengCeConstant.CONTROL_REMOTE_ONLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色

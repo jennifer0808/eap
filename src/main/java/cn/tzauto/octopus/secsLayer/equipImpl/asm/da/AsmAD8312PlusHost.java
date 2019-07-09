@@ -51,7 +51,7 @@ public class AsmAD8312PlusHost extends EquipHost {
     public AsmAD8312PlusHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
-        EquipStateChangeCeid = 8L;
+        EquipStateChangeCeid = 5L;
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -100,7 +100,7 @@ public class AsmAD8312PlusHost extends EquipHost {
 
                 DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
-                if (msg.getMsgSfName() != null && msg.getMsgSfName().contains("s14f1in")) {
+                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
@@ -191,7 +191,7 @@ public class AsmAD8312PlusHost extends EquipHost {
 
                 replyS6F12WithACK(data, (byte) 0);
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s14f1in")) {
+            } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data); 
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f4in")) {
@@ -264,9 +264,9 @@ public class AsmAD8312PlusHost extends EquipHost {
                 processS6F11inStripMapUpload(data);
             } else {
                 replyS6F12WithACK(data,(byte)0);
-                if (ceid == EquipStateChangeCeid) {
+                if (ceid == EquipStateChangeCeid || ceid == 8 || ceid == 47  ) {
                     processS6F11EquipStatusChange(data);
-                } else if (ceid == 5 || ceid == 6 || ceid == 7 || ceid == 10 || ceid == 47 ) {
+                } else if ( ceid == 6 || ceid == 7 || ceid == 9 || ceid == 10 ) {
                     findDeviceRecipe();
                 } else {
                     processS6F11EquipStatus(data);

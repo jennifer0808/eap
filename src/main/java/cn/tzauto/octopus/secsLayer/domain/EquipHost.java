@@ -595,9 +595,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     protected List getNcessaryData() {
         DataMsgMap data = null;
+        List<Long> statusList = new ArrayList<>();
         try {
-            List<Long> statusList = new ArrayList<>();
-
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
@@ -606,8 +605,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
             statusList.add(equipStatussvid);
             statusList.add(pPExecNamesvid);
             statusList.add(controlStatesvid);
-            data = activeWrapper.sendS1F3out(statusList, svFormat);
         } catch (Exception e) {
+            logger.error("error while querying database：" , e);
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "数据库查询报错，请检查EAP日志确认原因.");
+            return null;
+        }
+        try {
+            data = activeWrapper.sendS1F3out(statusList, svFormat);
+        }catch (Exception e){
             logger.error("Wait for get meessage directly error：" + e);
             setControlState(FengCeConstant.CONTROL_OFFLINE);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
@@ -669,11 +674,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("isInterrupted:[" + isInterrupted() + "]isStartUp:[" + isStartUp() + "]isThreadUsed:[" + isThreadUsed() + "]");
             return null;
         }
+        Map resultMap = sendS1F3Check();
         if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(this.getControlState())) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备处于Offline状态...");
             return null;
         }
-        Map resultMap = sendS1F3Check();
         updateCommStateInExt();
         return resultMap;
     }
