@@ -480,7 +480,7 @@ public class HT9045HWHost extends EquipHost {
                                             recipeParasDiffText.append(",\r\nGold Recipe Set Value;");
                                             recipeParasDiffText.append(recipePara.getDefValue());
                                         }
-//                                        this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
+                                        this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
                                     }
                                 } else {
                                     checkParaFlag = false;
