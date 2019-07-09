@@ -34,7 +34,7 @@ public class VSP88DNHTHost extends EquipHost {
     public String Lead_Frame_Type_Id;
     public String Datelength;
     boolean holdFlag = false;
-    public ExecutorService fixPool= Executors.newSingleThreadExecutor();
+    public ExecutorService fixPool;
     public VSP88DNHTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
