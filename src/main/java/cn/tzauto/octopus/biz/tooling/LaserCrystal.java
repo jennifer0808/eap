@@ -23,6 +23,7 @@ public class LaserCrystal {
             return false;
         }
     }
+
     public boolean canAccuracyCheck() {
         if (this.getAccuracy() != null && this.getAp_no() != null && this.getAxis() != null) {
             return true;
@@ -31,15 +32,18 @@ public class LaserCrystal {
             return false;
         }
     }
+
     @Override
     public String toString() {
         String str = this.getAxis() + "_" + this.getAp_no() + "_POWER=" + this.getPower();
         return str;
     }
+
     public String toAccuracyString() {
         String str = this.getAxis() + "_" + this.getAp_no() + "_ACCURACY=" + this.getAccuracy();
         return str;
     }
+
     public String getAp_no() {
         return ap_no;
     }
@@ -65,7 +69,8 @@ public class LaserCrystal {
     }
 
     public String getPower() {
-        return power;
+        double powertemp = Double.parseDouble(this.power) / 1000;
+        return String.valueOf(powertemp);
     }
 
     public void setPower(String power) {

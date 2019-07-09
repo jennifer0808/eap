@@ -149,7 +149,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             if (str.contains("MAX_1")) {
                                 String[] strs = str.split(",");
                                 str = strs[strs.length - 1];
-                                str =  str.split("=")[1];
+                                str = str.split("=")[1];
                                 GlobalConstants.laserCrystalAccuracy.setAxis("Z1");
                                 GlobalConstants.laserCrystalAccuracy.setAccuracy(str);
 //                                String crystalAccuracyTemp = "Z1_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
@@ -217,7 +217,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
      * @param laserCrystal
      */
     private void accuracyCheck(String deviceCode, LaserCrystal laserCrystal) {
-        logger.info("HITACHI_LASER_DRILL_ACCURACY=" +laserCrystal.toAccuracyString());
+        logger.info("HITACHI_LASER_DRILL_ACCURACY=" + laserCrystal.toAccuracyString());
         if (!laserCrystal.canAccuracyCheck()) {
 
             return;
@@ -268,7 +268,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         double actualPower = Double.parseDouble(crystalPowers[1]);
         double UPPER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("UPPER_LIMIT"))) / 100;
         double LOWER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("LOWER_LIMIT"))) / 100;
-        if (Double.valueOf(standardPower) > actualPower / 1000 * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower / 1000 * (1 - LOWER_LIMIT)) {
+        if (Double.valueOf(standardPower) > actualPower * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower * (1 - LOWER_LIMIT)) {
             logger.error("Crystal power out of range. actual data " + crystalPower);
         }
         List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));

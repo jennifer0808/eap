@@ -171,11 +171,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    String recipeName2 = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo2);
-                    if (!recipeName.equals(recipeName2)) {
-                        logger.error("两个批号关联的程序名不一致！");
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "LOT1:" + lotNo + "-->" + recipeName + "LOT2:" + lotNo2 + "-->" + recipeName2);
-                        return;
+                    if (!lotNo2.equals("")) {
+                        String recipeName2 = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo2);
+                        if (!recipeName.equals(recipeName2)) {
+                            logger.error("两个批号关联的程序名不一致！");
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "LOT1:" + lotNo + "-->" + recipeName + "LOT2:" + lotNo2 + "-->" + recipeName2);
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("Two lot with different partno!");
+                            return;
+                        }
                     }
                 } else {
                     recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(partNoTemp, lotNo);
