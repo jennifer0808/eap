@@ -124,6 +124,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected String RCMD_PPSELECT = "PP-SELECT";
     protected String CPN_PPID = "PPID";
     protected String iconPath;
+    public List<String> repeatAlarmList = new ArrayList<>();
 
     public EquipHost(String devId, String remoteIpAddress, int remoteTcpPort,
                      String connectMode, String deviceType, String deviceCode) {

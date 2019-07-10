@@ -35,6 +35,9 @@ public class RecipeUtil {
             recipePara.setMinValue(recipeTemplate.getMinValue());
             recipePara.setMaxValue(recipeTemplate.getMaxValue());
             recipePara.setParaMeasure(recipeTemplate.getParaUnit());
+            if((paramMap.get(key)!=null||"".equals(paramMap.get(key)))&&"Y".equals(recipeTemplate.getMonitorFlag())){
+                recipePara.setRemarks("N");
+            }
             recipeParaList.add(recipePara);
         }
         return recipeParaList;

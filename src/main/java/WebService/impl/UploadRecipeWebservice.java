@@ -18,6 +18,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
+import javax.swing.*;
 import java.util.*;
 
 
@@ -53,6 +54,18 @@ public class UploadRecipeWebservice implements BaseWebservice {
             webMap.put("deviceCode", deviceCode);
             webMap.put("recipe", JSONArray.toJSONString(recipe));
             webMap.put("recipeParaList", JSONArray.toJSONString(recipeParaList));
+            StringBuilder stringBuilder = new StringBuilder();
+            if(recipe.getDeviceTypeCode().contains("CCTECH")){
+                for(RecipePara recipePara:recipeParaList){
+                    if("N".equals(recipePara.getRemarks())){
+                        stringBuilder.append(recipePara.getParaName()+",");
+                    }
+                }
+                if(!"".equals(stringBuilder.toString())){
+                    logger.info(stringBuilder.toString()+"各个参数值为空");
+                }
+            }
+            webMap.put("errorRecipePara",stringBuilder.toString());
             logger.info("开始获取Attach信息");
             List<Attach> attList=hostManager.getRecipeAttachInfo(deviceCode, recipe);
             if(attList==null){

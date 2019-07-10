@@ -6,24 +6,24 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.SocketException;
+import java.util.*;
 
 public class ISecsHost implements ISecsInterface {
 
-    private static Logger logger = Logger.getLogger(ISecsHost.class);
+    private static Logger logger = Logger.getLogger(ISecsHost.class.getName());
 
     public ISecsConnection iSecsConnection;
     private List<ISecsPara> paraList;
     private Map<String, ScreenDomain> screenMap;
     public boolean isConnect;
     public String ip;
-    private String port;
+    public String port;
     public String deviceCode;
     public String deviceTypeCode;
     private int tryCount = 0;
+    public long lastCommDate;
+    public long preCommDate;
 
     public ISecsHost(String ip, String port, String deviceTypeCode, String deviceCode) {
         this.iSecsConnection = new ISecsConnection(ip, port);
@@ -40,6 +40,41 @@ public class ISecsHost implements ISecsInterface {
         this.deviceTypeCode = deviceTypeCode;
     }
 
+    public byte[] executeCommand2(String command) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command);
+            writer.flush();
+            byte[] bytes = new byte[1024];
+            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
+            inputStream.read(bytes);
+            System.out.println("=======================");
+            System.out.println(new String(bytes, "GBK"));
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    public String executeCommand3(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command.toString());
+            writer.flush();
+            byte[] bytes = new byte[1024];
+            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
+            System.out.println("=======================");
+            System.out.println(new String(bytes, "GBK"));
+            logger.info("已经将参数发送至wafer软件:"+command);
+        } catch (Exception e) {
+            System.out.print("111111");
+        }
+        return null;
+    }
+
     /**
      * 根据传入的命令执行，并且返回参数
      *
@@ -48,6 +83,109 @@ public class ISecsHost implements ISecsInterface {
      */
     @Override
     public List<String> executeCommand(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        List<String> result = new ArrayList<String>();
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream(),"UTF-8"));
+            logger.info(deviceCode + " Ready to execute command==>" + command);
+            writer.write(command);
+            writer.flush();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream(),"UTF-8"));
+            String lineContent = "";
+            while ((lineContent = reader.readLine()) != null) {
+                logger.info(deviceCode + " success get reply==>" + lineContent);
+                if (lineContent.trim().contains("done")) {
+                    result.add(lineContent);
+                    logger.info("get done flag,and ignore");
+                    break;
+                }
+                if (!"done".equals(lineContent.trim())) {
+                    result.add(lineContent);
+                } else {
+                    logger.info("get done flag,and ignore");
+                    break;
+                }
+            }
+            logger.info(deviceCode + " execute command [" + command + "] success and get reply==>" + result);
+            for (String str : result) {
+                if (str.contains("Target process service stop.")) {
+                    result.clear();
+                    result.add("Local");
+                }else if(str.contains("Error 0")){
+                    result.clear();
+                    result.add("error");
+                }
+            }
+//
+//            for (String str : result) {
+//                if (str.contains("Error 0001: Invalid Command")) {
+//                    iSecsConnection.getSocketClient().close();
+//                    tryCount++;
+//                    logger.info(deviceCode + " execute command [" + command + "]error ,try again");
+//                    if (tryCount > 0) {
+//                        tryCount = 0;
+//                        result.clear();
+//                        result.add("error");
+//                        return result;
+//                    }
+//                    try {
+//                        iSecsConnection = new ISecsConnection(ip, port);
+//                        tryCount++;
+//                        if (iSecsConnection.getSocketClient() == null) {
+//                            result.clear();
+//                            result.add("error");
+//                            return result;
+//                        }
+//                    } catch (Exception ex) {
+//                    }
+//                    return executeCommand(command);
+//                }
+//            }
+            //更新最近一次通信的时间
+            lastCommDate = new Date().getTime();
+            preCommDate = lastCommDate ;
+            return result;
+        } catch (IOException e) {
+            logger.error(deviceCode + " execute command fail==>" + e.getMessage());
+            logger.error(e);
+            // result.add("socket error");
+            //可能断线了，直接回复错误
+            result.clear();
+            result.add("error");
+            //将最后一次通信时间置为0，保证下次testLink直接执行
+            lastCommDate = 0;
+            return result;
+//            try {
+//                iSecsConnection = new ISecsConnection(ip, port);
+//                tryCount++;
+//                if (iSecsConnection.getSocketClient() == null) {
+//                    result.clear();
+//                    result.add("error");
+//                    return result;
+//                }
+//            } catch (Exception ex) {
+//            }
+//            if (tryCount > 0) {
+//                tryCount = 0;
+//                result.clear();
+//                result.add("error");
+//                return result;
+//            }
+//            return executeCommand(command);
+            // return result;
+        }
+
+    }
+
+    /**
+     * 根据传入的命令执行，并且返回参数
+     *
+     * @param command
+     * @return
+     */
+    @Override
+    public List<String> executePLCCommand(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         List<String> result = new ArrayList<String>();
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -71,56 +209,59 @@ public class ISecsHost implements ISecsInterface {
                 }
             }
             logger.info(deviceCode + " execute command [" + command + "] success and get reply==>" + result);
-            for (String str : result) {
-                if (str.contains("Error 0001: Invalid Command")) {
-                    iSecsConnection.getSocketClient().close();
-                    tryCount++;
-                    logger.info(deviceCode + " execute command [" + command + "]error ,try again");
-                    if (tryCount > 0) {
-                        tryCount = 0;
-                        result.clear();
-                        result.add("error");
-                        return result;
-                    }
-                    try {
-                        iSecsConnection = new ISecsConnection(ip, port);
-                        tryCount++;
-                        if (iSecsConnection.getSocketClient() == null) {
-                            result.clear();
-                            result.add("error");
-                            return result;
-                        }
-                    } catch (Exception ex) {
-                    }
-                    return executeCommand(command);
-                }
-            }
             return result;
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(deviceCode + " execute command fail==>" + e.getMessage());
-            // result.add("socket error");
+            logger.debug(e);
+            //可能断线了，直接回复错误，尝试重连并再次发送指令
+            result.clear();
+            logger.error(deviceCode + " 尝试重新连接 ==>" + e.getMessage());
             try {
+                if(iSecsConnection.getSocketClient()!=null){
+                    iSecsConnection.getSocketClient().close();
+                    iSecsConnection.setSocketClient(null);
+                    logger.error(deviceCode + " 关闭连接并置空!==>");
+                }
                 iSecsConnection = new ISecsConnection(ip, port);
-                tryCount++;
                 if (iSecsConnection.getSocketClient() == null) {
-                    result.clear();
-                    result.add("error");
+                    logger.error(deviceCode + " 重新连接失败!==>");
+                    result.add("ResetFail");
                     return result;
                 }
-            } catch (Exception ex) {
-            }
-            if (tryCount > 0) {
-                tryCount = 0;
-                result.clear();
-                result.add("error");
+                logger.error(deviceCode + " 重新连接完毕 ==>IP:"+iSecsConnection.getSocketClient().getRemoteSocketAddress().toString()
+                        +"PORT:"+iSecsConnection.getSocketClient().getPort());
+                //再次尝试发送指令
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+                logger.info(deviceCode + "TryAgain; Ready to execute command==>" + command);
+                writer.write(command);
+                writer.flush();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream()));
+                String lineContent = "";
+                while ((lineContent = reader.readLine()) != null) {
+                    logger.info(deviceCode + "TryAgain;success get reply==>" + lineContent);
+                    if (lineContent.trim().contains("done")) {
+                        result.add(lineContent);
+                        logger.info("TryAgain;get done flag,and ignore");
+                        break;
+                    }
+                    if (!"done".equals(lineContent.trim())) {
+                        result.add(lineContent);
+                    } else {
+                        logger.info("TryAgain;get done flag,and ignore");
+                        break;
+                    }
+                }
+                logger.info(deviceCode + " TryAgain;execute command [" + command + "] success and get reply==>" + result);
                 return result;
+            } catch (Exception ex) {
+                logger.error(deviceCode + " Reset Fail ==>" + e.getMessage());
+                result.add("ResetFail");
+                return result;
+            }finally {
+
             }
-            return executeCommand(command);
-            // return result;
         }
-
     }
-
 
     /**
      * 根据传入的命令执行，并且返回参数
@@ -132,11 +273,12 @@ public class ISecsHost implements ISecsInterface {
     public List<String> executeCommand(String command, String charsetName) {
         List<String> result = new ArrayList<String>();
         try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream(),"UTF-8"));
             logger.info(deviceCode + " Ready to execute command==>" + command);
             writer.write(command);
             writer.flush();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream(), charsetName));
+            InputStream in = iSecsConnection.getSocketClient().getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream(),"UTF-8"));
             String lineContent = "";
             while ((lineContent = reader.readLine()) != null) {
                 logger.info(deviceCode + " success get reply==>" + lineContent);
@@ -146,6 +288,7 @@ public class ISecsHost implements ISecsInterface {
                     break;
                 }
                 if (!"done".equals(lineContent.trim())) {
+                    //result.add(new String(lineContent.getBytes("UTF-8"),charsetName));
                     result.add(lineContent);
                 } else {
                     logger.info("get done flag,and ignore");
@@ -190,99 +333,6 @@ public class ISecsHost implements ISecsInterface {
             // return result;
         }
 
-    }
-
-    /**
-     * 根据传入的命令执行，并且返回参数
-     *
-     * @param command
-     * @return
-     */
-    @Override
-    public List<String> executePLCCommand(String command) {
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
-        List<String> result = new ArrayList<String>();
-        try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
-            logger.info(deviceCode + " Ready to execute command==>" + command);
-            writer.write(command);
-            writer.flush();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream()));
-            String lineContent = "";
-            while ((lineContent = reader.readLine()) != null) {
-                logger.info(deviceCode + " success get reply==>" + lineContent);
-                if (lineContent.trim().contains("done")) {
-                    result.add(lineContent);
-                    logger.info("get done flag,and ignore");
-                    break;
-                }
-                if (!"done".equals(lineContent.trim())) {
-                    result.add(lineContent);
-                } else {
-                    logger.info("get done flag,and ignore");
-                    break;
-                }
-            }
-            logger.info(deviceCode + " execute command [" + command + "] success and get reply==>" + result);
-            return result;
-        } catch (Exception e) {
-            logger.error(deviceCode + " execute command fail==>" + e.getMessage());
-            logger.debug(e);
-            //可能断线了，直接回复错误，尝试重连并再次发送指令
-            result.clear();
-            logger.error(deviceCode + " 尝试重新连接 ==>" + e.getMessage());
-            try {
-                if (iSecsConnection.getSocketClient() != null) {
-                    iSecsConnection.getSocketClient().close();
-                    iSecsConnection.setSocketClient(null);
-                    logger.error(deviceCode + " 关闭连接并置空!==>");
-                }
-                iSecsConnection = new ISecsConnection(ip, port);
-                if (iSecsConnection.getSocketClient() == null) {
-                    logger.error(deviceCode + " 重新连接失败!==>");
-                    result.add("ResetFail");
-                    return result;
-                }
-                logger.error(deviceCode + " 重新连接完毕 ==>IP:" + iSecsConnection.getSocketClient().getRemoteSocketAddress().toString()
-                        + "PORT:" + iSecsConnection.getSocketClient().getPort());
-                //再次尝试发送指令
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
-                logger.info(deviceCode + "TryAgain; Ready to execute command==>" + command);
-                writer.write(command);
-                writer.flush();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(iSecsConnection.getSocketClient().getInputStream()));
-                String lineContent = "";
-                while ((lineContent = reader.readLine()) != null) {
-                    logger.info(deviceCode + "TryAgain;success get reply==>" + lineContent);
-                    if (lineContent.trim().contains("done")) {
-                        result.add(lineContent);
-                        logger.info("TryAgain;get done flag,and ignore");
-                        break;
-                    }
-                    if (!"done".equals(lineContent.trim())) {
-                        result.add(lineContent);
-                    } else {
-                        logger.info("TryAgain;get done flag,and ignore");
-                        break;
-                    }
-                }
-                logger.info(deviceCode + " TryAgain;execute command [" + command + "] success and get reply==>" + result);
-                return result;
-            } catch (Exception ex) {
-                logger.error(deviceCode + " Reset Fail ==>" + e.getMessage());
-                result.add("ResetFail");
-                return result;
-            } finally {
-
-            }
-        } finally {
-            if (temp == null) {
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-            } else {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
-            }
-        }
     }
 
     private String gotoScreen(String screenName, int repeatCnt) {
@@ -430,40 +480,9 @@ public class ISecsHost implements ISecsInterface {
     }
 
     public static void main(String[] args) {
-        ISecsHost iSecsHost = new ISecsHost("192.168.103.128", "12002", "", "test");
-        System.out.println(iSecsHost.isConnect);
-//        iSecsHost.executeCommand("curscreesn");
-////        new Thread(new Runnable() {
-////            @Override
-////            public void run() {
-////                for (int i = 0; i < 1000; i++) {
-////                    iSecsHost.executeCommand("curscreesn");
-////                    iSecsHost.executeCommand("curscreen");
-////                    iSecsHost.executeCommand("read name");
-////                    iSecsHost.executeCommand("curscreen");
-////                    iSecsHost.executeCommand("read name");
-////                    iSecsHost.executeCommand("curscreen");
-////                    iSecsHost.executeCommand("read name");
-////
-////                }
-////            }
-////        }).start();
-////        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-//
-//        for (int i = 0; i < 3000; i++) {
-//            iSecsHost.executeCommand("curscreesn");
-//            iSecsHost.executeCommand("curscreen");
-//            iSecsHost.executeCommand("read name");
-//            iSecsHost.executeCommand("curscreen");
-//            iSecsHost.executeCommand("read name");
-//            iSecsHost.executeCommand("curscreen");
-//            iSecsHost.executeCommand("read name");
-//
-////            }
-//        }
-
-//        iSecsHost.checkConenctionStatus();
-//         iSecsHost.executeCommand("dos  $start  D:\\RECIPE\\spyxx.exe $");
+        final ISecsHost iSecsHost = new ISecsHost("127.0.0.1", "12000", "", "test");
+        iSecsHost.executeCommand("curscreen");
+        iSecsHost.executeCommand("curscreen");
     }
 
     public Map<String, String> readJasonData(List<String> paraNameList) {
@@ -634,46 +653,22 @@ public class ISecsHost implements ISecsInterface {
         return resultMap;
     }
 
-    public byte[] executeCommand2(String command) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
-            logger.info(deviceCode + " Ready to execute command==>" + command);
-            writer.write(command);
-            writer.flush();
-            byte[] bytes = new byte[1024];
-            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
-            inputStream.read(bytes);
-            System.out.println("=======================");
-            System.out.println(new String(bytes, "GBK"));
-        } catch (Exception e) {
-
-        }
-        return null;
-    }
-
-    public String executeCommand3(String command) {
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
-        try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
-            logger.info(deviceCode + " Ready to execute command==>" + command);
-            writer.write(command.toString());
-            writer.flush();
-            byte[] bytes = new byte[1024];
-            InputStream inputStream = iSecsConnection.getSocketClient().getInputStream();
-            System.out.println("=======================");
-            System.out.println(new String(bytes, "GBK"));
-            logger.info("已经将参数发送至wafer软件:" + command);
-        } catch (Exception e) {
-            logger.error("Exception", e);
-            System.out.print("111111");
-        } finally {
-            if (temp == null) {
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-            } else {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+    public void checkLinkStatus() throws SocketException {
+        synchronized (iSecsConnection.getSocketClient()){
+            List<String> result = new ArrayList<>();
+            if(iSecsConnection.getPort().equals("12000")){
+                result = this.executeCommand("curscreen");
+            }else {
+                result = this.executeCommand("help");
             }
+            if (result.get(0).toLowerCase().contains("error")) {
+//                if(result.get(0).toLowerCase().contains("error 0100")){
+//                    logger.info("当前设备处于LOCAL模式===>" + deviceCode);
+//                }else throw new SocketException("socket error!");
+                throw new SocketException("socket error!");
+            }
+
         }
-        return null;
     }
+
 }

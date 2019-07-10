@@ -34,7 +34,7 @@ public class VSP88DNHTHost extends EquipHost {
     public String Lead_Frame_Type_Id;
     public String Datelength;
     boolean holdFlag = false;
-    public ExecutorService fixPool= Executors.newSingleThreadExecutor();
+    public ExecutorService fixPool;
     public VSP88DNHTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -428,7 +428,7 @@ public class VSP88DNHTHost extends EquipHost {
             this.sends2f41stripReply(false);
             sendS2f41Cmd("STOP");
             if ("".equals(result)) {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, msgMap.get("msgName")+"等待MQ回复信息超时!");
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, msgMap.get("msgName")+"等待回复信息超时!");
             }
         }
         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
@@ -552,6 +552,7 @@ public class VSP88DNHTHost extends EquipHost {
         } else if (equipStatus.equalsIgnoreCase("pause") || equipStatus.equalsIgnoreCase("ldle") || equipStatus.equalsIgnoreCase("end")) {
             sendS2f41Cmd("LOCAL");
         }
+        fixPool = Executors.newFixedThreadPool(9);
     }
 
     @Override

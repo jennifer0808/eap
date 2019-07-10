@@ -2,6 +2,8 @@ package cn.tzauto.octopus.isecsLayer.equipImpl.hontech;
 
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.recipe.domain.Attach;
+import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
@@ -14,8 +16,6 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.biz.recipe.domain.Attach;
-import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.ibatis.session.SqlSession;
@@ -132,6 +132,7 @@ public class HT7045HISIHost extends EquipModel {
         }
         Map<String, String> map = new HashMap<>();
         map.put("PPExecName", ppExecName);
+        map.put("ControlState", controlState);
         changeEquipPanel(map);
         return ppExecName;
     }
@@ -186,7 +187,7 @@ public class HT7045HISIHost extends EquipModel {
                 }
             } else {
                 logger.info("{}:当前设备未设置锁机！", deviceCode);
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, ":当前设备未设置锁机！");
+                UiLogUtil.getInstance().getInstance().appendLog2EventTab(deviceCode, ":当前设备未设置锁机！");
                 return "1";
             }
         } catch (Exception e) {
@@ -360,7 +361,7 @@ public class HT7045HISIHost extends EquipModel {
 //                    break;
 //                }
 //                if (str != null && str.contains("error")) {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
 //                    map.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
 //                    break;
 //                }
@@ -402,14 +403,14 @@ public class HT7045HISIHost extends EquipModel {
             /**
              *获取sitemap中的参数
              */
-            result = iSecsHost.executeCommand("playback clicksitemap.txt");
+            result = iSecsHost.executeCommand("playback clicksitemode.txt");
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
-            if (!"sitemap".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+            if (!"sitemode".equals(result.get(0))) {
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
-            result = iSecsHost.executeCommand("readbyscreen sitemap");
+            result = iSecsHost.executeCommand("readbyscreen sitemode");
             Map<String, String> sitemapMap = (HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class);
             paraMap.putAll(sitemapMap);
 
@@ -422,8 +423,8 @@ public class HT7045HISIHost extends EquipModel {
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm1bin1-8".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm1bin1-8");
             Map<String, String> a11_8Map = (HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class);
@@ -435,8 +436,8 @@ public class HT7045HISIHost extends EquipModel {
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm1bin9-15".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm1bin9-15");
             Map<String, String> a19_15Map = (HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class);
@@ -448,8 +449,8 @@ public class HT7045HISIHost extends EquipModel {
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm2".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm2");
             Map<String, String> a2Map = (HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class);
@@ -463,8 +464,8 @@ public class HT7045HISIHost extends EquipModel {
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm1bin1-8".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm1bin1-8");
             Map<String, String> a11_8MapRT = getRTMap((HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class));
@@ -476,38 +477,58 @@ public class HT7045HISIHost extends EquipModel {
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm1bin9-15".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm1bin9-15");
             Map<String, String> a19_15MapRT = getRTMap((HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class));
             paraMap.putAll(a19_15MapRT);
             /**
-             *
+             *alarm2
              */
             result = iSecsHost.executeCommand("playback clickalarm2.txt");
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"alarm2".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen alarm2");
             Map<String, String> a2MapRT = getRTMap((HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class));
             paraMap.putAll(a2MapRT);
             /**
-             *
+             *bin
              */
             result = iSecsHost.executeCommand("playback clickbin.txt");
             Thread.sleep(100);
             result = iSecsHost.executeCommand("curscreen");
             if (!"bin".equals(result.get(0))) {
-                result = iSecsHost.executeCommand("playback clickexittool.txt");
-                return recipeParas;
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
             }
             result = iSecsHost.executeCommand("readbyscreen bin");
             Map<String, String> binMap = (HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class);
             paraMap.putAll(binMap);
+            /**
+             *module
+             */
+            result = iSecsHost.executeCommand("playback clickmodule.txt");
+            Thread.sleep(100);
+            Map<String, String> moduleMap = new HashMap<>();
+            result = iSecsHost.executeCommand("curscreen");
+            if ("module_a".equals(result.get(0))) {
+//                result = iSecsHost.executeCommand("playback clickexittool.txt");
+//                return recipeParas;
+                moduleMap.put("mpae", "true");
+                moduleMap.put("mpie", "false");
+                result = iSecsHost.executeCommand("readbyscreen module_a");
+            } else if ("module_i".equals(result.get(0))) {
+                moduleMap.put("mpae", "false");
+                moduleMap.put("mpie", "true");
+                result = iSecsHost.executeCommand("readbyscreen module_i");
+            }
+            moduleMap.putAll((HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class));
+            paraMap.putAll(moduleMap);
             result = iSecsHost.executeCommand("playback clickexittool.txt");
             //读取文件中的trayName
 //            String trayName = this.getTrayNameFromZIP(getClientFtpRecipeAbsolutePath(recipeName) + recipeName + ".zip").trim();
@@ -573,8 +594,13 @@ public class HT7045HISIHost extends EquipModel {
                 /**
                  * 读取sitemap参数
                  */
-                Map<String, String> sitemapMap = getScrrenParaByPlc("ToPara5", "sitemap");
+                Map<String, String> sitemapMap = getScrrenParaByPlc("ToPara5", "sitemode");
                 paraMap.putAll(sitemapMap);
+                /**
+                 * 读取module参数
+                 */
+                Map<String, String> moduleMap = getScrren2ParaByPlc("ToPara6", "module_a","module_i");
+                paraMap.putAll(moduleMap);
                 if ("RT".equalsIgnoreCase(result.get(0))) {
 
                     /**
@@ -1126,6 +1152,27 @@ public class HT7045HISIHost extends EquipModel {
         return resultMap;
     }
 
+    public Map<String, String> getScrren2ParaByPlc(String ctrlCommand, String ocrCommand1, String ocrCommand2) throws InterruptedException {
+        List<String> result = null;
+        Map<String, String> resultMap = new HashMap<>();
+        List<String> resultPlc = plcCtrlHost.executeCommand(ctrlCommand);
+        Thread.sleep(130);
+        result = iSecsHost.executeCommand("curscreen");
+        if ((ocrCommand1.equals(result.get(0))) && ("Y".equals(resultPlc.get(0)))) {
+            result = iSecsHost.executeCommand("readbyscreen " + ocrCommand1);
+            resultMap.put("mpae","true");
+            resultMap.put("mpie","false");
+        } else if ((ocrCommand2.equals(result.get(0))) && ("Y".equals(resultPlc.get(0)))) {
+            result = iSecsHost.executeCommand("readbyscreen " + ocrCommand2);
+            resultMap.put("mpae","false");
+            resultMap.put("mpie","true");
+        }else{
+            return resultMap;
+        }
+        resultMap.putAll ((HashMap<String, String>) JsonMapper.fromJsonString(result.get(0), Map.class));
+        return resultMap;
+    }
+
     @Override
     public Map getEquipRecipeList() {
         Map<String, Object> eppd = new HashMap<>();
@@ -1514,14 +1561,14 @@ public class HT7045HISIHost extends EquipModel {
 ////            return false;
 //        }
 ////        if (AxisUtility.isEngineerMode(deviceCode)) {
-////            UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+////            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
 ////            return true;
 ////        }
 //        boolean pass = true;
 //        String checkRecultDesc = "";
 //        if (this.checkLockFlagFromServerByWS(deviceCode)) {
 //            checkRecultDesc = "检测到设备被Server要求锁机,设备将被锁!";
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+//            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
 //            pass = false;
 //        }
 //        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -1531,20 +1578,20 @@ public class HT7045HISIHost extends EquipModel {
 //
 //        if (deviceInfoExt == null) {
 //            logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-//            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
 //            checkRecultDesc = "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！";
 //            pass = false;
 //        } else {
 //            String trackInRcpName = deviceInfoExt.getRecipeName();
 //            if (!ppExecName.equals(trackInRcpName)) {
-//                UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
 //                pass = false;
 //                checkRecultDesc = "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + trackInRcpName + " 已选程序:" + ppExecName;
 //            }
 //        }
 //        Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
 //        if (execRecipe == null) {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
 //            checkRecultDesc = "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理!";
 //            pass = false;
 //        }
@@ -1566,10 +1613,10 @@ public class HT7045HISIHost extends EquipModel {
 //                String eventDesc = "";
 //                if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
 //                    this.stopEquip();
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查未通过!");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
 //                    for (RecipePara recipePara : recipeParasdiff) {
 //                        eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-//                        UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+//                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
 //                        checkRecultDesc = checkRecultDesc + eventDesc;
 //                    }
 //                    //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
@@ -1585,7 +1632,7 @@ public class HT7045HISIHost extends EquipModel {
 //                    sendMessage2Eqp(recipeParasDiffText.toString());
 //                    pass = false;
 //                } else {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查通过！");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
 //                    eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
 //                    logger.info("设备：" + deviceCode + " 开机Check成功");
 //                    pass = true;
@@ -1598,7 +1645,7 @@ public class HT7045HISIHost extends EquipModel {
 //                sqlSession.close();
 //            }
 //        } else {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
 //        }
 //        mqMap.put("eventDesc", checkRecultDesc);
 //        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
@@ -1612,7 +1659,7 @@ public class HT7045HISIHost extends EquipModel {
      */
 //    public boolean specialCheck() {
 ////        if (AxisUtility.isEngineerMode(deviceCode)) {
-//////            UiLogUtil.appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
+//////            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
 //////            return true;
 //////        }
 ////            if(this.startCheckOver1st){
@@ -1624,7 +1671,7 @@ public class HT7045HISIHost extends EquipModel {
 //        String checkRecultDesc = "";
 //        if (this.checkLockFlagFromServerByWS(deviceCode)) {
 //            checkRecultDesc = "检测到设备被Server要求锁机,设备将被锁!";
-//            UiLogUtil.appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+//            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
 //            pass = false;
 //        }
 //        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
@@ -1634,20 +1681,20 @@ public class HT7045HISIHost extends EquipModel {
 //
 //        if (deviceInfoExt == null) {
 //            logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-//            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
 //            checkRecultDesc = "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！";
 //            pass = false;
 //        } else {
 //            String trackInRcpName = deviceInfoExt.getRecipeName();
 //            if (!ppExecName.equals(trackInRcpName)) {
-//                UiLogUtil.appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
 //                pass = false;
 //                checkRecultDesc = "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + trackInRcpName + " 已选程序:" + ppExecName;
 //            }
 //        }
 //        Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
 //        if (execRecipe == null) {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
 //            checkRecultDesc = "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理!";
 //            pass = false;
 //        }
@@ -1667,10 +1714,10 @@ public class HT7045HISIHost extends EquipModel {
 //                String eventDesc = "";
 //                if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
 //                    this.stopEquip();
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查未通过!");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
 //                    for (RecipePara recipePara : recipeParasdiff) {
 //                        eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
-//                        UiLogUtil.appendLog2EventTab(deviceCode, eventDesc);
+//                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
 //                        checkRecultDesc = checkRecultDesc + eventDesc;
 //                    }
 //                    //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
@@ -1686,7 +1733,7 @@ public class HT7045HISIHost extends EquipModel {
 //                    sendMessage2Eqp(recipeParasDiffText.toString());
 //                    pass = false;
 //                } else {
-//                    UiLogUtil.appendLog2EventTab(deviceCode, "开机参数检查通过！");
+//                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
 //                    eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
 //                    logger.info("设备：" + deviceCode + " 开机Check成功");
 //                    //开始作业
@@ -1700,7 +1747,7 @@ public class HT7045HISIHost extends EquipModel {
 //                sqlSession.close();
 //            }
 //        } else {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+//            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
 //        }
 //        mqMap.put("eventDesc", checkRecultDesc);
 //        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
@@ -1779,7 +1826,7 @@ public class HT7045HISIHost extends EquipModel {
                 //MonitorService monitorService = new MonitorService(sqlSession);
                 // List<RecipePara> equipRecipeParas = getRecipeParasFromMonitorMap();
                 List<RecipePara> equipRecipeParas = getRecipeParasFromMonitorMap();
-                List<RecipePara> recipeParasdiff = this.checkRcpPara(deviceInfoExt.getRecipeId(), deviceCode, equipRecipeParas, "");
+                List<RecipePara> recipeParasdiff = this.checkRcpPara(execRecipe.getId(), deviceCode, equipRecipeParas, "abs");
                 try {
                     String eventDesc = "";
                     if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
@@ -1816,7 +1863,7 @@ public class HT7045HISIHost extends EquipModel {
                     sqlSession.close();
                 }
             } else {
-//                UiLogUtil.appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
                 logger.info("设备：" + deviceCode + " 未设置卡机检查参数！");
             }
             mqMap.put("eventDesc", checkRecultDesc);
@@ -1875,33 +1922,6 @@ public class HT7045HISIHost extends EquipModel {
                         equipRecipePara.setDefValue(setValue);//默认值，recipe参数设定值
                         //判断开关是否false，若默认关闭则之后数值不需要卡控，并将之后code放置到规则中
                         //如果code在规则中则不参与比对,next
-                        DecimalFormat decimalFormat = new DecimalFormat("##########.##########");
-                        if (!"".equals(setValue)) {
-                            if (setValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                                if (setValue.contains(".")) {
-                                    setValue = decimalFormat.format(Double.parseDouble(setValue));
-                                } else {
-                                    setValue = decimalFormat.format(Integer.parseInt(setValue));
-                                }
-                            }
-                        }
-                        if (!"".equals(currentRecipeValue)) {
-                            if (currentRecipeValue.matches("^-?[0-9]+(.[0-9]+)?$")) {
-                                if (currentRecipeValue.contains(".")) {
-                                    currentRecipeValue = decimalFormat.format(Double.parseDouble(currentRecipeValue));
-                                } else {
-                                    currentRecipeValue = decimalFormat.format(Integer.parseInt(currentRecipeValue));
-                                }
-                            }
-                        }
-//                        if(codeList.contains(recipeTemplate.getParaCode())){
-//                            System.out.println(recipeTemplate.getParaCode());
-//                            break;
-//                        }
-//                        if(recipeTemplate.getParaName().contains("Alarm1_Gategory")&&recipeTemplate.getParaName().contains("_Enable")&&"false".equals(setValue)){
-//                            codeList.add(recipeTemplate.getParaCode().replace("0","1"));
-//                            codeList.add(recipeTemplate.getParaCode().replace("0","3"));
-//                        }
                         try {
                             if (recipeTemplate.getParaName().contains("_") && codeList.contains(recipeTemplate.getParaName().substring(0, recipeTemplate.getParaName().lastIndexOf("_")))) {
                                 logger.info("此值不需要比对,开关默认关闭:" + recipeTemplate.getParaName());

@@ -21,24 +21,23 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import org.apache.ibatis.cache.NullCacheKey;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
 
-public class C6800SECSHost extends EquipHost {
+public class C6430SECSHost extends EquipHost {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger logger = Logger.getLogger(C6800SECSHost.class);
+    private static Logger logger = Logger.getLogger(C6430SECSHost.class);
 
     private boolean checkNameFlag = true;
     private boolean checkParaFlag = true;
     private boolean canDownladMap = true;
 
-    public C6800SECSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
+    public C6430SECSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -49,7 +48,7 @@ public class C6800SECSHost extends EquipHost {
     }
 
     public Object clone() {
-        C6800SECSHost newEquip = new C6800SECSHost(deviceId,
+        C6430SECSHost newEquip = new C6430SECSHost(deviceId,
                 this.iPAddress,
                 this.tCPPort, this.connectMode,
                 this.deviceType, this.deviceCode);

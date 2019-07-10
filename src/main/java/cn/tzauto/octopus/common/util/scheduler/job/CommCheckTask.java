@@ -13,6 +13,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsConnection;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
@@ -27,9 +28,11 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -40,13 +43,13 @@ import java.util.concurrent.*;
 public class CommCheckTask implements Job {
 
     private static final Logger logger = Logger.getLogger(CommCheckTask.class);
-    private static EquipHost currentHost = null;
     private static String testType = "";
     static MultipleEquipHostManager hostsManager = GlobalConstants.stage.hostManager;
 
     @Override
     public void execute(JobExecutionContext jec) {
         logger.info("CommCheckTask=====>CommCheckTask任务执行....");
+        EquipHost currentHost = null;
         int checkTimes = 4;
 //        int restartCnt = 0;//检测到正在重启的次数，如果超过4次，也直接开始重启通信
         String settingTimes = GlobalConstants.getProperty("RECOMM_BEFORE_CHECK_TIMES") != null ? GlobalConstants.getProperty("RECOMM_BEFORE_CHECK_TIMES") : "";
@@ -286,6 +289,7 @@ public class CommCheckTask implements Job {
      * @param equipNodeBean
      */
     private void msgTimeoutCountAndRestart(String deviceId, EquipNodeBean equipNodeBean) {
+        EquipHost currentHost= GlobalConstants.stage.equipHosts.get(deviceId);
         logger.info("CommCheckTask=====>currentHost.secsMsgTimeoutTime:" + currentHost.secsMsgTimeoutTime + " DeviceID:" + deviceId);
         if (currentHost.secsMsgTimeoutTime == 3) {
             logger.info("CommCheckTask=====>检测到中断，secsMsgTimeoutTime=" + currentHost.secsMsgTimeoutTime + "修改状态，准备重启，DeviceID:" + deviceId + ";线程中断状态:" + currentHost.isInterrupted() + ";通信状态:" + currentHost.getCommState() + ";程序状态:" + currentHost.isSdrReady());
@@ -351,7 +355,7 @@ public class CommCheckTask implements Job {
         });
         try {
             executor.execute(future);
-            result = future.get(3000, TimeUnit.MILLISECONDS);
+            result = future.get(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             future.cancel(true);
             result = "2";
@@ -441,50 +445,140 @@ public class CommCheckTask implements Job {
         return holdResult;
     }
 
+//    private void easyCheck(EquipModel equipModel) {
+//        Map map = new HashMap();
+//        boolean needInit = false;
+//        logger.info("Check equipModel:" + equipModel.deviceCode);
+//        for (ISecsHost iSecsHost : equipModel.iSecsHostList) {
+//            if (iSecsHost.iSecsConnection == null
+//                    || iSecsHost.iSecsConnection.getSocketClient() == null
+//                    || !iSecsHost.iSecsConnection.getSocketClient().isConnected()
+//                    || !iSecsHost.iSecsConnection.checkConenctionStatus()) {
+//                if (iSecsHost.iSecsConnection.getSocketClient() == null) {
+//                    logger.info(equipModel.deviceCode + "Check equipModel:getSocketClient() == null");
+//                    needInit = true;
+//                    if (checkNet(iSecsHost.ip) >= 3) {
+//                        netBrokenDealer(equipModel.deviceCode);
+//                        needInit = false;
+//                        map.put("CommState", 0);
+//                        equipModel.changeEquipPanel(map);
+//                        iSecsHost.isConnect = false;
+//                    }
+//                    GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
+//                } else {
+//                    if (!iSecsHost.iSecsConnection.getSocketClient().isConnected()) {
+//                        logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.disConnected");
+//                        needInit = true;
+//                    }
+////                    if (equipModel.getPassport(2)) {
+////                        if (!iSecsHost.checkConenctionStatus()) {
+////                            logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.checkConenctionStatus==false");
+////                            needInit = true;
+////                        }
+////                        equipModel.returnPassport();
+////                    }
+//                }
+//                if (needInit) {
+//                    logger.info(equipModel.deviceCode + " connect off");
+//                    map.put("CommState", 0);
+//                    equipModel.changeEquipPanel(map);
+//                    iSecsHost.isConnect = false;
+//                    equipModel.equipState.setCommOn(false);
+//                    equipModel.initialize();
+//                }
+//
+//                //  GlobalConstants.stage.equipModels.remove(equipModel.deviceCode);
+//                // GlobalConstants.stage.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
+//            } else {
+//                map.put("CommState", 1);
+//                equipModel.changeEquipPanel(map);
+//                equipModel.equipState.setCommOn(true);
+//                equipModel.iSecsHost.isConnect = true;
+//                equipModel.setIsConnect(true);
+//            }
+//        }
+////        if (equipModel.iSecsHost.iSecsConnection.getSocketClient() == null
+////                || !equipModel.iSecsHost.iSecsConnection.getSocketClient().isConnected()
+////                || !equipModel.iSecsHost.iSecsConnection.checkConenctionStatus()) {
+////            if (equipModel.iSecsHost.iSecsConnection.getSocketClient() == null) {
+////                logger.info("Check equipModel:getSocketClient() == null");
+////                needInit = true;
+////                if (checkNet(equipModel.remoteIPAddress) >= 3) {
+////                    netBrokenDealer(equipModel.deviceCode);
+////                    needInit = false;
+////                    map.put("CommState", 0);
+////                    equipModel.changeEquipPanel(map);
+////                    equipModel.iSecsHost.isConnect = false;
+////                }
+////                GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
+////            } else {
+////                if (!equipModel.iSecsHost.iSecsConnection.getSocketClient().isConnected()) {
+////                    logger.info("Check equipModel: SocketClient.disConnected");
+////                    needInit = true;
+////                }
+////                if (!equipModel.iSecsHost.iSecsConnection.checkConenctionStatus()) {
+////                    logger.info("Check equipModel: SocketClient.checkConenctionStatus==false");
+////                    needInit = true;
+////                }
+////            }
+////            if (needInit) {
+////                logger.info("connect off");
+////                // map.put("CommState", 0);
+////                // equipModel.changeEquipPanel(map);
+////                equipModel.iSecsHost.isConnect = false;
+////                equipModel.equipState.setCommOn(false);
+////                equipModel.initialize();
+////            }
+////
+////            //  GlobalConstants.stage.equipModels.remove(equipModel.deviceCode);
+////            // GlobalConstants.stage.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
+////        } else {
+////            map.put("CommState", 1);
+////            equipModel.changeEquipPanel(map);
+////            equipModel.equipState.setCommOn(true);
+////        }
+//
+//    }
+
     private void easyCheck(EquipModel equipModel) {
         Map map = new HashMap();
-        boolean needInit = false;
+//        boolean needInit = false;
         logger.info("Check equipModel:" + equipModel.deviceCode);
         for (ISecsHost iSecsHost : equipModel.iSecsHostList) {
-            if (iSecsHost.iSecsConnection == null
-                    || iSecsHost.iSecsConnection.getSocketClient() == null
-                    || !iSecsHost.iSecsConnection.getSocketClient().isConnected()
-                    || !iSecsHost.iSecsConnection.checkConenctionStatus()) {
-                if (iSecsHost.iSecsConnection.getSocketClient() == null) {
-                    logger.info(equipModel.deviceCode + "Check equipModel:getSocketClient() == null");
-                    needInit = true;
-                    if (checkNet(iSecsHost.ip) >= 3) {
-                        netBrokenDealer(equipModel.deviceCode);
-                        needInit = false;
-                        map.put("CommState", 0);
-                        equipModel.changeEquipPanel(map);
-                        iSecsHost.isConnect = false;
-                    }
-                    GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
-                } else {
-                    if (!iSecsHost.iSecsConnection.getSocketClient().isConnected()) {
-                        logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.disConnected");
-                        needInit = true;
-                    }
-//                    if (equipModel.getPassport(2)) {
-//                        if (!iSecsHost.checkConenctionStatus()) {
-//                            logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.checkConenctionStatus==false");
-//                            needInit = true;
-//                        }
-//                        equipModel.returnPassport();
-//                    }
-                }
-                if (needInit) {
-                    logger.info(equipModel.deviceCode + " connect off");
-                    map.put("CommState", 0);
-                    equipModel.changeEquipPanel(map);
-                    iSecsHost.isConnect = false;
-                    equipModel.equipState.setCommOn(false);
-                    equipModel.initialize();
-                }
+            logger.info(equipModel.deviceCode + "TESTLink...");
+            long nowDate = new Date().getTime();
+            //满足任一条件进行check
+            if ((nowDate - iSecsHost.preCommDate) > 30 * 1000 | (iSecsHost.lastCommDate - iSecsHost.preCommDate) > 30 * 1000) {
+                logger.info(equipModel.deviceCode + "满足check条件：lastCommDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(iSecsHost.lastCommDate)
+                        + ",preCommDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(iSecsHost.preCommDate)
+                        + ",nowDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(nowDate)
+                        + ",Timeout=" + (iSecsHost.lastCommDate - iSecsHost.preCommDate));
 
-                //  GlobalConstants.stage.equipModels.remove(equipModel.deviceCode);
-                // GlobalConstants.stage.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
+            } else {
+                logger.info(equipModel.deviceCode + "不满足check条件：lastCommDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(iSecsHost.lastCommDate)
+                        + ",preCommDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(iSecsHost.preCommDate)
+                        + ",nowDate=" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(nowDate)
+                        + ",Timeout=" + (iSecsHost.lastCommDate - iSecsHost.preCommDate));
+                continue;
+            }
+            if (!testLinkSocket(iSecsHost, equipModel.deviceCode)) {
+                logger.info(equipModel.deviceCode + "Check equipModel:getSocketClient() == null");
+                logger.info(equipModel.deviceCode + " connect off");
+                GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
+                map.put("CommState", 0);
+                equipModel.changeEquipPanel(map);
+                iSecsHost.isConnect = false;
+                equipModel.equipState.setCommOn(false);
+//                equipModel.initialize();
+                //置最后一次通信时间为0，确保下次一定执行testLinkSocket
+                iSecsHost.preCommDate = 0;
+                if (checkNet(iSecsHost.ip) >= 3) {
+                    netBrokenDealer(equipModel.deviceCode);
+//                    needInit = false;
+//                    map.put("CommState", 0);
+//                    equipModel.changeEquipPanel(map);
+//                    iSecsHost.isConnect = false;
+                }
             } else {
                 map.put("CommState", 1);
                 equipModel.changeEquipPanel(map);
@@ -492,6 +586,52 @@ public class CommCheckTask implements Job {
                 equipModel.iSecsHost.isConnect = true;
                 equipModel.setIsConnect(true);
             }
+//            if (iSecsHost.iSecsConnection.getSocketClient() == null
+//                    || !iSecsHost.iSecsConnection.getSocketClient().isConnected()
+//                    || !iSecsHost.iSecsConnection.checkConenctionStatus()) {
+//                if (iSecsHost.iSecsConnection.getSocketClient() == null) {
+//                    logger.info(equipModel.deviceCode + "Check equipModel:getSocketClient() == null");
+//                    needInit = true;
+//                    if (checkNet(iSecsHost.ip) >= 3) {
+//                        netBrokenDealer(equipModel.deviceCode);
+//                        needInit = false;
+//                        map.put("CommState", 0);
+//                        equipModel.changeEquipPanel(map);
+//                        iSecsHost.isConnect = false;
+//                    }
+//                    GlobalConstants.eapView.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
+//                } else {
+//                    if (!iSecsHost.iSecsConnection.getSocketClient().isConnected() || !equipModel.isConnect()) {
+//                        logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.disConnected");
+//                        needInit = true;
+//                    }
+////                    if (equipModel.getPassport(2)) {
+////                        if (!iSecsHost.checkConenctionStatus()) {
+////                            logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.checkConenctionStatus==false");
+////                            needInit = true;
+////                        }
+////                        equipModel.returnPassport();
+////                    }
+//                }
+//
+//                if (needInit) {
+//                    logger.info(equipModel.deviceCode + " connect off");
+//                    map.put("CommState", 0);
+//                    equipModel.changeEquipPanel(map);
+//                    iSecsHost.isConnect = false;
+//                    equipModel.equipState.setCommOn(false);
+//                    equipModel.initialize();
+//                }
+//
+//                //  GlobalConstants.eapView.equipModels.remove(equipModel.deviceCode);
+//                //GlobalConstants.eapView.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
+//            } else {
+//                map.put("CommState", 1);
+//                equipModel.changeEquipPanel(map);
+//                equipModel.equipState.setCommOn(true);
+//                equipModel.iSecsHost.isConnect = true;
+//                equipModel.setIsConnect(true);
+//            }
         }
 //        if (equipModel.iSecsHost.iSecsConnection.getSocketClient() == null
 //                || !equipModel.iSecsHost.iSecsConnection.getSocketClient().isConnected()
@@ -506,7 +646,7 @@ public class CommCheckTask implements Job {
 //                    equipModel.changeEquipPanel(map);
 //                    equipModel.iSecsHost.isConnect = false;
 //                }
-//                GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
+//                GlobalConstants.eapView.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
 //            } else {
 //                if (!equipModel.iSecsHost.iSecsConnection.getSocketClient().isConnected()) {
 //                    logger.info("Check equipModel: SocketClient.disConnected");
@@ -526,13 +666,94 @@ public class CommCheckTask implements Job {
 //                equipModel.initialize();
 //            }
 //
-//            //  GlobalConstants.stage.equipModels.remove(equipModel.deviceCode);
-//            // GlobalConstants.stage.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
+//            //  GlobalConstants.eapView.equipModels.remove(equipModel.deviceCode);
+//            //GlobalConstants.eapView.equipModels.put(equipModelTmp.deviceCode, equipModelTmp);
 //        } else {
 //            map.put("CommState", 1);
 //            equipModel.changeEquipPanel(map);
 //            equipModel.equipState.setCommOn(true);
 //        }
 
+    }
+
+    public boolean testLinkSocket(ISecsHost iSecsHost, String deviceCode) {
+        try {
+            logger.info("开始检查Socket连接===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+            if (iSecsHost.iSecsConnection.getSocketClient() == null) {
+                logger.info("连接中断，尝试重连===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+                iSecsHost.iSecsConnection = new ISecsConnection(iSecsHost.ip, iSecsHost.port);
+                if (iSecsHost.iSecsConnection.getSocketClient() != null) {
+//                    iSecsHost.iSecsConnection.getSocketClient().sendUrgentData(0xFF);//发送1个字节的紧急数据，默认情况下，服务器端没有开启紧急数据处理，不影响正常通信
+                    iSecsHost.checkLinkStatus();
+//                    List<String> result = iSecsHost.executeCommand("curscreen");
+//                    if (result.get(0).toLowerCase().contains("error")) {
+//                        if(result.get(0).toLowerCase().contains("Error 0100")){
+//                            logger.info("当前设备处于LOCAL模式===>" + deviceCode);
+//                        }else{
+//                            throw new SocketException("socket error!");
+//                        }
+//                    }
+                    logger.info("重新建立连接成功===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+                } else {
+                    logger.info("重新建立连接失败===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+                    return false;
+                }
+            } else if (iSecsHost.iSecsConnection.getSocketClient() != null) {
+                iSecsHost.checkLinkStatus();
+//                List<String> result = iSecsHost.executeCommand("curscreen");
+//                if (result.get(0).toLowerCase().contains("error")) {
+//                    if(result.get(0).toLowerCase().contains("Error 0100")){
+//                        logger.info("当前设备处于LOCAL模式===>" + deviceCode);
+//                    }else {
+//                        throw new SocketException("socket error!");
+//                    }
+//                }
+//                iSecsHost.iSecsConnection.getSocketClient().sendUrgentData(0xFF);
+                logger.info("Socket连接一切正常===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+            }
+            return true;
+        } catch (Exception e) {
+//            e.printStackTrace();
+            logger.info("Socket异常，再次确认连接状况！：" + e.getMessage());
+            logger.debug(e);
+            if (iSecsHost.iSecsConnection.getSocketClient() != null) {
+                try {
+//                    iSecsHost.iSecsConnection.getSocketClient().connect(new InetSocketAddress(iSecsHost.iSecsConnection.getIp(), Integer.parseInt(iSecsHost.iSecsConnection.getPort())), 5000);
+                    iSecsHost.checkLinkStatus();
+//                    List<String> result = iSecsHost.executeCommand("curscreen");
+//                    if (result.get(0).toLowerCase().contains("error")) {
+//                        if(result.get(0).toLowerCase().contains("Error 0100")){
+//                            logger.info("当前设备处于LOCAL模式===>" + deviceCode);
+//                        }else{
+//                            throw new SocketException("socket error!");
+//                        }
+//                    }
+                    //此指令无效
+                    // iSecsHost.iSecsConnection.getSocketClient().sendUrgentData(0xFF);
+                    logger.info("Socket成功建立连接===>" + deviceCode+",PROT:"+iSecsHost.iSecsConnection.getPort());
+                    return true;
+                } catch (Exception e1) {
+                    logger.error("Socket异常，确认连接失败！关闭原有socket并置空！=》", e1);
+                    if (iSecsHost.iSecsConnection.getSocketClient() != null) {
+                        try {
+                            //断开之前的socket，释放资源，ocr只允许一个连接
+                            iSecsHost.iSecsConnection.getSocketClient().close();
+                        } catch (IOException e2) {
+                            logger.debug(e);
+//                            e2.printStackTrace();
+                        } finally {
+                            iSecsHost.iSecsConnection.setSocketClient(null);
+                            iSecsHost.iSecsConnection = new ISecsConnection(iSecsHost.ip, iSecsHost.port);
+//                            if("Connection reset by peer: send".equals(e1.getMessage())){
+//                                return true;
+//                            }
+                        }
+                    }
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     }
 }
