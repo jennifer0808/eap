@@ -62,21 +62,18 @@ public class AsmAD832iHost extends EquipHost {
                 }
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
-                }
-
-                logger.info("AsmAD832iHost getControlState:"+FengCeConstant.CONTROL_REMOTE_ONLINE);
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
+
                 logger.info("rptDefineNum；"+rptDefineNum);
                 if (rptDefineNum < 1) {
                     //为了能调整为online remote
 //                    sendS1F17out();
 //                    sendS2f41Cmd("ONLINE_REMOTE");
 
-                    logger.info("go to initial s1f3....");
+
                     super.findDeviceRecipe();
-                    logger.info("go to initial s1f3 end....");
+
                     rptDefineNum++;
 
                     // Enable/Disable s2f37
