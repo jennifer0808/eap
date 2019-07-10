@@ -48,6 +48,7 @@ public class ISecsHost implements ISecsInterface {
      */
     @Override
     public List<String> executeCommand(String command) {
+        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         List<String> result = new ArrayList<String>();
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));

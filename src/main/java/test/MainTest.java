@@ -6,13 +6,22 @@ package test;
 
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class MainTest {
 
     public static void main(String[] args) {
+        String startTime = "12345644889900";
+        LocalDateTime now = LocalDateTime.now();
+        String nowTime = now.format(AvaryAxisUtil.dtf2);
+        String startTimeM = startTime.substring(10, 12);
+        String nowTimeM = nowTime.substring(10, 12);
+
+
         String ss = "123|4564";
         System.out.print(ss.contains("|"));
         String sss[] = ss.split("|");

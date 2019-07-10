@@ -391,7 +391,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     public String selectRecipe(String recipeName) {
         try {
             getCurrentRecipeName();
-            uploadData("正常");
+            uploadData("生产");
         } catch (Exception e) {
             logger.error("报表上传出错", e);
         }
@@ -555,6 +555,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     @Override
     public String getEquipStatus() {
+        String preEquipStatusTemp = equipStatus;
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
 
@@ -589,13 +590,13 @@ public class HitachiLaserDrillHost extends EquipModel {
                         equipStatus = "Idle";
                     }
 
-                    String abcColor = "";
-                    List<String> abcColors = this.iSecsHost.executeCommand("readrectcolor 1040 556 1070 559");
-                    for (String abcColorTemp : abcColors) {
-                        if (abcColorTemp.contains("0x")) {
-                            abcColor = abcColorTemp;
-                        }
-                    }
+//                    String abcColor = "";
+//                    List<String> abcColors = this.iSecsHost.executeCommand("readrectcolor 1040 556 1070 559");
+//                    for (String abcColorTemp : abcColors) {
+//                        if (abcColorTemp.contains("0x")) {
+//                            abcColor = abcColorTemp;
+//                        }
+//                    }
                     String startColor = "";
                     List<String> startColors = this.iSecsHost.executeCommand("readrectcolor 1040 368 1070 374");
                     for (String startColorTemp : startColors) {
@@ -605,16 +606,18 @@ public class HitachiLaserDrillHost extends EquipModel {
                     }
                     if (shutterColor.equals("0x99ff00")) {
                         if (startColor.equals("0x99ff00")) {
-                            if (abcColor.equals("0x99ff00")) {
-                                equipStatus = "AutoRun";
-                            }
-                            if (abcColor.equals("0xcbcbcb")) {
-                                equipStatus = "ManualRun";
-                            }
+//                            if (abcColor.equals("0x99ff00")) {
+//                                equipStatus = "Run";
+//                            }
+//                            if (abcColor.equals("0xcbcbcb")) {
+                            equipStatus = "Run";
+//                            }
                         } else {
                             equipStatus = "Idle";
                         }
                     }
+                } else {
+                    equipStatus = "Idle";
                 }
 
 //                String startColor = "";
@@ -644,7 +647,10 @@ public class HitachiLaserDrillHost extends EquipModel {
         }
         Map map = new HashMap();
         map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
+        if (!equipStatus.equals(preEquipStatusTemp)) {
+            preEquipStatus = preEquipStatusTemp;
+            changeEquipPanel(map);
+        }
         return equipStatus;
     }
 
@@ -881,6 +887,11 @@ public class HitachiLaserDrillHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
+        if (macstate.equals("生产")) {
+            if (!confirmLotCount()) {
+                return false;
+            }
+        }
         LocalDateTime now = LocalDateTime.now();
 
         /**
@@ -1009,6 +1020,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(laserHeadLife);
 
         String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
+        lotStartTime = now.format(AvaryAxisUtil.dtf2);
         if ("".equals(uploadReportDetailResult)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
             FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
@@ -1026,9 +1038,15 @@ public class HitachiLaserDrillHost extends EquipModel {
         }
         List paraValueList = new ArrayList();
         paraValueList.add(MacState);
-        if (MacState.equals("保养")) {
-            paraValueList.add(pmState.getStartTime());
-            paraValueList.add(pmState.getEndTime());
+        if (MacState.equals("保养") || MacState.equals("待料")) {
+            if (MacState.equals("待料")) {
+                paraValueList.add(lotStartTime);
+                LocalDateTime now = LocalDateTime.now();
+                paraValueList.add(now.format(AvaryAxisUtil.dtf2));
+            } else {
+                paraValueList.add(pmState.getStartTime());
+                paraValueList.add(pmState.getEndTime());
+            }
             paraValueList.add("");
             paraValueList.add(0);
             paraValueList.add("");
@@ -1096,5 +1114,23 @@ public class HitachiLaserDrillHost extends EquipModel {
 
         }
         return laserHeadLife;
+    }
+
+    private boolean confirmLotCount() {
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            String panelCount = iSecsHost.executeCommand("read panelcount ").get(0);
+
+            String panelTotal = iSecsHost.executeCommand("read paneltotal ").get(0);
+            logger.info("panelcount:" + panelCount + " paneltotal :" + panelTotal);
+            try {
+                if (Double.parseDouble(panelTotal) - Double.parseDouble(panelCount) <= 2) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
     }
 }

@@ -81,7 +81,7 @@ public abstract class EquipModel extends Thread {
     public boolean isEngineerMode = false;
     public boolean isLocalMode = false;
     public String tableNum = "";
-    protected String lotStartTime = ""; //开始时间
+    public String lotStartTime = ""; //开始时间
     public List<Material> materials = new ArrayList<>();
     public List<Tooling> toolings = new ArrayList<>();
     public PMState pmState;
@@ -136,7 +136,7 @@ public abstract class EquipModel extends Thread {
 
     @Override
     public void run() {
-        while (!this.isInterrupted()) {
+//        while (!this.isInterrupted()) {
             if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
                 if (testOcrConnect()) {
                     Map map = new HashMap();
@@ -147,7 +147,7 @@ public abstract class EquipModel extends Thread {
                     iSecsHostList.add(iSecsHost);
                 }
             }
-        }
+//        }
     }
 
     public void initialize() {

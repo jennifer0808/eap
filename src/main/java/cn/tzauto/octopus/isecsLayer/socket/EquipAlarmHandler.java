@@ -264,7 +264,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         }
         String crystalPower = laserCrystal.toString();
         String[] crystalPowers = crystalPower.split("=");
-        String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[0]));
+        String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[1]));
         double actualPower = Double.parseDouble(crystalPowers[1]);
         double UPPER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("UPPER_LIMIT"))) / 100;
         double LOWER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("LOWER_LIMIT"))) / 100;

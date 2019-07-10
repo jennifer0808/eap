@@ -6,6 +6,7 @@
 package cn.tzauto.octopus.gui.widget.equipstatuspane;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.gui.widget.svquerypane.SVQueryPaneController;
@@ -21,8 +22,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
+import javax.xml.rpc.ServiceException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
+import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
 /**
@@ -152,19 +157,34 @@ public class EquipStatusPaneController implements Initializable {
             isOnPM = false;
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "保养结束.");
             //todo 执行ocr解锁屏命令
-            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputunlock");
+//            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputunlock");
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(true);
+            LocalDateTime now = LocalDateTime.now();
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setEndTime(now.format(AvaryAxisUtil.dtf2));
+            try {
+                GlobalConstants.stage.equipModels.get(deviceCode).uploadData("保养");
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (ServiceException e) {
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         } else {
             isOnPM = true;
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
             //todo 执行ocr锁屏命令
-            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputlock");
+//            GlobalConstants.stage.equipModels.get(deviceCode).iSecsHost.executeCommand("inputlock");
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(true);
+            LocalDateTime now = LocalDateTime.now();
+            GlobalConstants.stage.equipModels.get(deviceCode).pmState.setStartTime(now.format(AvaryAxisUtil.dtf2));
         }
     }
 
     private void reportInfoReUp(String deviceCode) {
         try {
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
-            boolean data = equipModel.uploadData();
+            boolean data = equipModel.uploadData("生产");
             if (data) {
                 equipModel.firstLot = true;
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据重传成功.");

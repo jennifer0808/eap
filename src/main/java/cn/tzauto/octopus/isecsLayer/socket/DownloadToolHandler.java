@@ -253,12 +253,15 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
         }
         if (command.equals("startmiantain")) {
             String time = String.valueOf(downloadMessageMap.get("time"));
+            time = time.replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "");
+
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(true);
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setStartTime(time);
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始保养.");
         }
         if (command.equals("endmiantain")) {
             String time = String.valueOf(downloadMessageMap.get("time"));
+            time = time.replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "");
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setPM(false);
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setEndTime(time);
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "结束保养.");

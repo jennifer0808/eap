@@ -9,16 +9,19 @@ import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
+import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  * @author luosy
@@ -75,7 +79,13 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             Map statusmap = new HashMap();
             statusmap.put("EquipStatus", status);
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
+            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
             if (equipModel != null) {
+                if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
+                    prestatus = equipModel.equipStatus;
+                    Thread.sleep(1000);
+                    status = equipModel.getEquipStatus();
+                }
                 equipModel.changeEquipPanel(statusmap);
                 equipModel.preEquipStatus = prestatus.trim();
                 equipModel.equipStatus = status.trim();
@@ -102,7 +112,17 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                         equipModel.getSpecificData(null);
                     }
                 }
+                if ("run".equalsIgnoreCase(preEquipstatus) && equipstatus.equalsIgnoreCase("idle")) {
+                    if (equipModel.deviceType.equals("HITACHI-LASERDRILL")) {
+                        equipModel.uploadData("生产");
+                    }
+                }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {
+                    if (equipModel.deviceType.equals("HITACHI-LASERDRILL")) {
+                        if (needCare(equipModel)) {
+                            equipModel.uploadData("待料");
+                        }
+                    }
                     logger.info("设备:" + deviceCode + "开机作业.");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
                     boolean businessmode = false;
@@ -199,4 +219,19 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
 
     }
 
+    private boolean needCare(EquipModel equipModel) {
+        String startTime = equipModel.lotStartTime;
+
+        LocalDateTime now = LocalDateTime.now();
+        String nowTime = now.format(AvaryAxisUtil.dtf2);
+        String startTimeM = startTime.substring(10, 12);
+        String nowTimeM = nowTime.substring(10, 12);
+
+        if (Double.parseDouble(nowTimeM) - Double.parseDouble(startTimeM) < Double.parseDouble(GlobalConstants.getProperty("IDLE_LESS_TIME"))
+                && Double.parseDouble(nowTimeM) + 60 - Double.parseDouble(startTimeM) < Double.parseDouble(GlobalConstants.getProperty("IDLE_LESS_TIME"))
+                ) {
+            return false;
+        }
+        return true;
+    }
 }
