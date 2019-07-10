@@ -233,6 +233,9 @@ public class EsecDB2100Host extends EquipHost {
 
             sendS2F37outAll();
 
+            sendS2F37outClose(3152L);
+            sendS2F37outClose(3211L);
+
             sendS2F37outClose(15650L);
             sendS2F37outClose(15652L);
             sendS5F3out(true);
