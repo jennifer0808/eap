@@ -142,9 +142,8 @@ public class MVPHost extends EquipHost {
             //切换recipe后获取事件报告
             replyS6F12WithACK(data, (byte) 0);
             findDeviceRecipe();
-//                sendS1F3Check();
         } else if (ceid == StripMapUpCeid) {
-            logger.info("----Received from Equip Strip Map Upload event - S6F11");
+            logger.info("----Received from Equip Strip Map Upload event - S6F11 , ceid : " + ceid);
             long result = -1L;
             try {
                 List reportData = (List) data.get("REPORT");
@@ -161,6 +160,11 @@ public class MVPHost extends EquipHost {
                 replyS6F12WithACK(data, (byte) 0);
                 logger.info("检测结果为:" + result + ",不上传mapping!");
             }
+        } else if(ceid == 3043L){
+            logger.info("----Received from Equip Strip Map Upload event - S6F11 , ceid : " + ceid);
+            processS6F11inStripMapUpload(data);
+        } else {
+            replyS6F12WithACK(data, (byte) 0);
         }
 
 
