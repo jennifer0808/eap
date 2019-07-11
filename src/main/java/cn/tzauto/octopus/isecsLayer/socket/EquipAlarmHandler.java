@@ -105,53 +105,56 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             if (str.contains("Date")) {
                                 logger.info("power check data:Date:" + str.split(",")[1]);
 //                            ((HitachiLaserDrillHost) GlobalConstants.eapView.equipModels.get(deviceInfo.getDeviceCode())).setPCHK(str.split(",")[1], null, null, null);
+                                return null;
                             }
                             if (str.contains("Crystal No.")) {
                                 logger.info("power check data:CrystalNo:" + str.split(",")[1]);
+                                return null;
                             }
                             if (str.contains("Crystal_Time")) {
                                 logger.info("power check data:Crystal_Time:" + str.split(",")[1]);
+                                return null;
                             }
                             if (str.contains("Axis")) {
-                                GlobalConstants.laserCrystalPower.setAxis(str.split(",")[1].substring(0, 2));
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAxis(str.split(",")[1].substring(0, 2));
                                 logger.info("power check data:Axis:" + str.split(",")[1]);
                             }
                             if (str.contains("AP_No")) {
-                                GlobalConstants.laserCrystalPower.setAp_no(str.split(",")[1]);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAp_no(str.split(",")[1]);
 //                                crystalPower = crystalPower + "_" + str + "_POWER";
                                 logger.info("power check data:AP_No:" + str.split(",")[1]);
                             }
                             if (str.contains("Power")) {
-                                GlobalConstants.laserCrystalPower.setPower(str.split(",")[1]);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setPower(str.split(",")[1]);
 //                                crystalPower = crystalPower + "=" + str;
                                 logger.info("power check data:Power:" + str.split(",")[1]);
 
                             }
-                            crystalPowerCheck(GlobalConstants.laserCrystalPower);
+                            crystalPowerCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower);
                             return null;
                         }
                         if (str.contains(".GLV")) {
                             if (str.contains("GCHK,")) {
-                                GlobalConstants.laserCrystalAccuracy.setCrystalAccuracy(true);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(true);
 //                                isCrystalAccuracy = true;
                             }
                             if (str.contains("GCOMP,")) {
-                                GlobalConstants.laserCrystalAccuracy.setCrystalAccuracy(false);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(false);
 //                                isCrystalAccuracy = false;
-                                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+                                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceInfo.getDeviceCode());
                             }
 
                             if (str.contains(",XY,")) {
                                 String[] stringss = str.split(",");
-                                GlobalConstants.laserCrystalAccuracy.setAp_no(stringss[1].trim());
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAp_no(stringss[1].trim());
 
                             }
                             if (str.contains("MAX_1")) {
                                 String[] strs = str.split(",");
                                 str = strs[strs.length - 1];
                                 str = str.split("=")[1];
-                                GlobalConstants.laserCrystalAccuracy.setAxis("Z1");
-                                GlobalConstants.laserCrystalAccuracy.setAccuracy(str);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z1");
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
 //                                String crystalAccuracyTemp = "Z1_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
 //                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_1:" + str);
 //                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
@@ -164,10 +167,10 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 //                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_2:" + str);
 //                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
 //                                    crystalAccuracy = "";
-                                GlobalConstants.laserCrystalAccuracy.setAxis("Z2");
-                                GlobalConstants.laserCrystalAccuracy.setAccuracy(str);
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z2");
+                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
                             }
-                            accuracyCheck(deviceInfo.getDeviceCode(), GlobalConstants.laserCrystalAccuracy);
+                            accuracyCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy);
                             return null;
                         }
                         break;
@@ -224,6 +227,7 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         }
 
         String str = laserCrystal.toAccuracyString();
+        logger.info("Crystal Accuracy. actual data " + str);
         String accuracysTemp = laserCrystal.getAccuracy();
         try {
             Double.parseDouble(accuracysTemp);
@@ -235,22 +239,22 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         } catch (Exception e) {
         }
-        List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+        List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
         if (fileBodyAsStrList == null || fileBodyAsStrList.isEmpty()) {
             fileBodyAsStrList = new ArrayList();
             fileBodyAsStrList.add(str);
-            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
         } else {
             if (strHasBeenWrite(fileBodyAsStrList, str)) {
                 fileBodyAsStrList = removeRepetitionStr(fileBodyAsStrList, str);
             } else {
                 fileBodyAsStrList.add(str);
             }
-            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
         }
 
 
-        GlobalConstants.laserCrystalAccuracy = new LaserCrystal();
+        GlobalConstants.stage.equipModels.get(deviceCode).laserCrystalAccuracy = new LaserCrystal();
     }
 
     /**
@@ -258,33 +262,34 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
      *
      * @param laserCrystal
      */
-    private void crystalPowerCheck(LaserCrystal laserCrystal) {
+    private void crystalPowerCheck(String deviceCode, LaserCrystal laserCrystal) {
         if (!laserCrystal.canPowerCheck()) {
             return;
         }
         String crystalPower = laserCrystal.toString();
+        logger.info("Crystal power. actual data " + crystalPower);
         String[] crystalPowers = crystalPower.split("=");
-        String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[1]));
+        String standardPower = String.valueOf(GlobalConstants.crystalPowerMap.get(crystalPowers[0]));
         double actualPower = Double.parseDouble(crystalPowers[1]);
         double UPPER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("UPPER_LIMIT"))) / 100;
         double LOWER_LIMIT = Double.valueOf(String.valueOf(GlobalConstants.crystalPowerMap.get("LOWER_LIMIT"))) / 100;
         if (Double.valueOf(standardPower) > actualPower * (1 + UPPER_LIMIT) || Double.valueOf(standardPower) < actualPower * (1 - LOWER_LIMIT)) {
             logger.error("Crystal power out of range. actual data " + crystalPower);
         }
-        List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+        List fileBodyAsStrList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
         if (fileBodyAsStrList == null || fileBodyAsStrList.isEmpty()) {
             fileBodyAsStrList = new ArrayList();
             fileBodyAsStrList.add(crystalPower);
-            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
         } else {
             if (strHasBeenWrite(fileBodyAsStrList, crystalPower)) {
                 fileBodyAsStrList = removeRepetitionStr(fileBodyAsStrList, crystalPower);
             } else {
                 fileBodyAsStrList.add(crystalPower);
             }
-            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+            FileUtil.writeStrListFile(fileBodyAsStrList, GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
         }
-        GlobalConstants.laserCrystalPower = new LaserCrystal();
+        GlobalConstants.stage.equipModels.get(deviceCode).laserCrystalPower = new LaserCrystal();
     }
 
     private boolean strHasBeenWrite(List<String> strlist, String str) {

@@ -117,8 +117,7 @@ public class GlobalConstants {
     public static List<DeviceInfo> deviceInfos;
     public static Map<String, Map> mesInferfaceParaMap;
     public static Map crystalPowerMap;
-    public static LaserCrystal laserCrystalPower = new LaserCrystal();
-    public static LaserCrystal laserCrystalAccuracy = new LaserCrystal();
+
 
     public static boolean loadPropertyFromDB() {
         try {

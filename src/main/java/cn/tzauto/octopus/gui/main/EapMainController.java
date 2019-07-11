@@ -60,13 +60,14 @@ public class EapMainController implements Initializable {
     private String DEFAULT_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private String time;
     private int ONE_SECOND = 1000;
-    public static int loginmark=0;
+    public static int loginmark = 0;
     //   private Boolean Flag = false ;
 
     @FXML
     private void logout(ActionEvent event) throws IOException {
         loginOut();
     }
+
     //登出
     public void loginOut() throws IOException {
         Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
@@ -74,10 +75,7 @@ public class EapMainController implements Initializable {
         Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
         Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
         Button localMode = (Button) EapClient.root.lookup("#localMode");
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Login.fxml"), resourceBundle);
-        userName = (TextField) root.lookup("#userName");
-       UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName.getText() + "注销登录...");
+        UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + GlobalConstants.sysUser.getName() + "注销登录...");
         JB_MainPage.setVisible(false);
         JB_RcpMng.setVisible(false);
         JB_Login.setVisible(true);
@@ -88,7 +86,7 @@ public class EapMainController implements Initializable {
         GlobalConstants.isUpload = false;
         GlobalConstants.isDownload = false;
         GlobalConstants.isSvQuery = false;
-        loginmark=0;
+        loginmark = 0;
         rcpMngClose();
     }
 
@@ -96,10 +94,10 @@ public class EapMainController implements Initializable {
     private void login() throws IOException {
 
         GlobalConstants.userFlag = false;
-        if(loginmark==0){
+        if (loginmark == 0) {
             loginStage = new Stage();
             loginInterface();
-            loginmark=1;
+            loginmark = 1;
         }
 
     }
@@ -123,20 +121,20 @@ public class EapMainController implements Initializable {
         String passwordStr = password.getText();
 
         button.setOnAction((ActionEvent t) -> {
-            new LoginController().loginSuc(userNameStr,passwordStr);
+            new LoginController().loginSuc(userNameStr, passwordStr);
         });
 
         loginStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent event) {
-                if (isUpload && !onlyOnePageUpload){
+                if (isUpload && !onlyOnePageUpload) {
                     isUpload = false;
                 } else if (isDownload && !onlyOnePageDownload) {
                     isDownload = false;
-                } else if (isSvQuery ) {
+                } else if (isSvQuery) {
                     isSvQuery = false;
                 }
-                loginmark=0;
+                loginmark = 0;
             }
         });
 
@@ -164,6 +162,7 @@ public class EapMainController implements Initializable {
     }
 
     Tab rcpMngtTab = new Tab("Recipe管理");
+
     @FXML
     private void rcpMngClick() {
 //        TBP_Main.getTabs().add(TB_RcpMng);
@@ -181,6 +180,7 @@ public class EapMainController implements Initializable {
         TBP_Main.getTabs().add(rcpMngtTab);
         TBP_Main.getSelectionModel().select(rcpMngtTab);
     }
+
     @FXML
     private void rcpMngClose() {
 //        TBP_Main.getTabs().add(TB_RcpMng);

@@ -16,19 +16,33 @@ public class LaserCrystal {
     }
 
     public boolean canPowerCheck() {
-        if (this.getPower() != null && this.getAp_no() != null && this.getAxis() != null) {
-            return true;
-        } else {
+        if (this == null) {
+            return false;
+        }
+        try {
+            if (this.getPower() != null && this.getAp_no() != null && this.getAxis() != null) {
+                return true;
+            } else {
 
+                return false;
+            }
+        } catch (Exception w) {
             return false;
         }
     }
 
     public boolean canAccuracyCheck() {
-        if (this.getAccuracy() != null && this.getAp_no() != null && this.getAxis() != null) {
-            return true;
-        } else {
+        if (this == null) {
+            return false;
+        }
+        try {
+            if (this.getAccuracy() != null && this.getAp_no() != null && this.getAxis() != null) {
+                return true;
+            } else {
 
+                return false;
+            }
+        } catch (Exception w) {
             return false;
         }
     }

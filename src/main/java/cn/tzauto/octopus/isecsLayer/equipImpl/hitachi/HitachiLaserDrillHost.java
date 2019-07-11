@@ -1023,8 +1023,8 @@ public class HitachiLaserDrillHost extends EquipModel {
         lotStartTime = now.format(AvaryAxisUtil.dtf2);
         if ("".equals(uploadReportDetailResult)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
-            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
-            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
+            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
             return true;
         }
         logger.error("报表数据上传中，明細表數據插入失败：" + uploadReportDetailResult);
@@ -1082,7 +1082,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     private Map getCrystalPowerMap() {
 
         Map powerMap = new HashMap();
-        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH"));
+        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
         for (String str : CrystalPowerList) {
             String[] strs = str.split("=");
             powerMap.put(strs[0], strs[1]);
@@ -1092,7 +1092,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     private Map getCrystalAccuracyMap() {
         Map accuracyMap = new HashMap();
-        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH"));
+        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
         for (String str : CrystalAccuracyList) {
             String[] strs = str.split("=");
             accuracyMap.put(strs[0], strs[1]);

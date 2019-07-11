@@ -220,6 +220,9 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
     }
 
     private boolean needCare(EquipModel equipModel) {
+        if (equipModel.pmState.isPM()) {
+            return false;
+        }
         String startTime = equipModel.lotStartTime;
 
         LocalDateTime now = LocalDateTime.now();

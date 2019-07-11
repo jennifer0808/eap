@@ -12,6 +12,7 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
+import cn.tzauto.octopus.biz.tooling.LaserCrystal;
 import cn.tzauto.octopus.biz.tooling.Tooling;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
@@ -85,6 +86,8 @@ public abstract class EquipModel extends Thread {
     public List<Material> materials = new ArrayList<>();
     public List<Tooling> toolings = new ArrayList<>();
     public PMState pmState;
+    public LaserCrystal laserCrystalPower;
+    public LaserCrystal laserCrystalAccuracy;
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -103,6 +106,9 @@ public abstract class EquipModel extends Thread {
         candidates.put("UserLevel", "99");
         candidates.put("Waiter", "");
         pmState = new PMState("system");
+        laserCrystalPower = new LaserCrystal();
+        laserCrystalAccuracy = new LaserCrystal();
+        lotStartTime = LocalDateTime.now().format(AvaryAxisUtil.dtf2);
     }
 
     public abstract String getCurrentRecipeName();
@@ -137,16 +143,16 @@ public abstract class EquipModel extends Thread {
     @Override
     public void run() {
 //        while (!this.isInterrupted()) {
-            if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
-                if (testOcrConnect()) {
-                    Map map = new HashMap();
-                    map.put("ControlState", controlState);
-                    changeEquipPanel(map);
-                    getEquipRealTimeState();
-                    iSecsHostList.remove(iSecsHost);
-                    iSecsHostList.add(iSecsHost);
-                }
+        if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
+            if (testOcrConnect()) {
+                Map map = new HashMap();
+                map.put("ControlState", controlState);
+                changeEquipPanel(map);
+                getEquipRealTimeState();
+                iSecsHostList.remove(iSecsHost);
+                iSecsHostList.add(iSecsHost);
             }
+        }
 //        }
     }
 

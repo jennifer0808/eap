@@ -7,6 +7,7 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 
+import java.io.IOException;
 import java.util.Date;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
@@ -31,10 +32,15 @@ public class SessionControlTask implements Job {
             if (now - past >= timeDiff) {
                 if (GlobalConstants.sysUser != null) {
                     String userName = GlobalConstants.sysUser.getLoginName();
-                    GlobalConstants.sysUser = null;
+//                    GlobalConstants.sysUser = null;
                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
                 }
 //                GlobalConstants.stage.setPartsInvisible();//超过设定时间系统自动注销
+                try {
+                    GlobalConstants.stage.loginOut();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 GlobalConstants.loginTime = null;
                 logger.debug("长时间未进行关键性操作，登录已被注销");
             }

@@ -17,7 +17,7 @@ public class PMState {
     public PMState(String operater) {
         startTime = dateFormat.format(new Date());
         endTime = "";
-        isPM = true;
+        isPM = false;
         this.operater = operater;
     }
 

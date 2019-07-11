@@ -603,14 +603,13 @@ public class EapClient extends Application implements JobListener, PropertyChang
             }
         }.start();
     }
+
     public void loginOut() throws IOException {
         Button JB_MainPage = (Button) EapClient.root.lookup("#JB_MainPage");
         Button JB_RcpMng = (Button) EapClient.root.lookup("#JB_RcpMng");
         Button JB_Login = (Button) EapClient.root.lookup("#JB_Login");
         Button JB_SignOut = (Button) EapClient.root.lookup("#JB_SignOut");
         Button localMode = (Button) EapClient.root.lookup("#localMode");
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("eap", new languageUtil().getLocale());
-
         UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + GlobalConstants.sysUser.getName() + "注销登录...");
         JB_MainPage.setVisible(false);
         JB_RcpMng.setVisible(false);
@@ -622,8 +621,9 @@ public class EapClient extends Application implements JobListener, PropertyChang
         GlobalConstants.isUpload = false;
         GlobalConstants.isDownload = false;
         GlobalConstants.isSvQuery = false;
-        TabPane TBP_Main= (TabPane) GlobalConstants.stage.root.lookup("#TBP_Main");
-
-
+        TabPane TBP_Main = (TabPane) GlobalConstants.stage.root.lookup("#TBP_Main");
+        if (TBP_Main.getTabs().size() > 1) {
+            TBP_Main.getTabs().remove(1);
+        }
     }
 }
