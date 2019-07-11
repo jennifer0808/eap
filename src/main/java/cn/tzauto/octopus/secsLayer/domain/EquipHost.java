@@ -668,11 +668,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("isInterrupted:[" + isInterrupted() + "]isStartUp:[" + isStartUp() + "]isThreadUsed:[" + isThreadUsed() + "]");
             return null;
         }
+        Map resultMap = sendS1F3Check();
         if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(this.getControlState())) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备处于Offline状态...");
             return null;
         }
-        Map resultMap = sendS1F3Check();
+
         updateCommStateInExt();
         return resultMap;
     }
