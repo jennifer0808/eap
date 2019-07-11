@@ -146,8 +146,21 @@ public class EsecDB2100Host extends EquipHost {
 //                processS6F11inStripMapUpload(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-//                processS6F11in(data);
-                this.inputMsgQueue.put(data);
+                long ceid = 0L;
+                try {
+                    ceid = (long) data.get("CEID");
+                    logger.info("Received a s6f11in with CEID = " + ceid);
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                }
+                if (ceid == StripMapUpCeid ) {
+                    this.inputMsgQueue.put(data);
+                } else {
+                    replyS6F12WithACK(data, (byte) 0);
+                    if(ceid == EquipStateChangeCeid || ceid == 3L){
+                        this.inputMsgQueue.put(data);
+                    }
+                }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -204,24 +217,24 @@ public class EsecDB2100Host extends EquipHost {
 
             List list1 = new ArrayList();
             list1.add(269352993L);
-            sendS2F33out(1001L,1001L, list1);//15339
+            sendS2F33out(1001L, 1001L, list1);//15339
 
             List list2 = new ArrayList();
             list2.add(269352993L);
-            sendS2F33out(1001L,1002L, list1);//15338
+            sendS2F33out(1001L, 1002L, list1);//15338
 
             List list3 = new ArrayList();
             list3.add(269352995L);
-            sendS2F33out(1001L,1003L, list3);//15328
+            sendS2F33out(1001L, 1003L, list3);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(1001L,15339L, 1001L);//15339 1001
+            sendS2F35out(1001L, 15339L, 1001L);//15339 1001
 
-            sendS2F35out(1001L,15338L, 1002L);//15339 1001
+            sendS2F35out(1001L, 15338L, 1002L);//15339 1001
 
-            sendS2F35out(1001L,15328L, 1003L);//15339 1001
+            sendS2F35out(1001L, 15328L, 1003L);//15339 1001
 
             List list = new ArrayList();
             list.add(2031L);
@@ -248,13 +261,12 @@ public class EsecDB2100Host extends EquipHost {
     }
 
 
-
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
     @Override
     public void processS1F13in(DataMsgMap data) {
         super.processS1F13in(data);
-        if(rptDefineNum>0) {
+        if (rptDefineNum > 0) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -355,10 +367,9 @@ public class EsecDB2100Host extends EquipHost {
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
-                replyS6F12WithACK(data, (byte) 0);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
-                }else if(ceid == 3L){
+                } else if (ceid == 3L) {
                     processS6F11LearnDevice(data);
                 }
             }
@@ -414,7 +425,7 @@ public class EsecDB2100Host extends EquipHost {
             String busniessMod = deviceInfoExt.getBusinessMod();
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑&&
-            logger.info("equipStatus: "+  equipStatus);
+            logger.info("equipStatus: " + equipStatus);
             if (dataReady && "run".equalsIgnoreCase(equipStatus)) {
                 logger.info("校验2D");
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
@@ -571,7 +582,7 @@ public class EsecDB2100Host extends EquipHost {
     }
 
     public void sendS2F15outLearnDevice(long ecid, Object ecv, short ecvFormat) {
-        sendS2F15out(ecid,(String)ecv);
+        sendS2F15out(ecid, (String) ecv);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Learn Device，设备进行锁机，请报修MES并进行数据BuyOff！");
     }
 

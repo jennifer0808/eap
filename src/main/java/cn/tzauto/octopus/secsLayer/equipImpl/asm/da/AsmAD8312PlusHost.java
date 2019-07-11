@@ -154,7 +154,25 @@ public class AsmAD8312PlusHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-                this.inputMsgQueue.put(data);
+                long ceid = 0;
+                try {
+                    if (data.get("CEID") != null) {
+                        ceid = (long) data.get("CEID");
+                        logger.info("Received a s6f11in with CEID = " + ceid);
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                }
+                if (ceid == StripMapUpCeid) {
+                    this.inputMsgQueue.put(data);
+                } else {
+                    replyS6F12WithACK(data, (byte) 0);
+                    if (ceid == EquipStateChangeCeid || ceid == 8 || ceid == 47 || ceid == 6 || ceid == 7 || ceid == 9 || ceid == 10) {
+                        this.inputMsgQueue.put(data);
+                    }
+                }
+                this.setCommState(1);
+
             } else if (tagName.toLowerCase().contains("s6f11incommon")) {
                 processS6F11in(data);
                 if ((long) data.get("CEID") == 8L) {
@@ -263,16 +281,12 @@ public class AsmAD8312PlusHost extends EquipHost {
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
-                replyS6F12WithACK(data,(byte)0);
-                if (ceid == EquipStateChangeCeid || ceid == 8 || ceid == 47  ) {
+                if (ceid == EquipStateChangeCeid || ceid == 8 || ceid == 47) {
                     processS6F11EquipStatusChange(data);
-                } else if ( ceid == 6 || ceid == 7 || ceid == 9 || ceid == 10 ) {
+                } else if (ceid == 6 || ceid == 7 || ceid == 9 || ceid == 10) {
                     findDeviceRecipe();
-                } else {
-                    processS6F11EquipStatus(data);
                 }
             }
-            this.setCommState(1);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

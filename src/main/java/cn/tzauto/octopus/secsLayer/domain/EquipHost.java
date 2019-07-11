@@ -2252,8 +2252,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @return
      */
     public boolean holdDeviceAndShowDetailInfo() {
-        Map resultMap = new HashMap();
-        resultMap = holdDevice();
+        Map resultMap   = holdDevice();
 
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
@@ -2274,50 +2273,31 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     public boolean holdDeviceAndShowDetailInfo(String type) {
-        Map resultMap = new HashMap();
-        boolean hold;
+        Map resultMap;
         if ("QA_LOCK".equals(type) && deviceType.contains("TOWA")) {
             resultMap = lockDevice();
         } else {
             resultMap = holdDevice();
         }
-        String holdDesc = "";
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                holdDesc = "当前设备已经被锁机";
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, holdDesc);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
-                hold = true;
+                return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                holdDesc = "设备将稍后执行锁机";
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, holdDesc);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
                 String dateStr = GlobalConstants.dateFormat.format(new Date());
                 this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + type);
-                hold = true;
+                return true;
             } else {
                 Map eqptStateMap = this.findEqptStatus();
-                holdDesc = "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState"));
                 UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
-                hold = false;
+                return false;
             }
         } else {
-            hold = false;
-            holdDesc = "无法锁机,设备状态异常或未开启锁机";
+            return false;
         }
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "HostHoldResult");
-        mqMap.put("holdReason", type);
-        mqMap.put("deviceCode", deviceCode);
-        if (hold) {
-            mqMap.put("holdResult", "锁机成功");
-            mqMap.put("holdDesc", holdDesc);
-        } else {
-            mqMap.put("holdResult", "锁机失败");
-            mqMap.put("holdDesc", holdDesc);
-        }
-        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-        return hold;
     }
 
     /**
