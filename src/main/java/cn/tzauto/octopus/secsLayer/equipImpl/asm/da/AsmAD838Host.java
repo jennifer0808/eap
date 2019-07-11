@@ -37,7 +37,7 @@ public class AsmAD838Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    public Long ceid =0L;
+    public Long ceid = 0L;
 
     public AsmAD838Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -64,8 +64,7 @@ public class AsmAD838Host extends EquipHost {
                 }
 
 
-
-                logger.info("rptDefineNum:"+rptDefineNum);
+                logger.info("rptDefineNum:" + rptDefineNum);
                 if (rptDefineNum < 1) {
 
                     //为了能调整为online remote
@@ -89,13 +88,13 @@ public class AsmAD838Host extends EquipHost {
                     rptDefineNum++;
                 }
                 msg = this.inputMsgQueue.take();
-                if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")){
+                if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")) {
                     processS1F1in(msg);
-                }else if(msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")) {
                     processS1F13in(msg);
-                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F14IN")){
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F14IN")) {
                     processS1F14in(msg);
-                }else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S14F1IN")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
@@ -125,21 +124,21 @@ public class AsmAD838Host extends EquipHost {
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
                 processS1F1in(data);
-            }else if (tagName.equalsIgnoreCase("s1f2in")) {
+            } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
-            }else if (tagName.equalsIgnoreCase("S1F13IN")) {
+            } else if (tagName.equalsIgnoreCase("S1F13IN")) {
                 processS1F13in(data);
-            }else if (tagName.equalsIgnoreCase("s1f14in")) {
+            } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 this.inputMsgQueue.put(data);
-            }else if (tagName.equalsIgnoreCase("s1f4in")) {
+            } else if (tagName.equalsIgnoreCase("s1f4in")) {
                 putDataIntoWaitMsgValueMap(data);
-            }else if (tagName.equalsIgnoreCase("s2f38in")){
+            } else if (tagName.equalsIgnoreCase("s2f38in")) {
                 processS2F38in(data);
-            }else if (tagName.equalsIgnoreCase("S6F11IN")) {
+            } else if (tagName.equalsIgnoreCase("S6F11IN")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s7f1in")) {
                 processS7F1in(data);
-            }  else if (tagName.equalsIgnoreCase("S5F1IN")) {
+            } else if (tagName.equalsIgnoreCase("S5F1IN")) {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("S14F1IN")) {
@@ -167,11 +166,10 @@ public class AsmAD838Host extends EquipHost {
                 processS12F17in(data);
             } else if (tagName.equalsIgnoreCase("s12f19in")) {
                 processS12F19in(data);
-            }else if(tagName.equalsIgnoreCase("f0")){
+            } else if (tagName.equalsIgnoreCase("f0")) {
                 sendSnF0();
-                logger.info("tagName===========>"+tagName);
-            }
-            else {
+                logger.info("tagName===========>" + tagName);
+            } else {
                 System.out.println("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
@@ -179,8 +177,6 @@ public class AsmAD838Host extends EquipHost {
             e.printStackTrace();
         }
     }
-
-
 
 
     @Override
@@ -242,7 +238,7 @@ public class AsmAD838Host extends EquipHost {
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
             //发送设备UPH参数至服务端
-           // sendUphData2Server();
+            // sendUphData2Server();
 
 
 //            String busniessMod = deviceInfoExt.getBusinessMod();
@@ -466,6 +462,7 @@ public class AsmAD838Host extends EquipHost {
             sqlSession.close();
         }
     }
+
     private void initRptPara() {
 //sendS6F23clear();
         //重写事件 报告
@@ -496,18 +493,18 @@ public class AsmAD838Host extends EquipHost {
     public void processS6F11in(DataMsgMap data) {
         if (data.get("CEID") != null) {
             ceid = (long) data.get("CEID");
-            logger.info("Received a s6f11in with CEID = " + ceid);
+            logger.info("Received a s6f11in with CEID = " + ceid + ";事务Id:" + data.getTransactionId());
         }
 
         try {
 
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
-            } else{
+            } else {
                 activeWrapper.sendS6F12out((byte) 0, data.getTransactionId());
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
-                }else  if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
+                } else if (ceid == 4 || ceid == 2 || ceid == 3 || ceid == 7) {
                     processS6F11ControlStateChange(data);
                 }
             }
