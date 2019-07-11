@@ -60,9 +60,11 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
-                    sendS1F1out();
+//                    sendS1F1out();
                 }
-
+                if(!this.getControlState().equals(FengCeConstant.CONTROL_LOCAL_ONLINE)){
+                   findDeviceRecipe();
+                }
 
                 logger.info("rptDefineNum:" + rptDefineNum);
                 if (rptDefineNum < 1) {
