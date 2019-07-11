@@ -38,7 +38,7 @@ public class HtFtpUtil {
 
     private static FTPClient connectFtpServer() {
         FTPClient ftpClient = new FTPClient();
-        ftpClient.setConnectTimeout(1000 * 30);//设置连接超时时间
+//        ftpClient.setConnectTimeout(1000 * 30);//设置连接超时时间
         ftpClient.setControlEncoding(controlEncoding);//设置ftp字符集
         ftpClient.enterLocalPassiveMode();//设置被动模式，文件传输端口设置
         try {
@@ -50,7 +50,7 @@ public class HtFtpUtil {
                 ftpClient.disconnect();
                 return null;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("htftp 连接失败", e);
             return null;
         }
@@ -229,7 +229,7 @@ public class HtFtpUtil {
                 recodeFile(ftpFile, ftpClient, path, deviceService, start);
             }
             sqlSession.commit();
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("htftp文件定时任务失败", e);
         } finally {
             if (ftpClient.isConnected()) {
@@ -249,15 +249,19 @@ public class HtFtpUtil {
     private void recodeFile(FTPFile ftpFile, FTPClient ftpClient, String path, DeviceService deviceService, long start) {
 
         if (ftpFile.isDirectory()) {
+            String name = ftpFile.getName();
+            if (".".equals(name) || "..".equals(name)) {
+                return;
+            }
             if (Instant.now().toEpochMilli() > start) {
                 logger.error("ftp 定时任务超时");
                 return;
             }
             try {
-                ftpClient.changeWorkingDirectory(path + ftpFile.getName() + "/");
+                ftpClient.changeWorkingDirectory(path + name + "/");
                 FTPFile[] ftpFiles = ftpClient.listFiles();
                 for (int i = 0; i < ftpFiles.length; i++) {
-                    recodeFile(ftpFiles[i], ftpClient, path + ftpFile.getName() + "/", deviceService, start);
+                    recodeFile(ftpFiles[i], ftpClient, path + name + "/", deviceService, start);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
