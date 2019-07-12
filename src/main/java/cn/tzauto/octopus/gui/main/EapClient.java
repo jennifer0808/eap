@@ -12,7 +12,6 @@ import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
-import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
@@ -23,7 +22,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -361,7 +360,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startHost() {
         for (int i = 0; i < equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
+            MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipBeans.get(i).getDeviceCode());
             int finalI = i;
             new Thread(new Runnable() {
                 @Override
@@ -478,32 +477,32 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 }
                 if (newPanel.getNetState() == 1) {
                     equipStatusPane.setCommLabelForegroundColorCommOn();
-                    if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
-                        equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    if (newPanel.getControlState().equals(NormalConstant.CONTROL_OFFLINE)) {
+                        equipStatusPane.setControlState(NormalConstant.CONTROL_OFFLINE);
                         equipStatusPane.setCommLabelForegroundColorCommOff();
                         logger.info(deviceCode + "getControlState---------------------off-line");
                     } else {
                         if (newPanel.getAlarmState() == 0) {
                             switch (newPanel.getControlState()) {
-                                case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                                case NormalConstant.CONTROL_LOCAL_ONLINE:
+                                    equipStatusPane.setControlState(NormalConstant.CONTROL_LOCAL_ONLINE);
                                     break;
-                                case FengCeConstant.CONTROL_REMOTE_ONLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                                case NormalConstant.CONTROL_REMOTE_ONLINE:
+                                    equipStatusPane.setControlState(NormalConstant.CONTROL_REMOTE_ONLINE);
                                     break;
-                                case FengCeConstant.CONTROL_OFFLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                                case NormalConstant.CONTROL_OFFLINE:
+                                    equipStatusPane.setControlState(NormalConstant.CONTROL_OFFLINE);
                                     equipStatusPane.setCommLabelForegroundColorCommOff();
                                     break;
                             }
                         } else if (newPanel.getAlarmState() == 1 || newPanel.getAlarmState() == 2) {
                             equipStatusPane.setAlarmState(newPanel.getAlarmState());
                             switch (newPanel.getControlState()) {
-                                case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                                    equipStatusPane.setControlStateSpecial(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                                case NormalConstant.CONTROL_LOCAL_ONLINE:
+                                    equipStatusPane.setControlStateSpecial(NormalConstant.CONTROL_LOCAL_ONLINE);
                                     break;
-                                case FengCeConstant.CONTROL_REMOTE_ONLINE:
-                                    equipStatusPane.setControlStateSpecial(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                                case NormalConstant.CONTROL_REMOTE_ONLINE:
+                                    equipStatusPane.setControlStateSpecial(NormalConstant.CONTROL_REMOTE_ONLINE);
                                     break;
                             }
                         }

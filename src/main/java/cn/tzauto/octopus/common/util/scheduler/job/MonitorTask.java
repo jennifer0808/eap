@@ -20,7 +20,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.quartz.Job;
@@ -48,7 +48,7 @@ public class MonitorTask implements Job {
         DeviceService deviceService = new DeviceService(sqlSession);
         try {
             for (EquipHost equipHost : GlobalConstants.stage.equipHosts.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipHost.getDeviceCode());
+                MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipHost.getDeviceCode());
                 try {
                     String deviceCode = equipHost.getDeviceCode();
                     DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
@@ -400,7 +400,7 @@ public class MonitorTask implements Job {
         DeviceService deviceService = new DeviceService(sqlSession);
         try {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (equipModel.deviceType.contains("BTU") || equipModel.deviceType.contains("HELLER") || equipModel.deviceType.contains("HTM5022")) {
                     try {
                         String deviceCode = equipModel.deviceCode;

@@ -22,7 +22,7 @@ import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -44,7 +44,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     public HitachiLaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
         tableNum = "SFCZ1_ZD_RTRUV";
     }
 
@@ -1123,7 +1123,7 @@ public class HitachiLaserDrillHost extends EquipModel {
             String panelTotal = iSecsHost.executeCommand("read paneltotal ").get(0);
             logger.info("panelcount:" + panelCount + " paneltotal :" + panelTotal);
             try {
-                if (Double.parseDouble(panelTotal) - Double.parseDouble(panelCount) <= 2) {
+                if (Double.parseDouble(panelTotal) - Double.parseDouble(panelCount) <= 2 && Double.parseDouble(panelTotal) - Double.parseDouble(panelCount) > -1) {
                     return true;
                 } else {
                     return false;

@@ -18,7 +18,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.util.DeviceComm;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -57,7 +57,7 @@ public class CommCheckTask implements Job {
         }
         // Todo 扫描所有Host线程，如果超过1分钟未通信，发送S1F1信号
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
+            MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             boolean isSecsException = false;
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                  
             String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();

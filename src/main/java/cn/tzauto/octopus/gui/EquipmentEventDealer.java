@@ -11,7 +11,7 @@ import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import com.alibaba.fastjson.JSON;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -56,7 +56,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
      */
     @Override
     public Object doInBackground() {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.equipNodeBean.getDeviceCode());
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, this.equipNodeBean.getDeviceCode());
         try {
 //            while (!this.isCancelled()) {
             while (true) {

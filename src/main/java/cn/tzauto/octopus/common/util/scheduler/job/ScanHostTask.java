@@ -9,7 +9,7 @@ import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.gui.main.EapClient;
 import org.apache.log4j.Logger;
@@ -35,7 +35,7 @@ public class ScanHostTask implements Job {
 //        hostsManager.testComm();
         // Todo 扫描所有Host线程，如果中断，重新启动
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
+            MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                                    
             String deviceCode = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
             //start the Host Thread

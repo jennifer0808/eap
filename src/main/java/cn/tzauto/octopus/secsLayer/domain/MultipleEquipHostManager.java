@@ -24,7 +24,7 @@ import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 //import cn.tzauto.octopus.sdr4isecs.main.MultipleSDRManager;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import cn.tzauto.octopus.secsLayer.util.UtilityFengCe;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -1027,7 +1027,7 @@ public class MultipleEquipHostManager {
         Map resultMap = null;
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
+            if (NormalConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
                 UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return null;
             }
@@ -1044,7 +1044,7 @@ public class MultipleEquipHostManager {
         String equipStatus = "";
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
+            if (NormalConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
                 UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return "Offline";
             }

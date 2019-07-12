@@ -7,7 +7,7 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.Job;
@@ -26,7 +26,7 @@ public class MonitorAlarmLockTask implements Job {
         logger.info("MonitorAlarmLockTask start...");
         if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (!equipModel.iSecsHost.isConnect) {
                     continue;
                 }

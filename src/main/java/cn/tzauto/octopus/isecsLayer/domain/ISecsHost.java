@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.isecsLayer.domain;
 
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
@@ -48,7 +48,7 @@ public class ISecsHost implements ISecsInterface {
      */
     @Override
     public List<String> executeCommand(String command) {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         List<String> result = new ArrayList<String>();
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
@@ -560,7 +560,7 @@ public class ISecsHost implements ISecsInterface {
     }
 
     public void sendSocketMsg(String command) {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
             logger.info(deviceCode + " send " + ip + " socket message==>" + command);

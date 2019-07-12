@@ -16,7 +16,7 @@ import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -51,7 +51,6 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
 
         String message = new String(req, "UTF-8");
         if (message.contains("done")) {
-            logger.debug("接收到alert信息:" + message);
 
             String[] messages = message.replaceAll("alert", "").replaceAll("done", "").split(";");
             message = messages[0].trim();
@@ -74,12 +73,13 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             if (messages.length > 1) {
                 prestatus = transferStatus(messages[1]);
             }
+            MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+            logger.debug("接收到alert信息:" + message);
             logger.debug("设备:" + deviceCode + "设备进入" + status + "状态.");
             //UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入" + status + "状态...");
             Map statusmap = new HashMap();
             statusmap.put("EquipStatus", status);
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
             if (equipModel != null) {
                 if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
                     prestatus = equipModel.equipStatus;

@@ -23,7 +23,7 @@ public class DeviceComm {
     private static final Logger logger = Logger.getLogger(DeviceComm.class);
 
     public static void startHost(final EquipNodeBean equipNodeBean) {
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
 //        EquipmentEventDealer watchDogOld = EAPGuiView.removeWatchDog(equipNodeBean.getDeviceIdProperty());
 //        if (watchDogOld != null && !watchDogOld.isDone()) { // still runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.
@@ -73,7 +73,7 @@ public class DeviceComm {
 
     public static void restartHost(EquipNodeBean equipNodeBean) {
         boolean needRestart = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
         EquipmentEventDealer watchDog = EapClient.getWatchDog(equipNodeBean.getDeviceCode());
 //        if (watchDog == null || watchDog.isDone()) { // not runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.

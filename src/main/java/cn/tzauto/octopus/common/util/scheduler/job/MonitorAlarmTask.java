@@ -10,7 +10,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.Job;
@@ -33,7 +33,7 @@ public class MonitorAlarmTask implements Job {
         // ConcurrentHashMap<String, EquipModel> equipModels = GlobalConstants.stage.equipModels;
         if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (equipModel.getPassport(30)) {
                     if (!equipModel.iSecsHost.isConnect) {
                         continue;

@@ -3,18 +3,7 @@
  */
 package cn.tzauto.octopus.secsLayer.util;
 
-/**
- * @author dingxiaoguo
- * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-8-8
- * @(#)FengCeConstant.java
- *
- * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
- * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
- * use and distribution are prohibited. Modification History: Modification Date
- * Author Reason class Description modify by njtz at 2016-12-15
- */
-public class FengCeConstant {
+public class NormalConstant {
 
     public static final String WHICH_EQUIPHOST_CONTEXT = "Which_Equip_Host";
     public static final String DOT = ".";

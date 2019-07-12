@@ -2,7 +2,7 @@ package cn.tzauto.octopus.isecsLayer.equipImpl.esi;
 
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import org.apache.log4j.MDC;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class ESILaserDrillHost extends EquipModel {
 
     public ESILaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override

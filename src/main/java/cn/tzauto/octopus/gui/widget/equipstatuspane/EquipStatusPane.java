@@ -9,7 +9,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -208,14 +208,14 @@ public class EquipStatusPane {
         this.controlState = controlState;
         P_EquipPane.setBorder(borderWhite);
         switch (controlState) {
-            case FengCeConstant.CONTROL_LOCAL_ONLINE:
+            case NormalConstant.CONTROL_LOCAL_ONLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgBlue));//蓝色
 
                 break;
-            case FengCeConstant.CONTROL_REMOTE_ONLINE:
+            case NormalConstant.CONTROL_REMOTE_ONLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgGreen));//深绿色
                 break;
-            case FengCeConstant.CONTROL_OFFLINE:
+            case NormalConstant.CONTROL_OFFLINE:
                 Platform.runLater(() -> P_EquipPane.setBackground(bgGray));//灰色
                 break;
         }
@@ -224,10 +224,10 @@ public class EquipStatusPane {
     public void setControlStateSpecial(String controlState) {
         this.controlState = controlState;
         switch (controlState) {
-            case FengCeConstant.CONTROL_LOCAL_ONLINE:
+            case NormalConstant.CONTROL_LOCAL_ONLINE:
                 this.P_EquipPane.setBorder(borderBlue);
                 break;
-            case FengCeConstant.CONTROL_REMOTE_ONLINE:
+            case NormalConstant.CONTROL_REMOTE_ONLINE:
                 this.P_EquipPane.setBorder(borderWhite);
                 break;
         }

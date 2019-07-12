@@ -10,10 +10,12 @@ import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -29,7 +31,6 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         String message = new String(req, "UTF-8");
-        logger.info("alarm message =====> " + message);
 
         //get device code
         Map<String, String> map = new HashMap();
@@ -41,10 +42,10 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         }
         String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
-        //记得改回来
-//        String deviceCode = map.get(eqpIp);
-        String deviceCode = "RTRUV009";
+        String deviceCode = map.get(eqpIp);
         DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        logger.info("alarm message =====> " + message);
 
         List<String> alarmStringList = new ArrayList<>();
         alarmStringList.add(message);
