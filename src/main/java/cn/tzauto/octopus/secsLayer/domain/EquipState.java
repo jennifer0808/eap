@@ -4,14 +4,13 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
 import cn.tzauto.octopus.secsLayer.exception.BehaviorStateException;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 
 ;
 
 /**
  * @author dingxiaoguo
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-8-14
  * @(#)EquipState.java
  *
  */
@@ -51,7 +50,7 @@ public class EquipState  {
         serviceState = OUT_OF_SERVICE_STATE;
         commOn = false;
         isAlarm = false;
-        eventString = FengCeConstant.NO_EVENT_REPORT;
+        eventString = GlobalConstant.NO_EVENT_REPORT;
         runState = "--";
         workLot = "--";
         runningRcp = "--";

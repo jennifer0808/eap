@@ -20,7 +20,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -72,7 +72,7 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -793,7 +793,6 @@ public class EsecDB2100Host extends EquipHost {
             MaterialID = MaterialID.trim();
             byte IDTYP = ((byte) dataMsgMap.get("IDTYP"));
             upFlatNotchLocation = (long) dataMsgMap.get("FNLOC");
-//            long FileFrameRotation = dataMsgMap.getSingleNumber("FileFrameRotation");
             byte OriginLocation = ((byte) dataMsgMap.get("ORLOC"));
             long RowCountInDieIncrements = (long) dataMsgMap.get("ROWCT");
             long ColumnCountInDieIncrements = (long) dataMsgMap.get("COWCT");

@@ -19,7 +19,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hanmi.HanmiRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -29,9 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author njtz
- */
+
 @SuppressWarnings("serial")
 public class HANMIHost extends EquipHost {
 
@@ -67,7 +65,7 @@ public class HANMIHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -162,11 +160,11 @@ public class HANMIHost extends EquipHost {
             Map panelMap = new HashMap();
 
             if (ceid == 400011L) {
-                panelMap.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
+                panelMap.put("ControlState", GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 400012L) {
-                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
+                panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
             } else if (ceid == 400013L) {
-                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
+                panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
             }
             changeEquipPanel(panelMap);
 

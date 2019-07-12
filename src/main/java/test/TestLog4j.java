@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author rain
  */
 public class TestLog4j {
 

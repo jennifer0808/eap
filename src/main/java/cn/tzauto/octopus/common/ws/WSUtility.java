@@ -9,7 +9,6 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import org.apache.log4j.Logger;
 
 
-@SuppressWarnings("JavaDoc")
 public class WSUtility {
 
     private static final Logger logger = Logger.getLogger(WSUtility.class);

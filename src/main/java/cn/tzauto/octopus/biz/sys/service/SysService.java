@@ -19,9 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author root
- */
+
 public class SysService extends BaseService {
 
     private static final Logger logger = Logger.getLogger(SysService.class);

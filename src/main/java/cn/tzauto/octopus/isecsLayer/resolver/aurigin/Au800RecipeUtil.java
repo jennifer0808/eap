@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  *
- * @author Administrator
  */
 public class Au800RecipeUtil {
 

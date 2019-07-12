@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.asm;
 
 /**
  *
- * @author Administrator
  */
 public class ASM3GPPbody {
 

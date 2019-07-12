@@ -19,11 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.ibatis.session.SqlSession;
-//import sun.security.krb5.internal.tools.Ktab;
 
 /**
  *
- * @author 马继山
  */
 public class DiscoReTransfer {
     //filePath 是PPBODY原文件的存储路径(非文件夹)

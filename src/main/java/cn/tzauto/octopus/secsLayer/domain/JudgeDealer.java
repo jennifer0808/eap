@@ -2,7 +2,7 @@ package cn.tzauto.octopus.secsLayer.domain;
 
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class JudgeDealer {
     public static boolean deal(SecsParameter secsParameter, String judgeObject) {

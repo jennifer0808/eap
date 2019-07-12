@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  *
- * @author njtz modify :2016-8-23
  */
 public class AutoAlter {
 

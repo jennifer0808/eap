@@ -16,10 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- *
- * @author 陈佳能
- */
 public class GrandaRcpTransferUtil {
 
     private static Logger logger = Logger.getLogger(GrandaRcpTransferUtil.class);

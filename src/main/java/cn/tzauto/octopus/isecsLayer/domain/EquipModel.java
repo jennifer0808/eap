@@ -21,7 +21,7 @@ import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.EquipPanel;
 import cn.tzauto.octopus.secsLayer.domain.EquipState;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -35,7 +35,7 @@ public abstract class EquipModel extends Thread {
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
     protected int commState = NOT_COMMUNICATING;
-    public String controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+    public String controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
     private int alarmState = 0;
     protected String protocolType;
     protected String deviceId;
@@ -75,7 +75,7 @@ public abstract class EquipModel extends Thread {
         this.deviceCode = devId;
         this.iconPath = iconPath;
         isInitState = false;
-        equipState.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+        equipState.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
         this.equipRecipePath = equipRecipePath;
         passport.put("Status", "idle");
         passport.put("UserLevel", "99");
@@ -318,7 +318,7 @@ public abstract class EquipModel extends Thread {
         this.remoteIPAddress = null;
         this.protocolType = null;
         commState = NOT_COMMUNICATING;
-        controlState = FengCeConstant.CONTROL_OFFLINE;
+        controlState = GlobalConstant.CONTROL_OFFLINE;
 
     }
 
@@ -931,7 +931,7 @@ public abstract class EquipModel extends Thread {
     }
 
     protected String checkEquipStatus() {
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";
@@ -944,7 +944,7 @@ public abstract class EquipModel extends Thread {
     }
 
     protected String checkControlState() {
-        if (FengCeConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
+        if (GlobalConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
         }
         return "0";
     }
@@ -986,17 +986,17 @@ public abstract class EquipModel extends Thread {
             this.equipState.setCommOn(true);
             commState = 1;
             if (list.contains("Error 0101: Target process service stop.")) {
-                this.controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                equipState.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                this.controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
+                equipState.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else {
-                this.controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                equipState.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                this.controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
+                equipState.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             }
 
             return true;
         } else {
-            this.controlState = FengCeConstant.CONTROL_OFFLINE;
-            equipState.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            this.controlState = GlobalConstant.CONTROL_OFFLINE;
+            equipState.setControlState(GlobalConstant.CONTROL_OFFLINE);
             this.equipState.setCommOn(false);
             commState = 0;
 

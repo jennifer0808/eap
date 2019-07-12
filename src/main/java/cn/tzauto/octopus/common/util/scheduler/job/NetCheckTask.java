@@ -21,7 +21,6 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 /**
- * @author rain
  */
 public class NetCheckTask implements Job {
 

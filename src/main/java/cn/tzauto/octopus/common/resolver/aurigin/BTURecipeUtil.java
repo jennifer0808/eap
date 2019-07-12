@@ -19,9 +19,7 @@ import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- * @author xuchao
- */
+
 public class BTURecipeUtil {
 
     private static Logger logger = Logger.getLogger(BTURecipeUtil.class);

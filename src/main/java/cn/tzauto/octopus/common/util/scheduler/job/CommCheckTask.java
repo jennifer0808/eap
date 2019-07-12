@@ -19,7 +19,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.util.DeviceComm;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -38,7 +38,6 @@ import java.util.concurrent.*;
 
 /**
  *
- * @author rain
  */
 public class CommCheckTask implements Job {
 
@@ -59,9 +58,9 @@ public class CommCheckTask implements Job {
             logger.info("未正确配置通信检测次数，使用默认值");
         }
         // Todo 扫描所有Host线程，如果超过1分钟未通信，发送S1F1信号
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         for (int i = 0; i < GlobalConstants.stage.equipBeans.size(); i++) {
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
+            MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, GlobalConstants.stage.equipBeans.get(i).getDeviceCode());
             boolean isSecsException = false;
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                  
             String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
@@ -193,9 +192,9 @@ public class CommCheckTask implements Job {
             }
         }
         if(temp ==null){
-            MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         }else{
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
         }
     }
 

@@ -23,7 +23,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.besi.HP_EPL2400RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -31,7 +31,8 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
+ * @author Wang Dafeng
+ * 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
  */
 public class HP_EPL2400Host extends EquipHost {
 
@@ -75,7 +76,7 @@ public class HP_EPL2400Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -195,8 +196,6 @@ public class HP_EPL2400Host extends EquipHost {
             ceid = (long) data.get("CEID");
             //刷新当前机台状态
             findDeviceRecipe();
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             //将设备的当前状态显示在界面上
 //        Map map = new HashMap();
 //        map.put("PPExecName", ppExecName);

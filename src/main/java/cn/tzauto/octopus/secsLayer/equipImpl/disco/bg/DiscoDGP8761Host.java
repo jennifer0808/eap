@@ -20,16 +20,13 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
 
-/**
- * @author njtz
- */
 @SuppressWarnings("serial")
 public class DiscoDGP8761Host extends EquipHost {
 
@@ -64,7 +61,7 @@ public class DiscoDGP8761Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -73,7 +70,7 @@ public class DiscoDGP8761Host extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     this.sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
@@ -96,9 +93,9 @@ public class DiscoDGP8761Host extends EquipHost {
                         Map panelMap = new HashMap();
                         if (ceid == 83 || ceid == 84) {
                             if (ceid == 83) {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
                             } else {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
                         } else if (ceid == 211 || ceid == 221 || ceid ==1000000401) {
@@ -323,15 +320,11 @@ public class DiscoDGP8761Host extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-//        Map map = new HashMap();
-//        //TODO 此设备可以反馈前一状态
-//        map.put("EquipStatus", equipStatus);
-//        changeEquipPanel(map);
+
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -425,8 +418,8 @@ public class DiscoDGP8761Host extends EquipHost {
     private void processS6F11AlarmClear(DataMsgMap data) {
         long alid = 0l;
         try {
-            alid = data.getSingleNumber("ALID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(MsgSection) data.get("EquipStatus")).getData().toString();
+            alid = (long) data.get("ALID");
+            findDeviceRecipe();
             if (!"".equals(equipStatus) && equipStatus != null) {
                 Map map = new HashMap();
                 map.put("EquipStatus", equipStatus);
@@ -541,7 +534,7 @@ public class DiscoDGP8761Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findEqptStatus();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";

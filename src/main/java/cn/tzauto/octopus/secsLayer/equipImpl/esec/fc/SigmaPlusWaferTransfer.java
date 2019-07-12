@@ -18,7 +18,8 @@ import java.util.Map;
 
 /**
  *
- * @author luosy nullbin 46 bin 48 bad 83
+ * @author luosy
+ * nullbin 46 bin 48 bad 83
  */
 public class SigmaPlusWaferTransfer {
 

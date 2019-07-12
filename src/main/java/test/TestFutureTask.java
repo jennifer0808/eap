@@ -13,8 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
 /**
- * 
- * @author Weiqy
+ *
  */
 public class TestFutureTask {
 

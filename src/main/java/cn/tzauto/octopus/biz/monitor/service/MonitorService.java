@@ -19,8 +19,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
 /**
- *
- * @author lsy
  */
 public class MonitorService extends BaseService {
 

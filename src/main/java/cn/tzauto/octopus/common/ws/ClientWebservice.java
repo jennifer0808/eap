@@ -8,7 +8,7 @@ import java.util.Date;
 
 
 /**
- * Created by leo on 2019-02-18.
+ * Created by leo
  */
 @WebService(targetNamespace = "http://www.tzinfo.com")
 @SOAPBinding(style = SOAPBinding.Style.RPC)

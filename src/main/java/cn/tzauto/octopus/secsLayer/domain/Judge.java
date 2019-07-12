@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.secsLayer.domain;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class Judge {
     //判断字符串，数字，判断方法的返回结果

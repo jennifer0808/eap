@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/9/4.
+ * Created by wj_co
  */
 public class XMLRecipeUtil {
     private static List vaList = new ArrayList();

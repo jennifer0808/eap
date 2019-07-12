@@ -25,7 +25,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -33,7 +33,8 @@ import org.apache.log4j.MDC;
 import java.util.*;
 
 /**
- * @author Wang Dafeng 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
+ * @author Wang Dafeng
+ * 机台特性：status是ASCII,@overwrite sendS1F3Check recipe为ASCII类型
  * template中ParaShotName不要修改
  */
 public class HT9045HWHost extends EquipHost {
@@ -60,7 +61,7 @@ public class HT9045HWHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -209,7 +210,7 @@ public class HT9045HWHost extends EquipHost {
                     this.processPressStartButton(data);
                     break;
                 case 27:
-                    setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                     this.processEquipStatusChange2(data);
                     break;
                 case 15:
@@ -245,7 +246,7 @@ public class HT9045HWHost extends EquipHost {
         //TODO 开机check;
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             //刷新当前机台状态
             sendS1F3Check();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");

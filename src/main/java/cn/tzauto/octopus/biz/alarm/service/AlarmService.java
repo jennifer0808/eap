@@ -26,7 +26,6 @@ import org.apache.log4j.Logger;
 
 /**
  * @author njtz
- * @since 2017/08/07
  */
 public class AlarmService extends BaseService {
 

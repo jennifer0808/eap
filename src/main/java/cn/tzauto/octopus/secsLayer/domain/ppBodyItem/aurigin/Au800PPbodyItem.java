@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.aurigin;
 
 /**
  *
- * @author Administrator
  */
 public class Au800PPbodyItem {
     private String paraName;

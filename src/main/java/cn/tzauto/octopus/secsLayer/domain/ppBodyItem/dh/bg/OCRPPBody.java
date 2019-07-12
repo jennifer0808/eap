@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.dh.bg;
 
 /**
  *
- * @author Administrator
  */
 public class OCRPPBody {
 

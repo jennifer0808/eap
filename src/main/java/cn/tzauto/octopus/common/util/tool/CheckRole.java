@@ -9,16 +9,12 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 /**
  * 判断登陆者的权限是否正确
  *
- * @author root
  */
 public class CheckRole {
 
     public static boolean ifLogin() { //不一定跳出登录框
         if (GlobalConstants.sysUser == null) {
-//            LoginDialog loginDialog = new LoginDialog(new javax.swing.JFrame(), true, GlobalConstants.stage);
-//            loginDialog.setSize(340, 300);
-//            SwingUtil.setWindowCenter(loginDialog);
-//            loginDialog.setVisible(true);
+
             return false;
         } else {
             if (GlobalConstants.sysUser.getUserType().equalsIgnoreCase("1")) {
@@ -40,10 +36,6 @@ public class CheckRole {
         if (GlobalConstants.isLocalMode) {
             return true;
         }
-//        LoginDialog loginDialog = new LoginDialog(new javax.swing.JFrame(), true, GlobalConstants.stage, true);
-//        loginDialog.setSize(340, 300);
-//        SwingUtil.setWindowCenter(loginDialog);
-//        loginDialog.setVisible(true);
         return GlobalConstants.loginValid;
     }
 }

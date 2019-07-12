@@ -19,9 +19,6 @@ import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- *
- */
 public class APTRecipeUtil {
 
     private static final Logger logger = Logger.getLogger(APTRecipeUtil.class);

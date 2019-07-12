@@ -22,10 +22,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import org.apache.ibatis.session.SqlSession;
 
-/**
- *
- * @author 陈佳能
- */
+
 public class ASMAD8312PlusRcpUtil {
 
     public static List<RecipePara> transferRecipeParaFromDB(String filePath, String deviceType) {

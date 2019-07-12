@@ -20,7 +20,6 @@ import java.util.Map;
 
 /**
  *
- * @author rain
  */
 public class FindEquipStatusHandler implements MessageHandler {
 

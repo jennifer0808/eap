@@ -22,10 +22,7 @@ import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- *
- * @author root
- */
+
 public class InitService {
 
     private static final Logger logger = Logger.getLogger(InitService.class);

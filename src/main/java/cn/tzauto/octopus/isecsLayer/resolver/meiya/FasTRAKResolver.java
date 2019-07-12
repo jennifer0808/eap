@@ -17,7 +17,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/11/6.
+ * Created by wj_co
  */
 public class FasTRAKResolver {
     private static List vaList = new ArrayList();

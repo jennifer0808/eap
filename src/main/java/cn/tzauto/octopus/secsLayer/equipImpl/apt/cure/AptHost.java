@@ -19,7 +19,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -45,7 +45,7 @@ public class AptHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -65,9 +65,9 @@ public class AptHost extends EquipHost {
                     initRptPara();
                     rptDefineNum++;
                 }
-//                if (!FengCeConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
+//                if (!GlobalConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
 //                    if (changeEqptControlStateAndShowDetailInfo("REMOTE")) {
-//                        controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+//                        controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
 //                    }
 //                }
                 DataMsgMap msg = null;
@@ -165,11 +165,11 @@ public class AptHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 1002) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 1003) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1001) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
             updateCommStateInExt();
         } catch (Exception e) {
@@ -429,9 +429,9 @@ public class AptHost extends EquipHost {
 //        sendS2F37out(1401L);
         sendS2F37outAll();
         if (changeEqptControlStateAndShowDetailInfo("REMOTE")) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+            controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
             Map map = new HashMap();
-            map.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
+            map.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);
             changeEquipPanel(map);
         }
     }
@@ -489,7 +489,7 @@ public class AptHost extends EquipHost {
 
 
     public Map sendS2F41outPPselect(String recipeName) {
-        if (!FengCeConstant.CONTROL_REMOTE_ONLINE.equals(controlState)) {
+        if (!GlobalConstant.CONTROL_REMOTE_ONLINE.equals(controlState)) {
             changeEqptControlStateAndShowDetailInfo("REMOTE");
         }
         byte hcack = -1;
@@ -520,11 +520,11 @@ public class AptHost extends EquipHost {
         List checkValueList = sendf3beforeStartCheck();
         try {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "执行设备自动开机前的各项状态检查...");
-            if (!equipStatus.equalsIgnoreCase(FengCeConstant.STATUS_IDLE)) {
+            if (!equipStatus.equalsIgnoreCase(GlobalConstant.STATUS_IDLE)) {
                 return "开机前检查失败,设备状态异常,请将设备调整为Idle状态!";
             }
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备运行状态为IDLE，检查通过！");
-            if (!controlState.equalsIgnoreCase(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+            if (!controlState.equalsIgnoreCase(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态为[" + controlState + "]，检查不通过，尝试自动切换至Remote！");
                 if (changeEqptControlStateAndShowDetailInfo("REMOTE")) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态自动切换至Remote，检查通过！");

@@ -9,7 +9,7 @@ import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.meiya.FasTRAKResolver;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -19,7 +19,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/9/5.
+ * Created by wj_co
  */
 public class FasTRAKHost extends EquipModel {
 
@@ -29,7 +29,7 @@ public class FasTRAKHost extends EquipModel {
 
     public FasTRAKHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
 

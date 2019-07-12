@@ -25,7 +25,6 @@ import org.quartz.JobExecutionException;
 
 /**
  *
- * @author rain
  */
 public class LogSaveTask implements Job{
 

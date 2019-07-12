@@ -25,10 +25,6 @@ import javax.jms.Message;
 import java.util.List;
 
 
-
-/**
- * 
- */
 public class CheckRecipePapaHandler implements MessageHandler {
 
 //    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);

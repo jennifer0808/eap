@@ -3,7 +3,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
-import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -15,7 +14,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -59,7 +58,7 @@ public class AsmTwin832Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -68,7 +67,7 @@ public class AsmTwin832Host extends EquipHost {
                 if (this.getCommState() != AsmTwin832Host.COMMUNICATING) {
                     sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
                 sendS5F3out(true);
@@ -84,16 +83,7 @@ public class AsmTwin832Host extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CollEventID") != null) {
-                        long ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == StripMapUpCeid) {
-                            processS6F11inStripMapUpload(msg);
-                        } else {
-                            processS6F11in(msg);
-                        }
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     this.processS6F11in(msg);
@@ -128,12 +118,7 @@ public class AsmTwin832Host extends EquipHost {
                 processS1F14in(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 this.inputMsgQueue.put(data);
-            } else if (tagName.toLowerCase().contains("s6f11intodo")) {
-                processS6F11in(data);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11inStripMapUpload")) {
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s14f1in")) {
+            }  else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s5f1in")) {
                 replyS5F2Directly(data);
@@ -295,67 +280,7 @@ public class AsmTwin832Host extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
-        //回复s6f11消息
-        long ceid = 0L;
-        long reportID = 0L;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-//        if (ceid == 1 && reportID == 1) {
-        Map panelMap = new HashMap();
-        if (ceid == 4) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-        }
-        if (ceid == 2) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-        }
-        if (ceid == 3) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-        }
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-//        }
-    }
 
-    private void processS6F11PPExecNameChange(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID: " + ceid + ", 设备正在使用的程序为: " + ppExecName);
-        Map panelMap = new HashMap();
-        panelMap.put("PPExecName", ppExecName);
-        changeEquipPanel(panelMap);
-    }
-
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((MsgSection) data.get("UserLoginName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120 && reportID == 120) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-
-    }
 // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">

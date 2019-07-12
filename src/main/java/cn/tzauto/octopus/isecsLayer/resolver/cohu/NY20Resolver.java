@@ -17,7 +17,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/10/30.
+ * Created by wj_co
  */
 public class NY20Resolver {
     private static Logger logger = Logger.getLogger(NY20Resolver.class);

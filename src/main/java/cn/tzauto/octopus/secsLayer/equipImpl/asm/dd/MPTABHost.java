@@ -12,7 +12,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -24,7 +24,6 @@ import java.util.Map;
 /**
  * @author WangDanfeng
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2018-8-24
  * @(#)EquipHost.java
  * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
  * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
@@ -65,7 +64,7 @@ public class MPTABHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -74,7 +73,7 @@ public class MPTABHost extends EquipHost {
                 if (this.getCommState() != MPTABHost.COMMUNICATING) {
                     sendS1F13out();
                 }
-//                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+//                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
 //                    sendS1F1out();
 //                }
                 if (rptDefineNum < 1) {
@@ -95,11 +94,6 @@ public class MPTABHost extends EquipHost {
                     this.processS5F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
-//                    long ceid = 0;
-//                    ceid = msg.getSingleNumber("CollEventID");
-//                    if (ceid == 1011) {
-//                        processS6F11EquipStatusChange(msg);
-//                    }
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
@@ -180,7 +174,6 @@ public class MPTABHost extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);

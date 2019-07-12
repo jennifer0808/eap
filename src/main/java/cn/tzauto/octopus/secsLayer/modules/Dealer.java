@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 import java.util.*;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class Dealer {
     static Logger logger = Logger.getLogger(Dealer.class);

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class ReportData extends ArrayList {
 

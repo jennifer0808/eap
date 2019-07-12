@@ -18,7 +18,6 @@ import org.apache.ibatis.session.SqlSession;
 
 /**
  *
- * @author 陈佳能
  */
 public class TestProviderPrameter {
 

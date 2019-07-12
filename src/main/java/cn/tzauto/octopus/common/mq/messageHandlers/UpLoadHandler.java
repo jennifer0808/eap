@@ -31,7 +31,6 @@ import java.util.*;
 /**
  *
  * @author luosy
- * @ 2017/08/02
  */
 public class UpLoadHandler implements MessageHandler {
 

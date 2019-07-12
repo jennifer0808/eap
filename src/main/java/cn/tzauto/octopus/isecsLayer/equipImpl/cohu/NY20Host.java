@@ -12,7 +12,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.cohu.NY20POJO;
 import cn.tzauto.octopus.isecsLayer.resolver.cohu.NY20Resolver;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -22,7 +22,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/8/22.
+ * Created by wj_co
  */
 public class NY20Host extends EquipModel {
     private Logger logger = Logger.getLogger(NY20Host.class);
@@ -33,7 +33,7 @@ public class NY20Host extends EquipModel {
 
     public NY20Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     /**

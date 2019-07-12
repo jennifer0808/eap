@@ -20,7 +20,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -31,7 +31,6 @@ import java.util.*;
 
 
 /**
- * @author njtz
  */
 @SuppressWarnings("serial")
 public class ASMIdeal3GHost extends EquipHost {
@@ -67,7 +66,7 @@ public class ASMIdeal3GHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -164,179 +163,7 @@ public class ASMIdeal3GHost extends EquipHost {
         }
     }
 
-    //    public void processS1F4statein(DataMsgMap data) {
-//        if (data == null) {
-//            return;
-//        }
-//        long ProcessState = 0l;
-//        long ControlState = 0l;
-//        long AlarmState = 0l;
-//        long AlarmID = 0l;
-//        try {
-//            ProcessState = data.getSingleNumber("ProcessState");
-//            ControlState = data.getSingleNumber("ControlState");
-//
-//            AlarmID = data.getSingleNumber("AlarmID");
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        String CommState = (String) ((MsgSection) data.get("CommState")).getData();
-//        System.out.println("CommState = " + CommState);
-//        System.out.println("ControlState = " + ControlState);
-//        System.out.println("ProcessState = " + ProcessState);
-//        System.out.println("AlarmState = " + AlarmState);
-//        System.out.println("AlarmID = " + AlarmID);
-//    }
-//
-//    public void processS1F4recipein(DataMsgMap data) {
-//        if (data == null) {
-//            return;
-//        }
-//        long PPExecName = 0l;
-//        //long   RecipeHanding =0l;
-//        try {
-//            PPExecName = data.getSingleNumber("PPExecName");
-//        } catch (Exception e) {
-//        }
-//        System.out.println("PPExecName = " + PPExecName);
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    public void sendS2F33out() {
-//
-//        DataMsgMap s2f33out = new DataMsgMap("s2f33out", activeWrapper.getDeviceId());
-//        s2f33out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        long[] dataid = new long[1];
-//        dataid[0] = 10012;
-//        long[] reportid = new long[1];
-//        reportid[0] = 100012;
-//        long[] variableid = new long[1];
-//        variableid[0] = 2045;
-//        s2f33out.put("DataID", dataid);
-//        s2f33out.put("ReportID", reportid);
-//        s2f33out.put("VariableID", variableid);
-//        //s1f13out.put("SoftRev", "9.25.5");
-//        try {
-//            activeWrapper.sendAwaitMessage(s2f33out);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
-//
-//
-//    public Map sendS2F41outMuiltPPselect(List ppidList) {
-//
-//        DataMsgMap s2f41out = new DataMsgMap("s2f41muiltout", activeWrapper.getDeviceId());
-//        s2f41out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        s2f41out.put("Remotecommand", "PP-SELECT");
-//        for (int i = 0; i < ppidList.size(); i++) {
-//            s2f41out.put("Commandparametername" + i, "PPID");
-//            s2f41out.put("Commandparametervalue" + i, (String) ppidList.get(i));
-//        }
-//        try {
-//            msgdata = activeWrapper.sendAwaitMessage(s2f41out);
-//            logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + (String) ppidList.get(0));
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        byte[] hcack = (byte[]) ((MsgSection) msgdata.get("HCACK")).getData();
-//        logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
-//        Map resultMap = new HashMap();
-//        resultMap.put("msgType", "s2f42");
-//        resultMap.put("deviceCode", deviceCode);
-//        resultMap.put("prevCmd", "PP-SELECT");
-//        resultMap.put("HCACK", hcack[0]);
-//        resultMap.put("Description", "Remote cmd PP-SELECT at equip " + deviceCode + " get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
-//        return resultMap;
-//    }
-//
-//    public void sendS7F1Multi(List l) {
-//        DataMsgMap s7f1multi = new DataMsgMap("s7f1multiout", activeWrapper.getDeviceId());
-//        s7f1multi.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        MsgSection secsItemmain = new MsgSection();
-//        secsItemmain.setFormatCode(SecsFormatValue.SECS_LIST);
-//        ArrayList listmain = new ArrayList();
-//        for (int i = 0; i < l.size(); i++) {
-//            MsgSection secsItemsub = new MsgSection();
-//            ArrayList list = new ArrayList();
-//            String ppid = (String) l.get(i);
-//            MsgSection secsItemppid = new MsgSection(ppid, SecsFormatValue.SECS_ASCII);
-//            list.add(secsItemppid);
-//            long[] pplength = new long[1];
-//            pplength[0] = TransferUtil.getPPLength(recipePath + ppid);
-//            MsgSection secsItemlength = new MsgSection(pplength, SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER);
-//            list.add(secsItemlength);
-//            secsItemsub.setData(list);
-//            listmain.add(secsItemsub);
-//            //s7f1multi.put("ProcessprogramID"+i, ppid);
-//            //s7f1multi.put("Length"+i, l); 
-//        }
-//        secsItemmain.setData(listmain);
-//        s7f1multi.put("RESULT", secsItemmain);
-//        try {
-//            activeWrapper.sendAwaitMessage(s7f1multi);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
-//
-//    public void sendS7F3Multi(List l) {
-//        DataMsgMap s7f3multi = new DataMsgMap("s7f3multiout", activeWrapper.getDeviceId());
-//        s7f3multi.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        MsgSection secsItemmain = new MsgSection();
-//        secsItemmain.setFormatCode(SecsFormatValue.SECS_LIST);
-//        ArrayList listmain = new ArrayList();
-//        for (int i = 0; i < l.size(); i++) {
-//            MsgSection secsItemsub = new MsgSection();
-//            ArrayList list = new ArrayList();
-//            String ppid = (String) l.get(i);
-//            MsgSection secsItemppid = new MsgSection(ppid, SecsFormatValue.SECS_ASCII);
-//            list.add(secsItemppid);
-//            String ppbody = (String) TransferUtil.getPPBody(1, recipePath + ppid).get(0);
-//            MsgSection secsItemppbody = new MsgSection(ppbody, SecsFormatValue.SECS_ASCII);
-//            list.add(secsItemppbody);
-//            secsItemsub.setData(list);
-//            listmain.add(secsItemsub);
-//            //s7f3multi.put("ProcessprogramID"+i, ppid);
-//            //s7f3multi.put("Processprogram"+i, ppbody);            
-//        }
-//        secsItemmain.setData(listmain);
-//        s7f3multi.put("RESULT", secsItemmain);
-//        try {
-//            activeWrapper.sendAwaitMessage(s7f3multi);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//    }
-//    //TODO 组合型recipe（ASM3G）删除指令 要有必要的记录日志，记录操作人，操作时间。
-//
-//    public Map sendS7F17outMulit(List ppid, EquipHost equipHost) {
-//        activeWrapper = equipHost.getMli();
-//
-//        deviceCode = equipHost.getDeviceCode();
-//        DataMsgMap s7f17outmuilt = new DataMsgMap("s7f17outmuilt", activeWrapper.getDeviceId());
-//        s7f17outmuilt.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        for (int i = 0; i < ppid.size(); i++) {
-//            s7f17outmuilt.put("ProcessprogramID" + i, ppid.get(i));
-//        }
-//        try {
-//            msgdata = activeWrapper.sendAwaitMessage(s7f17outmuilt);
-//        } catch (Exception e) {
-//            logger.error("Exception:", e);
-//        }
-//        byte[] ackc7 = (byte[]) ((MsgSection) msgdata.get("AckCode")).getData();
-//        if (ackc7[0] == 0) {
-//            logger.debug("The recipe " + ppid + " has been delete from " + deviceCode);
-//        } else {
-//            logger.error("Delete recipe " + ppid + " from " + deviceCode + " failure whit ACKC7=" + ackc7[0] + " means " + ACKDescription.description(ackc7, "ACKC7"));
-//        }
-//        Map resultMap = new HashMap();
-//        resultMap.put("msgType", "s7f18");
-//        resultMap.put("deviceCode", deviceCode);
-//        resultMap.put("ppid", ppid);
-//        resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
-//        return resultMap;
-//    }
+
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 //    @Override
 //    @SuppressWarnings("unchecked")
@@ -456,11 +283,11 @@ public class ASMIdeal3GHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 5) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 6) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) { //待验证
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);

@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 
 /**
  *
- * @author rain
  */
 public class TestJDBC {
      public static void main(String[] args) {

@@ -14,7 +14,7 @@ import cn.tzauto.octopus.common.util.tool.ZipUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.resolver.hta.FI7300Resolver;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/8/27.
+ * Created by wj_co
  */
 public class FI7200Host extends EquipModel {
     private Logger logger = Logger.getLogger(FI7200Host.class);
@@ -36,7 +36,7 @@ public class FI7200Host extends EquipModel {
 
     public FI7200Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
     @Override
     public String getCurrentRecipeName() {

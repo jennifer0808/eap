@@ -15,7 +15,6 @@ import javax.jms.Message;
 
 /**
  *
- * @author Administrator
  */
 public class MqTestHandler implements MessageHandler {
 

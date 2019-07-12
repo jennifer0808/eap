@@ -12,7 +12,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/8/28.
+ * Created by wj_co
  */
 public class FI7300RecipeUtil {
     public static List<RecipePara> transferFromDB(Map paraMap, String deviceType) {

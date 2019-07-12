@@ -28,9 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Administrator
- */
+
 public class Au800RecipeUtil {
 
     private static final Logger logger = Logger.getLogger(Au800RecipeUtil.class);

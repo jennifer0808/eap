@@ -13,7 +13,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -41,7 +41,7 @@ public class AsmAD832PHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -316,15 +316,15 @@ public class AsmAD832PHost extends EquipHost {
         }
         Map panelMap = new HashMap();
         if (ceid == 4) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
+            controlState = GlobalConstant.CONTROL_OFFLINE;
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
         }
         if (ceid == 2) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+            controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
         }
         if (ceid == 3) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+            controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
         }
         panelMap.put("ControlState", controlState);

@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.towa;
 
 /**
  *
- * @author njtz
  */
 public class TowaPPBodyItem {
 

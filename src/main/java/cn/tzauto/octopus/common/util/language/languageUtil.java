@@ -2,9 +2,7 @@ package cn.tzauto.octopus.common.util.language;
 
 import java.util.Locale;
 
-/**
- * Created by wj_co on 2019/3/15.
- */
+
 public class languageUtil {
     public static final String CN = "zh_CN";
     public static final String EN = "en_US";

@@ -19,7 +19,6 @@ import java.util.Map;
 
 /**
  *
- * @author Weiqy
  */
 public class EqptCheckBeforeDownloadHandler implements MessageHandler {
 

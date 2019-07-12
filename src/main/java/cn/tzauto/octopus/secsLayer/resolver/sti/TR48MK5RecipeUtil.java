@@ -15,10 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-/**
- *
- * @author xuc
- */
 public class TR48MK5RecipeUtil {
 
     private static final Logger logger = Logger.getLogger(TR48MK5RecipeUtil.class);

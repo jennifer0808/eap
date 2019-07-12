@@ -17,7 +17,7 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.ht.HongTengRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -60,7 +60,7 @@ public class HongTeng7300Host extends EquipHost {
     public void run() {
 //        String localRecipeFilePath="D:\\HongTengRecipe\\RECIPE\\A6\\BackGrind\\HT\\Engineer\\D7400-6010\\JCET-A-TQFP-14X14-100L-1.4\\JCET-A-TQFP-14X14-100L-1.4.txt";
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -134,7 +134,7 @@ public class HongTeng7300Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
+                controlState = GlobalConstant.CONTROL_OFFLINE;
                 equipStatus = "SECS-OFFLINE";
                 Map panelMap = new HashMap();
                 panelMap.put("EquipStatus", equipStatus);
@@ -426,11 +426,11 @@ public class HongTeng7300Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findDeviceRecipe();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！";
         }
-        if (!FengCeConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
-            return "设备未处于" + FengCeConstant.STATUS_IDLE + "状态，不可调整Recipe！";
+        if (!GlobalConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
+            return "设备未处于" + GlobalConstant.STATUS_IDLE + "状态，不可调整Recipe！";
         }
         return "0";
     }

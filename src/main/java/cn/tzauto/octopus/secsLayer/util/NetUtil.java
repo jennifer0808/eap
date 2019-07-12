@@ -4,16 +4,6 @@ package cn.tzauto.octopus.secsLayer.util;
 /**
  * @author  dingxiaoguo
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-8-6
- * @(#)Utility.java
- *
- * @Copyright tzinfo, Ltd. 2016.
- * This software and documentation contain confidential and
- * proprietary information owned by tzinfo, Ltd.
- * Unauthorized use and distribution are prohibited.
- * Modification History:
- * Modification Date     Author        Reason
- * class Description
  */
 
 import java.util.regex.Matcher;
@@ -22,9 +12,9 @@ import java.util.regex.PatternSyntaxException;
 
 import org.apache.log4j.Logger;
 
-public class UtilityFengCe
+public class NetUtil
 {
-	private static final Logger logger = Logger.getLogger(UtilityFengCe.class);
+	private static final Logger logger = Logger.getLogger(NetUtil.class);
 
 	private static Pattern VALID_IPV4_PATTERN = null;
 	private static Pattern VALID_IPV6_PATTERN = null;
@@ -51,11 +41,11 @@ public class UtilityFengCe
 	   */
 	  public static boolean isIpAddress(String ipAddress)
 	  {
-		  Matcher m1 = UtilityFengCe.VALID_IPV4_PATTERN.matcher(ipAddress);
+		  Matcher m1 = NetUtil.VALID_IPV4_PATTERN.matcher(ipAddress);
 		  if (m1.matches()) {
 			  return true;
 		  }
-		  Matcher m2 = UtilityFengCe.VALID_IPV6_PATTERN.matcher(ipAddress);
+		  Matcher m2 = NetUtil.VALID_IPV6_PATTERN.matcher(ipAddress);
 		  return m2.matches();
 	  }
 

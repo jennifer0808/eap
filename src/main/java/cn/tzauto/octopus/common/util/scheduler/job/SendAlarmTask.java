@@ -19,7 +19,6 @@ import org.quartz.JobExecutionContext;
 
 /**
  *
- * @author Administrator
  */
 public class SendAlarmTask implements Job {
 

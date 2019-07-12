@@ -24,7 +24,6 @@ import java.util.Map;
 /**
  *
  * @author lsy
- * @ 2017/08/02
  */
 public class FindEqptRecipeListHandler implements MessageHandler {
 

@@ -4,9 +4,6 @@
  */
 package cn.tzauto.octopus.common.resolver.apt;
 
-/**
- *  wqy
- */
 public class APTPPbody {
 
     private String type;

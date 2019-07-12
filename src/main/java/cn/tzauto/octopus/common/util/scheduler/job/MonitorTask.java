@@ -20,7 +20,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  *
- * @author njtz
  */
 public class MonitorTask implements Job {
 
@@ -48,10 +47,10 @@ public class MonitorTask implements Job {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         try {
             for (EquipHost equipHost : GlobalConstants.stage.equipHosts.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipHost.getDeviceCode());
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipHost.getDeviceCode());
                 try {
                     String deviceCode = equipHost.getDeviceCode();
                     DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
@@ -147,9 +146,9 @@ public class MonitorTask implements Job {
             logger.error("Exception:", e);
         } finally {
             if(temp ==null){
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             }else{
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
             sqlSession.close();
         }
@@ -406,10 +405,10 @@ public class MonitorTask implements Job {
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         try {
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (equipModel.deviceType.contains("BTU") || equipModel.deviceType.contains("HELLER") || equipModel.deviceType.contains("HTM5022")) {
                     try {
                         String deviceCode = equipModel.deviceCode;
@@ -500,9 +499,9 @@ public class MonitorTask implements Job {
             logger.error("Exception:", e);
         } finally {
             if(temp ==null){
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             }else{
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
             sqlSession.close();
         }

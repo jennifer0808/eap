@@ -13,7 +13,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by wj_co on 2019/1/9.
+ * Created by wj_co
  */
 public class SYM2000EDResolver {
     private static Logger logger = Logger.getLogger(SYM2000EDResolver.class);

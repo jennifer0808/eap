@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class EdcDealer {
     public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, ProcessFunctionNotSupportException, StateException, IntegrityException, InvalidDataException {

@@ -29,7 +29,6 @@ import org.apache.ibatis.session.SqlSession;
 
 /**
  *
- * @author njtz
  */
 public class TowaRecipeUtil {
 

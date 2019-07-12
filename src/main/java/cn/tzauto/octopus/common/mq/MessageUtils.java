@@ -9,9 +9,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * Created by Chase on 2016/7/24.
- */
+
 public class MessageUtils {
 
     private ProducerServiceImpl producer;//生产者
