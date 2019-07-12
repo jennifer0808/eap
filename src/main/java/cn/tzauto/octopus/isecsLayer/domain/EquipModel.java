@@ -34,7 +34,7 @@ public abstract class EquipModel extends Thread {
     private static Logger logger = Logger.getLogger(EquipModel.class);
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
-    protected int commState = NOT_COMMUNICATING;
+    public int commState = NOT_COMMUNICATING;
     public String controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
     private int alarmState = 0;
     protected String protocolType;
@@ -107,6 +107,14 @@ public abstract class EquipModel extends Thread {
     public abstract Map getEquipRecipeList();
 
     public abstract String getEquipStatus();
+
+    public String getControlState() {
+        return controlState;
+    }
+
+    public void setControlState(String controlState) {
+        this.controlState = controlState;
+    }
 
     @Override
     public abstract Object clone();

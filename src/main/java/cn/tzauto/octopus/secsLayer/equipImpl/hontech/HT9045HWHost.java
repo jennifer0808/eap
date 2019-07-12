@@ -747,7 +747,7 @@ public class HT9045HWHost extends EquipHost {
         try {
             recipeParaList = HT9045HWUtil.getRecipePara(recipePath, deviceType);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("",ex);
         }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");

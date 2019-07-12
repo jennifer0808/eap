@@ -16,6 +16,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import javafx.concurrent.Task;
@@ -166,8 +167,13 @@ public class DeviceInfoPaneController implements Initializable {
 //        } catch (HsmsProtocolNotSelectedException e) {
 //            e.printStackTrace();
 //        }
-
-        int commState= equipHost.commState;
+        EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
+        int commState=NOT_COMMUNICATING;
+        if(equipHost!=null){
+            commState = equipHost.commState;
+        }else if(equipModel!=null){
+            commState= equipModel.commState;
+        }
         logger.info("commState=====>"+commState);
         if(commState==COMMUNICATING  ){
                 Task task = new Task<Map>() {
@@ -182,7 +188,11 @@ public class DeviceInfoPaneController implements Initializable {
         new Thread(task).start();
         }else if(commState==NOT_COMMUNICATING ){
 //            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
-            equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            if(equipHost!=null){
+                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            }else if(equipModel!=null){
+                equipModel.setControlState(FengCeConstant.CONTROL_OFFLINE);
+            }
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
 
         }

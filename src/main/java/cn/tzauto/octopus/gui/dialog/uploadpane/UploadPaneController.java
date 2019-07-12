@@ -356,7 +356,7 @@ public class UploadPaneController implements Initializable {
                     RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
                     //保存数据
                     boolean re;
-                    if (deviceType.contains("DB-800HSD")||deviceType.contains("9045HW")) {
+                    if (deviceType.contains("DB-800HSD")) {
                         re = recipeService.saveUpLoadRcpInfoBatch(recipe, recipeParaList, deviceCode);
                     } else {
                         if (recipeNameMapping != null) {

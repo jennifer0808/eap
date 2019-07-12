@@ -288,12 +288,12 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 if ("1".equals(GlobalConstants.getProperty("MONITOR_PARA"))) {
                     CommonUtil.startMonitorJob(this);
                 }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_ALARM"))) {
-                    CommonUtil.startMonitorAlarmJob(this);
-                }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_EQUIPSTATUS"))) {
-                    CommonUtil.startRefreshEquipStateJob(this);
-                }
+//                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_ALARM"))) {
+//                    CommonUtil.startMonitorAlarmJob(this);
+//                }
+//                if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_EQUIPSTATUS"))) {
+//                    CommonUtil.startRefreshEquipStateJob(this);
+//                }
                 if ("1".equals(GlobalConstants.getProperty("NETCHECK"))) {
                     CommonUtil.startNetCheckJob(this);
                 }
@@ -304,14 +304,20 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     CommonUtil.startCleanDataJob(this);
                 }
 
-                //netty监控
-                if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN"))) {
-                    EquipStatusListen.startListen();
+                if(this.equipModels.size()>0){
+                    if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_ALARM"))) {
+                        CommonUtil.startMonitorAlarmJob(this);
+                    }
+                    if ("1".equals(GlobalConstants.getProperty("ISECS_MONITOR_EQUIPSTATUS"))) {
+                        CommonUtil.startRefreshEquipStateJob(this);
+                    }
+                    if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN"))) {
+                        EquipStatusListen.startListen();
+                    }
+                    if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN"))) {
+                        EquipStatusListen.startAlarmListen();
+                    }
                 }
-                if ("1".equals(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN"))) {
-                    EquipStatusListen.startAlarmListen();
-                }
-
                 //开启MQ监听
                 startMq();
 
