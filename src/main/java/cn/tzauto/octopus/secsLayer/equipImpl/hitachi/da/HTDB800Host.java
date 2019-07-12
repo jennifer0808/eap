@@ -3,9 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
-import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -65,7 +64,7 @@ public class HTDB800Host extends EquipHost {
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
         EquipStateChangeCeid = 5L;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -579,7 +578,7 @@ public class HTDB800Host extends EquipHost {
 
         try {
             sleep(3000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
             byte ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
@@ -708,11 +707,11 @@ public class HTDB800Host extends EquipHost {
         }
         String objType = null;
         if (data.get("ObjectType") != null) {
-            objType = (String) ((SecsItem) data.get("ObjectType")).getData();
+            objType = (String) ((MsgSection) data.get("ObjectType")).getData();
         }
         String stripId = "";
         if (data.get("StripId") != null) {
-            stripId = (String) ((SecsItem) data.get("StripId")).getData();
+            stripId = (String) ((MsgSection) data.get("StripId")).getData();
         }
         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
         DataMsgMap out = null;
@@ -762,12 +761,12 @@ public class HTDB800Host extends EquipHost {
             attrMap.put("AxisDirection", "DownLeft");
             objMap.put(new String(), attrMap);
             Map stripIDformatMap = new HashMap();
-            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
-            activeWrapper.sendS14F4out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
-                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+            stripIDformatMap.put("Orientation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", SecsFormatValue.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -891,7 +890,7 @@ public class HTDB800Host extends EquipHost {
 
 
     @Override
-    public boolean testInitLink() throws HsmsProtocolNotSelectedException {
+    public boolean testInitLink()  {
         try {
             DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
             s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -899,11 +898,7 @@ public class HTDB800Host extends EquipHost {
             logger.info("testInitLink成功 建立连接、通信正常 ");
             setCommState(1);
             return true;
-        } catch (HsmsProtocolNotSelectedException e) {
-            e.printStackTrace();
-            logger.error("Exception:", e);
-            throw new HsmsProtocolNotSelectedException("HsmsProtocolNotSelectedException");
-        } catch (Exception e) {
+        }  catch (Exception e) {
             logger.error("Exception:", e);
             return false;
         }
@@ -928,7 +923,7 @@ public class HTDB800Host extends EquipHost {
             aled = 0;
         }
         try {
-            activeWrapper.sendS5F3out(aled, -1, FormatCode.SECS_4BYTE_UNSIGNED_INTEGER);
+            activeWrapper.sendS5F3out(aled, -1, SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

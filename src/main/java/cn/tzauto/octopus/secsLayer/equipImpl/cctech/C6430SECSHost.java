@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.cctech;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -39,10 +39,10 @@ public class C6430SECSHost extends EquipHost {
 
     public C6430SECSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
         CPN_PPID = "PP_NAME";
     }
@@ -421,7 +421,7 @@ public class C6430SECSHost extends EquipHost {
         resultMap.put("ppid", targetRecipeName);
         byte ackc7 = -1;
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName.replace("@", "/") + "", ppbody, SecsFormatValue.SECS_BINARY);
             ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
@@ -528,9 +528,9 @@ public class C6430SECSHost extends EquipHost {
             Map cpmap = new HashMap();
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
             List cpNameList = new ArrayList();
             cpNameList.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cpNameList, cpmap, cpNameFromatMap, cpValueFromatMap);

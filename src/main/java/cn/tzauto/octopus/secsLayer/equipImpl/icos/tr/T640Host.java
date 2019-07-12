@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -36,11 +36,11 @@ public class T640Host extends EquipHost {
 
     public T640Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
 
     }
 
@@ -216,20 +216,20 @@ public class T640Host extends EquipHost {
         cpMap.put("TRAY-REPORTING", "NO");
 
         Map cpNameFormatMap = new HashMap();
-        cpNameFormatMap.put("BATCH-NAME", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("BATCH-TO-PROCESS", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("CARRIER-COUNT", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("INPUT-TRAY-MAP", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("TRAY-REPORTING", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-NAME", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-TO-PROCESS", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("CARRIER-COUNT", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("INPUT-TRAY-MAP", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("TRAY-REPORTING", SecsFormatValue.SECS_ASCII);
 
 
         Map cpValueFormatMap = new HashMap();
-        cpNameFormatMap.put(batchName, FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NEW", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NO", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put(batchName, SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("NEW", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("NO", SecsFormatValue.SECS_ASCII);
         List cplist = new ArrayList();
         cplist.add("BATCH-NAME");
         cplist.add("ACTION");
@@ -474,7 +474,7 @@ public class T640Host extends EquipHost {
         //下载han文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -490,7 +490,7 @@ public class T640Host extends EquipHost {
         //下载comp文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -505,7 +505,7 @@ public class T640Host extends EquipHost {
         //下载recipe文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }

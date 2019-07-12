@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -60,7 +60,7 @@ public class HTDB730Host extends EquipHost {
         CPN_PPID = "PPROGRAM";
         StripMapUpCeid = 115L;
         EquipStateChangeCeid = 4L;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -689,7 +689,7 @@ public class HTDB730Host extends EquipHost {
 
         try {
             sleep(3000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
             byte ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));

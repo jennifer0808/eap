@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.sti;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -36,9 +36,9 @@ public class TR48MK5Host extends EquipHost {
 
     public TR48MK5Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PPSELECT";
         CPN_PPID = "RecipeName";
     }
@@ -342,36 +342,36 @@ public class TR48MK5Host extends EquipHost {
         cpnamelist.add("AddTrailerPockets");
 
         Map s2f41outNameFromatMap = new HashMap();
-        s2f41outNameFromatMap.put("OutputMode", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("TopStationEnable", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("BtmStationEnable", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("FiveSideStationEnable", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("InPocketCheck", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("PostSealInspection", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("TopVisionRecipe", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("BottomVisionRecipe", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("FiveSideVisionRecipe", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("PostSeal", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("InPocket", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("OpPartsPerReel", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("NonStdBoxQty", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("AddTrailerPockets", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("OutputMode", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("TopStationEnable", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("BtmStationEnable", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("FiveSideStationEnable", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("InPocketCheck", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("PostSealInspection", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("TopVisionRecipe", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("BottomVisionRecipe", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("FiveSideVisionRecipe", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("PostSeal", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("InPocket", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("OpPartsPerReel", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("NonStdBoxQty", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("AddTrailerPockets", SecsFormatValue.SECS_ASCII);
 
         Map s2f41outVauleFromatMap = new HashMap();
-        s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA2, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA3, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA4, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA5, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA6, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA7, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA8, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA9, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA10, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA11, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA12, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA13, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA14, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA1, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA5, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA6, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA7, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA8, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA9, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA10, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA11, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA12, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA13, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA14, SecsFormatValue.SECS_ASCII);
         byte hcack = -1;
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s2f42");
@@ -405,16 +405,16 @@ public class TR48MK5Host extends EquipHost {
 
 
         Map s2f41outNameFromatMap = new HashMap();
-        s2f41outNameFromatMap.put("LotNumber", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("LotQuantity", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("OperatorNumber", FormatCode.SECS_ASCII);
-        s2f41outNameFromatMap.put("Shift", FormatCode.SECS_ASCII);
+        s2f41outNameFromatMap.put("LotNumber", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("LotQuantity", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("OperatorNumber", SecsFormatValue.SECS_ASCII);
+        s2f41outNameFromatMap.put("Shift", SecsFormatValue.SECS_ASCII);
 
         Map s2f41outVauleFromatMap = new HashMap();
-        s2f41outVauleFromatMap.put(DATA1, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA2, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA3, FormatCode.SECS_ASCII);
-        s2f41outVauleFromatMap.put(DATA4, FormatCode.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA1, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA2, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA3, SecsFormatValue.SECS_ASCII);
+        s2f41outVauleFromatMap.put(DATA4, SecsFormatValue.SECS_ASCII);
 
         byte hcack = -1;
         Map resultMap = new HashMap();
@@ -477,7 +477,7 @@ public class TR48MK5Host extends EquipHost {
 //        try {
 //            msgdata = activeWrapper.sendAwaitMessage(s2f41out);
 //            logger.info("The equip " + deviceCode + " request to change typeMaterial!" );
-//            hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
+//            hcack = (byte[]) ((MsgSection) msgdata.get("HCACK")).getData();
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }

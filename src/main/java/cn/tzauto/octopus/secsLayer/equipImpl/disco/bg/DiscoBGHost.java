@@ -7,8 +7,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -48,11 +48,11 @@ public class DiscoBGHost extends EquipHost {
 
     public DiscoBGHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid = 10150L;
     }
 
@@ -217,7 +217,7 @@ public class DiscoBGHost extends EquipHost {
             return null;
         }
         Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("RESULT")).getData();
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         resultMap.put("msgType", "s1f4");
         resultMap.put("deviceCode", deviceCode);
@@ -282,11 +282,11 @@ public class DiscoBGHost extends EquipHost {
                             cpmap.put("PPID_A", recipeName);
                             cpmap.put("LOTID_A", lotId);
                             Map cpNameFromatMap = new HashMap();
-                            cpNameFromatMap.put("PPID_A", FormatCode.SECS_ASCII);
-                            cpNameFromatMap.put("LOTID_A", FormatCode.SECS_ASCII);
+                            cpNameFromatMap.put("PPID_A", SecsFormatValue.SECS_ASCII);
+                            cpNameFromatMap.put("LOTID_A", SecsFormatValue.SECS_ASCII);
                             Map cpValueFromatMap = new HashMap();
-                            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-                            cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
+                            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
+                            cpValueFromatMap.put(lotId, SecsFormatValue.SECS_ASCII);
                             List cplist = new ArrayList();
                             cplist.add("PPID_A");
                             cplist.add("LOTID_A");
@@ -303,11 +303,11 @@ public class DiscoBGHost extends EquipHost {
                             cpmap.put("PPID_B", recipeName);
                             cpmap.put("LOTID_B", lotId);
                             Map cpNameFromatMap = new HashMap();
-                            cpNameFromatMap.put("PPID_B", FormatCode.SECS_ASCII);
-                            cpNameFromatMap.put("LOTID_B", FormatCode.SECS_ASCII);
+                            cpNameFromatMap.put("PPID_B", SecsFormatValue.SECS_ASCII);
+                            cpNameFromatMap.put("LOTID_B", SecsFormatValue.SECS_ASCII);
                             Map cpValueFromatMap = new HashMap();
-                            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-                            cpValueFromatMap.put(lotId, FormatCode.SECS_ASCII);
+                            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
+                            cpValueFromatMap.put(lotId, SecsFormatValue.SECS_ASCII);
                             List cplist = new ArrayList();
                             cplist.add("PPID_B");
                             cplist.add("LOTID_B");
@@ -534,11 +534,11 @@ public class DiscoBGHost extends EquipHost {
                 cpmap.put("PPID_A", recipeName);
                 cpmap.put("LOTID_A", lotId);
                 Map cpNameMap = new HashMap();
-                cpNameMap.put("PPID_A", FormatCode.SECS_ASCII);
-                cpNameMap.put("LOTID_A", FormatCode.SECS_ASCII);
+                cpNameMap.put("PPID_A", SecsFormatValue.SECS_ASCII);
+                cpNameMap.put("LOTID_A", SecsFormatValue.SECS_ASCII);
                 Map cpValueMp = new HashMap();
-                cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
-                cpValueMp.put(lotId, FormatCode.SECS_ASCII);
+                cpValueMp.put(recipeName, SecsFormatValue.SECS_ASCII);
+                cpValueMp.put(lotId, SecsFormatValue.SECS_ASCII);
                 List cplist = new ArrayList();
                 cplist.add("PPID_A");
                 cplist.add("LOTID_A");
@@ -574,11 +574,11 @@ public class DiscoBGHost extends EquipHost {
                 cpmap.put("PPID_B", recipeName);
                 cpmap.put("LOTID_B", lotId);
                 Map cpNameMap = new HashMap();
-                cpNameMap.put("PPID_B", FormatCode.SECS_ASCII);
-                cpNameMap.put("LOTID_B", FormatCode.SECS_ASCII);
+                cpNameMap.put("PPID_B", SecsFormatValue.SECS_ASCII);
+                cpNameMap.put("LOTID_B", SecsFormatValue.SECS_ASCII);
                 Map cpValueMp = new HashMap();
-                cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
-                cpValueMp.put(lotId, FormatCode.SECS_ASCII);
+                cpValueMp.put(recipeName, SecsFormatValue.SECS_ASCII);
+                cpValueMp.put(lotId, SecsFormatValue.SECS_ASCII);
                 List cplist = new ArrayList();
                 cplist.add("PPID_B");
                 cplist.add("LOTID_B");

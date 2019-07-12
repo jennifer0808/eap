@@ -382,7 +382,7 @@ public class MultipleEquipHostManager {
      * @param deviceId
      * @throws NotInitializedException
      */
-    public void startSECS(String deviceId, EquipmentEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
+    public void startSECS(String deviceId, EquipmentEventDealer eqpEventDealer) throws NotInitializedException, InterruptedException, T3TimeOutException, T6TimeOutException, InvalidDataException, StateException {
         if (equipHosts.get(deviceId) != null) {
             equipHosts.get(deviceId).startSecs(eqpEventDealer);
         }
@@ -839,7 +839,7 @@ public class MultipleEquipHostManager {
     /*
      * 获取设备使用recipe所需要监控参数的对应svid
      */
-    public Map getDeviceRcpParaCheck(String deviceId, List svIdList) throws IOException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, BrokenProtocolException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public Map getDeviceRcpParaCheck(String deviceId, List svIdList) throws IOException, T6TimeOutException, T3TimeOutException, BrokenProtocolException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
             return equipHost.activeWrapper.sendS1F3out(svIdList, equipHost.svFormat);
@@ -1096,7 +1096,7 @@ public class MultipleEquipHostManager {
         return null;
     }
 
-    public Map getSVShotCountValue(String deviceId) throws IOException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, BrokenProtocolException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public Map getSVShotCountValue(String deviceId) throws IOException, T6TimeOutException, T3TimeOutException, BrokenProtocolException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         Map resultMap = new HashMap();
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);

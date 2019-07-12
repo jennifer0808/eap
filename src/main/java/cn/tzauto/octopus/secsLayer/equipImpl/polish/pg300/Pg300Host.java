@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.polish.pg300;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -34,10 +34,10 @@ public class Pg300Host extends EquipHost {
 
     public Pg300Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -178,13 +178,13 @@ public class Pg300Host extends EquipHost {
             cpmap.put("PPID", recipeName);
             cpmap.put("PORTID", this.portId);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put("LOTID", FormatCode.SECS_ASCII);
-            cpNameFromatMap.put("PPID", FormatCode.SECS_ASCII);
-            cpNameFromatMap.put("PORTID", FormatCode.SECS_ASCII);
+            cpNameFromatMap.put("LOTID", SecsFormatValue.SECS_ASCII);
+            cpNameFromatMap.put("PPID", SecsFormatValue.SECS_ASCII);
+            cpNameFromatMap.put("PORTID", SecsFormatValue.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put("testlotid", FormatCode.SECS_ASCII);
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-            cpValueFromatMap.put(this.portId, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
+            cpValueFromatMap.put("testlotid", SecsFormatValue.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
+            cpValueFromatMap.put(this.portId, SecsFormatValue.SECS_1BYTE_UNSIGNED_INTEGER);
             List list = new ArrayList();
             list.add("LOTID");
             list.add("PPID");

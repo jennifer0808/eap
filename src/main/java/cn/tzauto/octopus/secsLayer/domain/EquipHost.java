@@ -4,8 +4,8 @@ import cn.tzauto.generalDriver.api.MsgListener;
 import cn.tzauto.generalDriver.api.SecsDriverFactory;
 import cn.tzauto.generalDriver.entity.cnct.ConnRegInfo;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.alarm.service.AlarmService;
@@ -94,11 +94,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public boolean isCleanMode = false;
     public Map<String, CommandDomain> remoteCommandMap = new HashMap<>();
     public Map<Long, DataMsgMap> waitMsgValueMap = new ConcurrentHashMap<>();
-    protected short svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-    protected short ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-    protected short ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-    protected short rptFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-    protected short lengthFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short svFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short ecFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short ceFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short rptFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+    protected short lengthFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
     protected long lastStartCheckTime;
     protected long startCheckIntervalTime = 60;
     protected boolean holdFlag = false;
@@ -710,7 +710,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
     }
 
-    public boolean testInitLink() throws BrokenProtocolException, HsmsProtocolNotSelectedException {
+    public boolean testInitLink() throws BrokenProtocolException {
         try {
 
             DataMsgMap s1f14in = activeWrapper.sendS1F13out();
@@ -793,7 +793,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("Exception:", e);
         }
         Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = new ArrayList<>();
+        ArrayList<MsgSection> list = new ArrayList<>();
         if (data == null || data.get("EC") == null) {
             return null;
         }
@@ -851,20 +851,20 @@ public abstract class EquipHost extends Thread implements MsgListener {
         float tmpF = Float.parseFloat(ecv);
         float f[] = new float[1];
         f[0] = tmpF;
-        SecsItem rootItem = new SecsItem();
+        MsgSection rootItem = new MsgSection();
         List rootList = new ArrayList();
 
-        SecsItem secsItemL = new SecsItem(l, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+        MsgSection secsItemL = new MsgSection(l, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER);
         rootList.add(secsItemL);
-        SecsItem secsItemF = new SecsItem(f, FormatCode.SECS_4BYTE_FLOAT_POINT);
+        MsgSection secsItemF = new MsgSection(f, SecsFormatValue.SECS_4BYTE_FLOAT_POINT);
         rootList.add(secsItemF);
-        SecsItem secsItemRootList = new SecsItem(rootList, FormatCode.SECS_LIST);
+        MsgSection secsItemRootList = new MsgSection(rootList, SecsFormatValue.SECS_LIST);
 
         s2f15out.put("S2F15OUT", secsItemRootList);
         DataMsgMap msgdata = null;
         try {
             msgdata = activeWrapper.sendAwaitMessage(s2f15out);
-            byte[] ack = (byte[]) ((SecsItem) msgdata.get("AckCode")).getData();
+            byte[] ack = (byte[]) ((MsgSection) msgdata.get("AckCode")).getData();
             if (ack[0] == 0 || ack[0] == 2) {
                 setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
             }
@@ -880,7 +880,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         try {
             DateFormat df = new SimpleDateFormat("yyMMddHHmmss");
 //            s2f18out.put("Time", df.format(new Date()));
-            SecsItem secsItem = new SecsItem(df.format(new Date()), FormatCode.SECS_ASCII);
+            MsgSection secsItem = new MsgSection(df.format(new Date()), SecsFormatValue.SECS_ASCII);
             s2f18out.put("S2F18OUT", secsItem);
             activeWrapper.respondMessage(s2f18out);
         } catch (Exception e) {
@@ -917,7 +917,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
 
     public void processS2F34in(DataMsgMap data) {
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
     }
 
     /**
@@ -957,7 +957,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     @SuppressWarnings("unchecked")
     public void processS2F36in(DataMsgMap data) {
         logger.info("----------Received s2f36in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -1004,7 +1004,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     public void processS2F38in(DataMsgMap data) {
         logger.info("----------Received s2f38in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -1021,25 +1021,25 @@ public abstract class EquipHost extends Thread implements MsgListener {
         CommandDomain commandDomain = this.remoteCommandMap.get(commandKey);
         if (commandDomain != null) {
             s2f41out.put("RCMD", commandDomain.getRcmd());
-            SecsItem vRoot = new SecsItem();
-            vRoot.setFormatCode(FormatCode.SECS_LIST);
+            MsgSection vRoot = new MsgSection();
+            vRoot.setFormatCode(SecsFormatValue.SECS_LIST);
             ArrayList rootData = new ArrayList();
             if (commandDomain.getParaList().size() > 0) {
                 for (CommandParaPair cpPair : commandDomain.getParaList()) {
-                    SecsItem cpItem = new SecsItem();
-                    cpItem.setFormatCode(FormatCode.SECS_LIST);
+                    MsgSection cpItem = new MsgSection();
+                    cpItem.setFormatCode(SecsFormatValue.SECS_LIST);
                     ArrayList cpPairNode = new ArrayList(2);
-                    SecsItem cpname = new SecsItem(cpPair.getCpname(), FormatCode.SECS_ASCII);
+                    MsgSection cpname = new MsgSection(cpPair.getCpname(), SecsFormatValue.SECS_ASCII);
                     cpPairNode.add(cpname);
-                    short cpvalType = FormatCode.SECS_ASCII;
+                    short cpvalType = SecsFormatValue.SECS_ASCII;
                     if (cpPair.getCpval() instanceof Boolean) {
-                        cpvalType = FormatCode.SECS_BOOLEAN;
+                        cpvalType = SecsFormatValue.SECS_BOOLEAN;
                     } else if (cpPair.getCpval() instanceof Byte) {
-                        cpvalType = FormatCode.SECS_BINARY;
+                        cpvalType = SecsFormatValue.SECS_BINARY;
                     } else if (cpPair.getCpval() instanceof Integer) {
-                        cpvalType = FormatCode.SECS_4BYTE_SIGNED_INTEGER;
+                        cpvalType = SecsFormatValue.SECS_4BYTE_SIGNED_INTEGER;
                     }
-                    SecsItem cpvalue = new SecsItem(cpPair.getCpval(), cpvalType);
+                    MsgSection cpvalue = new MsgSection(cpPair.getCpval(), cpvalType);
                     cpPairNode.add(cpvalue);
                     cpItem.setData(cpPairNode);
                     rootData.add(cpItem);
@@ -1050,7 +1050,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             byte hcack = -1;
             try {
                 DataMsgMap data = activeWrapper.sendAwaitMessage(s2f41out);
-                hcack = (byte) ((SecsItem) data.get("HCACK")).getData();
+                hcack = (byte) ((MsgSection) data.get("HCACK")).getData();
                 logger.info("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
             } catch (Exception e) {
                 logger.error("Exception:", e);
@@ -1080,9 +1080,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
             Map cpmap = new HashMap();
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);
@@ -1254,7 +1254,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         try {
             ArrayList reportData = (ArrayList) data.get("REPORT");
             //获取xml字符串
-//            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
+//            String stripMapData = (String) ((MsgSection) data.get("MapData")).getData();
             String stripMapData = (String) ((ArrayList) reportData.get(1)).get(0);
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");
@@ -1525,7 +1525,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
             byte ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
@@ -1646,7 +1646,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         Map<Long, String> errorMap = new HashMap<>();
         Map stripMap = new HashMap();
         Map stripIDformatMap = new HashMap();
-        stripIDformatMap.put("MapData", FormatCode.SECS_ASCII);
+        stripIDformatMap.put("MapData", SecsFormatValue.SECS_ASCII);
         byte objack = 0;
         String stripMapData = WSUtility.binGet(stripId, deviceCode);
 //        String stripMapData = AxisUtility.downloadStripMap(stripId, deviceCode);
@@ -1685,11 +1685,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         }
         try {
 
-//            activeWrapper.sendS14F2out(stripMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap, (byte) 2,
-//                    errorMap, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+//            activeWrapper.sendS14F2out(stripMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap, (byte) 2,
+//                    errorMap, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
 
-            activeWrapper.sendS14F2out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
-                    objack, errorMap, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+            activeWrapper.sendS14F2out(objMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap,
+                    objack, errorMap, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送Strip Map到设备,StripId：[" + stripId + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -1740,7 +1740,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @throws NotInitializedException
      */
     public void startSecs(EquipmentEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
+            throws NotInitializedException, InterruptedException, T3TimeOutException, T6TimeOutException, InvalidDataException, StateException {
         if (this.activeWrapper == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.deviceId + " is not initialized yet.");
@@ -2205,7 +2205,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     /**
      * uph数据上报
      */
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
     }
 
     public String getOutputData() {
@@ -2472,7 +2472,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         byte[] hcack = new byte[1];
         try {
             DataMsgMap feedBackData = activeWrapper.sendAwaitMessage(commandMsg);
-            hcack = (byte[]) ((SecsItem) feedBackData.get("HCACK")).getData();
+            hcack = (byte[]) ((MsgSection) feedBackData.get("HCACK")).getData();
             return String.valueOf(hcack);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3101,7 +3101,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
             String MaterialID = DataMsgMap.get("MaterialID").toString();
 
-            byte IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData())[0];
+            byte IDTYP = ((byte[]) ((MsgSection) DataMsgMap.get("IDTYP")).getData())[0];
 
             String binList = DataMsgMap.get("RSINFBinList").toString();
 
@@ -3151,7 +3151,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             DataMsgMap s12f14out = new DataMsgMap("s12f14out", activeWrapper.getDeviceId());
 
             s12f14out.setTransactionId(DataMsgMap.getTransactionId());
-            activeWrapper.sendS12F14out("null", FormatCode.SECS_ASCII, (byte) 1, null, FormatCode.SECS_1BYTE_SIGNED_INTEGER, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
+            activeWrapper.sendS12F14out("null", SecsFormatValue.SECS_ASCII, (byte) 1, null, SecsFormatValue.SECS_1BYTE_SIGNED_INTEGER, SecsFormatValue.SECS_ASCII, DataMsgMap.getTransactionId());
 
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3226,8 +3226,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
             uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
             //kong
-            //String NullBinCodeValue = (String)((SecsItem) dataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((SecsItem) dataMsgMap.get("ProcessAxis")).getData());
+            //String NullBinCodeValue = (String)((MsgSection) dataMsgMap.get("NullBinCodeValue")).getData();
+            //byte[] ProcessAxis = ((byte[]) ((MsgSection) dataMsgMap.get("ProcessAxis")).getData());
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
             DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
@@ -3310,8 +3310,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             downFlatNotchLocation = (long) DataMsgMap.get("FNLOC");
             byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
             byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
-//            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
-//            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
+//            String BinCodeEquivalents = (String) ((MsgSection) DataMsgMap.get("BinCodeEquivalents")).getData();
+//            String NullBinCodeValue = (String) ((MsgSection) DataMsgMap.get("NullBinCodeValue")).getData();
             Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
             Object NullBinCodeValue = DataMsgMap.get("NULBC");
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
@@ -3322,8 +3322,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
-                activeWrapper.sendS12F4out(null, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                        , 0, 0, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 0 * 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                activeWrapper.sendS12F4out(null, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
+                        , 0, 0, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, 0 * 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
                 return null;
@@ -3400,8 +3400,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
             try {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
-                activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                        , mapRow, mapCol, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, mapRow * mapCol, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                activeWrapper.sendS12F4out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
+                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
             } catch (Exception ex) {
@@ -3443,14 +3443,14 @@ public abstract class EquipHost extends Thread implements MsgListener {
             s12f16out.put("MaterialID", MaterialID);
             s12f16out.put("IDTYP", IDTYP);
             logger.info("waferMappingbinList:" + waferMappingbins);
-            SecsItem BinList = new SecsItem(waferMappingbins, FormatCode.SECS_ASCII);
+            MsgSection BinList = new MsgSection(waferMappingbins, SecsFormatValue.SECS_ASCII);
             s12f16out.put("BinList", BinList);
             s12f16out.setTransactionId(DataMsgMap.getTransactionId());
             long[] strps = new long[2];
             strps[0] = 0;
             strps[1] = 0;
-            activeWrapper.sendS12F16out(MaterialID, FormatCode.SECS_ASCII, IDTYP, strps, FormatCode.SECS_2BYTE_SIGNED_INTEGER,
-                    waferMappingbins, FormatCode.SECS_ASCII, DataMsgMap.getTransactionId());
+            activeWrapper.sendS12F16out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, strps, SecsFormatValue.SECS_2BYTE_SIGNED_INTEGER,
+                    waferMappingbins, SecsFormatValue.SECS_ASCII, DataMsgMap.getTransactionId());
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping至机台！WaferId：[" + MaterialID + "]");
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -3574,7 +3574,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             ack[0] = 0;
             out.put("AckCode", ack);
             out.setTransactionId(data.getTransactionId());
-            SecsItem secsItem = new SecsItem((byte) 0, FormatCode.SECS_BINARY);
+            MsgSection secsItem = new MsgSection((byte) 0, SecsFormatValue.SECS_BINARY);
             out.put("S6F6OUT", secsItem);
             activeWrapper.respondMessage(out);
         } catch (Exception e) {
@@ -3600,12 +3600,12 @@ public abstract class EquipHost extends Thread implements MsgListener {
             attrMap.put("AxisDirection", "DownLeft");
             objMap.put(new String(), attrMap);
             Map stripIDformatMap = new HashMap();
-            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
-            activeWrapper.sendS14F4out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
-                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+            stripIDformatMap.put("Orientation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", SecsFormatValue.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

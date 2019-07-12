@@ -8,8 +8,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.esec.plating;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -51,8 +51,8 @@ public class HP_EPL2400Host extends EquipHost {
 
     public HP_EPL2400Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -196,7 +196,7 @@ public class HP_EPL2400Host extends EquipHost {
             //刷新当前机台状态
             findDeviceRecipe();
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             //将设备的当前状态显示在界面上
 //        Map map = new HashMap();
 //        map.put("PPExecName", ppExecName);
@@ -339,7 +339,7 @@ public class HP_EPL2400Host extends EquipHost {
         byte[] ppgnt = new byte[1];
         try {
             data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            ppgnt = (byte[]) ((MsgSection) data.get("PPGNT")).getData();
             logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -365,7 +365,7 @@ public class HP_EPL2400Host extends EquipHost {
         DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+        MsgSection secsItem = new MsgSection(ppbody, SecsFormatValue.SECS_BINARY);
         s7f3out.put("ProcessprogramID", targetRecipeName);
         s7f3out.put("Processprogram", secsItem);
         try {
@@ -373,7 +373,7 @@ public class HP_EPL2400Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ackc7 = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -401,7 +401,7 @@ public class HP_EPL2400Host extends EquipHost {
             return null;
         }
         //
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) ((MsgSection) msgdata.get("Processprogram")).getData();
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();
@@ -432,7 +432,7 @@ public class HP_EPL2400Host extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            ackc7 = (byte[]) ((MsgSection) data.get("AckCode")).getData();
             if (ackc7[0] == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {

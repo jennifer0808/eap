@@ -7,7 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.ls;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -44,8 +44,8 @@ public class DiscoLSHost extends EquipHost {
 
     public DiscoLSHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT_S";
         CPN_PPID = "DEV_NO";
     }
@@ -199,7 +199,7 @@ public class DiscoLSHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             super.findDeviceRecipe();
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -441,11 +441,11 @@ public class DiscoLSHost extends EquipHost {
             cpmap.put("Port", (byte) 1);
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameMap = new HashMap();
-            cpNameMap.put("Port", FormatCode.SECS_ASCII);
-            cpNameMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpNameMap.put("Port", SecsFormatValue.SECS_ASCII);
+            cpNameMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValueMp = new HashMap();
-            cpValueMp.put((byte) 1, FormatCode.SECS_BINARY);
-            cpValueMp.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueMp.put((byte) 1, SecsFormatValue.SECS_BINARY);
+            cpValueMp.put(recipeName, SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add("Port");
             cplist.add(CPN_PPID);
