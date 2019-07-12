@@ -70,10 +70,10 @@ public class AsmAD838Host extends EquipHost {
                 if (rptDefineNum < 1) {
 
                     //为了能调整为online remote
-                    logger.info("sendS1F17out request online...");
-                    this.sendS1F17out();
-                    logger.info("sendS2f41Cmd online remote...");
-                    sendS2f41Cmd("ONLINE_REMOTE");
+//                    logger.info("sendS1F17out request online...");
+//                    this.sendS1F17out();
+//                    logger.info("sendS2f41Cmd online remote...");
+//                    sendS2f41Cmd("ONLINE_REMOTE");
                     //获取设备开机状态
                     super.findDeviceRecipe();
                     initRptPara();
@@ -82,6 +82,7 @@ public class AsmAD838Host extends EquipHost {
                 }
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")) {
+                    logger.info("s1f1input enter into MsgQueue ..");
                     processS1F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")) {
                     processS1F13in(msg);
@@ -116,6 +117,7 @@ public class AsmAD838Host extends EquipHost {
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
+                logger.info("s1f1input enter into inputMessage ..");
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
