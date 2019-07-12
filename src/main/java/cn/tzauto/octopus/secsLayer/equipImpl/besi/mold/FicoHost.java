@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.besi.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
@@ -47,10 +47,10 @@ public class FicoHost extends EquipHost {
 
     public FicoHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -122,7 +122,7 @@ public class FicoHost extends EquipHost {
                         logger.error("Exception:", e);
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -836,7 +836,7 @@ public class FicoHost extends EquipHost {
 
 
     @Override
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException,  InterruptedException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -1042,24 +1042,22 @@ public class FicoHost extends EquipHost {
             ceidList.add(ceids[i]);
         }
         try {
-            activeWrapper.sendS2F37out(true, ceidList, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
-        } catch (HsmsProtocolNotSelectedException e) {
+            activeWrapper.sendS2F37out(true, ceidList, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER);
+        }  catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
+        }  catch (IOException e) {
             e.printStackTrace();
-        } catch (StreamFunctionNotSupportException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ItemIntegrityException e) {
-            e.printStackTrace();
-        } catch (MessageDataException e) {
-            e.printStackTrace();
-        } catch (BrokenProtocolException e) {
+        }  catch (BrokenProtocolException e) {
             e.printStackTrace();
         } catch (T3TimeOutException e) {
             e.printStackTrace();
         } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        } catch (IntegrityException e) {
+            e.printStackTrace();
+        } catch (StateException e) {
+            e.printStackTrace();
+        } catch (InvalidDataException e) {
             e.printStackTrace();
         }
         //todo sendS2F37outMuilt

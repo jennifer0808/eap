@@ -51,17 +51,15 @@ public class DeviceComm {
         } catch (NotInitializedException e1) {
             e1.printStackTrace();
 //                    return null;
-        } catch (InvalidHsmsHeaderDataException e) {
-            e.printStackTrace();
-        } catch (T6TimeOutException e) {
+        }  catch (T6TimeOutException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (T3TimeOutException e) {
             e.printStackTrace();
-        } catch (HsmsProtocolNotSelectedException e) {
+        } catch (InvalidDataException e) {
             e.printStackTrace();
-        } catch (IllegalStateTransitionException e) {
+        } catch (StateException e) {
             e.printStackTrace();
         }
         EapClient.removeWatchDog(deviceCode);

@@ -7,7 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -41,9 +41,9 @@ public class DiscoDGP8761Host extends EquipHost {
 
     public DiscoDGP8761Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid=10150;
     }
 
@@ -248,11 +248,11 @@ public class DiscoDGP8761Host extends EquipHost {
                     cpmap.put("PPID_A", ppExecName);
                     cpmap.put("LOTID_A", lotId);
                     Map cpNameMap = new HashMap();
-                    cpNameMap.put("PPID_A", FormatCode.SECS_ASCII);
-                    cpNameMap.put("LOTID_A", FormatCode.SECS_ASCII);
+                    cpNameMap.put("PPID_A", SecsFormatValue.SECS_ASCII);
+                    cpNameMap.put("LOTID_A", SecsFormatValue.SECS_ASCII);
                     Map cpValueMp = new HashMap();
-                    cpValueMp.put(ppExecName, FormatCode.SECS_ASCII);
-                    cpValueMp.put(lotId, FormatCode.SECS_ASCII);
+                    cpValueMp.put(ppExecName, SecsFormatValue.SECS_ASCII);
+                    cpValueMp.put(lotId, SecsFormatValue.SECS_ASCII);
                     List cplist = new ArrayList();
                     cplist.add("PPID_A");
                     cplist.add("LOTID_A");
@@ -288,11 +288,11 @@ public class DiscoDGP8761Host extends EquipHost {
                     cpmap.put("PPID_B", ppExecName);
                     cpmap.put("LOTID_B", lotId);
                     Map cpNameMap = new HashMap();
-                    cpNameMap.put("PPID_B", FormatCode.SECS_ASCII);
-                    cpNameMap.put("LOTID_B", FormatCode.SECS_ASCII);
+                    cpNameMap.put("PPID_B", SecsFormatValue.SECS_ASCII);
+                    cpNameMap.put("LOTID_B", SecsFormatValue.SECS_ASCII);
                     Map cpValueMp = new HashMap();
-                    cpValueMp.put(ppExecName, FormatCode.SECS_ASCII);
-                    cpValueMp.put(lotId, FormatCode.SECS_ASCII);
+                    cpValueMp.put(ppExecName, SecsFormatValue.SECS_ASCII);
+                    cpValueMp.put(lotId, SecsFormatValue.SECS_ASCII);
                     List cplist = new ArrayList();
                     cplist.add("PPID_B");
                     cplist.add("LOTID_B");
@@ -426,7 +426,7 @@ public class DiscoDGP8761Host extends EquipHost {
         long alid = 0l;
         try {
             alid = data.getSingleNumber("ALID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(SecsItem) data.get("EquipStatus")).getData().toString();
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(MsgSection) data.get("EquipStatus")).getData().toString();
             if (!"".equals(equipStatus) && equipStatus != null) {
                 Map map = new HashMap();
                 map.put("EquipStatus", equipStatus);
@@ -450,7 +450,7 @@ public class DiscoDGP8761Host extends EquipHost {
             ceid = (long) data.get("CEID");
 //            if (ceid == 77) {
 //                //ppselect 事件
-//                ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//                ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
 //                portARcpName = "";
 //                portARcpName = "";
 //            }
@@ -496,7 +496,7 @@ public class DiscoDGP8761Host extends EquipHost {
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
-//        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+//        byte[] ppbody = (byte[]) ((MsgSection) msgdata.get("Processprogram")).getData();
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         //Recipe解析
         List<RecipePara> recipeParaList = new ArrayList<>();

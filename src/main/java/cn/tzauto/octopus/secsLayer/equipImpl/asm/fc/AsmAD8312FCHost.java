@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.fc;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -36,9 +36,9 @@ public class AsmAD8312FCHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 4L;
         StripMapUpCeid = 237L;
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
 //        RCMD_PPSELECT = "PP_SELECT";
     }
 
@@ -332,7 +332,7 @@ public class AsmAD8312FCHost extends EquipHost {
         try {
             out.setTransactionId(data.getTransactionId());
             ceid = (long) data.get("CEID");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
+            loginUserName = ((MsgSection) data.get("UserLoginName")).getData().toString();
             if (ceid == 9L) {
                 Map map = new HashMap();
                 map.put("PPExecName", loginUserName);

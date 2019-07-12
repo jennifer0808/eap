@@ -18,7 +18,7 @@ import java.util.List;
  * Created by luosy on 2019/4/3.
  */
 public class EdcDealer {
-    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException, ProcessFunctionNotSupportException {
+    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, ProcessFunctionNotSupportException, StateException, IntegrityException, InvalidDataException {
         List idlist = new ArrayList();
         for (SecsParameter secsParameter : processFunction.getFunctionPara()) {
             idlist.add(secsParameter.getValue());

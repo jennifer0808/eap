@@ -2,8 +2,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -35,9 +35,9 @@ public class AsmTwin832Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 8L;
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -328,7 +328,7 @@ public class AsmTwin832Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid = data.getSingleNumber("CollEventID");
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -347,7 +347,7 @@ public class AsmTwin832Host extends EquipHost {
             out.setTransactionId(data.getTransactionId());
             ceid = data.getSingleNumber("CollEventID");
             reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
+            loginUserName = ((MsgSection) data.get("UserLoginName")).getData().toString();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

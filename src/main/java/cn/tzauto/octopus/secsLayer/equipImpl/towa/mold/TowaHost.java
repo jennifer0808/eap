@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.towa.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -41,7 +41,7 @@ public class TowaHost extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         //Y1R Y1E 50007 ; YPM 271
         EquipStateChangeCeid = 50007;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -372,7 +372,7 @@ public class TowaHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             if (lineAutoHasbeenPressed) {
                 equipStatus = "run";
                 lineAutoHasbeenPressed = false;

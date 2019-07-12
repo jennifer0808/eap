@@ -7,8 +7,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.smt.dek;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -41,9 +41,9 @@ public class Horizon03ixHost extends EquipHost {
 
     public Horizon03ixHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -496,7 +496,7 @@ public class Horizon03ixHost extends EquipHost {
                 logger.error("获取设备：" + deviceCode + "状态信息失败.");
                 return null;
             }
-            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) s14f2in.get("RESULT")).getData();
+            ArrayList<MsgSection> list = (ArrayList) ((MsgSection) s14f2in.get("RESULT")).getData();
             ArrayList<Object> listtem = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
             int parameterCount = (listtem.size() - 1) / 5;
             for (int n = 0; n < parameterCount; n++) {
@@ -512,8 +512,8 @@ public class Horizon03ixHost extends EquipHost {
 //            for (int n = 3; n < 11; n++) {
 //                String Key = "DATA" + Integer.toString(n + 1);
 //                String Value = "VALUE" + Integer.toString(n + 1);
-//                String ParameterID = ((SecsItem) s14f2in.get(Key)).getData().toString();
-//                String ParameterData = ((SecsItem) s14f2in.get(Value)).getData().toString();
+//                String ParameterID = ((MsgSection) s14f2in.get(Key)).getData().toString();
+//                String ParameterData = ((MsgSection) s14f2in.get(Value)).getData().toString();
 //                System.out.println(ParameterID + ":" + ParameterData);
 //                recipePara.setParaCode(Integer.toString(n + 1));
 //                recipePara.setParaName(ParameterID);
@@ -522,8 +522,8 @@ public class Horizon03ixHost extends EquipHost {
 //            }
             return recipeParas;
 //            return null;
-//            Mdln = (String) ((SecsItem) s1f2in.get("Mdln")).getData();
-//            SoftRev = (String) ((SecsItem) s1f2in.get("SoftRev")).getData();
+//            Mdln = (String) ((MsgSection) s1f2in.get("Mdln")).getData();
+//            SoftRev = (String) ((MsgSection) s1f2in.get("SoftRev")).getData();
         } catch (Exception e) {
             e.printStackTrace();
             return null;

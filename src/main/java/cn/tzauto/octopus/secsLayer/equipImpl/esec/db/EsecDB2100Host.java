@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.esec.db;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -43,10 +43,10 @@ public class EsecDB2100Host extends EquipHost {
 
     public EsecDB2100Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 15339L;
         EquipStateChangeCeid = 3255L;
         CPN_PPID = "PPNAME";
@@ -146,8 +146,21 @@ public class EsecDB2100Host extends EquipHost {
 //                processS6F11inStripMapUpload(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
-//                processS6F11in(data);
-                this.inputMsgQueue.put(data);
+                long ceid = 0L;
+                try {
+                    ceid = (long) data.get("CEID");
+                    logger.info("Received a s6f11in with CEID = " + ceid);
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                }
+                if (ceid == StripMapUpCeid ) {
+                    this.inputMsgQueue.put(data);
+                } else {
+                    replyS6F12WithACK(data, (byte) 0);
+                    if(ceid == EquipStateChangeCeid || ceid == 3L){
+                        this.inputMsgQueue.put(data);
+                    }
+                }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
 //                processS14F1in(data);
                 this.inputMsgQueue.put(data);
@@ -204,24 +217,24 @@ public class EsecDB2100Host extends EquipHost {
 
             List list1 = new ArrayList();
             list1.add(269352993L);
-            sendS2F33out(1001L,1001L, list1);//15339
+            sendS2F33out(1001L, 1001L, list1);//15339
 
             List list2 = new ArrayList();
             list2.add(269352993L);
-            sendS2F33out(1001L,1002L, list1);//15338
+            sendS2F33out(1001L, 1002L, list1);//15338
 
             List list3 = new ArrayList();
             list3.add(269352995L);
-            sendS2F33out(1001L,1003L, list3);//15328
+            sendS2F33out(1001L, 1003L, list3);//15328
 
 
             //SEND S2F35
 
-            sendS2F35out(1001L,15339L, 1001L);//15339 1001
+            sendS2F35out(1001L, 15339L, 1001L);//15339 1001
 
-            sendS2F35out(1001L,15338L, 1002L);//15339 1001
+            sendS2F35out(1001L, 15338L, 1002L);//15339 1001
 
-            sendS2F35out(1001L,15328L, 1003L);//15339 1001
+            sendS2F35out(1001L, 15328L, 1003L);//15339 1001
 
             List list = new ArrayList();
             list.add(2031L);
@@ -232,6 +245,9 @@ public class EsecDB2100Host extends EquipHost {
             //SEND S2F37
 
             sendS2F37outAll();
+
+            sendS2F37outClose(3152L);
+            sendS2F37outClose(3211L);
 
             sendS2F37outClose(15650L);
             sendS2F37outClose(15652L);
@@ -245,13 +261,12 @@ public class EsecDB2100Host extends EquipHost {
     }
 
 
-
     // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
     @Override
     public void processS1F13in(DataMsgMap data) {
         super.processS1F13in(data);
-        if(rptDefineNum>0) {
+        if (rptDefineNum > 0) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -294,9 +309,9 @@ public class EsecDB2100Host extends EquipHost {
             Map cp = new HashMap();
             cp.put(CPN_PPID, recipeName + ".dbrcp");
             Map cpName = new HashMap();
-            cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpName.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
+            cpValue.put(recipeName + ".dbrcp", SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cp, cpName, cpValue);
@@ -304,7 +319,7 @@ public class EsecDB2100Host extends EquipHost {
             if (data != null) {
                 ppselectFlag = true;
             }
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+            hcack = (byte[]) ((MsgSection) data.get("HCACK")).getData();
             logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
@@ -352,10 +367,9 @@ public class EsecDB2100Host extends EquipHost {
             if (ceid == StripMapUpCeid) {
                 processS6F11inStripMapUpload(data);
             } else {
-                replyS6F12WithACK(data, (byte) 0);
                 if (ceid == EquipStateChangeCeid) {
                     processS6F11EquipStatusChange(data);
-                }else if(ceid == 3L){
+                } else if (ceid == 3L) {
                     processS6F11LearnDevice(data);
                 }
             }
@@ -411,7 +425,7 @@ public class EsecDB2100Host extends EquipHost {
             String busniessMod = deviceInfoExt.getBusinessMod();
             boolean checkResult = false;
             //获取设备当前运行状态，如果是Run，执行开机检查逻辑&&
-            logger.info("equipStatus: "+  equipStatus);
+            logger.info("equipStatus: " + equipStatus);
             if (dataReady && "run".equalsIgnoreCase(equipStatus)) {
                 logger.info("校验2D");
                 //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
@@ -549,7 +563,7 @@ public class EsecDB2100Host extends EquipHost {
             if ("Learn device".equals(commandName)) {
                 logger.info("检测到设备触发LearnDevice事件，请求将设备ProductionAccess改成“disabled”!");
                 // TODO 需要检查下MES状态，判断是否需要发送锁机指令
-                sendS2F15outLearnDevice(151126402L, 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER);
+                sendS2F15outLearnDevice(151126402L, 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER);
 
                 Map resultMap = new HashMap();
                 resultMap.put("msgType", "s5f1");
@@ -568,7 +582,7 @@ public class EsecDB2100Host extends EquipHost {
     }
 
     public void sendS2F15outLearnDevice(long ecid, Object ecv, short ecvFormat) {
-        sendS2F15out(ecid,(String)ecv);
+        sendS2F15out(ecid, (String) ecv);
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备Learn Device，设备进行锁机，请报修MES并进行数据BuyOff！");
     }
 
@@ -577,7 +591,7 @@ public class EsecDB2100Host extends EquipHost {
             return;
         }
         System.out.println("--------Received s2f16in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
+        byte[] value = (byte[]) ((MsgSection) in.get("EAC")).getData();
         System.out.println();
         System.out.println("EAC = " + ((value == null) ? "" : value[0]));
     }
@@ -613,7 +627,7 @@ public class EsecDB2100Host extends EquipHost {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName + ".dbrcp", ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName + ".dbrcp", ppbody, SecsFormatValue.SECS_BINARY);
             logger.info("send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -787,8 +801,8 @@ public class EsecDB2100Host extends EquipHost {
             uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
             uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
             //kong
-            //String NullBinCodeValue = (String)((SecsItem) dataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((SecsItem) dataMsgMap.get("ProcessAxis")).getData());
+            //String NullBinCodeValue = (String)((MsgSection) dataMsgMap.get("NullBinCodeValue")).getData();
+            //byte[] ProcessAxis = ((byte[]) ((MsgSection) dataMsgMap.get("ProcessAxis")).getData());
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
             DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
@@ -809,10 +823,10 @@ public class EsecDB2100Host extends EquipHost {
 
     public Map processS12F9inold(DataMsgMap DataMsgMap) {
         try {
-            String MaterialID = (String) ((SecsItem) DataMsgMap.get("MaterialID")).getData();
-            byte[] IDTYP = ((byte[]) ((SecsItem) DataMsgMap.get("IDTYP")).getData());
-            int[] STRPxSTRPy = (int[]) ((SecsItem) DataMsgMap.get("STRPxSTRPy")).getData();
-            String binList = (String) ((SecsItem) DataMsgMap.get("BinList")).getData();
+            String MaterialID = (String) ((MsgSection) DataMsgMap.get("MaterialID")).getData();
+            byte[] IDTYP = ((byte[]) ((MsgSection) DataMsgMap.get("IDTYP")).getData());
+            int[] STRPxSTRPy = (int[]) ((MsgSection) DataMsgMap.get("STRPxSTRPy")).getData();
+            String binList = (String) ((MsgSection) DataMsgMap.get("BinList")).getData();
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台上传WaferMapping成功！WaferId：[" + MaterialID + "]");
             //上传WaferMapping,
             String _uploadWaferMappingRow = uploadWaferMappingRow;

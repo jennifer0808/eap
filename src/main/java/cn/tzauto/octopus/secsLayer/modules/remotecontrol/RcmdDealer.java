@@ -9,12 +9,12 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class RcmdDealer {
     private static Logger logger = Logger.getLogger(RcmdDealer.class);
 
-    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         //todo 完善每个判断逻辑
         if (processFunction.getFunctionCode().equals(ProcessFunction.RCMD_STOP)) {
             String rcmd = processFunction.getFunctionPara().get(0).getValue();

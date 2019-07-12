@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -41,8 +41,8 @@ public class DiscoDFG8540Host extends EquipHost {
 
     public DiscoDFG8540Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid = 10150;
     }
 
@@ -223,7 +223,7 @@ public class DiscoDFG8540Host extends EquipHost {
                         if ("setup".equalsIgnoreCase(equipStatus)) {
                             if (cassUseMap.get("A")) {
                                 DataMsgMap dataA = activeWrapper.sendAwaitMessage(PPselectA);
-                                byte[] hcacka = (byte[]) ((SecsItem) dataA.get("HCACK")).getData();
+                                byte[] hcacka = (byte[]) ((MsgSection) dataA.get("HCACK")).getData();
                                 if (hcacka != null && hcacka[0] == 0) {
                                     portARcpName = recipeName;
                                     selectOkFlag = true;
@@ -233,7 +233,7 @@ public class DiscoDFG8540Host extends EquipHost {
                             }
                             if (cassUseMap.get("B")) {
                                 DataMsgMap dataB = activeWrapper.sendAwaitMessage(PPselectB);
-                                byte[] hcackb = (byte[]) ((SecsItem) dataB.get("HCACK")).getData();
+                                byte[] hcackb = (byte[]) ((MsgSection) dataB.get("HCACK")).getData();
                                 if (hcackb != null && hcackb[0] == 0) {
                                     portBRcpName = recipeName;
                                     selectOkFlag = true;
@@ -270,7 +270,7 @@ public class DiscoDFG8540Host extends EquipHost {
             if (cassUseMap.get("A")) {
                 if ("".equals(portARcpName) || !portARcpName.equals(recipeName)) {
                     DataMsgMap dataA = activeWrapper.sendAwaitMessage(PPselectA);
-                    byte[] hcacka = (byte[]) ((SecsItem) dataA.get("HCACK")).getData();
+                    byte[] hcacka = (byte[]) ((MsgSection) dataA.get("HCACK")).getData();
                     if (hcacka != null && hcacka[0] == 0) {
                         portARcpName = recipeName;
                     }
@@ -298,7 +298,7 @@ public class DiscoDFG8540Host extends EquipHost {
             if (cassUseMap.get("B")) {
                 if ("".equals(portARcpName) || !portARcpName.equals(recipeName)) {
                     DataMsgMap dataB = activeWrapper.sendAwaitMessage(PPselectB);
-                    byte[] hcackb = (byte[]) ((SecsItem) dataB.get("HCACK")).getData();
+                    byte[] hcackb = (byte[]) ((MsgSection) dataB.get("HCACK")).getData();
                     if (hcackb != null && hcackb[0] == 0) {
                         portBRcpName = recipeName;
                     }
@@ -396,7 +396,7 @@ public class DiscoDFG8540Host extends EquipHost {
         long alid = 0L;
         try {
             alid = data.getSingleNumber("ALID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(SecsItem) data.get("EquipStatus")).getData().toString();
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(MsgSection) data.get("EquipStatus")).getData().toString();
             if (!"".equals(equipStatus) && equipStatus != null) {
                 Map map = new HashMap();
                 map.put("EquipStatus", equipStatus);
