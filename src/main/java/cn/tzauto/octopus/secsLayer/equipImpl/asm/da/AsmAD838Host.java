@@ -61,35 +61,29 @@ public class AsmAD838Host extends EquipHost {
                 }
                 if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
                     sendS1F13out();
-                    sendS1F1out();
+//                    sendS1F1out();
                 }
-
+                if(!this.getControlState().equals(FengCeConstant.CONTROL_LOCAL_ONLINE)){
+                   findDeviceRecipe();
+                }
 
                 logger.info("rptDefineNum:" + rptDefineNum);
                 if (rptDefineNum < 1) {
 
                     //为了能调整为online remote
-                    logger.info("sendS1F17out request online...");
-                    this.sendS1F17out();
-                    logger.info("sendS2f41Cmd online remote...");
-                    sendS2f41Cmd("ONLINE_REMOTE");
+//                    logger.info("sendS1F17out request online...");
+//                    this.sendS1F17out();
+//                    logger.info("sendS2f41Cmd online remote...");
+//                    sendS2f41Cmd("ONLINE_REMOTE");
                     //获取设备开机状态
                     super.findDeviceRecipe();
-
-                    sendS2F37outCloseAll();
-                    sendS2F37out(2);
-                    sendS2F37out(3);
-                    sendS2F37out(4);
-                    sendS2F37out(6);
-                    sendS2F37out(7);
-                    sendS2F37out(237);
-
-                    sendS5F3out(true);
+                    initRptPara();
                     sendStatus2Server(equipStatus);
                     rptDefineNum++;
                 }
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")) {
+                    logger.info("s1f1input enter into MsgQueue ..");
                     processS1F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")) {
                     processS1F13in(msg);
@@ -124,7 +118,8 @@ public class AsmAD838Host extends EquipHost {
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
-                processS1F1in(data);
+                logger.info("s1f1input enter into inputMessage ..");
+                this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("S1F13IN")) {
@@ -179,6 +174,18 @@ public class AsmAD838Host extends EquipHost {
         }
     }
 
+    @Override
+    public void processS1F13in(DataMsgMap data) {
+        super.processS1F13in(data);
+        if(rptDefineNum>0) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    initRptPara();
+                }
+            }).start();
+        }
+    }
 
     @Override
     public Map sendS7F5out(String recipeName) {
@@ -464,24 +471,36 @@ public class AsmAD838Host extends EquipHost {
         }
     }
 
+//    private void initRptPara() {
+////sendS6F23clear();
+//        //重写事件 报告
+////            sendS2f33out(50007l, 902l, 906l);
+////            sendS2f35out(50007l, 50007l, 50007l);
+////            sendS2F37out(50007l);
+////        sendS2F37outCloseAll();
+////        sendS2F33clear();
+////        sendS2F35clear();
+////        sendS2F33init();
+////        sendS2F35init();
+////        sendS2F37outAll();
+////        sendS2F33clear();
+////        sendS2F35clear();
+////
+////        sendStatus2Server(equipStatus);
+//
+//    }
+
     private void initRptPara() {
-//sendS6F23clear();
-        //重写事件 报告
-//            sendS2f33out(50007l, 902l, 906l);
-//            sendS2f35out(50007l, 50007l, 50007l);
-//            sendS2F37out(50007l);
-//        sendS2F37outCloseAll();
-//        sendS2F33clear();
-//        sendS2F35clear();
-//        sendS2F33init();
-//        sendS2F35init();
-        sendS2F37outAll();
-        sendS2F33clear();
-        sendS2F35clear();
+        sendS2F37outCloseAll();
+        sendS2F37out(2);
+        sendS2F37out(3);
+        sendS2F37out(4);
+        sendS2F37out(6);
+        sendS2F37out(7);
+        sendS2F37out(237);
 
-        sendStatus2Server(equipStatus);
+        sendS5F3out(true);
     }
-
     @Override
     public String checkPPExecName(String recipeName) {
         if (ppExecName.equals(recipeName)) {
