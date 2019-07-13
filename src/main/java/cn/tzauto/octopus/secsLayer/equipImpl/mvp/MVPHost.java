@@ -7,7 +7,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.mvp;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
 import org.apache.log4j.Logger;
@@ -29,10 +29,10 @@ public class MVPHost extends EquipHost {
 
     public MVPHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 3014L;
     }
 
@@ -247,7 +247,7 @@ public class MVPHost extends EquipHost {
     public void sendS2F33out(long dataid, long reportId, List svidList) {
         // TODO: 2019/4/13  在s2f33out中svFormat和rptFormat为U2，s2f35中为U4
         try {
-            short format = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+            short format = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
             activeWrapper.sendS2F33out(dataid, format, reportId, format, svidList, format);
         } catch (Exception e) {
             logger.error("Exception:", e);

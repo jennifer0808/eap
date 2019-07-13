@@ -14,7 +14,7 @@ import java.io.IOException;
 public class RcmdDealer {
     private static Logger logger = Logger.getLogger(RcmdDealer.class.getName());
 
-    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public static JudgeResult deal(ProcessFunction processFunction, String deviceCode) throws IOException, BrokenProtocolException, T6TimeOutException,  T3TimeOutException,    InterruptedException {
         //todo 完善每个判断逻辑
         if (processFunction.getFunctionCode().equals(ProcessFunction.RCMD_STOP)) {
             String rcmd = processFunction.getFunctionPara().get(0).getValue();

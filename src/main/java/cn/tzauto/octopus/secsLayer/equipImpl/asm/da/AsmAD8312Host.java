@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -37,9 +37,9 @@ public class AsmAD8312Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 4L;
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -315,7 +315,7 @@ public class AsmAD8312Host extends EquipHost {
             targetRecipeName = targetRecipeName + ".rcp";
         }
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception:", e);
             return null;

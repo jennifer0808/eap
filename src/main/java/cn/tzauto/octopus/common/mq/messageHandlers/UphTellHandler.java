@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- *
  * @author Weiqy
  */
 public class UphTellHandler implements MessageHandler {
@@ -30,9 +29,9 @@ public class UphTellHandler implements MessageHandler {
     private static Logger logger = Logger.getLogger(UphTellHandler.class.getName());
 
     @Override
-    public void handle(Message message) throws IOException, HsmsProtocolNotSelectedException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, ItemIntegrityException, StreamFunctionNotSupportException, MessageDataException, InterruptedException {
+    public void handle(Message message) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException {
         MapMessage mapMessage = (MapMessage) message;
-       UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
+        UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);

@@ -38,7 +38,7 @@ import java.util.Map;
 public class EventDealer {
     static Logger logger = Logger.getLogger(EventDealer.class);
 
-    public static JudgeResult deal(DataMsgMap dataMsgMap, String deviceCode, Process process, ActiveWrapper activeWrapper) throws IOException, HsmsProtocolNotSelectedException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, ItemIntegrityException, StreamFunctionNotSupportException, MessageDataException, InterruptedException, ProcessFunctionNotSupportException {
+    public static JudgeResult deal(DataMsgMap dataMsgMap, String deviceCode, Process process, ActiveWrapper activeWrapper) throws IOException,  T6TimeOutException, BrokenProtocolException, T3TimeOutException,    InterruptedException, ProcessFunctionNotSupportException {
         List<ProcessFunction> processFunctions = process.getFunction();
         boolean isJudgePass = true;
         for (ProcessFunction processFunction : processFunctions) {
@@ -88,7 +88,7 @@ public class EventDealer {
         try {
             ArrayList reportData = (ArrayList) data.get("REPORT");
             //获取xml字符串
-//            String stripMapData = (String) ((SecsItem) data.get("MapData")).getData();
+//            String stripMapData = (String) ((MsgSection) data.get("MapData")).getData();
             String stripMapData = (String) ((ArrayList) reportData.get(1)).get(0);
             String stripId = XmlUtil.getStripIdFromXml(stripMapData);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "请求上传Strip Map！StripID:[" + stripId + "]");

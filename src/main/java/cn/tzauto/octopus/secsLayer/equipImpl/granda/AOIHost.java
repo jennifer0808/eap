@@ -8,7 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.granda;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -113,7 +113,7 @@ public class AOIHost extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {//todo ceid未找到
                     processS6F11EquipStatus(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {//todo ceid未找到
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -205,7 +205,7 @@ public class AOIHost extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
     
@@ -373,7 +373,7 @@ public class AOIHost extends EquipHost {
         if (data == null || data.get("SV") == null) {
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList)  data.get("SV");;
+        ArrayList<MsgSection> list = (ArrayList)  data.get("SV");;
         if (list == null) {
             return null;
         }

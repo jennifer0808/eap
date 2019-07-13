@@ -2,8 +2,9 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -35,9 +36,9 @@ public class AsmTwin832Host extends EquipHost {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
         EquipStateChangeCeid = 8L;
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -85,8 +86,8 @@ public class AsmTwin832Host extends EquipHost {
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CollEventID") != null) {
-                        long ceid = msg.getSingleNumber("CollEventID");
+                    if (msg.get("CEID") != null) {
+                        long ceid = (long) msg.get("CEID");
                         if (ceid == StripMapUpCeid) {
                             processS6F11inStripMapUpload(msg);
                         } else {
@@ -295,67 +296,7 @@ public class AsmTwin832Host extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
-        //回复s6f11消息
-        long ceid = 0L;
-        long reportID = 0L;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-//        if (ceid == 1 && reportID == 1) {
-        Map panelMap = new HashMap();
-        if (ceid == 4) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-        }
-        if (ceid == 2) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-        }
-        if (ceid == 3) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-        }
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-//        }
-    }
 
-    private void processS6F11PPExecNameChange(DataMsgMap data) {
-        long ceid = 0L;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-       UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到事件报告CEID: " + ceid + ", 设备正在使用的程序为: " + ppExecName);
-        Map panelMap = new HashMap();
-        panelMap.put("PPExecName", ppExecName);
-        changeEquipPanel(panelMap);
-    }
-
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = data.getSingleNumber("CollEventID");
-            reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((SecsItem) data.get("UserLoginName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120 && reportID == 120) {
-           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-
-    }
 // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">

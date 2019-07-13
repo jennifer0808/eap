@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.accretech;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -37,11 +37,11 @@ public class PG3000RMXHost extends EquipHost {
 
     public PG3000RMXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-         short svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-         short ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-         short ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-         short rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-         short lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+         short svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+         short ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+         short ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+         short rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+         short lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
 
         EquipStateChangeCeid = -1L;
         StripMapUpCeid = -1L;
@@ -105,15 +105,8 @@ public class PG3000RMXHost extends EquipHost {
                     //sml中s6f11equipstatuschange data1，data2表示状态前后的两个值，需要测试得到
                     processS6F11EquipStatusChange(msg);
 
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    try {
-                        long ceid = msg.getSingleNumber("CollEventID");
-//                        processS6F11EquipStatus(msg);
-                    } catch (Exception e) {
-                        logger.error("Exception:", e);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {//todo 暂没写ceid
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {//todo 暂没写ceid
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -221,7 +214,7 @@ public class PG3000RMXHost extends EquipHost {
             return;
         }
 
-        ArrayList<SecsItem> list = (ArrayList)  data.get("SV");;
+        ArrayList<MsgSection> list = (ArrayList)  data.get("SV");;
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         String port1Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
         String port2Status = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(1)), deviceType);
@@ -257,14 +250,14 @@ public class PG3000RMXHost extends EquipHost {
         cpMap.put("PORTID",portIdL);
 
         Map cpNameFormatMap = new HashMap();
-        cpNameFormatMap.put("LOTID",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("PPID",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("PORTID",FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("LOTID",SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("PPID",SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("PORTID",SecsFormatValue.SECS_ASCII);
 
         Map cpValueFormatMap = new HashMap();
-        cpNameFormatMap.put("testlotid",FormatCode.SECS_ASCII);
-        cpNameFormatMap.put(recipeName,FormatCode.SECS_ASCII);
-        cpNameFormatMap.put(portIdL,FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
+        cpNameFormatMap.put("testlotid",SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put(recipeName,SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put(portIdL,SecsFormatValue.SECS_1BYTE_UNSIGNED_INTEGER);
 
 
         byte hcack = -1;
@@ -312,14 +305,14 @@ public class PG3000RMXHost extends EquipHost {
             cpMap.put("PORTID",portIdL);
 
             Map cpNameFormatMap = new HashMap();
-            cpNameFormatMap.put("LOTID",FormatCode.SECS_ASCII);
-            cpNameFormatMap.put("PPID",FormatCode.SECS_ASCII);
-            cpNameFormatMap.put("PORTID",FormatCode.SECS_ASCII);
+            cpNameFormatMap.put("LOTID",SecsFormatValue.SECS_ASCII);
+            cpNameFormatMap.put("PPID",SecsFormatValue.SECS_ASCII);
+            cpNameFormatMap.put("PORTID",SecsFormatValue.SECS_ASCII);
 
             Map cpValueFormatMap = new HashMap();
-            cpNameFormatMap.put("testlotid",FormatCode.SECS_ASCII);
-            cpNameFormatMap.put(recipeName,FormatCode.SECS_ASCII);
-            cpNameFormatMap.put(portIdL,FormatCode.SECS_1BYTE_UNSIGNED_INTEGER);
+            cpNameFormatMap.put("testlotid",SecsFormatValue.SECS_ASCII);
+            cpNameFormatMap.put(recipeName,SecsFormatValue.SECS_ASCII);
+            cpNameFormatMap.put(portIdL,SecsFormatValue.SECS_1BYTE_UNSIGNED_INTEGER);
 
 
             resultMap.put("msgType", "s2f42");
@@ -504,7 +497,7 @@ public class PG3000RMXHost extends EquipHost {
                 }
                 byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + "ACCT_POL-TEST").get(0);
 
-                DataMsgMap s7f3out = activeWrapper.sendS7F3out("ACCT_POL-TEST",ppbody,FormatCode.SECS_BINARY);
+                DataMsgMap s7f3out = activeWrapper.sendS7F3out("ACCT_POL-TEST",ppbody,SecsFormatValue.SECS_BINARY);
                 sendS2F41outPPselect("ACCT_POL-TEST");
                 sendS7F17out(targetRecipeName);
             }

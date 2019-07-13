@@ -5,7 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.api.SecsDriverFactory;
 import cn.tzauto.generalDriver.entity.cnct.ConnRegInfo;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
@@ -50,10 +50,10 @@ public class HtmWashHost extends EquipHost {
 
     public HtmWashHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid = 10;
         RCMD_PPSELECT = "PP_SELECT";
         // 添加所有设备的报警id，用于转发报警事件
@@ -201,7 +201,7 @@ public class HtmWashHost extends EquipHost {
      */
     @Override
     public void startSecs(EquipmentEventDealer eqpEventDealer)
-            throws NotInitializedException, InterruptedException, InvalidHsmsHeaderDataException, T3TimeOutException, T6TimeOutException, HsmsProtocolNotSelectedException, IllegalStateTransitionException {
+            throws NotInitializedException, InterruptedException, T3TimeOutException, T6TimeOutException {
         if (this.activeWrapper == null) {
             throw new NotInitializedException("Host with device id = " + this.deviceId
                     + " Equip Id = " + this.deviceId + " is not initialized yet.");
@@ -467,9 +467,9 @@ public class HtmWashHost extends EquipHost {
             Map cp = new HashMap();
             cp.put("RESULT", isOk);
             Map cpName = new HashMap();
-            cpName.put("RESULT", FormatCode.SECS_ASCII);
+            cpName.put("RESULT", SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(isOk, FormatCode.SECS_BOOLEAN);
+            cpValue.put(isOk, SecsFormatValue.SECS_BOOLEAN);
             List list = new ArrayList();
             list.add("RESULT");
             activeWrapper.sendS2F41out(confirnStr, list, cp, cpName, cpValue);

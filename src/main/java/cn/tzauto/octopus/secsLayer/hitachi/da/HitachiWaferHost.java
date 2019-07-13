@@ -8,8 +8,8 @@ package cn.tzauto.octopus.secsLayer.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.HitachiWaferUtil;
@@ -135,7 +135,7 @@ public class HitachiWaferHost extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -174,7 +174,7 @@ public class HitachiWaferHost extends EquipHost {
 //        DataMsgMap s12f4out = null;
         try {
 //            s12f4out = new DataMsgMap("s12f4out", activeWrapper.getDeviceId());
-//            ArrayList<SecsItem> list = (ArrayList) ((SecsItem) DataMsgMap.get("RESULT")).getData();
+//            ArrayList<MsgSection> list = (ArrayList) ((MsgSection) DataMsgMap.get("RESULT")).getData();
 //            ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
 //
             String MaterialID = String.valueOf(DataMsgMap.get("MID")).trim();
@@ -207,8 +207,8 @@ public class HitachiWaferHost extends EquipHost {
 //            long[] RrferencePointSelects = new long[1];
 //            RrferencePointSelects[0] = 0L;
 //            s12f4out.put("RrferencePointSelect", RrferencePointSelects);
-//            SecsItem vRoot = new SecsItem();
-//            vRoot.setFormatCode(FormatCode.SECS_LIST);
+//            MsgSection vRoot = new MsgSection();
+//            vRoot.setFormatCode(SecsFormatValue.SECS_LIST);
 //            s12f4out.put("REFPxREFPy", vRoot);
 //            s12f4out.put("DieUnitsOfMeasure", "");
 //            s12f4out.put("XAxisDieSize", RrferencePointSelects);
@@ -240,8 +240,8 @@ public class HitachiWaferHost extends EquipHost {
 //            short countFormat, Object binCode, Object nullBinCode,short binCodeFormat, long messageLength,
 //            short messageLengthFromat, long transactionId
 
-            activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, flatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "", 0, 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                    , rowCount, columnCount, dieCount, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 38L, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId());
+            activeWrapper.sendS12F4out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, flatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "", 0, 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
+                    , rowCount, columnCount, dieCount, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, 38L, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -259,8 +259,8 @@ public class HitachiWaferHost extends EquipHost {
             byte IDTYP = Byte.valueOf(idtyp);
 
 //            s12f16ut = new DataMsgMap("s12f16out", activeWrapper.getDeviceId());
-//            byte[] IDTYP = ((byte[]) ((SecsItem) msgDataHashtable.get("IDTYP")).getData());
-//            String MaterialID = ((SecsItem) msgDataHashtable.get("MaterialID")).getData().toString();
+//            byte[] IDTYP = ((byte[]) ((MsgSection) msgDataHashtable.get("IDTYP")).getData());
+//            String MaterialID = ((MsgSection) msgDataHashtable.get("MaterialID")).getData().toString();
 //            s12f16ut.put("MaterialID", MaterialID);
 //            s12f16ut.put("IDTYP", IDTYP);
             long[] STRPxSTRPy = new long[2];
@@ -272,7 +272,7 @@ public class HitachiWaferHost extends EquipHost {
             for (int i = 0; i < BinListTmp.length; i++) {
                 BinList = BinList + BinListTmp[i];
             }
-//            s12f16ut.put("BinList", new SecsItem(BinList, FormatCode.SECS_ASCII));
+//            s12f16ut.put("BinList", new MsgSection(BinList, SecsFormatValue.SECS_ASCII));
 //
 //
 //            map.put("MID", resultList.get(0) != null ? resultList.get(0) : "");
@@ -284,8 +284,8 @@ public class HitachiWaferHost extends EquipHost {
 //            Object mid, short midFormat, byte idtype, long[] strp, short strpFormat,
 //            Object binlist, short binlistFormat, long transactionId
 
-            activeWrapper.sendS12F16out(MaterialID, FormatCode.SECS_ASCII, IDTYP, STRPxSTRPy, FormatCode.SECS_2BYTE_SIGNED_INTEGER,
-                    BinList, FormatCode.SECS_ASCII, msgDataHashtable.getTransactionId());
+            activeWrapper.sendS12F16out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, STRPxSTRPy, SecsFormatValue.SECS_2BYTE_SIGNED_INTEGER,
+                    BinList, SecsFormatValue.SECS_ASCII, msgDataHashtable.getTransactionId());
             waferInfoMap = new HashMap();
         } catch (Exception e) {
             logger.error("Exception:", e);

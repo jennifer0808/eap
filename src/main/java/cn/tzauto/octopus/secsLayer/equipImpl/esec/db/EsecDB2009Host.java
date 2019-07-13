@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.esec.db;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -44,10 +44,10 @@ public class EsecDB2009Host extends EquipHost {
 
     public EsecDB2009Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         CPN_PPID = "PPNAME";
     }
 
@@ -289,7 +289,7 @@ public class EsecDB2009Host extends EquipHost {
         if (data == null || data.get("RESULT") == null) {
             data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("RESULT")).getData();
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         equipStatus = ACKDescription.descriptionStatus(listtmp.get(0).toString(), deviceType);
         ppExecName = (String) listtmp.get(1);
@@ -335,7 +335,7 @@ public class EsecDB2009Host extends EquipHost {
             return;
         }
         System.out.println("--------Received s2f16in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
+        byte[] value = (byte[]) ((MsgSection) in.get("EAC")).getData();
         System.out.println();
         //System.out.println("CPNAme[0] = " + cpName);
         System.out.println("EAC = " + ((value == null) ? "" : value[0]));
@@ -351,9 +351,9 @@ public class EsecDB2009Host extends EquipHost {
             Map cp = new HashMap();
             cp.put(CPN_PPID, recipeName + ".dbrcp");
             Map cpName = new HashMap();
-            cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpName.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(recipeName + ".dbrcp", FormatCode.SECS_ASCII);
+            cpValue.put(recipeName + ".dbrcp", SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT,cplist, cp, cpName, cpValue);
@@ -362,7 +362,7 @@ public class EsecDB2009Host extends EquipHost {
             if (data != null) {
                 ppselectFlag = true;
             }
-            hcack = (byte[]) ((SecsItem) data.get("HCACK")).getData();
+            hcack = (byte[]) ((MsgSection) data.get("HCACK")).getData();
             logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack[0], "HCACK"));
             logger.debug("The equip " + deviceCode + " request to PP-select the ppid: " + recipeName);
         } catch (Exception e) {
@@ -407,7 +407,7 @@ public class EsecDB2009Host extends EquipHost {
             ceid = data.getSingleNumber("CollEventID");
             preEquipStatus = equipStatus;
             equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             controlState = ACKDescription.describeControlState(data.getSingleNumber("ControlState"), deviceType);
             ppExecName = ppExecName.replace(".dbrcp", "");
 
@@ -567,8 +567,8 @@ public class EsecDB2009Host extends EquipHost {
         try {
             //todo 需要知道Learn device 的 ceid 然后从REPORT中获取到OpreatorCommandName
             ceid = (long) data.get("CEID");
-            command = ((SecsItem) data.get("OpreatorCommand")).getData().toString();
-            commandName = ((SecsItem) data.get("OpreatorCommandName")).getData().toString();
+            command = ((MsgSection) data.get("OpreatorCommand")).getData().toString();
+            commandName = ((MsgSection) data.get("OpreatorCommandName")).getData().toString();
             logger.info("=========command=" + command);
             logger.info("=========commandName=" + commandName);
             if (commandName.equals("Learn device")) {
@@ -608,7 +608,7 @@ public class EsecDB2009Host extends EquipHost {
             return;
         }
         System.out.println("--------Received s2f16in---------");
-        byte[] value = (byte[]) ((SecsItem) in.get("EAC")).getData();
+        byte[] value = (byte[]) ((MsgSection) in.get("EAC")).getData();
         System.out.println();
         System.out.println("EAC = " + ((value == null) ? "" : value[0]));
     }
@@ -626,7 +626,7 @@ public class EsecDB2009Host extends EquipHost {
         byte[] ppgnt = new byte[1];
         try {
             data = activeWrapper.sendAwaitMessage(s7f1out);
-            ppgnt = (byte[]) ((SecsItem) data.get("PPGNT")).getData();
+            ppgnt = (byte[]) ((MsgSection) data.get("PPGNT")).getData();
             logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -646,7 +646,7 @@ public class EsecDB2009Host extends EquipHost {
         DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+        MsgSection secsItem = new MsgSection(ppbody, SecsFormatValue.SECS_BINARY);
         s7f3out.put("ProcessprogramID", targetRecipeName + ".dbrcp");
         s7f3out.put("Processprogram", secsItem);
         try {
@@ -654,7 +654,7 @@ public class EsecDB2009Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ackc7 = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f4");
         resultMap.put("deviceCode", deviceCode);
@@ -680,7 +680,7 @@ public class EsecDB2009Host extends EquipHost {
         }
         List<RecipePara> recipeParaList = null;
         if (data != null && !data.isEmpty()) {
-            byte[] ppbody = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+            byte[] ppbody = (byte[]) ((MsgSection) data.get("Processprogram")).getData();
             TransferUtil.setPPBody(ppbody, recipeType, recipePath);
             logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
             //Recipe解析      
@@ -780,7 +780,7 @@ public class EsecDB2009Host extends EquipHost {
         try {
             DataMsgMap data = activeWrapper.sendAwaitMessage(s7f17out);
             logger.debug("Request delete recipe " + recipeName + " on " + deviceCode);
-            ackc7 = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+            ackc7 = (byte[]) ((MsgSection) data.get("AckCode")).getData();
             if (ackc7[0] == 0) {
                 logger.debug("The recipe " + recipeName + " has been delete from " + deviceCode);
             } else {
@@ -820,7 +820,7 @@ public class EsecDB2009Host extends EquipHost {
             logger.error("获取设备[" + deviceCode + "]的recipe列表信息失败！");
             return null;
         }
-        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("EPPD")).getData();
+        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("EPPD")).getData();
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
         } else {

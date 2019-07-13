@@ -8,7 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.esec.fc;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -51,11 +51,11 @@ public class SigmaPlusHost extends EquipHost {
     //private Object synS2F41 = null;
     public SigmaPlusHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
         CPN_PPID = "PROGRAM";
         EquipStateChangeCeid = 49L;
@@ -614,8 +614,8 @@ public class SigmaPlusHost extends EquipHost {
             downFlatNotchLocation = (long) DataMsgMap.get("FNLOC");
             byte OriginLocation = (byte) DataMsgMap.get("ORLOC");
             byte ProcessAxis = ((byte) DataMsgMap.get("PRAXI"));
-//            String BinCodeEquivalents = (String) ((SecsItem) DataMsgMap.get("BinCodeEquivalents")).getData();
-//            String NullBinCodeValue = (String) ((SecsItem) DataMsgMap.get("NullBinCodeValue")).getData();
+//            String BinCodeEquivalents = (String) ((MsgSection) DataMsgMap.get("BinCodeEquivalents")).getData();
+//            String NullBinCodeValue = (String) ((MsgSection) DataMsgMap.get("NullBinCodeValue")).getData();
             Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
             Object NullBinCodeValue = DataMsgMap.get("NULBC");
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
@@ -626,8 +626,8 @@ public class SigmaPlusHost extends EquipHost {
                 s12f4out = new DataMsgMap("s12f4Zeroout", activeWrapper.getDeviceId());
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
-                activeWrapper.sendS12F4out(null, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                        , 0, 0, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_ASCII, 0 * 0, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                activeWrapper.sendS12F4out(null, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
+                        , 0, 0, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, 0 * 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
                 return null;
@@ -704,8 +704,8 @@ public class SigmaPlusHost extends EquipHost {
             try {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
-                activeWrapper.sendS12F4out(MaterialID, FormatCode.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, FormatCode.SECS_LIST, "um", 1231, 1231, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER
-                        , mapRow, mapCol, -1, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, FormatCode.SECS_1BYTE_UNSIGNED_INTEGER, mapRow * mapCol, FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                activeWrapper.sendS12F4out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
+                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_1BYTE_UNSIGNED_INTEGER, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
             } catch (Exception ex) {

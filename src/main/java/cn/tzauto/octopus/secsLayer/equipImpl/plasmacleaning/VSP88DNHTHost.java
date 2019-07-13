@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.plasmacleaning;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -41,11 +41,11 @@ public class VSP88DNHTHost extends EquipHost {
 
     public VSP88DNHTHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -383,9 +383,9 @@ public class VSP88DNHTHost extends EquipHost {
             Map cp = new HashMap();
             cp.put("RESULT", isOk);
             Map cpName = new HashMap();
-            cpName.put("RESULT", FormatCode.SECS_ASCII);
+            cpName.put("RESULT", SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(isOk, FormatCode.SECS_BOOLEAN);
+            cpValue.put(isOk, SecsFormatValue.SECS_BOOLEAN);
             List list = new ArrayList();
             list.add("RESULT");
             activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM", list, cp, cpName, cpValue);
@@ -456,9 +456,9 @@ public class VSP88DNHTHost extends EquipHost {
             Map cp = new HashMap();
             cp.put(CPN_PPID, recipeName + ".rcp");
             Map cpName = new HashMap();
-            cpName.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpName.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(recipeName + ".rcp", FormatCode.SECS_ASCII);
+            cpValue.put(recipeName + ".rcp", SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             DataMsgMap data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cp, cpName, cpValue);

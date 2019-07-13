@@ -5,8 +5,6 @@
  */
 package cn.tzauto.octopus.gui.widget.deviceinfopane;
 
-import cn.tzauto.generalDriver.exceptions.BrokenProtocolException;
-import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -17,12 +15,9 @@ import cn.tzauto.octopus.biz.sys.service.SysService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.gui.main.EapClient;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -37,16 +32,12 @@ import javafx.stage.WindowEvent;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.*;
 
-import static cn.tzauto.generalDriver.mid.HsmsProtocol.NOT_CONNECTED;
 import static cn.tzauto.octopus.secsLayer.domain.EquipHost.*;
 
 

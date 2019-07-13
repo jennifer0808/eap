@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -35,11 +35,11 @@ public class T740Host extends EquipHost {
 
     public T740Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
 
     }
 
@@ -343,7 +343,7 @@ public class T740Host extends EquipHost {
         //下载han文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, SecsFormatValue.SECS_BINARY);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -360,7 +360,7 @@ public class T740Host extends EquipHost {
         //下载comp文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, SecsFormatValue.SECS_BINARY);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -377,7 +377,7 @@ public class T740Host extends EquipHost {
         //下载recipe文件
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -756,12 +756,12 @@ public class T740Host extends EquipHost {
         cpNameList.add("MESSAGE-TEXT");
         cpNameList.add("CARRIER-NAME");
         Map cpNameFormatMap = new HashMap();
-        cpNameFormatMap.put("MESSAGE-TEXT", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("CARRIER-NAME", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("MESSAGE-TEXT", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("CARRIER-NAME", SecsFormatValue.SECS_ASCII);
 
         Map cpValueFormatMap = new HashMap();
-        cpValueFormatMap.put("Taper IDS of LEFT-TAPER bar code not correct. Please scan again.", FormatCode.SECS_ASCII);
-        cpValueFormatMap.put("LEFT-TAPER", FormatCode.SECS_ASCII);
+        cpValueFormatMap.put("Taper IDS of LEFT-TAPER bar code not correct. Please scan again.", SecsFormatValue.SECS_ASCII);
+        cpValueFormatMap.put("LEFT-TAPER", SecsFormatValue.SECS_ASCII);
         try {
             activeWrapper.sendS2F41out(rcmd, cpNameList, map, cpNameFormatMap, cpValueFormatMap);
         } catch (Exception e) {

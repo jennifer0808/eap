@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -41,10 +41,10 @@ public class ASMIdeal3GHost extends EquipHost {
 
     public ASMIdeal3GHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
     }
 
@@ -102,7 +102,7 @@ public class ASMIdeal3GHost extends EquipHost {
                         logger.error("Exception:", e);
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -180,7 +180,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }
-//        String CommState = (String) ((SecsItem) data.get("CommState")).getData();
+//        String CommState = (String) ((MsgSection) data.get("CommState")).getData();
 //        System.out.println("CommState = " + CommState);
 //        System.out.println("ControlState = " + ControlState);
 //        System.out.println("ProcessState = " + ProcessState);
@@ -239,7 +239,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }
-//        byte[] hcack = (byte[]) ((SecsItem) msgdata.get("HCACK")).getData();
+//        byte[] hcack = (byte[]) ((MsgSection) msgdata.get("HCACK")).getData();
 //        logger.debug("Recive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack[0] + " means " + ACKDescription.description(hcack, "HCACK"));
 //        Map resultMap = new HashMap();
 //        resultMap.put("msgType", "s2f42");
@@ -253,18 +253,18 @@ public class ASMIdeal3GHost extends EquipHost {
 //    public void sendS7F1Multi(List l) {
 //        DataMsgMap s7f1multi = new DataMsgMap("s7f1multiout", activeWrapper.getDeviceId());
 //        s7f1multi.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        SecsItem secsItemmain = new SecsItem();
-//        secsItemmain.setFormatCode(FormatCode.SECS_LIST);
+//        MsgSection secsItemmain = new MsgSection();
+//        secsItemmain.setFormatCode(SecsFormatValue.SECS_LIST);
 //        ArrayList listmain = new ArrayList();
 //        for (int i = 0; i < l.size(); i++) {
-//            SecsItem secsItemsub = new SecsItem();
+//            MsgSection secsItemsub = new MsgSection();
 //            ArrayList list = new ArrayList();
 //            String ppid = (String) l.get(i);
-//            SecsItem secsItemppid = new SecsItem(ppid, FormatCode.SECS_ASCII);
+//            MsgSection secsItemppid = new MsgSection(ppid, SecsFormatValue.SECS_ASCII);
 //            list.add(secsItemppid);
 //            long[] pplength = new long[1];
 //            pplength[0] = TransferUtil.getPPLength(recipePath + ppid);
-//            SecsItem secsItemlength = new SecsItem(pplength, FormatCode.SECS_4BYTE_UNSIGNED_INTEGER);
+//            MsgSection secsItemlength = new MsgSection(pplength, SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER);
 //            list.add(secsItemlength);
 //            secsItemsub.setData(list);
 //            listmain.add(secsItemsub);
@@ -283,17 +283,17 @@ public class ASMIdeal3GHost extends EquipHost {
 //    public void sendS7F3Multi(List l) {
 //        DataMsgMap s7f3multi = new DataMsgMap("s7f3multiout", activeWrapper.getDeviceId());
 //        s7f3multi.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-//        SecsItem secsItemmain = new SecsItem();
-//        secsItemmain.setFormatCode(FormatCode.SECS_LIST);
+//        MsgSection secsItemmain = new MsgSection();
+//        secsItemmain.setFormatCode(SecsFormatValue.SECS_LIST);
 //        ArrayList listmain = new ArrayList();
 //        for (int i = 0; i < l.size(); i++) {
-//            SecsItem secsItemsub = new SecsItem();
+//            MsgSection secsItemsub = new MsgSection();
 //            ArrayList list = new ArrayList();
 //            String ppid = (String) l.get(i);
-//            SecsItem secsItemppid = new SecsItem(ppid, FormatCode.SECS_ASCII);
+//            MsgSection secsItemppid = new MsgSection(ppid, SecsFormatValue.SECS_ASCII);
 //            list.add(secsItemppid);
 //            String ppbody = (String) TransferUtil.getPPBody(1, recipePath + ppid).get(0);
-//            SecsItem secsItemppbody = new SecsItem(ppbody, FormatCode.SECS_ASCII);
+//            MsgSection secsItemppbody = new MsgSection(ppbody, SecsFormatValue.SECS_ASCII);
 //            list.add(secsItemppbody);
 //            secsItemsub.setData(list);
 //            listmain.add(secsItemsub);
@@ -324,7 +324,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //        } catch (Exception e) {
 //            logger.error("Exception:", e);
 //        }
-//        byte[] ackc7 = (byte[]) ((SecsItem) msgdata.get("AckCode")).getData();
+//        byte[] ackc7 = (byte[]) ((MsgSection) msgdata.get("AckCode")).getData();
 //        if (ackc7[0] == 0) {
 //            logger.debug("The recipe " + ppid + " has been delete from " + deviceCode);
 //        } else {
@@ -390,7 +390,7 @@ public class ASMIdeal3GHost extends EquipHost {
 //                return null;
 //            }
 //        }
-//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("RESULT")).getData();
 //        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
 //        equipStatus = ACKDescription.descriptionStatus((long) listtmp.get(0), deviceType);
 //        ppExecName = (String) listtmp.get(1);
@@ -654,7 +654,7 @@ public class ASMIdeal3GHost extends EquipHost {
     }
 
     @Override
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, HsmsProtocolNotSelectedException, T3TimeOutException, MessageDataException, StreamFunctionNotSupportException, ItemIntegrityException, InterruptedException {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException,  T3TimeOutException,    InterruptedException {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);

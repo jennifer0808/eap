@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.secsLayer.modules.alarm;
 
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import org.apache.log4j.Logger;
 

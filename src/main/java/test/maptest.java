@@ -1,6 +1,6 @@
 package test;
 
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -14,7 +14,7 @@ public class maptest {
     @Test
     public void testMap(){
         Map map = new HashMap<>();
-        map.put("", FormatCode.SECS_ASCII);
+        map.put("", SecsFormatValue.SECS_ASCII);
         short value = (Short) map.get("");
         System.out.println(value);
     }

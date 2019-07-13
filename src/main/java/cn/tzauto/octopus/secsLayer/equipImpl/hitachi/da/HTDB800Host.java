@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hitachi.da;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
@@ -323,7 +323,7 @@ public class HTDB800Host extends EquipHost {
         try {
             ceid = (long)data.get("CEID");
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.get("EquipStatus")), deviceType);
-//            ppExecName = ((SecsItem) data.get("PPExecName")).getData().toString();
+//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             super.findDeviceRecipe();
             if (ceid == 80) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为" + ppExecName);
@@ -559,11 +559,11 @@ public class HTDB800Host extends EquipHost {
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         //byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         byte[] ppbody = {1};
-        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+        MsgSection secsItem = new MsgSection(ppbody, SecsFormatValue.SECS_BINARY);
         s7f3out.put("ProcessprogramID", targetRecipeName);
         s7f3out.put("Processprogram", secsItem);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception", e);
         }
@@ -694,11 +694,11 @@ public class HTDB800Host extends EquipHost {
         }
         String objType = null;
         if (data.get("ObjectType") != null) {
-            objType = (String) ((SecsItem) data.get("ObjectType")).getData();
+            objType = (String) ((MsgSection) data.get("ObjectType")).getData();
         }
         String stripId = "";
         if (data.get("StripId") != null) {
-            stripId = (String) ((SecsItem) data.get("StripId")).getData();
+            stripId = (String) ((MsgSection) data.get("StripId")).getData();
         }
         UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "设备请求下载Strip Map，StripId：[" + stripId + "]");
         DataMsgMap out = null;
@@ -748,12 +748,12 @@ public class HTDB800Host extends EquipHost {
             attrMap.put("AxisDirection", "DownLeft");
             objMap.put(new String(), attrMap);
             Map stripIDformatMap = new HashMap();
-            stripIDformatMap.put("Orientation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("OriginLocation", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("SubstrateSide", FormatCode.SECS_ASCII);
-            stripIDformatMap.put("AxisDirection", FormatCode.SECS_ASCII);
-            activeWrapper.sendS14F4out(objMap, FormatCode.SECS_ASCII, FormatCode.SECS_ASCII, stripIDformatMap,
-                    (byte) 0, new HashMap<>(), FormatCode.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+            stripIDformatMap.put("Orientation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", SecsFormatValue.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -914,7 +914,7 @@ public class HTDB800Host extends EquipHost {
             aled = 0;
         }
         try {
-            activeWrapper.sendS5F3out(aled, -1, FormatCode.SECS_4BYTE_UNSIGNED_INTEGER);
+            activeWrapper.sendS5F3out(aled, -1, SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

@@ -2,8 +2,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.icos.tr;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -41,10 +41,10 @@ public class T340Host extends EquipHost {
     public T340Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid=101L;
-        this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.rptFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.rptFormat=SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -219,7 +219,7 @@ public class T340Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -285,10 +285,10 @@ public class T340Host extends EquipHost {
 //        } catch (Exception e) {
 //            logger.error("Wait for get meessage directly error：" + e);
 //        }
-//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//        if (data == null || data.get("RESULT") == null || ((MsgSection) data.get("RESULT")).getData() == null) {
 //            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
 //        }
-//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//        if (data == null || data.get("RESULT") == null || ((MsgSection) data.get("RESULT")).getData() == null) {
 //            if ("SECS-OFFLINE".equalsIgnoreCase(equipStatus)) {
 //                Map panelMap = new HashMap();
 //                panelMap.put("EquipStatus", equipStatus);
@@ -299,7 +299,7 @@ public class T340Host extends EquipHost {
 //            return null;
 //        }
 //        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("RESULT")).getData();
 //        List listtmp = getNcessaryData();
 //        if (listtmp != null && !listtmp.isEmpty()) {
 //            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
@@ -333,20 +333,20 @@ public class T340Host extends EquipHost {
         cpMap.put("TRAY-REPORTING", "NO");
 
         Map cpNameFormatMap = new HashMap();
-        cpNameFormatMap.put("BATCH-NAME", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("BATCH-TO-PROCESS", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("CARRIER-COUNT", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("INPUT-TRAY-MAP", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("TRAY-REPORTING", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-NAME", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("BATCH-TO-PROCESS", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("CARRIER-COUNT", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("INPUT-TRAY-MAP", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("TRAY-REPORTING", SecsFormatValue.SECS_ASCII);
 
 
         Map cpValueFormatMap = new HashMap();
-        cpNameFormatMap.put(batchName, FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NEW", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("ACTION", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("", FormatCode.SECS_ASCII);
-        cpNameFormatMap.put("NO", FormatCode.SECS_ASCII);
+        cpNameFormatMap.put(batchName, SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("NEW", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("ACTION", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("", SecsFormatValue.SECS_ASCII);
+        cpNameFormatMap.put("NO", SecsFormatValue.SECS_ASCII);
         byte hcack = -1;
         try {
             DataMsgMap data = activeWrapper.sendS2F41out(rcmd, null, cpMap, cpNameFormatMap, cpValueFormatMap);
@@ -544,15 +544,15 @@ public class T340Host extends EquipHost {
         byte[] ppbody0 = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
         byte[] ppbody1 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("hanRcpPath"))).get(0);
         byte[] ppbody2 = (byte[]) TransferUtil.getPPBody(recipeType, String.valueOf(hanAndCompMap.get("compRcpPath"))).get(0);
-//        SecsItem secsItem0 = new SecsItem(ppbody0, FormatCode.SECS_BINARY);
-//        SecsItem secsItem1 = new SecsItem(ppbody1, FormatCode.SECS_BINARY);
-//        SecsItem secsItem2 = new SecsItem(ppbody2, FormatCode.SECS_BINARY);
+//        MsgSection secsItem0 = new MsgSection(ppbody0, SecsFormatValue.SECS_BINARY);
+//        MsgSection secsItem1 = new MsgSection(ppbody1, SecsFormatValue.SECS_BINARY);
+//        MsgSection secsItem2 = new MsgSection(ppbody2, SecsFormatValue.SECS_BINARY);
         //下载han文件
 //        s7f3out.put("ProcessprogramID", String.valueOf(hanAndCompMap.get("hanRcpName")));
 //        s7f3out.put("Processprogram", secsItem1);
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("hanRcpName")), ppbody1, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -570,7 +570,7 @@ public class T340Host extends EquipHost {
 //        s7f3out.put("Processprogram", secsItem2);
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(String.valueOf(hanAndCompMap.get("compRcpName")), ppbody2, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -588,7 +588,7 @@ public class T340Host extends EquipHost {
         s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody0, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -644,8 +644,8 @@ public class T340Host extends EquipHost {
 //                        e.printStackTrace();
 //                    }
 //                    if (data.get("ProcessprogramID") != null) {
-//                        ppidTem = (String) ((SecsItem) data.get("ProcessprogramID")).getData();
-//                        byte[] ppbodyTem = (byte[]) ((SecsItem) data.get("Processprogram")).getData();
+//                        ppidTem = (String) ((MsgSection) data.get("ProcessprogramID")).getData();
+//                        byte[] ppbodyTem = (byte[]) ((MsgSection) data.get("Processprogram")).getData();
 //                        TransferUtil.setPPBody(ppbodyTem, recipeType, recipePathTem);
 //                        rcpContent = rcpContent + str;
 //                    }
@@ -1032,9 +1032,9 @@ public class T340Host extends EquipHost {
                     Map cpmap = new HashMap();
                     cpmap.put(CPN_PPID, recipeName);
                     Map cpNameFromatMap = new HashMap();
-                    cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+                    cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
                     Map cpValueFromatMap = new HashMap();
-                    cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+                    cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
                     List cplist = new ArrayList();
                     cplist.add(CPN_PPID);
                     data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);

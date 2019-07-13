@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.parmi;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -33,10 +33,10 @@ public class ParmiHost extends EquipHost {
 
     public ParmiHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         EquipStateChangeCeid=1015;
     }
 
@@ -189,14 +189,14 @@ public class ParmiHost extends EquipHost {
 //                pUserNo = "00031113";
                 pUserName = "王士杰";
                 pUserNo = "B0000803";
-                ppid = ((SecsItem) data.get("PPID")).getData().toString();
-                stripId = ((SecsItem) data.get("STRIPID")).getData().toString();
-                time = ((SecsItem) data.get("TIME")).getData().toString();
-                snt = ((SecsItem) data.get("Thickness0")).getData().toString();
+                ppid = ((MsgSection) data.get("PPID")).getData().toString();
+                stripId = ((MsgSection) data.get("STRIPID")).getData().toString();
+                time = ((MsgSection) data.get("TIME")).getData().toString();
+                snt = ((MsgSection) data.get("Thickness0")).getData().toString();
                 logger.info("Thickness0=" + snt);
                 String value[] = new String[count];
                 for (int i = 0; i < count; i++) {
-                    value[i] = ((SecsItem) data.get("Value" + i)).getData().toString();
+                    value[i] = ((MsgSection) data.get("Value" + i)).getData().toString();
                     logger.info("Value" + i + "=" + value[i]);
                 }
                 pSampleValues = value[0] + "," + value[1] + "," + value[2] + "," + value[3] + "," + value[4];
@@ -217,16 +217,16 @@ public class ParmiHost extends EquipHost {
 //                pUserNo = "00031113";
                 pUserName = "王士杰";
                 pUserNo = "B0000803";
-                ppid = ((SecsItem) data.get("PPID")).getData().toString();
-                stripId = ((SecsItem) data.get("STRIPID")).getData().toString();
-                time = ((SecsItem) data.get("TIME")).getData().toString();
-                snt = ((SecsItem) data.get("Thickness0")).getData().toString();
-                snt1 = ((SecsItem) data.get("Thickness1")).getData().toString();
+                ppid = ((MsgSection) data.get("PPID")).getData().toString();
+                stripId = ((MsgSection) data.get("STRIPID")).getData().toString();
+                time = ((MsgSection) data.get("TIME")).getData().toString();
+                snt = ((MsgSection) data.get("Thickness0")).getData().toString();
+                snt1 = ((MsgSection) data.get("Thickness1")).getData().toString();
                 logger.info("Thickness0=" + snt);
                 logger.info("Thickness1=" + snt1);
                 String value[] = new String[count];
                 for (int i = 0; i < count; i++) {
-                    value[i] = ((SecsItem) data.get("Value" + i)).getData().toString();
+                    value[i] = ((MsgSection) data.get("Value" + i)).getData().toString();
                     logger.info("Value" + i + "=" + value[i]);
                 }
                 pSampleValues = value[0] + "," + value[2] + "," + value[4] + "," + value[6] + "," + value[8];

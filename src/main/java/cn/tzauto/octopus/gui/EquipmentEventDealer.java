@@ -1,8 +1,7 @@
 package cn.tzauto.octopus.gui;
 
 import cn.tzauto.generalDriver.api.EqpEventDealer;
-import cn.tzauto.generalDriver.exceptions.InvalidHsmsDataLengthException;
-import cn.tzauto.generalDriver.exceptions.InvalidHsmsHeaderDataException;
+import cn.tzauto.generalDriver.exceptions.InvalidDataException;
 import cn.tzauto.octopus.gui.equipevent.CommFailureEvent;
 import cn.tzauto.octopus.gui.equipevent.CommStatusEvent;
 import cn.tzauto.octopus.gui.equipevent.ControlEvent;
@@ -221,7 +220,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     }
 
     @Override
-    public void processInvalidHeaderDataException(InvalidHsmsHeaderDataException e, int deviceId) {
+    public void processInvalidHeaderDataException(InvalidDataException e, int deviceId) {
         logger.debug("Communication Failure occured:InvalidHeaderDataException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));
     }
@@ -239,7 +238,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     }
 
     @Override
-    public void processWrongMessageLengthException(InvalidHsmsDataLengthException e, int deviceId) {
+    public void processWrongMessageLengthException(InvalidDataException e, int deviceId) {
         logger.debug("Communication Failure occured:  "
                 + "WrongMessageLengthException with device id = " + deviceId + ".", e);
         eventQueue.add(new CommFailureEvent(e, deviceId));

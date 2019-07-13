@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hanmi.coverlayattach;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -36,11 +36,11 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
 
     public COVERLAYATTACH2000175Z1Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -215,18 +215,18 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
             DataMsgMap sfNameout = new DataMsgMap("S2F29OUT", Integer.valueOf(this.deviceId));
             long transactionId = activeWrapper.getNextAvailableTransactionId();
             sfNameout.setTransactionId(transactionId);
-            SecsItem vRoot = new SecsItem();
+            MsgSection vRoot = new MsgSection();
             vRoot.setFormatCode(0);
             ArrayList rootData = new ArrayList();
             vRoot.setData(rootData);
             sfNameout.put("S2F29OUT", vRoot);
             DataMsgMap dataMsgMap = activeWrapper.sendAwaitMessage(sfNameout);
             Map<String, String> ecMap = new HashMap<>();
-            List resultList = (ArrayList) ((SecsItem) dataMsgMap.get("S2F30IN")).getData();
+            List resultList = (ArrayList) ((MsgSection) dataMsgMap.get("S2F30IN")).getData();
             List ecidList = new ArrayList();
             for (int i = 0; i < resultList.size(); i++) {
-                List ecContentList = (ArrayList) ((SecsItem) resultList.get(i)).getData();
-                Long ecid = Long.valueOf(((long[]) ((SecsItem) ecContentList.get(0)).getData())[0]);
+                List ecContentList = (ArrayList) ((MsgSection) resultList.get(i)).getData();
+                Long ecid = Long.valueOf(((long[]) ((MsgSection) ecContentList.get(0)).getData())[0]);
                 ecidList.add(ecid);
             }
 
@@ -449,9 +449,9 @@ public class COVERLAYATTACH2000175Z1Host extends EquipHost {
             Map cp = new HashMap();
             cp.put("RESULT", isOk);
             Map cpName = new HashMap();
-            cpName.put("RESULT", FormatCode.SECS_ASCII);
+            cpName.put("RESULT", SecsFormatValue.SECS_ASCII);
             Map cpValue = new HashMap();
-            cpValue.put(isOk, FormatCode.SECS_BOOLEAN);
+            cpValue.put(isOk, SecsFormatValue.SECS_BOOLEAN);
             List list = new ArrayList();
             list.add("RESULT");
             activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM", list, cp, cpName, cpValue);

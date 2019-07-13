@@ -8,8 +8,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.granda;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -39,12 +39,12 @@ public class GIS126Host extends EquipHost {
 
     public GIS126Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        this.svFormat = FormatCode.SECS_1BYTE_UNSIGNED_INTEGER;
+        this.svFormat = SecsFormatValue.SECS_1BYTE_UNSIGNED_INTEGER;
         StripMapUpCeid = 3435973836L;
         EquipStateChangeCeid = -1;  //日志文件找不到该记录，暂时不处理
-        svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
     @Override
@@ -109,7 +109,7 @@ public class GIS126Host extends EquipHost {
 //                    processS6F11EquipStatus(msg);
 //                }
                 else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     Map map = new HashMap();
                     map.put("PPExecName", ppExecName);
                     changeEquipPanel(map);
@@ -226,7 +226,7 @@ public class GIS126Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -378,7 +378,7 @@ public class GIS126Host extends EquipHost {
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
-        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+        byte[] ppbody = (byte[]) ((MsgSection) msgdata.get("Processprogram")).getData();
         TransferUtil.setPPBody(ppbody, recipeType, recipePath);
         //logger.debug("Recive S7F6, and the recipe " + ppid + " has been saved at " + recipePath);
         //Recipe解析

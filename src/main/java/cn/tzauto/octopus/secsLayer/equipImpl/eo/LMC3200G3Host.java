@@ -8,8 +8,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.eo;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -48,9 +48,9 @@ public class LMC3200G3Host extends EquipHost {
        //toDo  StripMapUpCeid
         StripMapUpCeid=-1L;
         EquipStateChangeCeid=1003L;
-        this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
 }
 
 
@@ -229,7 +229,7 @@ public class LMC3200G3Host extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -245,7 +245,7 @@ public class LMC3200G3Host extends EquipHost {
 //        s7f5out.put("ProcessprogramID", "PRODUCTION\\" + recipeName + ".PRJ");
         DataMsgMap msgdata = null;
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
-//        byte[] ppbody = (byte[]) ((SecsItem) msgdata.get("Processprogram")).getData();
+//        byte[] ppbody = (byte[]) ((MsgSection) msgdata.get("Processprogram")).getData();
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         //r
@@ -551,7 +551,7 @@ public class LMC3200G3Host extends EquipHost {
 //        DataMsgMap s7f3out = new DataMsgMap("s7f3out", activeWrapper.getDeviceId());
 //        s7f3out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-//        SecsItem secsItem = new SecsItem(ppbody, FormatCode.SECS_BINARY);
+//        MsgSection secsItem = new MsgSection(ppbody, SecsFormatValue.SECS_BINARY);
 //        s7f3out.put("ProcessprogramID", "PRODUCTION\\" + targetRecipeName + ".PRJ");
 //        s7f3out.put("Processprogram", secsItem);
         targetRecipeName="PRODUCTION\\" + targetRecipeName + ".PRJ";
@@ -560,7 +560,7 @@ public class LMC3200G3Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, 1, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, 1, SecsFormatValue.SECS_BINARY);
             byte ackc7 = (byte)  data.get("AckCode");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
@@ -597,14 +597,14 @@ public class LMC3200G3Host extends EquipHost {
 //            logger.error("Wait for get meessage directly error：" + e);
 //        }
 
-//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//        if (data == null || data.get("RESULT") == null || ((MsgSection) data.get("RESULT")).getData() == null) {
 //            data = getMsgDataFromWaitMsgValueMapByTransactionId(transactionId);
 //        }
-//        if (data == null || data.get("RESULT") == null || ((SecsItem) data.get("RESULT")).getData() == null) {
+//        if (data == null || data.get("RESULT") == null || ((MsgSection) data.get("RESULT")).getData() == null) {
 //            return null;
 //        }
 //        logger.info("get date from s1f4 reply :" + JsonMapper.toJsonString(data));
-//        ArrayList<SecsItem> list = (ArrayList) ((SecsItem) data.get("RESULT")).getData();
+//        ArrayList<MsgSection> list = (ArrayList) ((MsgSection) data.get("RESULT")).getData();
 //        ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         List listtmp = getNcessaryData();
         if (listtmp != null && !listtmp.isEmpty()) {
@@ -661,9 +661,9 @@ public class LMC3200G3Host extends EquipHost {
             Map cpmap = new HashMap();
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             // TODO: 2019/6/10   data = activeWrapper.sendPrimaryWsetMessage(s2f41out);

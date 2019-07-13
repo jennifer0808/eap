@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -38,7 +38,7 @@ public class ASM120THost extends EquipHost {
 
     public ASM120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        lengthFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat=SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
     }
 
@@ -97,7 +97,7 @@ public class ASM120THost extends EquipHost {
                         logger.error("Exception:", e);
                     }
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
-                    ppExecName = (String) ((SecsItem) msg.get("PPExecName")).getData();
+                    ppExecName = (String) ((MsgSection) msg.get("PPExecName")).getData();
                     if (ppExecName.contains(".prp")) {
                         ppExecName = ppExecName.replace(".prp", "");
                     }
@@ -221,9 +221,9 @@ public class ASM120THost extends EquipHost {
             logger.error("Exception:", e);
         }
         Map resultMap = new HashMap();
-        ArrayList<SecsItem> list = new ArrayList<>();
+        ArrayList<MsgSection> list = new ArrayList<>();
         if (msgdata != null) {
-            list = (ArrayList) ((SecsItem) msgdata.get("RESULT")).getData();
+            list = (ArrayList) ((MsgSection) msgdata.get("RESULT")).getData();
         }
         ArrayList<Object> listtmp = TransferUtil.getIDValue(CommonSMLUtil.getECSVData(list));
         resultMap.put("msgType", "s1f4");

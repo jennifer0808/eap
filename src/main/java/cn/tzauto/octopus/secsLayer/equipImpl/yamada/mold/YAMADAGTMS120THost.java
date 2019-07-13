@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.yamada.mold;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -44,10 +44,10 @@ public class YAMADAGTMS120THost extends EquipHost {
         //toDo StripMapUpCeid没找到
         StripMapUpCeid=-1L;
         EquipStateChangeCeid=101L;
-        this.svFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.ecFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.lengthFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        this.rptFormat=FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.lengthFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        this.rptFormat=SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
     }
 
 
@@ -215,7 +215,7 @@ public class YAMADAGTMS120THost extends EquipHost {
     @SuppressWarnings("unchecked")
     public void processS6F12in(DataMsgMap data) {
         logger.info("----------Received s6f12in---------");
-        byte[] ack = (byte[]) ((SecsItem) data.get("AckCode")).getData();
+        byte[] ack = (byte[]) ((MsgSection) data.get("AckCode")).getData();
         logger.info("ackCode = " + ((ack == null) ? "" : ack[0]));
     }
 
@@ -549,9 +549,9 @@ public class YAMADAGTMS120THost extends EquipHost {
             Map cpmap = new HashMap();
             cpmap.put(CPN_PPID, recipeName);
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
             List cplist = new ArrayList();
             cplist.add(CPN_PPID);
             data = activeWrapper.sendS2F41out(RCMD_PPSELECT, cplist, cpmap, cpNameFromatMap, cpValueFromatMap);

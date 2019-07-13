@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.apt.cure;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -37,8 +37,8 @@ public class AptHost extends EquipHost {
 
     public AptHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        ceFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_4BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT="PPSELECT";
     }
 
@@ -364,7 +364,7 @@ public class AptHost extends EquipHost {
         String ppbody = String.valueOf(TransferUtil.getPPBody(2, localRecipeFilePath).get(0));
         try {
             sleep(1000);
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_ASCII);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_ASCII);
         } catch (Exception e) {
             logger.error("Exception:", e);
         }

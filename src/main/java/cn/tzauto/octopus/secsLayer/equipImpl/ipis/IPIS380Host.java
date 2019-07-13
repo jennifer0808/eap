@@ -3,8 +3,8 @@ package cn.tzauto.octopus.secsLayer.equipImpl.ipis;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.generalDriver.entity.msg.FormatCode;
-import cn.tzauto.generalDriver.entity.msg.SecsItem;
+
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -37,10 +37,10 @@ public class IPIS380Host extends EquipHost {
 
     public IPIS380Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        svFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        ecFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        ceFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
-        rptFormat = FormatCode.SECS_2BYTE_UNSIGNED_INTEGER;
+        svFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        ecFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        ceFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
+        rptFormat = SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER;
 //        RCMD_PPSELECT = "START";
 //        StripMapUpCeid = 15339L;
 //        EquipStateChangeCeid = 1010;
@@ -306,13 +306,13 @@ public class IPIS380Host extends EquipHost {
             cpmap.put("PARTNO", "");
 
             Map cpNameFromatMap = new HashMap();
-            cpNameFromatMap.put(CPN_PPID, FormatCode.SECS_ASCII);
-            cpNameFromatMap.put("LOTID", FormatCode.SECS_ASCII);
-            cpNameFromatMap.put("PARTNO", FormatCode.SECS_ASCII);
+            cpNameFromatMap.put(CPN_PPID, SecsFormatValue.SECS_ASCII);
+            cpNameFromatMap.put("LOTID", SecsFormatValue.SECS_ASCII);
+            cpNameFromatMap.put("PARTNO", SecsFormatValue.SECS_ASCII);
 
             Map cpValueFromatMap = new HashMap();
-            cpValueFromatMap.put(recipeName, FormatCode.SECS_ASCII);
-            cpValueFromatMap.put("", FormatCode.SECS_ASCII);
+            cpValueFromatMap.put(recipeName, SecsFormatValue.SECS_ASCII);
+            cpValueFromatMap.put("", SecsFormatValue.SECS_ASCII);
 
             List cplist = new ArrayList();
             cplist.add("LOTID");
@@ -618,7 +618,7 @@ public class IPIS380Host extends EquipHost {
         resultMap.put("deviceCode", deviceCode);
         resultMap.put("ppid", targetRecipeName);
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, FormatCode.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
             byte ackc7 = (byte) data.get("ACKC7");
             resultMap.put("ACKC7", ackc7);
             resultMap.put("Description", ACKDescription.description(ackc7, "ACKC7"));
