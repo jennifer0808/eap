@@ -594,9 +594,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     protected List getNcessaryData() {
         DataMsgMap data = null;
+        List<Long> statusList = new ArrayList<>();
         try {
-            List<Long> statusList = new ArrayList<>();
-
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
@@ -605,11 +604,15 @@ public abstract class EquipHost extends Thread implements MsgListener {
             statusList.add(equipStatussvid);
             statusList.add(pPExecNamesvid);
             statusList.add(controlStatesvid);
-            data = activeWrapper.sendS1F3out(statusList, svFormat);
+
         } catch (Exception e) {
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "数据库查询报错，请检查EAP日志确认原因.");
+        }
+        try {
+            data = activeWrapper.sendS1F3out(statusList, svFormat);
+        }catch (Exception e){
             logger.error("Wait for get meessage directly error：" + e);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
-            setControlState(GlobalConstant.CONTROL_OFFLINE);
         }
         if (data == null || data.get("SV") == null) {
             return null;
