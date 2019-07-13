@@ -10,7 +10,7 @@ import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.equipImpl.disco.ls.DFL7161Host;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
 
 import java.util.ArrayList;
@@ -38,9 +38,9 @@ public class MonitorAlarmTask implements Job {
         logger.info("MonitorAlarmTask start...");
         // ConcurrentHashMap<String, EquipModel> equipModels = GlobalConstants.stage.equipModels;
         if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
-            String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (equipModel.getPassport(30)) {
                     if (!equipModel.iSecsHost.isConnect) {
                         continue;
@@ -95,9 +95,9 @@ public class MonitorAlarmTask implements Job {
                 }
             }
             if(temp ==null){
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             }else{
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
 

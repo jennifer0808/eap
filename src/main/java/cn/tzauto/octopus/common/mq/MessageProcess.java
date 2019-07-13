@@ -11,9 +11,7 @@ import javax.jms.MapMessage;
 import javax.jms.Message;
 import java.io.IOException;
 
-/**
- * Created by wxy on 2016/8/4. modified by lsy @ 20170805
- */
+
 public class MessageProcess implements MessageHandler {
 
     private String deviceTypeId;
@@ -59,21 +57,19 @@ public class MessageProcess implements MessageHandler {
                             mqLogger.error(ex);
                         } catch (T3TimeOutException e) {
                             e.printStackTrace();
-                        } catch (StreamFunctionNotSupportException e) {
-                            e.printStackTrace();
-                        } catch (MessageDataException e) {
-                            e.printStackTrace();
-                        } catch (HsmsProtocolNotSelectedException e) {
-                            e.printStackTrace();
-                        } catch (ItemIntegrityException e) {
-                            e.printStackTrace();
-                        } catch (T6TimeOutException e) {
+                        }  catch (T6TimeOutException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (BrokenProtocolException e) {
                             e.printStackTrace();
                         } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (IntegrityException e) {
+                            e.printStackTrace();
+                        } catch (StateException e) {
+                            e.printStackTrace();
+                        } catch (InvalidDataException e) {
                             e.printStackTrace();
                         }
 

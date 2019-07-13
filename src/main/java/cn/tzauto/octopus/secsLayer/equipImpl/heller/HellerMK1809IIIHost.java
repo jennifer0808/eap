@@ -8,12 +8,9 @@ package cn.tzauto.octopus.secsLayer.equipImpl.heller;
 
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
@@ -56,7 +53,7 @@ public class HellerMK1809IIIHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -66,7 +63,7 @@ public class HellerMK1809IIIHost extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
                 if (rptDefineNum < 1) {

@@ -20,7 +20,7 @@ import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.disco.RecipeEdit;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +40,7 @@ public class HorizonHost extends EquipModel {
 
     public HorizonHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override

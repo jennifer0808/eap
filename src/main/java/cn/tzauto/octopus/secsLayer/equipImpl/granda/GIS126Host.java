@@ -10,6 +10,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -21,7 +22,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -65,7 +66,7 @@ public class GIS126Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -74,7 +75,7 @@ public class GIS126Host extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     this.sendS1F13out();
                 }
-                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (this.getControlState() == null ? GlobalConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //为了能调整为online remote
                     sendS1F17out();
@@ -211,7 +212,7 @@ public class GIS126Host extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s14f1inMapDownLoad")) {
                 processS14F1in(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
+                controlState = GlobalConstant.CONTROL_OFFLINE;
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
             } else {
@@ -350,11 +351,11 @@ public class GIS126Host extends EquipHost {
 //            ceid = data.getSingleNumber("CollEventID");
 //            Map panelMap = new HashMap();
 //            if (ceid == 1L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
+//                panelMap.put("ControlState", GlobalConstant.CONTROL_OFFLINE);
 //            } else if (ceid == 2L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE); //Online_Local               
+//                panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE); //Online_Local
 //            } else if (ceid == 3L) {
-//                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE); //Online_Remote            
+//                panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE); //Online_Remote
 //            }
 //            changeEquipPanel(panelMap);
 //        } catch (Exception e) {

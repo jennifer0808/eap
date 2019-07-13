@@ -4,7 +4,7 @@
 package cn.tzauto.octopus.common.log;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import java.io.IOException;
 
 import org.apache.log4j.Layout;
@@ -70,7 +70,7 @@ public class MultiEquipRollingFileAppender extends RollingFileAppender {
         //Begin Added on 2016/09/10
         if (fileName != null) {
             if (!fileName.startsWith(LOG_FILE_PATH)) {
-                String fileNamePrefix = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                String fileNamePrefix = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
                 if (fileNamePrefix == null) {
                     fileName = LOG_FILE_PATH + File.separator + fileName;
                 } else {
@@ -100,7 +100,7 @@ public class MultiEquipRollingFileAppender extends RollingFileAppender {
     }
 
     private String findProperFileName(String propertyLogFileName) {
-        String fileNamePrefix = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+        String fileNamePrefix = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         if (fileNamePrefix == null) {
             return LOG_FILE_PATH + File.separator + propertyLogFileName;
         }
@@ -111,7 +111,7 @@ public class MultiEquipRollingFileAppender extends RollingFileAppender {
         {
         final File logFile = new File(propertyLogFileName);
         final String fn = logFile.getName();
-        final int dotIndex = fn.indexOf(FengCeConstant.DOT);
+        final int dotIndex = fn.indexOf(GlobalConstant.DOT);
         if (dotIndex != -1) {
         // the file name has an extension. so, insert the level
         // between the file name and the extension

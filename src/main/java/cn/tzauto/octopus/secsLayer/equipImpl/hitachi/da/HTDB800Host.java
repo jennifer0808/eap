@@ -5,7 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
-import cn.tzauto.generalDriver.exceptions.HsmsProtocolNotSelectedException;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -27,7 +27,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -37,12 +37,6 @@ import java.util.*;
 /**
  * @author NJTZ
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2016-3-25
- * @(#)EquipHost.java
- * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
- * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
- * use and distribution are prohibited. Modification History: Modification Date
- * Author Reason class Description
  */
 public class HTDB800Host extends EquipHost {
 
@@ -88,7 +82,7 @@ public class HTDB800Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -877,7 +871,7 @@ public class HTDB800Host extends EquipHost {
 
 
     @Override
-    public boolean testInitLink() throws HsmsProtocolNotSelectedException {
+    public boolean testInitLink()   {
         try {
             DataMsgMap s1f13out = new DataMsgMap("s1f13outListZero", activeWrapper.getDeviceId());
             s1f13out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
@@ -885,11 +879,7 @@ public class HTDB800Host extends EquipHost {
             logger.info("testInitLink成功 建立连接、通信正常 ");
             setCommState(1);
             return true;
-        } catch (HsmsProtocolNotSelectedException e) {
-            e.printStackTrace();
-            logger.error("Exception:", e);
-            throw new HsmsProtocolNotSelectedException("HsmsProtocolNotSelectedException");
-        } catch (Exception e) {
+        }  catch (Exception e) {
             logger.error("Exception:", e);
             return false;
         }

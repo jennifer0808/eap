@@ -14,13 +14,12 @@ import cn.tzauto.octopus.common.util.tool.CommonUtil;
 import cn.tzauto.octopus.common.util.tool.dragUtil;
 import cn.tzauto.octopus.common.ws.InitService;
 import cn.tzauto.octopus.gui.EquipmentEventDealer;
-import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.gui.widget.equipstatuspane.EquipStatusPane;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.socket.EquipStatusListen;
 import cn.tzauto.octopus.secsLayer.domain.*;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -460,7 +459,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {
         String deviceCode = equipNodeBean.getDeviceCode();
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         EquipmentEventDealer eqpEventDealer = new EquipmentEventDealer(equipNodeBean, this);
         Task task = new Task<String>() {
             @Override
@@ -507,8 +506,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 if (newPanel.getNetState() == 1) {
 
 
-                    if (newPanel.getControlState().equals(FengCeConstant.CONTROL_OFFLINE)) {
-                        equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    if (newPanel.getControlState().equals(GlobalConstant.CONTROL_OFFLINE)) {
+                        equipStatusPane.setControlState(GlobalConstant.CONTROL_OFFLINE);
 
                         equipStatusPane.setCommLabelForegroundColorCommOff();
                         logger.info(deviceCode + " getControlState---------------------off-line");
@@ -516,16 +515,16 @@ public class EapClient extends Application implements JobListener, PropertyChang
                         equipStatusPane.setCommLabelForegroundColorCommOn();
                         if (newPanel.getAlarmState() == 0) {
                             switch (newPanel.getControlState()) {
-                                case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                                case GlobalConstant.CONTROL_LOCAL_ONLINE:
+                                    equipStatusPane.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
 
                                     break;
-                                case FengCeConstant.CONTROL_REMOTE_ONLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                                case GlobalConstant.CONTROL_REMOTE_ONLINE:
+                                    equipStatusPane.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
 
                                     break;
-                                case FengCeConstant.CONTROL_OFFLINE:
-                                    equipStatusPane.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                                case GlobalConstant.CONTROL_OFFLINE:
+                                    equipStatusPane.setControlState(GlobalConstant.CONTROL_OFFLINE);
 
                                     equipStatusPane.setCommLabelForegroundColorCommOff();
                                     break;
@@ -533,11 +532,11 @@ public class EapClient extends Application implements JobListener, PropertyChang
                         } else if (newPanel.getAlarmState() == 1 || newPanel.getAlarmState() == 2) {
                             equipStatusPane.setAlarmState(newPanel.getAlarmState());
                             switch (newPanel.getControlState()) {
-                                case FengCeConstant.CONTROL_LOCAL_ONLINE:
-                                    equipStatusPane.setControlStateSpecial(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                                case GlobalConstant.CONTROL_LOCAL_ONLINE:
+                                    equipStatusPane.setControlStateSpecial(GlobalConstant.CONTROL_LOCAL_ONLINE);
                                     break;
-                                case FengCeConstant.CONTROL_REMOTE_ONLINE:
-                                    equipStatusPane.setControlStateSpecial(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                                case GlobalConstant.CONTROL_REMOTE_ONLINE:
+                                    equipStatusPane.setControlStateSpecial(GlobalConstant.CONTROL_REMOTE_ONLINE);
                                     break;
                             }
                         }

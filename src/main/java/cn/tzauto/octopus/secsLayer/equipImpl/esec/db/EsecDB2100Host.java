@@ -5,7 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
-import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -20,7 +20,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import cn.tzauto.octopus.secsLayer.util.WaferTransferUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -73,7 +73,7 @@ public class EsecDB2100Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -100,7 +100,6 @@ public class EsecDB2100Host extends EquipHost {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                    super.processS6F11in(msg);
-//                    processS6F11LearnDevice(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
                     processS6F11inStripMapUpload(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) {
@@ -479,36 +478,6 @@ public class EsecDB2100Host extends EquipHost {
         }
     }
 
-    private void processS6F11LearnDevice(DataMsgMap data) {
-        long ceid = 0L;
-        String command = "";
-        String commandName = "";
-        try {
-            ceid = data.getSingleNumber("CollEventId");
-            command = ((MsgSection) data.get("OpreatorCommand")).getData().toString();
-            commandName = ((MsgSection) data.get("OpreatorCommandName")).getData().toString();
-            logger.info("=========command=" + command);
-            logger.info("=========commandName=" + commandName);
-            if (commandName.equals("Learn device")) {
-                logger.info("检测到设备触发LearnDevice事件，请求将设备ProductionAccess改成“disabled”!");
-                // TODO 需要检查下MES状态，判断是否需要发送锁机指令
-                sendS2F15outLearnDevice(151126402, 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER);
-
-                Map resultMap = new HashMap();
-                resultMap.put("msgType", "s5f1");
-                resultMap.put("deviceCode", deviceCode);
-                resultMap.put("deviceId", deviceId);
-                resultMap.put("ALID", "E252641285");
-                resultMap.put("ALCD", 0);
-                resultMap.put("ALTX", "Learn device");
-                resultMap.put("Description", "Other categories");
-                resultMap.put("TransactionId", data.getTransactionId());
-                AutoAlter.alter(resultMap);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     public void sendS2F15outLearnDevice(long ecid, Object ecv, short ecvFormat) {
         DataMsgMap out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());

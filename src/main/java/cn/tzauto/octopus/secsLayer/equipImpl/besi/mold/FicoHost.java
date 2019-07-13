@@ -5,6 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
@@ -25,7 +26,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.besi.FicoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -72,7 +73,7 @@ public class FicoHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
 
         while (!isInterrupted) {
             try {
@@ -293,11 +294,11 @@ public class FicoHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 2) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 3) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
             updateCommStateInExt();
 //            //tranferEnd事件
@@ -847,7 +848,7 @@ public class FicoHost extends EquipHost {
 
 
     @Override
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException,  T3TimeOutException,    InterruptedException {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         String output = "";
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -1054,23 +1055,21 @@ public class FicoHost extends EquipHost {
         }
         try {
             activeWrapper.sendS2F37out(true, ceidList, ceFormat);
-        } catch (HsmsProtocolNotSelectedException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (StreamFunctionNotSupportException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ItemIntegrityException e) {
-            e.printStackTrace();
-        } catch (MessageDataException e) {
+        }  catch (InterruptedException e) {
             e.printStackTrace();
         } catch (BrokenProtocolException e) {
             e.printStackTrace();
         } catch (T3TimeOutException e) {
             e.printStackTrace();
         } catch (T6TimeOutException e) {
+            e.printStackTrace();
+        } catch (IntegrityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (StateException e) {
+            e.printStackTrace();
+        } catch (InvalidDataException e) {
             e.printStackTrace();
         }
         //todo sendS2F37outMuilt

@@ -4,6 +4,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.cctech;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -18,7 +19,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.cctech.C6800Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -63,7 +64,7 @@ public class C6800SECSHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -92,7 +93,7 @@ public class C6800SECSHost extends EquipHost {
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11in")) {
                     long ceid = (long) msg.get("CEID");
                     if (ceid == 3 || ceid == 7) {
-                        setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                        setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                         processEquipStatusChange(msg);
                     } else if (ceid == 1) {
                         processPressStartButton(msg);
@@ -211,7 +212,7 @@ public class C6800SECSHost extends EquipHost {
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            //从数据库中\获取当前设备模型信息
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
 //            // 更新设备模型

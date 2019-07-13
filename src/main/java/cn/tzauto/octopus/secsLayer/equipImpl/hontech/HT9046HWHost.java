@@ -9,6 +9,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hontech;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -24,7 +25,7 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -74,7 +75,7 @@ public class HT9046HWHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -104,7 +105,7 @@ public class HT9046HWHost extends EquipHost {
                     if (ceid == 1) {
 //                        processPressStartButton(msg);
                     } else if (ceid == 27) {
-                        setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                        setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                         processEquipStatusChange(msg);
                     } else if (ceid == 15) {
                         //刷新当前机台状态
@@ -235,147 +236,7 @@ public class HT9046HWHost extends EquipHost {
     }
 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
-    protected void processEquipStatusChange2(DataMsgMap data) {
-        //TODO 开机check;
-        long ceid = 0l;
-        try {
-            ceid = data.getSingleNumber("CollEventID");
-            //刷新当前机台状态
-            sendS1F3Check();
-            logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");
-//           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备" + equipStatus);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        RecipeService recipeService = new RecipeService(sqlSession);
-        try {
-            //从数据库中获取当前设备模型信息
-            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-            // 更新设备模型
-            if (deviceInfoExt == null) {
-                logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                //锁机
-                holdDevice();
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
-            } else {
-                deviceInfoExt.setDeviceStatus(equipStatus);
-                deviceInfoExt.setConnectionStatus(controlState);
-                deviceService.modifyDeviceInfoExt(deviceInfoExt);
-                sqlSession.commit();
-            }
-            //保存到设备操作记录数据库
-            saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
-            sqlSession.commit();
-//            if (AxisUtility.isEngineerMode(deviceCode)) {
-//               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-//                return;
-//            }
-//            //获取设备状态为ready时检查领料记录
-//            if (equipStatus.equalsIgnoreCase("Running")) {
-//                if (this.checkLockFlagFromServerByWS(deviceCode)) {
-//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
-//                    holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
-//                }
-//                //1、获取设备需要校验的信息类型,
-//                if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
-//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
-//                    holdDevice();
-//                }
-//                if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
-//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
-//                    checkNameFlag = false;
-//                } else {
-//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
-//                    checkNameFlag = true;
-//                }
-//
-//                if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
-//                    //查询trackin时的recipe和GoldRecipe
-//                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-//                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-//                    boolean hasGoldRecipe = true;
-//                    //查询客户端数据库是否存在GoldRecipe
-//                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-//                        hasGoldRecipe = false;
-//                    }
-//                    //首先判断下载的Recipe类型
-//                    //1、如果下载的是Unique版本，那么执行完全比较
-//                    String downloadRcpVersionType = downLoadRecipe.getVersionType();
-//                    if (false) {
-//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Unique Recipe:[" + ppExecName + "]参数绝对值Check");
-//                        this.startCheckRecipePara(downLoadRecipe, "abs");
-//                    } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-//                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
-//                        if (!hasGoldRecipe) {
-//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
-//                            //不允许开机
-//                            checkParaFlag = false;
-//                        } else {
-//                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-//                            Map resultMap = this.startCheckRecipeParaReturnMap(downLoadGoldRecipe.get(0));
-//                            if (resultMap != null) {
-//                                if (resultMap.get("CheckParaFlag") != null) {
-//                                    checkParaFlag = (boolean) resultMap.get("CheckParaFlag");
-//                                    //显示比对不通过参数
-//                                    List<RecipePara> recipeParasdiff = null;
-//                                    if (!checkParaFlag && resultMap.get("RecipeParasdiff") != null && ((List<RecipePara>) resultMap.get("RecipeParasdiff")).size() > 0) {
-//                                        recipeParasdiff = (List<RecipePara>) resultMap.get("RecipeParasdiff");
-//                                        StringBuilder recipeParasDiffText = new StringBuilder("StartCheck not pass, equipment locked!");
-//                                        for (RecipePara recipePara : recipeParasdiff) {
-//                                            recipeParasDiffText.append("\r\nError Para Name:" + recipePara.getParaShotName() + "Recipe Set Value:" + recipePara.getSetValue() + ",Gold Recipe Set Value：" + recipePara.getDefValue());
-//                                        }
-//                                        this.holdDeviceAndShowDetailInfo(recipeParasDiffText.toString());
-//                                    }
-//                                } else {
-//                                    checkParaFlag = false;
-//                                }
-//                            } else {
-//                                checkParaFlag = false;
-//                            }
-////                            checkParaFlag = this.startCheckRecipeParaReturnFlag(downLoadGoldRecipe.get(0));
-////                            //向服务端发送机台被锁.更新服务端lockflag;
-////                            if (checkParaFlag) {
-////                                //解锁机台
-////                                this.releaseDevice();
-////                            } else {
-////                                //锁机
-////                                this.holdDeviceAndShowDetailInfo("StartCheck not pass, equipment locked!");
-////                                //sendStatus2Server("LOCK");
-////                            }
-//                        }
-//                    }
-//                } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-//                    //如果未设置参数比对模式，默认参数比对通过
-//                    checkParaFlag = true;
-//                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check参数模式！");
-//                }
-//                //总结是否需要锁机
-//
-//                if (!checkNameFlag || !checkParaFlag) {
-//                    //锁机
-//                    holdFlag = true;
-//                } else {
-//                    holdFlag = false;
-//                }
-//                //更新界面
-//                if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
-//                    this.setAlarmState(0);
-//                } else {
-//                    holdDevice();
-//                    this.setAlarmState(2);
-//                }
-//            }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            sqlSession.rollback();
-        } finally {
-            sqlSession.close();
-
-        }
-    }
 
     protected void processEquipStatusChange(DataMsgMap data) {
         //TODO 开机check;
@@ -387,7 +248,7 @@ public class HT9046HWHost extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         StringBuilder recipeParasDiffText = new StringBuilder("StartCheck not pass, equipment locked!");
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
 //            //从数据库中\获取当前设备模型信息
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
 //            // 更新设备模型

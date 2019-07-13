@@ -5,6 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -19,8 +20,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -40,7 +40,7 @@ public class YAMADAGTMS120THost extends EquipHost {
 
     public YAMADAGTMS120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
         //toDo StripMapUpCeid没找到
         StripMapUpCeid=-1L;
         EquipStateChangeCeid=101L;
@@ -53,7 +53,7 @@ public class YAMADAGTMS120THost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -247,21 +247,17 @@ public class YAMADAGTMS120THost extends EquipHost {
         try {
             ceid = Long.parseLong(data.get("CEID").toString());
             if (ceid == 2) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 3) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 102 || ceid == 601) {
 //                sendS2f41Cmd("UNLOCK");
 //                UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
             } else if (ceid == 115) {
                 long runMode = -1L;
-                runMode = data.getSingleNumber("RunMode");
-                if (runMode == 0 || runMode == 2) {
-//                    sendS2f41Cmd("UNLOCK");
-//                    UiLogUtil.appendLog2SecsTab(deviceCode, "收到事件报告[CEID=" + ceid + "]，发送UNLOCK指令");
-                }
+
             } else if (ceid == 105) {
 //                sendS2f41Cmd("UNLOCK");
             }

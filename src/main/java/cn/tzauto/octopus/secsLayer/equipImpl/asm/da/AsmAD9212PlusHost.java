@@ -17,7 +17,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -55,7 +55,7 @@ public class AsmAD9212PlusHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -64,7 +64,7 @@ public class AsmAD9212PlusHost extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
                 if (rptDefineNum < 1) {
@@ -130,7 +130,7 @@ public class AsmAD9212PlusHost extends EquipHost {
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
+                controlState = GlobalConstant.CONTROL_OFFLINE;
                 equipStatus = "SECS-OFFLINE";
                 Map panelMap = new HashMap();
                 panelMap.put("EquipStatus", equipStatus);

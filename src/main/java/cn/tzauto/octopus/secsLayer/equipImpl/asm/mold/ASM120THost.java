@@ -5,6 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -20,7 +21,7 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -38,7 +39,7 @@ public class ASM120THost extends EquipHost {
 
     public ASM120THost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        lengthFormat=SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
+        lengthFormat= SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         RCMD_PPSELECT = "PP_SELECT";
     }
 
@@ -61,7 +62,7 @@ public class ASM120THost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -278,11 +279,11 @@ public class ASM120THost extends EquipHost {
             ceid = (long) data.get("CEID");
 
             if (ceid == 39) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 40) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) { //待验证
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);

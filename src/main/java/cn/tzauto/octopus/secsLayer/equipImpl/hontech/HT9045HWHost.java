@@ -8,6 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.hontech;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -25,7 +26,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hontech.HT9045HWUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -59,7 +60,7 @@ public class HT9045HWHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -89,7 +90,7 @@ public class HT9045HWHost extends EquipHost {
                     if (ceid == 1) {
                         processPressStartButton(msg);
                     } else if (ceid == 27) {
-                        setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                        setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                         processEquipStatusChange2(msg);
                     } else if (ceid == 15) {
                         //刷新当前机台状态
@@ -210,7 +211,7 @@ public class HT9045HWHost extends EquipHost {
         //TODO 开机check;
         long ceid = 0l;
         try {
-            ceid = data.getSingleNumber("CollEventID");
+            ceid = (long) data.get("CEID");
             //刷新当前机台状态
             sendS1F3Check();
             logger.info("[" + deviceCode + "]" + "设备进入" + equipStatus + "状态！");

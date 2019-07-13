@@ -15,15 +15,13 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -45,11 +43,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession.sqlSession;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.*;
-import static org.apache.axis.management.ServiceAdmin.start;
 
 /**
  * FXML Controller class
@@ -215,7 +211,7 @@ public class UploadPaneController implements Initializable {
         if ( resultMap== null || resultMap.size()==0) {
             Platform.runLater(() -> {
                 EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
-                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
             });
         }else{
@@ -309,7 +305,7 @@ public class UploadPaneController implements Initializable {
             if (recipeMap == null) {
                 Platform.runLater(() -> {
                     EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
-                    equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
                     CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
                 });
                 return;

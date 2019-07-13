@@ -5,6 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -20,7 +21,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.ASMIdeal3GRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -67,7 +68,7 @@ public class ASMIdeal3GHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -456,11 +457,11 @@ public class ASMIdeal3GHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 5) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 6) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) { //待验证
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -654,7 +655,7 @@ public class ASMIdeal3GHost extends EquipHost {
     }
 
     @Override
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException,  T3TimeOutException,    InterruptedException {
+    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         String output = this.getOutputData() == null ? "" : this.getOutputData();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);

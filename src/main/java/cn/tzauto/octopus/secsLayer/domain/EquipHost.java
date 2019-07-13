@@ -58,7 +58,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     private static final long serialVersionUID = -8008553978164121001L;
     private static Logger logger = Logger.getLogger(EquipHost.class.getName());
     public int commState = NOT_COMMUNICATING;
-    public String controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+    public String controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
     public String iPAddress;
     public String ppExecName = "--";
     public String equipStatus = "--";
@@ -162,7 +162,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.activeWrapper = null;
         this.inputMsgQueue = null;
         commState = NOT_COMMUNICATING;
-        controlState = FengCeConstant.CONTROL_OFFLINE;
+        controlState = GlobalConstant.CONTROL_OFFLINE;
         sdrReady = false;
     }
 
@@ -201,7 +201,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             equipState.setCommOn(true);
             equipState.setNetConnect(true);
             this.sdrReady = true;
-//            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+//            controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
         }
         if (commState == 0) {
             equipState.setCommOn(false);
@@ -520,7 +520,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     public String checkEquipStatus() {
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";
@@ -533,7 +533,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     }
 
     public String checkControlState() {
-        if (FengCeConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
+        if (GlobalConstant.CONTROL_REMOTE_ONLINE.equalsIgnoreCase(controlState)) {
         }
         return "0";
     }
@@ -609,7 +609,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
-            setControlState(FengCeConstant.CONTROL_OFFLINE);
+            setControlState(GlobalConstant.CONTROL_OFFLINE);
         }
         if (data == null || data.get("SV") == null) {
             return null;
@@ -669,7 +669,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return null;
         }
         Map resultMap = sendS1F3Check();
-        if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(this.getControlState())) {
+        if (GlobalConstant.CONTROL_OFFLINE.equalsIgnoreCase(this.getControlState())) {
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备处于Offline状态...");
             return null;
         }
@@ -755,7 +755,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             DataMsgMap msgdata = activeWrapper.sendS1F15out();
             byte onlack = (byte) msgdata.get("OFLACK");
             if (onlack == 0 || onlack == 2) {
-                setControlState(FengCeConstant.CONTROL_OFFLINE);
+                setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -770,7 +770,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             byte onlack = (byte) data.get("ONLACK");
             logger.info("result of s1f17onlack:"+onlack);
             if (onlack == 0 || onlack == 2) {
-                setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             }
             data = null;
         } catch (Exception e) {
@@ -861,7 +861,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             msgdata = activeWrapper.sendAwaitMessage(s2f15out);
             byte[] ack = (byte[]) ((MsgSection) msgdata.get("AckCode")).getData();
             if (ack[0] == 0 || ack[0] == 2) {
-                setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
@@ -2372,11 +2372,11 @@ public abstract class EquipHost extends Thread implements MsgListener {
         resultMap = sendS2f41Cmd(controlState);
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备控制状态切换被HOST命令切换到 " + controlState + "！");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行控制状态切换任务！");
                 return true;
             } else {
@@ -2809,7 +2809,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 
     //当设备发送SnF0时，eap界面显示断线
     public void  sendSnF0(){
-        controlState = FengCeConstant.CONTROL_OFFLINE;
+        controlState = GlobalConstant.CONTROL_OFFLINE;
         setCommState(0);
     }
 

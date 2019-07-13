@@ -652,13 +652,13 @@ public class ACKDescription {
             }
         } //        else if (deviceType.contains("VSP88")) {
         //            if (ack.equals("0")) {
-        //                description = FengCeConstant.STATUS_IDLE;
+        //                description = GlobalConstant.STATUS_IDLE;
         //            } else if (ack.equals("1")) {
-        //                description = FengCeConstant.STATUS_RUN;
+        //                description = GlobalConstant.STATUS_RUN;
         //            } else if (ack.equals("2")) {
-        //                description = FengCeConstant.STATUS_PAUSE;
+        //                description = GlobalConstant.STATUS_PAUSE;
         //            } else if (ack.equals("3")) {
-        //                description = FengCeConstant.STATUS_END;
+        //                description = GlobalConstant.STATUS_END;
         //            }
         //        } 
         else if (deviceType.contains("EOLMC3200")) {
@@ -1040,444 +1040,444 @@ public class ACKDescription {
         if (deviceType.contains("8800")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         }
         if (deviceType.contains("TOWA")) {
-//            descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+//            descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
             switch (String.valueOf(obj)) {
                 case "true":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
                     break;
                 case "false":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
                     break;
             }
         } else if (deviceType.contains("AOI")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
         } else if (deviceType.contains("832i")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
         } else if (deviceType.contains("FICO") || deviceType.contains("NITTODR3000III") || deviceType.contains("DEKHorizon03ix") || deviceType.contains("TSKAWD300TX") || deviceType.contains("PARMI") || deviceType.contains("STI")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Equipment Off-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Equipment Off-Line
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Attempt On-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Attempt On-Line
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Host Off-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Host Off-Line
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
                     break;
             }
         } else if (deviceType.contains("YAMADA") || deviceType.contains("VSP88D") || deviceType.contains("EOLMC3200")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("DISCO")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("ICOS") || deviceType.contains("2100")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
 
         } else if (deviceType.contains("ASM120T") || deviceType.contains("ASM80T") || deviceType.contains("ASMIDEAL3G")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("AU800")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("8312")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
             }
         } else if (deviceType.contains("AD86")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
 
             }
         } else if (deviceType.contains("DB730") || deviceType.contains("DB-800") || deviceType.contains("HITACHIDB700Z1")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Equipment Off-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Equipment Off-Line
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Attempt On-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Attempt On-Line
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Off-Line/Host Off-Line
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Off-Line/Host Off-Line
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On-Line/Local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On-Line/Remote
                     break;
             }
         } else if (deviceType.contains("APT")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
         } else if (deviceType.contains("Twin832")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
         } else if (deviceType.contains("AD832P") || deviceType.contains("AD838") || deviceType.contains("AD830PLUS")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     break;
             }
         } else if (deviceType.contains("HANMI")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
 
         } else if (deviceType.contains("MVP")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("BTU")) {
             switch (String.valueOf(obj)) {
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("PG300")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Equipment-Off Line(Equipment-Off-Line)
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Attempt-On Line(Trial-On-Line)
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;//Host-Off Line(Host-Off-Line)
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;//On Line-Local(On-Line-Local)
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;//On Line-Remote(On-Line-Remote)
                     break;
             }
         } else if (deviceType.contains("GIGA690")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/online establish attempt
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/online establish attempt
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/host offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/host offline
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
         } else if (deviceType.contains("COVERLAYATTACH-2000Z1") || deviceType.contains("COVERLAYATTACH-2000175Z1")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/online establish attempt
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/online establish attempt
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/host offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/host offline
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
         } else if (deviceType.contains("ICA120X")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline_EQUIP  offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline_EQUIP  offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/online establish attempt
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/online establish attempt
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/host offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/host offline
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
         } else if (deviceType.contains("IPIS-380Z1")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/Local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/Local
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/Remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/Remote
                     break;
             }
         } else if (deviceType.contains("UTC-5000 NeocuZ1")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/online establish attempt
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/online establish attempt
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/host offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/host offline
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
         } else if (deviceType.contains("AD3000T")) {
             switch (String.valueOf(obj)) {
                 case "0":
-                    descriControlState = FengCeConstant.STATUS_INIT;// Offline/machine offline
+                    descriControlState = GlobalConstant.STATUS_INIT;// Offline/machine offline
                     break;
                 case "1":
-                    descriControlState = FengCeConstant.STATUS_IDLE;// Offline/machine offline
+                    descriControlState = GlobalConstant.STATUS_IDLE;// Offline/machine offline
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.STATUS_SETUP;// Offline/online establish attempt
+                    descriControlState = GlobalConstant.STATUS_SETUP;// Offline/online establish attempt
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.STATUS_READY;// Offline/host offline
+                    descriControlState = GlobalConstant.STATUS_READY;// Offline/host offline
                     break;
                 case "4":
-                    descriControlState = FengCeConstant.STATUS_RUN;// Online/local
+                    descriControlState = GlobalConstant.STATUS_RUN;// Online/local
                     break;
                 case "5":
-                    descriControlState = FengCeConstant.STATUS_PAUSE;// Online/remote
+                    descriControlState = GlobalConstant.STATUS_PAUSE;// Online/remote
                     break;
             }
         } else if (deviceType.contains("HTM")) {
             switch (String.valueOf(obj)) {
                 case "1":
-                    descriControlState = FengCeConstant.CONTROL_LOCAL_ONLINE;// Online/local
+                    descriControlState = GlobalConstant.CONTROL_LOCAL_ONLINE;// Online/local
                     break;
                 case "2":
-                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Online/remote
+                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
                 case "3":
-                    descriControlState = FengCeConstant.CONTROL_OFFLINE;// Offline/machine offline
+                    descriControlState = GlobalConstant.CONTROL_OFFLINE;// Offline/machine offline
                     break;
 //                default:
-//                    descriControlState = FengCeConstant.CONTROL_REMOTE_ONLINE;// Offline/machine offline
+//                    descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Offline/machine offline
 //                    break;
             }
         }

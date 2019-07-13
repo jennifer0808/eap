@@ -8,7 +8,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.disco.bg;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
-import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -21,7 +21,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -65,7 +65,7 @@ public class DiscoDGP8761Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -74,7 +74,7 @@ public class DiscoDGP8761Host extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     this.sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
@@ -97,9 +97,9 @@ public class DiscoDGP8761Host extends EquipHost {
                         Map panelMap = new HashMap();
                         if (ceid == 83 || ceid == 84) {
                             if (ceid == 83) {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
                             } else {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
                         } else if (ceid == 211 || ceid == 221 || ceid ==1000000401) {
@@ -113,8 +113,6 @@ public class DiscoDGP8761Host extends EquipHost {
                     } catch (Exception e) {
                         logger.error("Exception:", e);
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11alarmClear")) {
-                    this.processS6F11AlarmClear(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
                     this.processS6F11PPselect(msg);
                 }
@@ -400,27 +398,7 @@ public class DiscoDGP8761Host extends EquipHost {
         sqlSession.close();
     }
 
-    private void processS6F11AlarmClear(DataMsgMap data) {
-        long alid = 0l;
-        try {
-            alid = data.getSingleNumber("ALID");
-            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);//(MsgSection) data.get("EquipStatus")).getData().toString();
-            if (!"".equals(equipStatus) && equipStatus != null) {
-                Map map = new HashMap();
-                map.put("EquipStatus", equipStatus);
-                changeEquipPanel(map);
-            }
-            if ("setup".equalsIgnoreCase(equipStatus) && alid == 3017) {
-                this.findDeviceRecipe();
-                sendS1F3CheckCassUse();
-                if (!"".equals(ppExecName) && ppExecName != null) {
-                    this.sendS2F41outPPselect(ppExecName);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
 
     private void processS6F11PPselect(DataMsgMap data) {
         long ceid = 0l;
@@ -519,7 +497,7 @@ public class DiscoDGP8761Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findEqptStatus();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";

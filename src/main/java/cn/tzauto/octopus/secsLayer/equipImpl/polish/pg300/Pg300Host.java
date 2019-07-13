@@ -4,6 +4,7 @@ package cn.tzauto.octopus.secsLayer.equipImpl.polish.pg300;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -15,7 +16,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.pg300.PG300RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -59,7 +60,7 @@ public class Pg300Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -229,11 +230,11 @@ public class Pg300Host extends EquipHost {
             long ceid = (long) data.get("CEID");
 //           UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "收到CEID: " + ceid);
             if (ceid == 9) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 10) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 8) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 45 || ceid == 46) {
                 checkPortStatusAndPPSelectToLocal();
             } else if (ceid == 57 || ceid == 59 || ceid == 56 || ceid == 58) {
@@ -417,7 +418,7 @@ public class Pg300Host extends EquipHost {
     @Override
     public Map holdDevice() {
         sendS1F3Check();
-        if (!this.controlState.equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+        if (!this.controlState.equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备不在Remote状态，无法进行锁机");
             return null;
         }

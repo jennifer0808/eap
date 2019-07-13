@@ -4,6 +4,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -15,15 +16,13 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import com.alibaba.fastjson.JSONArray;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -77,7 +76,7 @@ public class T340Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -196,7 +195,7 @@ public class T340Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
+                controlState = GlobalConstant.CONTROL_OFFLINE;
                 equipStatus = "SECS-OFFLINE";
                 Map panelMap = new HashMap();
                 panelMap.put("EquipStatus", equipStatus);
@@ -371,11 +370,11 @@ public class T340Host extends EquipHost {
         try {
             ceid =Long.parseLong( data.get("CEID").toString());
                 if (ceid == 2L) {
-                    super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
                 } else if (ceid == 3L) {
-                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                 } else if (ceid == 1L) {
-                    super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    super.setControlState(GlobalConstant.CONTROL_OFFLINE);
                 }
                 findDeviceRecipe();
 
@@ -950,13 +949,13 @@ public class T340Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findDeviceRecipe();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！";
         }
-        if (FengCeConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus) || equipStatus.equalsIgnoreCase("UNKNOWN")) {
+        if (GlobalConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus) || equipStatus.equalsIgnoreCase("UNKNOWN")) {
             return "0";
         } else {
-            return "设备未处于" + FengCeConstant.STATUS_IDLE + "状态，不可调整Recipe！";
+            return "设备未处于" + GlobalConstant.STATUS_IDLE + "状态，不可调整Recipe！";
         }
     }
 

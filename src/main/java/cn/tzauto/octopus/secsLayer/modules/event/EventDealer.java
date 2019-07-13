@@ -38,7 +38,7 @@ import java.util.Map;
 public class EventDealer {
     static Logger logger = Logger.getLogger(EventDealer.class);
 
-    public static JudgeResult deal(DataMsgMap dataMsgMap, String deviceCode, Process process, ActiveWrapper activeWrapper) throws IOException,  T6TimeOutException, BrokenProtocolException, T3TimeOutException,    InterruptedException, ProcessFunctionNotSupportException {
+    public static JudgeResult deal(DataMsgMap dataMsgMap, String deviceCode, Process process, ActiveWrapper activeWrapper) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException, ProcessFunctionNotSupportException, StateException, IntegrityException, InvalidDataException {
         List<ProcessFunction> processFunctions = process.getFunction();
         boolean isJudgePass = true;
         for (ProcessFunction processFunction : processFunctions) {

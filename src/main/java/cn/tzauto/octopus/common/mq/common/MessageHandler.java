@@ -15,5 +15,5 @@ public interface MessageHandler {
      * 接收消息后的处理事件
      * @param message
      */
-    public void handle(Message message) throws IOException,  T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException;
+    public void handle(Message message) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException;
 }

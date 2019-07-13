@@ -23,8 +23,8 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
-import cn.tzauto.octopus.secsLayer.util.UtilityFengCe;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
+import cn.tzauto.octopus.secsLayer.util.NetUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -201,7 +201,7 @@ public class MultipleEquipHostManager {
                 skip = true;
             } else {
                 ipAddress = ipAddress.trim();
-                skip = !UtilityFengCe.isIpAddress(ipAddress);
+                skip = !NetUtil.isIpAddress(ipAddress);
             }
 
             if (remoteIp == null || remoteIp.trim().isEmpty()) {
@@ -210,7 +210,7 @@ public class MultipleEquipHostManager {
                 skip = true;
             } else {
                 remoteIp = remoteIp.trim();
-                skip = !UtilityFengCe.isIpAddress(remoteIp);
+                skip = !NetUtil.isIpAddress(remoteIp);
             }
             if (smlPath == null || smlPath.trim().isEmpty()) {
                 logger.fatal("Found Equip " + deviceName + " with no smlFilePath.");
@@ -1044,7 +1044,7 @@ public class MultipleEquipHostManager {
         Map resultMap = null;
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
+            if (GlobalConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
                 UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return null;
             }
@@ -1061,7 +1061,7 @@ public class MultipleEquipHostManager {
         String equipStatus = "";
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            if (FengCeConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
+            if (GlobalConstant.CONTROL_OFFLINE.equalsIgnoreCase(equipHost.getControlState())) {
                 UiLogUtil.getInstance().appendLog2SecsTab(equipHost.getDeviceCode(), "设备处于Offline状态...");
                 return "Offline";
             }
@@ -1332,7 +1332,7 @@ public class MultipleEquipHostManager {
                 skip = true;
             } else {
                 ipAddress = ipAddress.trim();
-                skip = !UtilityFengCe.isIpAddress(ipAddress);
+                skip = !NetUtil.isIpAddress(ipAddress);
             }
 
             if (remoteIp == null || remoteIp.trim().isEmpty()) {
@@ -1341,7 +1341,7 @@ public class MultipleEquipHostManager {
                 skip = true;
             } else {
                 remoteIp = remoteIp.trim();
-                skip = !UtilityFengCe.isIpAddress(remoteIp);
+                skip = !NetUtil.isIpAddress(remoteIp);
             }
 
             if (activeMode == null || activeMode.trim().isEmpty()) {

@@ -19,7 +19,7 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.accretech.PG3000RMXRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -74,7 +74,7 @@ public class PG3000RMXHost extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -172,13 +172,13 @@ public class PG3000RMXHost extends EquipHost {
                 //sml中s6f11equipstatuschange data1，data2表示状态前后的两个值，需要测试得到
                 processS6F11EquipStatusChange(data);
             }else if (ceid == 9) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
                 super.sendS1F3Check();
             } else if (ceid == 10) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                 super.sendS1F3Check();
             } else if (ceid == 8) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 44) {
                 this.processS6F11EquipStatusChange(data);
             } else if (ceid == 45 || ceid == 46) {

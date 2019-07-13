@@ -24,7 +24,7 @@ public class DeviceComm {
     private static final Logger logger = Logger.getLogger(DeviceComm.class);
 
     public static void startHost(final EquipNodeBean equipNodeBean) {
-//        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
+//        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
 //        EquipmentEventDealer watchDogOld = EAPGuiView.removeWatchDog(equipNodeBean.getDeviceIdProperty());
 //        if (watchDogOld != null && !watchDogOld.isDone()) { // still runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.
@@ -51,17 +51,15 @@ public class DeviceComm {
         } catch (NotInitializedException e1) {
             e1.printStackTrace();
 //                    return null;
-        } catch (InvalidHsmsHeaderDataException e) {
-            e.printStackTrace();
         } catch (T6TimeOutException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (T3TimeOutException e) {
             e.printStackTrace();
-        } catch (HsmsProtocolNotSelectedException e) {
+        } catch (InvalidDataException e) {
             e.printStackTrace();
-        } catch (IllegalStateTransitionException e) {
+        } catch (StateException e) {
             e.printStackTrace();
         }
         EapClient.removeWatchDog(deviceCode);
@@ -74,8 +72,8 @@ public class DeviceComm {
 
     public static void restartHost(EquipNodeBean equipNodeBean) {
         boolean needRestart = true;
-        String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
+        String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipNodeBean.getDeviceCode());
         EquipmentEventDealer watchDog = EapClient.getWatchDog(equipNodeBean.getDeviceCode());
 //        if (watchDog == null || watchDog.isDone()) { // not runnning
 //            //watchDog is stopped at last if Host is requested to be stopped.
@@ -136,9 +134,9 @@ public class DeviceComm {
         }
 
         if(temp ==null){
-            MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
         }else{
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+            MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
         }
 
     }

@@ -11,11 +11,9 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.gui.widget.deviceinfopane.DeviceInfoPaneController;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,7 +40,6 @@ import java.util.*;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
 import static cn.tzauto.octopus.secsLayer.domain.EquipHost.COMMUNICATING;
-import static cn.tzauto.octopus.secsLayer.domain.EquipHost.NOT_COMMUNICATING;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -123,7 +120,7 @@ public class DownloadPaneController implements Initializable {
             if (equipHost != null  && equipHost.getEquipState().isCommOn()  &&equipHost.commState==COMMUNICATING ) {
                 deviceInfostmp.add(deviceInfo);
             }else{
-                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
                 CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
             }
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode());

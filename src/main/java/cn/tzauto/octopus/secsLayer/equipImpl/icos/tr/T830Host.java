@@ -5,6 +5,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
@@ -23,7 +24,7 @@ import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrT830RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -65,7 +66,7 @@ public class T830Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -285,11 +286,11 @@ public class T830Host extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 2) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 3) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 1) {
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 10002) {
                 processS6F11EquipStatusChange(data);
             }
@@ -305,12 +306,11 @@ public class T830Host extends EquipHost {
         long nowStatus = 0;
         long ceid = 0L;
         try {
-            nowStatus = data.getSingleNumber("EquipStatus");
             ceid = (long) data.get("CEID");
         } catch (Exception e) {
             e.printStackTrace();
         }
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(nowStatus), deviceType);
+        findDeviceRecipe();
         if (equipStatus.equalsIgnoreCase("Run")) {
             if (this.checkLockFlagFromServerByWS(deviceCode)) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备设置为锁机，设备将被锁！");
@@ -782,11 +782,11 @@ public class T830Host extends EquipHost {
 
     @Override
     public String checkEquipStatus() {
-        if (FengCeConstant.STATUS_RUN.equals(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equals(equipStatus)) {
             return "设备正在运行，不可调整Recipe！";
         }
-        if (!FengCeConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
-            return "设备未处于" + FengCeConstant.STATUS_IDLE + "状态，不可调整Recipe！";
+        if (!GlobalConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
+            return "设备未处于" + GlobalConstant.STATUS_IDLE + "状态，不可调整Recipe！";
         }
         return "0";
     }

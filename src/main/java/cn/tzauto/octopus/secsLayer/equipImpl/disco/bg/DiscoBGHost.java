@@ -9,6 +9,7 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.MsgSection;
+import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -24,7 +25,7 @@ import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.CommonSMLUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -74,7 +75,7 @@ public class DiscoBGHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -83,7 +84,7 @@ public class DiscoBGHost extends EquipHost {
                 if (this.getCommState() != DiscoBGHost.COMMUNICATING) {
                     this.sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                     //获取设备开机状态                   
                     super.findDeviceRecipe();
@@ -106,9 +107,7 @@ public class DiscoBGHost extends EquipHost {
                     processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
                     processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11alarmClear")) {
-                    processS6F11AlarmClear(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11ppselectfinish")) {
                     processS6F11PPselect(msg);
                 }
             } catch (InterruptedException e) {
@@ -346,10 +345,10 @@ public class DiscoBGHost extends EquipHost {
             if (ceid == 10103 || ceid == 10104) {
                 if (ceid == 10103) {
                     //Online_Local
-                    panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);
+                    panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE);
                 } else {
                     //Online_Remote}
-                    panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);
                 }
                 changeEquipPanel(panelMap);
             } else if (ceid == 77 || ceid == 211 || ceid == 221 || ceid == 1000000401) {
@@ -436,35 +435,7 @@ public class DiscoBGHost extends EquipHost {
         }
     }
 
-    private void processS6F11AlarmClear(DataMsgMap data) {
-        long alid = 0L;
-        try {
-            //todo alid如何获取
-            alid = data.getSingleNumber("ALID");
-            findDeviceRecipe();
-            if (!"".equals(equipStatus) && equipStatus != null) {
-                Map map = new HashMap();
-                map.put("EquipStatus", equipStatus);
-                changeEquipPanel(map);
-            }
-            if ("setup".equalsIgnoreCase(equipStatus) && alid == 3017) {
-                this.findDeviceRecipe();
-                sendS1F3CheckCassUse();
-                SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-                DeviceService deviceService = new DeviceService(sqlSession);
-                DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-                if (deviceInfoExt != null) {
-                    String trackInRcpName = deviceInfoExt.getRecipeName();
-                    if (trackInRcpName != null && !"".equals(trackInRcpName)) {
-                        this.sendS2F41outPPselect(trackInRcpName);
-                    }
-                }
-                sqlSession.close();
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
+
 
     private void processS6F11PPselect(DataMsgMap data) {
         long ceid = 0L;
@@ -588,7 +559,7 @@ public class DiscoBGHost extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findEqptStatus();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";

@@ -29,7 +29,7 @@ public class UphTellHandler implements MessageHandler {
     private static Logger logger = Logger.getLogger(UphTellHandler.class.getName());
 
     @Override
-    public void handle(Message message) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException {
+    public void handle(Message message) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         MapMessage mapMessage = (MapMessage) message;
         UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;

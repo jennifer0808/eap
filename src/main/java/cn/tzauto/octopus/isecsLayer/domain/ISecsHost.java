@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.isecsLayer.domain;
 
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
@@ -558,8 +558,8 @@ public class ISecsHost implements ISecsInterface {
     }
 
     public String executeCommand3(String command) {
-        String temp = (String)MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        String temp = (String)MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(iSecsConnection.getSocketClient().getOutputStream()));
             logger.info(deviceCode + " Ready to execute command==>" + command);
@@ -575,9 +575,9 @@ public class ISecsHost implements ISecsInterface {
             System.out.print("111111");
         }finally {
             if(temp ==null){
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             }else{
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
         return null;
