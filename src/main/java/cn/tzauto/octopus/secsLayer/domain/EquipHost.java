@@ -595,8 +595,8 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected List getNcessaryData() {
         DataMsgMap data = null;
         List<Long> statusList = new ArrayList<>();
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
             long pPExecNamesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
@@ -606,7 +606,10 @@ public abstract class EquipHost extends Thread implements MsgListener {
             statusList.add(controlStatesvid);
 
         } catch (Exception e) {
+            logger.error("Database Error:" + e);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "数据库查询报错，请检查EAP日志确认原因.");
+        }finally {
+            sqlSession.close();
         }
         try {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
