@@ -31,6 +31,7 @@ public class MessageProcess implements MessageHandler {
             msgName = mapMessage.getString("msgName") + "";
 //           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "接收到mq============================");
             mqLogger.info("接收到mq==================================,deviceCode：" + deviceCode + "，msgName:" + msgName + "，deviceTypeId:" + deviceTypeId);
+            logger.info("接收到mq==================================" + deviceCode + "==deviceTypeId:" + deviceTypeId);
             if (isInvoke(deviceCode, deviceTypeId)) {
                 logger.info("接收到mq==================================" + deviceCode + "==deviceTypeId:" + deviceTypeId);
                 logger.info("开始处理MQ请求...");
