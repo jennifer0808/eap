@@ -206,7 +206,7 @@ public class Disco6361Host extends EquipHost {
 
         if("run".equalsIgnoreCase(equipStatus)) {
             Map resultMap = sendS1F3SingleCheck(3218L);
-            long result = (long) resultMap.get("Value");
+            long result = Long.parseLong(resultMap.get("Value").toString()) ;
             if(result >= 999) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"UV LAMP TOTAL TIME MORE THAN 999!");
                 holdDevice();
