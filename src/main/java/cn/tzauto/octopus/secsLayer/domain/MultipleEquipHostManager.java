@@ -1000,7 +1000,7 @@ public class MultipleEquipHostManager {
             EquipHost equipHost = equipHosts.get(deviceId);
             try {
                 if ("LOCK".equals(state)) {
-                    pass = equipHost.holdDeviceAndShowDetailInfo(type);
+                    pass = equipHost.holdDeviceAndShowDetailInfo("\r\n"+type);
                 } else if ("RELEASE".equals(state)) {
                     pass = equipHost.releaseDeviceAndShowDetailInfo(type);
                 }

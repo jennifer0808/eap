@@ -2507,7 +2507,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             lockFlag = true;
             String lockReason = String.valueOf(checkServerLockResult.get("remarks"));
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机, 锁机原因为: " + lockReason);
-            holdDeviceAndShowDetailInfo("Equipment locked because of " + lockReason);
+            holdDeviceAndShowDetailInfo("Equipment locked because of :\r\n" + lockReason);
             SqlSession sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
             DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);

@@ -86,7 +86,7 @@ public class DeviceComm {
         logger.info("deviceId===>" + deviceId + "    watchDog==>" + watchDog);
 //        watchDog.notificationOfCloseNetwork(deviceId);
         logger.info("deviceId===>" + deviceId + " ; 停止SECS通信");
-        GlobalConstants.stage.hostManager.terminateSECS(equipNodeBean.getDeviceCode());
+//        GlobalConstants.stage.hostManager.terminateSECS(equipNodeBean.getDeviceCode());
         logger.info("deviceId===>" + deviceId + " ; 停止Host");
         GlobalConstants.stage.hostManager.terminateHostThread(equipNodeBean.getDeviceCode());
 //        Thread.yield();
