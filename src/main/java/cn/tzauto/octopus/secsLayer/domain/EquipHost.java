@@ -3576,7 +3576,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         MonitorService monitorService = new MonitorService(sqlSession);
-        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+        List<RecipePara> equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
         try {
             Map mqMap = new HashMap();
