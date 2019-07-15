@@ -606,8 +606,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
             statusList.add(controlStatesvid);
 
         } catch (Exception e) {
-            logger.error("Database Error:" + e);
+            logger.error("error while querying database：" , e);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "数据库查询报错，请检查EAP日志确认原因.");
+            return null;
         }finally {
             sqlSession.close();
         }
