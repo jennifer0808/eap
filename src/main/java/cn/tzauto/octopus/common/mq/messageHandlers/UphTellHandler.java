@@ -31,7 +31,7 @@ public class UphTellHandler implements MessageHandler {
     @Override
     public void handle(Message message) throws IOException, T6TimeOutException, BrokenProtocolException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
         MapMessage mapMessage = (MapMessage) message;
-       UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
+        UiLogUtil.getInstance().appendLog2SeverTab(null, "收到服务端请求获取UPH参数");
         MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -39,11 +39,15 @@ public class UphTellHandler implements MessageHandler {
         sqlSession.close();
         if (deviceInfos != null && !deviceInfos.isEmpty()) {
             for (DeviceInfo deviceInfo : deviceInfos) {
-                EquipHost equipHost = hostManager.getAllEquipHosts().get(deviceInfo.getDeviceCode());
-                if (equipHost == null || !equipHost.getEquipState().isCommOn()) {
-                    continue;
+                try {
+                    EquipHost equipHost = hostManager.getAllEquipHosts().get(deviceInfo.getDeviceCode());
+                    if (equipHost == null || !equipHost.getEquipState().isCommOn()) {
+                        continue;
+                    }
+                    equipHost.sendUphData2Server();
+                } catch (Exception e) {
+                    logger.info("处理uph失败" + e);
                 }
-                equipHost.sendUphData2Server();
             }
         }
     }

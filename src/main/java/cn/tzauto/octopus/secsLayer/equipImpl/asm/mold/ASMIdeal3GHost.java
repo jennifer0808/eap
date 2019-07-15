@@ -83,7 +83,6 @@ public class ASMIdeal3GHost extends EquipHost {
                     super.findDeviceRecipe();//
                     //获取lot号
                     super.updateLotId();
-                    initRptPara();
                     rptDefineNum++;
                 }
                 DataMsgMap msg = null;
@@ -487,9 +486,15 @@ public class ASMIdeal3GHost extends EquipHost {
         RecipeService recipeService = new RecipeService(sqlSession);
         List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
         sqlSession.close();
-        //获取前一状态与当前状态
 
-        Map shotCountMap = activeWrapper.sendS1F3out(svidlist, svFormat);
+        Map shotCountMap = null;
+        if(svidlist != null && svidlist.size() != 0){
+            List<Long> svids = new ArrayList<>();
+            for(Object svid:svidlist){
+                svids.add(Long.parseLong(svid.toString()));
+            }
+            shotCountMap = activeWrapper.sendS1F3out(svids, svFormat);
+        }
         Map mqMap = new HashMap();
         mqMap.put("msgName", "UphDataTransfer");
         mqMap.put("deviceCode", deviceCode);
