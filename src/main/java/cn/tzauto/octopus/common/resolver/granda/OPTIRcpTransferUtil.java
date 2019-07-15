@@ -15,10 +15,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author 陈佳能
- */
 public class OPTIRcpTransferUtil {
 
     private static Logger logger = Logger.getLogger(OPTIRcpTransferUtil.class);

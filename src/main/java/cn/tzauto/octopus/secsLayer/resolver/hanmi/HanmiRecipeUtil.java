@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  *
- * @author ccy
  */
 public class HanmiRecipeUtil {
 

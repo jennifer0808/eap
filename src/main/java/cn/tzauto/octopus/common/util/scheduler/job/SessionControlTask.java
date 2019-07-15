@@ -22,7 +22,6 @@ import cn.tzauto.octopus.gui.main.EapMainController;
 
 /**
  *
- * @author rain
  */
 public class SessionControlTask implements Job {
 

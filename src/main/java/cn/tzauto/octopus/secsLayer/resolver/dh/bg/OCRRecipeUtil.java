@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Administrator
  */
 public class OCRRecipeUtil {
 

@@ -21,10 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-
-/**
- * @author rain
- */
 public class ChangeEqptStateHandler implements MessageHandler {
 
 //    private static Logger logger = Logger.getLogger(ChangeEqptStateHandler.class);

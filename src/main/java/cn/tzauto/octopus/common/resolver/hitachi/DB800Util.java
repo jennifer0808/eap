@@ -31,7 +31,6 @@ import org.apache.ibatis.session.SqlSession;
 
 /**
  *
- * @author NJTZ
  */
 public class DB800Util {
     

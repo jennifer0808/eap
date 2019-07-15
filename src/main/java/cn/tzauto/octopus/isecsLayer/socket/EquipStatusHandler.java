@@ -15,7 +15,7 @@ import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -62,7 +62,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             }
             String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
             String deviceCode = map.get(eqpIp);
-            MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+            MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
             logger.debug("接收到设备:" + deviceCode + "的alert信息:" + message);
             if (deviceCode.contains("-S")) {
                 deviceCode = deviceCode.replace("-S", "");

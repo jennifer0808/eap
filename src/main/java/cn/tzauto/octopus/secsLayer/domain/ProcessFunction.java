@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.domain;
 import java.util.List;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class ProcessFunction {
     public static final String EDC_SV = "EDC_SV";//执行SV取值

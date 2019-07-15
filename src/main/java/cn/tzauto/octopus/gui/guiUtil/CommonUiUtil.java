@@ -11,9 +11,7 @@ import javafx.stage.Stage;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by zm730 on 2019/2/13.
- */
+
 public class CommonUiUtil {
 
     public static Optional<ButtonType> alert(Alert.AlertType type, String message) {

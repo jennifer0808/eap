@@ -17,16 +17,13 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.disco.DiscoRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
 import java.util.*;
 
-/**
- * @author njtz
- */
 
 public class Disco7160Host extends EquipHost {
 
@@ -61,7 +58,7 @@ public class Disco7160Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -92,9 +89,9 @@ public class Disco7160Host extends EquipHost {
                         Map panelMap = new HashMap();
                         if (ceid == 75 || ceid == 76) {
                             if (ceid == 75) {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_LOCAL_ONLINE);       //Online_Local
                             } else {
-                                panelMap.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
+                                panelMap.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);//Online_Remote}
                             }
                             changeEquipPanel(panelMap);
                         }
@@ -145,31 +142,7 @@ public class Disco7160Host extends EquipHost {
                     logger.info(deviceCode + ":设备已进入全自动模式！");
                 }
                 this.inputMsgQueue.put(data);
-            } else if (tagName.contains("s6f11equipstatuschange")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11ppselectfinish")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                this.inputMsgQueue.put(data);
-            } else if (tagName.equalsIgnoreCase("s6f11equipstate")) {
-                byte[] ack = new byte[1];
-                ack[0] = 0;
-                replyS6F12WithACK(data, ack[0]);
-                long ceid = 0l;
-                try {
-                    ceid = data.getSingleNumber("CollEventID");
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                if (ceid == 75 || ceid == 76) {
-                    this.inputMsgQueue.put(data);
-                }
-
-            } else if (tagName.equalsIgnoreCase("s1f2in")) {
+            }  else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
@@ -186,10 +159,7 @@ public class Disco7160Host extends EquipHost {
             logger.error("Exception:", e);
         }
     }
-    // <editor-fold defaultstate="collapsed" desc="S1FX Code">
 
-
-    // </editor-fold> 
     private String getDevIdFromEqp(long DEVID) {
         String devid = "--";
         DataMsgMap s2f13out = new DataMsgMap("s2f13DEVIDout", activeWrapper.getDeviceId());
@@ -218,15 +188,7 @@ public class Disco7160Host extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
-            String prestate = equipStatus;
             super.findDeviceRecipe();
-            String curstate = equipStatus;
-//            if("READY".equalsIgnoreCase(prestate)&&"RUN".equalsIgnoreCase(curstate)){
-//                isFullAutoState1st = true;
-//                logger.info(deviceCode+":设备已进入全自动模式！");
-//            }
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -522,7 +484,7 @@ public class Disco7160Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findEqptStatus();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus) || "RUN".equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
         return "0";

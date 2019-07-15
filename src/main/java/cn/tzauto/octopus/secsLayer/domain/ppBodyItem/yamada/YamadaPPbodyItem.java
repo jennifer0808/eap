@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.yamada;
 
 /**
  *
- * @author njtz
  */
 public class YamadaPPbodyItem {
 

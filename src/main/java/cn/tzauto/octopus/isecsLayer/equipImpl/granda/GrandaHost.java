@@ -21,7 +21,7 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.common.resolver.granda.GrandaRcpTransferUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -364,10 +364,10 @@ public class GrandaHost extends EquipModel {
     }
 
     protected String checkEquipStatus() {
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！下载失败！";
         }
-        if (!FengCeConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
+        if (!GlobalConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus)) {
             return "设备未处于闲置状态，不可调整Recipe！下载失败！";
         }
         return "0";

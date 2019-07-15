@@ -9,7 +9,6 @@ package cn.tzauto.octopus.secsLayer.resolver.ismeca;
 /**
  *
  * @author Wang Danfeng
- * @date 2018-8-6 17:48:14
  * @version V1.0
  * @desc 
  */

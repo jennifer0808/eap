@@ -28,7 +28,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.LaserRelinkUtil;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -74,7 +74,7 @@ public class HM2128FFWMHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -85,7 +85,7 @@ public class HM2128FFWMHost extends EquipHost {
                     this.sendS1F13out();
                     sendS1F17out();
                 }
-//                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+//                if (this.getControlState() == null ? GlobalConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
 //                    sendS1F1out();
 //                    //为了能调整为online remote
 ////                    sendS1F17out();
@@ -97,7 +97,7 @@ public class HM2128FFWMHost extends EquipHost {
 //                    //initRptPara();
 //                }
 
-//                if (this.getControlState() == null ? FengCeConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+//                if (this.getControlState() == null ? GlobalConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
 //                    sendS1F1out();
 //                    //获取设备开机状态
 //                    super.findDeviceRecipe();
@@ -150,7 +150,7 @@ public class HM2128FFWMHost extends EquipHost {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("s1f14in")) {
                 processS1F14in(data);
-                if (!this.controlState.equalsIgnoreCase(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.controlState.equalsIgnoreCase(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     this.inputMsgQueue.put(data);
                 }
             } else if (tagName.equalsIgnoreCase("s2f34in")) {
@@ -183,11 +183,11 @@ public class HM2128FFWMHost extends EquipHost {
             controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
         if (controlState.equalsIgnoreCase("OnlineLocal")) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+            controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
         } else if (controlState.equalsIgnoreCase("OnlineRemote")) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+            controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
         } else if (controlState.equalsIgnoreCase("EquipmentOffline")) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
+            controlState = GlobalConstant.CONTROL_OFFLINE;
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
@@ -224,11 +224,11 @@ public class HM2128FFWMHost extends EquipHost {
             e.printStackTrace();
         }
         if (controlState.equalsIgnoreCase("OnlineLocal")) {
-            controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+            controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
         } else if (controlState.equalsIgnoreCase("OnlineRemote")) {
-            controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+            controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
         } else if (controlState.equalsIgnoreCase("EquipmentOffline")) {
-            controlState = FengCeConstant.CONTROL_OFFLINE;
+            controlState = GlobalConstant.CONTROL_OFFLINE;
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);

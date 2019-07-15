@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
 
 
 /**
- * Created by wj_co on 2019/2/12.
+ * Created by wj_co
  */
 public class SVQueryPaneController implements Initializable {
     private final String deviceCode;

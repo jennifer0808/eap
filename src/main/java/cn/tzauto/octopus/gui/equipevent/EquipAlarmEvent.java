@@ -4,10 +4,7 @@
  */
 package cn.tzauto.octopus.gui.equipevent;
 
-/**
- *
- * @author njtz
- */
+
 public class EquipAlarmEvent extends ControlEvent {
 
     private int alarmState = 0;

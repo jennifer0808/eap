@@ -18,9 +18,7 @@ import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- * @author xuchao
- */
+
 public class Vision88DRecipeUtil {
 
     private static Logger logger = Logger.getLogger(Vision88DRecipeUtil.class);

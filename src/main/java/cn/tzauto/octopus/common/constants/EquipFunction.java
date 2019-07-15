@@ -6,7 +6,6 @@ package cn.tzauto.octopus.common.constants;
 
 /**
  *
- * @author gavin
  * 定义设备需要检查或者锁机功能的关键字
  */
 public class EquipFunction {

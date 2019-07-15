@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.secsLayer.modules;
 
 /**
- * Created by luosy on 2019/4/4.
+ * Created by luosy
  */
 public class JudgeResult {
     private boolean isJudgePass;

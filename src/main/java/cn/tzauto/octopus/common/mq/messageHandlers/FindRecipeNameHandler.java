@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  *
- * @author rain
  */
 public class FindRecipeNameHandler implements MessageHandler {
 

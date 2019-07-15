@@ -32,7 +32,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author gavin
  */
 public class DeviceFunctionService extends BaseService {
 

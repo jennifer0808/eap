@@ -24,9 +24,7 @@ import org.apache.ibatis.session.SqlSession;
 
 import org.apache.log4j.Logger;
 
-/**
- * @author njtz
- */
+
 public class PG3000RMXRecipeUtil {
 
     private static Logger logger = Logger.getLogger(PG3000RMXRecipeUtil.class);

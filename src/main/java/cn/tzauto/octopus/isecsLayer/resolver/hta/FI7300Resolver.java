@@ -17,7 +17,7 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Created by wj_co on 2018/9/29.
+ * Created by wj_co
  */
 public class FI7300Resolver {
     private static Logger logger = Logger.getLogger(FI7300Resolver.class);

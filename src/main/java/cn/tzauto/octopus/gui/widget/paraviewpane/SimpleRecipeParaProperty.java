@@ -2,9 +2,7 @@ package cn.tzauto.octopus.gui.widget.paraviewpane;
 
 import javafx.beans.property.SimpleStringProperty;
 
-/**
- * Created by zm730 on 2019/2/14.
- */
+
 public class SimpleRecipeParaProperty {
 
     private SimpleStringProperty paraCode;

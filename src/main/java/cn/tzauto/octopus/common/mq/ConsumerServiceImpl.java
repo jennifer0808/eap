@@ -5,9 +5,6 @@ import cn.tzauto.octopus.common.mq.common.MQConstants;
 
 import javax.jms.*;
 
-/**
- * Created by Chase on 2016/7/24.
- */
 public class ConsumerServiceImpl implements ExceptionListener {
 
     //队列预取策略

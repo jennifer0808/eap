@@ -20,7 +20,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.icos.TrRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -70,7 +70,7 @@ public class T640Host extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -150,7 +150,7 @@ public class T640Host extends EquipHost {
                 replyS5F2Directly(data);
                 this.inputMsgQueue.put(data);
             } else if (tagName.contains("F0") || tagName.contains("f0")) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
+                controlState = GlobalConstant.CONTROL_OFFLINE;
                 equipStatus = "SECS-OFFLINE";
                 Map panelMap = new HashMap();
                 panelMap.put("EquipStatus", equipStatus);
@@ -265,15 +265,15 @@ public class T640Host extends EquipHost {
             ceid = (long) data.get("CEID");
             if (ceid == 1 || ceid == 2 || ceid == 3) {
                 if (ceid == 2) {
-                    super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
                 } else if (ceid == 3) {
-                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                 } else if (ceid == 1) {
-                    super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    super.setControlState(GlobalConstant.CONTROL_OFFLINE);
                 }
                 findDeviceRecipe();
             } else {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             }
             if (ceid == 14032||ceid == 14033||ceid == 14034) {
                 needCheck = true;
@@ -839,13 +839,13 @@ public class T640Host extends EquipHost {
     @Override
     public String checkEquipStatus() {
         findDeviceRecipe();
-        if (FengCeConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
+        if (GlobalConstant.STATUS_RUN.equalsIgnoreCase(equipStatus)) {
             return "设备正在运行，不可调整Recipe！";
         }
-        if (FengCeConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus) || equipStatus.equalsIgnoreCase("UNKNOWN")) {
+        if (GlobalConstant.STATUS_IDLE.equalsIgnoreCase(equipStatus) || equipStatus.equalsIgnoreCase("UNKNOWN")) {
             return "0";
         } else {
-            return "设备未处于" + FengCeConstant.STATUS_IDLE + "状态，不可调整Recipe！";
+            return "设备未处于" + GlobalConstant.STATUS_IDLE + "状态，不可调整Recipe！";
         }
     }
 

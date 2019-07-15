@@ -4,7 +4,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.CheckBox;
 
 /**
- * Created by wj_co on 2019/2/15.
+ * Created by wj_co
  */
 public class SimpleRecipeUploadProperty {
 

@@ -28,10 +28,6 @@ import java.util.List;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
-/**
- *
- * @author Administrator
- */
 public class BTURecipeUtilTest {
     
     private static final Logger logger = Logger.getLogger(BTURecipeUtilTest.class);

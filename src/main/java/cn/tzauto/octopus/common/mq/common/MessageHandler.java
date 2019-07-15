@@ -6,9 +6,6 @@ import cn.tzauto.generalDriver.exceptions.*;
 import javax.jms.Message;
 import java.io.IOException;
 
-/**
- * Created by Chase on 2016/7/24.
- */
 public interface MessageHandler {
 
     /**

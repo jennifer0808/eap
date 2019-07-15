@@ -8,7 +8,6 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 
 /**
  *
- * @author njtz
  */
 public class TowaConfig {
 

@@ -18,7 +18,6 @@ import java.util.Map;
 
 /**
  *
- * @author 陈佳能
  */
 public class Sigma8800RecipeUtil {
 

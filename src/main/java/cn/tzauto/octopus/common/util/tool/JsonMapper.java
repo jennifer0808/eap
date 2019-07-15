@@ -27,12 +27,7 @@ import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import java.text.SimpleDateFormat;
 
-/**
- * 简单封装Jackson，实现JSON String<->Java Object的Mapper.
- * 封装不同的输出风格, 使用不同的builder函数创建实例.
- * @author ThinkGem
- * @version 2013-11-15
- */
+
 public class JsonMapper extends ObjectMapper {
 
     private static final long serialVersionUID = 1L;

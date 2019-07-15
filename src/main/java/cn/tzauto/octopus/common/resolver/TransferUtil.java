@@ -6,9 +6,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author njtz
- */
 public class TransferUtil {
 
     private static Logger logger = Logger.getLogger(TransferUtil.class);

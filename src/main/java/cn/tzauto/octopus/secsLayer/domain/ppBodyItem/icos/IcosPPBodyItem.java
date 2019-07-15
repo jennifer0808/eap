@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.icos;
 
 /**
  *
- * @author Administrator
  */
 public class IcosPPBodyItem {
 

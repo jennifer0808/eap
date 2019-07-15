@@ -24,7 +24,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author 陈佳能
  */
 public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 

@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 /**
  * @author WangDanFeng
  * @version V1.0
- * @date 2018-8-10 16:20:25
  * @desc
  */
 public class MdbUtil {

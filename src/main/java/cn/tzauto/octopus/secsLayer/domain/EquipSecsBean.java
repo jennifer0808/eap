@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class EquipSecsBean {
     public static Logger sysLogger = Logger.getLogger(EquipSecsBean.class);

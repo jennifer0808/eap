@@ -17,7 +17,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -68,7 +68,7 @@ public class EsecDB2100FCHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -78,7 +78,7 @@ public class EsecDB2100FCHost extends EquipHost {
                 if (this.getCommState() != EsecDB2100FCHost.COMMUNICATING) {
                     sendS1F13out();
                 }
-                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
                     sendS1F1out();
                 }
                 if (rptDefineNum < 1) {
@@ -93,16 +93,7 @@ public class EsecDB2100FCHost extends EquipHost {
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s14f1in")) {
                     processS14F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-//                    if (msg.get("CollEventID") != null) {
-//                        long ceid = msg.getSingleNumber("CollEventID");
-//                        if (ceid == 0) {
-                    processS6F11inStripMapUpload(msg);
-//                        } else {
-//                            processS6F11in(msg);
-//                        }
-//                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
@@ -305,8 +296,6 @@ public class EsecDB2100FCHost extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             ppExecName = ppExecName.replace(".dbrcp", "");
             preEquipStatus = equipStatus;
             findDeviceRecipe();

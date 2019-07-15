@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author wjy
  */
 public class ASMRecipeUtil {
     private static Logger logger = Logger.getLogger(ASMRecipeUtil.class);

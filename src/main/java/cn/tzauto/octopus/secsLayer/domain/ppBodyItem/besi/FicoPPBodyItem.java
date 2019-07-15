@@ -6,7 +6,6 @@ package cn.tzauto.octopus.secsLayer.domain.ppBodyItem.besi;
 
 /**
  *
- * @author njtz
  */
 public class FicoPPBodyItem {
 

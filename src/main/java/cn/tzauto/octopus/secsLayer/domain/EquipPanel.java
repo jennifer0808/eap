@@ -4,11 +4,10 @@
  */
 package cn.tzauto.octopus.secsLayer.domain;
 
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 
 /**
  *
- * @author rain
  */
 public class EquipPanel {
 
@@ -24,7 +23,7 @@ public class EquipPanel {
         this.runningRcp = "--";
         this.workLot = "--";
         this.alarmState = 0;
-        this.controlState = FengCeConstant.CONTROL_OFFLINE;
+        this.controlState = GlobalConstant.CONTROL_OFFLINE;
         this.netState = 1;
     }
 

@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  *
- * @author 陈佳能
  */
 public class TakeOutNum {
 

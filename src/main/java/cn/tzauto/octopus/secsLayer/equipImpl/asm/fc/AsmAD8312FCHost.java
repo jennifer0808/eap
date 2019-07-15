@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.fc;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
-import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -19,7 +18,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -61,7 +60,7 @@ public class AsmAD8312FCHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -86,12 +85,6 @@ public class AsmAD8312FCHost extends EquipHost {
                         processS14F1in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                         processS6F11in(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                        processS6F11inStripMapUpload(msg);
-                    } else if (msg.getMsgSfName().contains("s6f11EquipStatusChange")) {
-                        processS6F11EquipStatusChange(msg);
-                    } else if (msg.getMsgSfName().equals("s6f11ControlStateChange")) {
-                        processS6F11ControlStateChange(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
                     } else {
@@ -290,61 +283,7 @@ public class AsmAD8312FCHost extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
-        //回复s6f11消息
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        long reportID = 0L;
-        long controlStateTmp = 0L;
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = (long) data.get("CEID");
-            controlStateTmp = data.getSingleNumber("ControlState");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 1) {
-            Map panelMap = new HashMap();
-            if (controlStateTmp == 0) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-            }
-            if (controlStateTmp == 1) {
-                controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-            }
-            if (controlStateTmp == 2) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-            }
-            changeEquipPanel(panelMap);
-        }
-    }
 
-
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        DataMsgMap out = new DataMsgMap("s6f12out", activeWrapper.getDeviceId());
-        long ceid = 0L;
-        String loginUserName = "";
-        try {
-            out.setTransactionId(data.getTransactionId());
-            ceid = (long) data.get("CEID");
-            loginUserName = ((MsgSection) data.get("UserLoginName")).getData().toString();
-            if (ceid == 9L) {
-                Map map = new HashMap();
-                map.put("PPExecName", loginUserName);
-                changeEquipPanel(map);
-            }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120) {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">

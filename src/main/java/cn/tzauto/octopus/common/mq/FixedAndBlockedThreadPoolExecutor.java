@@ -7,9 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Created by Chase on 2016/7/24.
- */
+
 public class FixedAndBlockedThreadPoolExecutor extends ThreadPoolExecutor {
 
     //一个可重入的互斥锁 Lock，它具有与使用 synchronized 方法和语句所访问的隐式监视器锁相同的一些基本行为和语义，但功能更强大。

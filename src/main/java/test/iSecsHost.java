@@ -6,7 +6,6 @@ package test;
 
 /**
  *
- * @author 陈佳能
  */
 class iSecsHost {
     

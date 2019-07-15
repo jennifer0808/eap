@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  *
- * @author Weiqy
  */
 public class UphTellHandler implements MessageHandler {
 

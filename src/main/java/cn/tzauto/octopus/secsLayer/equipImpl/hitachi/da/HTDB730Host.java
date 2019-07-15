@@ -22,7 +22,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.hitachi.DB730Util;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -32,7 +32,6 @@ import java.util.*;
 /**
  * @author NJTZ
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2017-2-6
  * @(#)EquipHost.java
  * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
  * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
@@ -82,7 +81,7 @@ public class HTDB730Host extends EquipHost {
 
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
 
             try {
@@ -374,13 +373,13 @@ public class HTDB730Host extends EquipHost {
                 }
 
                 if (ceid == 0L) {
-                    controlState = FengCeConstant.CONTROL_OFFLINE;
+                    controlState = GlobalConstant.CONTROL_OFFLINE;
                     logger.info(deviceCode + "=====Equipment Offline");
                 } else if (ceid == 1L) {
-                    controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
+                    controlState = GlobalConstant.CONTROL_LOCAL_ONLINE;
                     logger.info(deviceCode + "=====Equipment control state change to Local");
                 } else if (ceid == 2L) {
-                    controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
+                    controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
                     logger.info(deviceCode + "=====Equipment control state change to Remote");
                 } else if (ceid == 3L) {
                     equipStatus = "INIT";

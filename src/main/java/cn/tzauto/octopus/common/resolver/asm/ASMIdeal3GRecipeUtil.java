@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author njtz
  */
 public class ASMIdeal3GRecipeUtil {
     

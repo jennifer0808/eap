@@ -10,7 +10,6 @@ import org.apache.ibatis.session.SqlSession;
 
 /**
  *
- * @author rain
  */
 public class TestProperty {
     public static void main(String[] args){

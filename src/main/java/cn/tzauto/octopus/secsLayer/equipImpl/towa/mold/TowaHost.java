@@ -21,7 +21,7 @@ import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandParaPair;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.towa.TowaRecipeUtil;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import com.alibaba.fastjson.JSONArray;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
@@ -64,7 +64,7 @@ public class TowaHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted) {
             try {
                 while (!this.isSdrReady()) {
@@ -201,13 +201,13 @@ public class TowaHost extends EquipHost {
             } else if (ceid == 50006 || ceid == 50005 || ceid == 50004 || ceid == 50003 ||
                     ceid == 53 || ceid == 52 || ceid == 51 || ceid == 50) {
                 if (ceid == 50006 || ceid == 53) {
-                    super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
                 } else if (ceid == 50005 || ceid == 52) {
-                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                 } else if (ceid == 50004 || ceid == 51) { //待验证
-                    super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                    super.setControlState(GlobalConstant.CONTROL_OFFLINE);
                 } else if (ceid == 50003 || ceid == 50) {
-                    super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                    super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
                 }
                 updateCommStateInExt();
             }
@@ -288,13 +288,13 @@ public class TowaHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             if (ceid == 50006 || ceid == 53) {
-                super.setControlState(FengCeConstant.CONTROL_LOCAL_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_LOCAL_ONLINE);
             } else if (ceid == 50005 || ceid == 52) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 50004 || ceid == 51) { //待验证
-                super.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                super.setControlState(GlobalConstant.CONTROL_OFFLINE);
             } else if (ceid == 50003 || ceid == 50) {
-                super.setControlState(FengCeConstant.CONTROL_REMOTE_ONLINE);
+                super.setControlState(GlobalConstant.CONTROL_REMOTE_ONLINE);
             } else if (ceid == 9) {
                 equipStatus = "Stopping";
             } else if (ceid == 10) {
@@ -371,8 +371,6 @@ public class TowaHost extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
-//            ppExecName = ((MsgSection) data.get("PPExecName")).getData().toString();
             if (lineAutoHasbeenPressed) {
                 equipStatus = "run";
                 lineAutoHasbeenPressed = false;

@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author gavin
  */
 public class DeviceService extends BaseService {
 

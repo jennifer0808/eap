@@ -6,9 +6,7 @@ import java.util.concurrent.ExecutorService;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 
-/**
- * Created by Chase on 2016/7/24.
- */
+
 public class MultiThreadMessageListener implements MessageListener {
 
     //默认线程池数量

@@ -30,9 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-/**
- * @author njtz
- */
 public class RecipeService extends BaseService {
 
     private RecipeMapper recipeMapper;

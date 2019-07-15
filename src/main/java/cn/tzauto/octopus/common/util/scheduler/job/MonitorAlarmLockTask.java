@@ -7,7 +7,7 @@ package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.quartz.Job;
@@ -25,9 +25,9 @@ public class MonitorAlarmLockTask implements Job {
     public void execute(JobExecutionContext jec) throws JobExecutionException {
         logger.info("MonitorAlarmLockTask start...");
         if (GlobalConstants.stage.equipModels != null && GlobalConstants.stage.equipModels.size() > 0) {
-            String temp = (String) MDC.get(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+            String temp = (String) MDC.get(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             for (EquipModel equipModel : GlobalConstants.stage.equipModels.values()) {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, equipModel.deviceCode);
                 if (!equipModel.iSecsHost.isConnect) {
                     continue;
                 }
@@ -41,9 +41,9 @@ public class MonitorAlarmLockTask implements Job {
                 }
             }
             if (temp == null) {
-                MDC.remove(FengCeConstant.WHICH_EQUIPHOST_CONTEXT);
+                MDC.remove(GlobalConstant.WHICH_EQUIPHOST_CONTEXT);
             } else {
-                MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, temp);
+                MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, temp);
             }
         }
     }

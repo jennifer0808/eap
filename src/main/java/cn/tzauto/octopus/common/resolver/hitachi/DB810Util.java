@@ -16,7 +16,6 @@ import java.util.zip.ZipInputStream;
 
 /**
  *
- * @author 
  */
 public class DB810Util {
 

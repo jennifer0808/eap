@@ -18,7 +18,7 @@ import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -189,9 +189,9 @@ public class DeviceInfoPaneController implements Initializable {
         }else if(commState==NOT_COMMUNICATING ){
 //            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
             if(equipHost!=null){
-                equipHost.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }else if(equipModel!=null){
-                equipModel.setControlState(FengCeConstant.CONTROL_OFFLINE);
+                equipModel.setControlState(GlobalConstant.CONTROL_OFFLINE);
             }
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
 

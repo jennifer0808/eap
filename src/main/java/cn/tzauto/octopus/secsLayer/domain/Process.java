@@ -3,7 +3,7 @@ package cn.tzauto.octopus.secsLayer.domain;
 import java.util.List;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class Process {
     private String processKey;

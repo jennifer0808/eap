@@ -14,10 +14,7 @@ import javax.swing.JOptionPane;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
 
-/**
- *
- * @author rain
- */
+
 public class CallWebService {
 
     public static void main(String args[]) {

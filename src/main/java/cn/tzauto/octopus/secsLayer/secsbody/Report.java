@@ -2,7 +2,7 @@ package cn.tzauto.octopus.secsLayer.secsbody;
 
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class Report {
     private long reportId;

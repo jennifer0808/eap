@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.isecsLayer.resolver.cohu;
 
 /**
- * Created by wj_co on 2018/11/12.
+ * Created by wj_co
  */
 public class NY20POJO {
 

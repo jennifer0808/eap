@@ -1,7 +1,7 @@
 package cn.tzauto.octopus.secsLayer.modules.recipe;
 
 /**
- * Created by luosy on 2019/4/3.
+ * Created by luosy
  */
 public class RecipeDealer {
 }

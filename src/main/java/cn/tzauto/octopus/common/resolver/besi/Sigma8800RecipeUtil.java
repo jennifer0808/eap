@@ -14,10 +14,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 
-/**
- *
- * @author 陈佳能
- */
+
 public class Sigma8800RecipeUtil {
 
     public static List transferFromDB(Map map, String deviceType) {

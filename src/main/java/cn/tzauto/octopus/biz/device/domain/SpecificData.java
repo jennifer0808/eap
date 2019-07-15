@@ -7,7 +7,6 @@ package cn.tzauto.octopus.biz.device.domain;
 
 /**
  *
- * @author luosy
  */
 public class SpecificData {
 

@@ -16,7 +16,7 @@ import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -64,7 +64,7 @@ public class VSP88DNHTHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -91,21 +91,6 @@ public class VSP88DNHTHost extends EquipHost {
                         processS14F1in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                         processS6F11in(msg);
-                    } else if (msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {// 1
-                        long ceid = msg.getSingleNumber("CollEventID");
-                        if (ceid == 1010L) {
-                            processS6F11EquipStatusChange(msg);
-//                        } else if (ceid == 1002L || ceid == 1011L) {
-//                            logger.info("将设备控制状态由Local调整为Remote");
-//                            sendS2f41Cmd("REMOTE");
-                        } else {
-                            //todo processS6F11EquipStatus
-//                            processS6F11EquipStatus(msg);
-                        }
-                    } else if (msg.getMsgSfName().equals("s6f11EquipStatusChange")) { // 1
-                        processS6F11EquipStatusChange(msg);
-                    } else if (msg.getMsgSfName().equals("s6f11stripIdRead")) {//2
-                        processS6F11stripIdRead(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                         this.processS5F1in(msg);
                     } else if (msg.getMsgSfName().equalsIgnoreCase("s1f0in")) {
@@ -260,7 +245,6 @@ public class VSP88DNHTHost extends EquipHost {
         try {
             ceid = (long) data.get("CEID");
             findDeviceRecipe();
-//            equipStatus = ACKDescription.descriptionStatus(String.valueOf(data.getSingleNumber("EquipStatus")), deviceType);
             if (equipStatus.equalsIgnoreCase("Run")) {
                 sendS2f41Cmd("REMOTE");
             } else if (equipStatus.equalsIgnoreCase("pause") || equipStatus.equalsIgnoreCase("ldle") || equipStatus.equalsIgnoreCase("end")) {

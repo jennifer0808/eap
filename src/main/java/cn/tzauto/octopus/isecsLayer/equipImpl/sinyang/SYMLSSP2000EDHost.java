@@ -9,7 +9,7 @@ import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -20,7 +20,7 @@ import java.util.*;
 
 
 /**
- * Created by wj_co on 2018/9/26.
+ * Created by wj_co
  */
 public class SYMLSSP2000EDHost extends EquipModel {
     private Logger logger = Logger.getLogger(SYMLSSP2000EDHost.class);
@@ -33,7 +33,7 @@ public class SYMLSSP2000EDHost extends EquipModel {
 
     public SYMLSSP2000EDHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, devId);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -700,7 +700,7 @@ public class SYMLSSP2000EDHost extends EquipModel {
 //
 //                map.put("PPExecName", currentRecipeName);
 ////                        map.put("EquipStatus", str);
-//                map.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
+//                map.put("ControlState", GlobalConstant.CONTROL_OFFLINE);
 //                changeEquipPanel(map);
 
 //                new Timer().schedule(new TimerTask() {
@@ -733,9 +733,9 @@ public class SYMLSSP2000EDHost extends EquipModel {
     public void showUpdateData(String currentRecipeName) {
         Map map = new HashMap();
         if ("STOP".equalsIgnoreCase(currentRecipeName) || "error".equalsIgnoreCase(currentRecipeName)) {
-            map.put("ControlState", FengCeConstant.CONTROL_OFFLINE);
+            map.put("ControlState", GlobalConstant.CONTROL_OFFLINE);
         } else {
-            map.put("ControlState", FengCeConstant.CONTROL_REMOTE_ONLINE);
+            map.put("ControlState", GlobalConstant.CONTROL_REMOTE_ONLINE);
         }
         map.put("PPExecName", currentRecipeName);
 //                        map.put("EquipStatus", str);

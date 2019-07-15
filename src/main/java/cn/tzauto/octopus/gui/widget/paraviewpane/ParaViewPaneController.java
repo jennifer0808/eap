@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
- * Created by wj_co on 2019/2/13.
+ * Created by wj_co
  */
 public class ParaViewPaneController implements Initializable {
 

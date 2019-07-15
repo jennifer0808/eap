@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  *
- * @author root
  */
 public class UpdateVerNoHandler implements MessageHandler {
 

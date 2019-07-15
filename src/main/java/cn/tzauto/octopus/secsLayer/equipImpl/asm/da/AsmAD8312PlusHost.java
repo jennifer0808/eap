@@ -4,7 +4,6 @@ package cn.tzauto.octopus.secsLayer.equipImpl.asm.da;
 import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
-import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
@@ -18,7 +17,7 @@ import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
 import cn.tzauto.octopus.secsLayer.resolver.TransferUtil;
 import cn.tzauto.octopus.secsLayer.resolver.asm.AsmAD8312RecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
-import cn.tzauto.octopus.secsLayer.util.FengCeConstant;
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -31,7 +30,6 @@ import java.util.Map;
 /**
  * @author leo
  * @Company 南京钛志信息系统有限公司
- * @Create Date 2019-06-28
  * @(#)EquipHost.java
  * @Copyright tzinfo, Ltd. 2016. This software and documentation contain
  * confidential and proprietary information owned by tzinfo, Ltd. Unauthorized
@@ -76,7 +74,7 @@ public class AsmAD8312PlusHost extends EquipHost {
     @Override
     public void run() {
         threadUsed = true;
-        MDC.put(FengCeConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
         while (!this.isInterrupted()) {
             try {
                 while (!this.isSdrReady()) {
@@ -85,7 +83,7 @@ public class AsmAD8312PlusHost extends EquipHost {
                 if (this.getCommState() != AsmAD8312PlusHost.COMMUNICATING) {
                     sendS1F13out();
                 }
-//                if (!this.getControlState().equals(FengCeConstant.CONTROL_REMOTE_ONLINE)) {
+//                if (!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
 //                    sendS1F1out();
 //                }
                 if (rptDefineNum < 1) {
@@ -104,22 +102,7 @@ public class AsmAD8312PlusHost extends EquipHost {
                     processS14F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     processS6F11in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) { //237
-                    processS6F11inStripMapUpload(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstate")) {
-                    processS6F11EquipStatus(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11EquipStatusChange")) { // 8
-                    processS6F11EquipStatusChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11ControlStateChange")) { //5 6 7 47 10
-                    processS6F11ControlStateChange(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equals("s6f11LoginUserChange")) { //ignore
-                    processS6F11LoginUserChange(msg);
-                } else if (msg.getMsgSfName().toLowerCase().contains("s6f11incommon")) {
-                    if (msg.getSingleNumber("CollEventID") == 8L) {
-                        logger.info("当前机台状态发生改变！2");
-                        processS6F11EquipStatusChange(msg);
-                    }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
+                }  else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     this.processS5F1in(msg);
                 } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
@@ -428,56 +411,7 @@ public class AsmAD8312PlusHost extends EquipHost {
         }
     }
 
-    protected void processS6F11ControlStateChange(DataMsgMap data) {
 
-        long ceid = 0l;
-        long reportID = 0l;
-        long controlStateTmp = 0l;
-        try {
-            ceid = (long) data.get("CEID");
-            reportID = data.getSingleNumber("ReportID");
-            controlStateTmp = data.getSingleNumber("ControlState");
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 1 && reportID == 1) {
-            Map panelMap = new HashMap();
-            if (controlStateTmp == 0) {
-                controlState = FengCeConstant.CONTROL_OFFLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备状态切换到OFF-LINE");
-            }
-            if (controlStateTmp == 1) {
-                controlState = FengCeConstant.CONTROL_LOCAL_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Local");
-            }
-            if (controlStateTmp == 2) {
-                controlState = FengCeConstant.CONTROL_REMOTE_ONLINE;
-                panelMap.put("ControlState", controlState);
-                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备控制状态切换到Remote");
-            }
-            equipState.setControlState(controlState);
-            changeEquipPanel(panelMap);
-        }
-    }
-
-    protected void processS6F11LoginUserChange(DataMsgMap data) {
-        long ceid = 0l;
-        long reportID = 0l;
-        String loginUserName = "";
-        try {
-            ceid = (long) data.get("CEID");
-            reportID = data.getSingleNumber("ReportId");
-            loginUserName = ((MsgSection) data.get("UserLoginName")).getData().toString();
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        if (ceid == 120 && reportID == 120) {
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "登陆用户变更，当前登陆用户：" + loginUserName);
-        }
-
-    }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
