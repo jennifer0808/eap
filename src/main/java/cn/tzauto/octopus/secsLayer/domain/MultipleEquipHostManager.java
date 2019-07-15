@@ -1000,7 +1000,7 @@ public class MultipleEquipHostManager {
             EquipHost equipHost = equipHosts.get(deviceId);
             try {
                 if ("LOCK".equals(state)) {
-                    pass = equipHost.holdDeviceAndShowDetailInfo("\r\n"+type);
+                    pass = equipHost.holdDeviceAndShowDetailInfo("\r\n" + type);
                 } else if ("RELEASE".equals(state)) {
                     pass = equipHost.releaseDeviceAndShowDetailInfo(type);
                 }
@@ -1219,6 +1219,7 @@ public class MultipleEquipHostManager {
         equipModels = new ConcurrentHashMap<String, EquipModel>();
         boolean pass = false;
         pass = instanciateEquipModels(deviceInfos);
+        this.deviceInfos.addAll(deviceInfos);
         if (!pass) {
             logger.fatal("Error during loading host.xnl file - returned false. Exit!");
             return false;
