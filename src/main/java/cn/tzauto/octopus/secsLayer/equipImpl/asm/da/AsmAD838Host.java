@@ -63,11 +63,11 @@ public class AsmAD838Host extends EquipHost {
                     sendS1F13out();
 //                    sendS1F1out();
                 }
-                if(!this.getControlState().equals(GlobalConstant.CONTROL_LOCAL_ONLINE)){
+                if(!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)){
                    findDeviceRecipe();
                 }
 
-                logger.info("rptDefineNum:" + rptDefineNum);
+
                 if (rptDefineNum < 1) {
 
                     //为了能调整为online remote
@@ -80,10 +80,11 @@ public class AsmAD838Host extends EquipHost {
                     initRptPara();
                     sendStatus2Server(equipStatus);
                     rptDefineNum++;
+                    logger.info("inputMsgQueue.size():" + inputMsgQueue.size());
                 }
                 msg = this.inputMsgQueue.take();
+
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")) {
-                    logger.info("s1f1input enter into MsgQueue ..");
                     processS1F1in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F13IN")) {
                     processS1F13in(msg);
@@ -118,8 +119,7 @@ public class AsmAD838Host extends EquipHost {
             secsMsgTimeoutTime = 0;
             DataMsgMap data = event.removeMessageFromQueue();
             if (tagName.equalsIgnoreCase("S1F1IN")) {
-                logger.info("s1f1input enter into inputMessage ..");
-                this.inputMsgQueue.put(data);
+                processS1F1in(data);
             } else if (tagName.equalsIgnoreCase("s1f2in")) {
                 processS1F2in(data);
             } else if (tagName.equalsIgnoreCase("S1F13IN")) {
