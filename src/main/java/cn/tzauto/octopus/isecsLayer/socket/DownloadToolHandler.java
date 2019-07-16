@@ -80,9 +80,10 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     Material material = new Material();
                     material.setCode(mstrs[0]);
                     material.setId(mstrs[0]);
-                    material.setName(mstrs[1]);
+                    String realMname = mstrs[1].split("-")[1];
+                    material.setName(realMname);
                     GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
-                    if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
+                    if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
                         new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
                         return;
                     }
@@ -116,9 +117,10 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         Material material = new Material();
                         material.setCode(mstrs[0]);
                         material.setId(mstrs[0]);
-                        material.setName(mstrs[1]);
+                        String realMname = mstrs[1].split("-")[1];
+                        material.setName(realMname);
                         GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
-                        if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(mstrs[1]))) {
+                        if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
                             new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
                             return;
                         }
