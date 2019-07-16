@@ -813,10 +813,10 @@ public class RecipeService extends BaseService {
         this.saveRecipeOperationLog(recipeOperationLog);
         recipeParas = setParasRCProwId(recipeParas, recipe.getId());
         //  new RecipeParaDao().saveRecipeParaBatch(recipeParaList);
-//        this.saveRcpParaBatch(recipeParas);
+        this.saveRcpParaBatch(recipeParas);
         //存储之后查询，得到id
         //这里太慢，于是在setParasRCProwId给赋值了
-        //recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+        recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         //附件信息         
@@ -841,16 +841,51 @@ public class RecipeService extends BaseService {
             // 上传ftp
             FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-            if (!existFlag) {
-//                return false;
-            }
+
             //日志
 //       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
-        return true;
+        return existFlag;
     }
+
+    /**
+     * UploadHandler使用
+     *
+     * @param recipe
+     * @param rcpRemoteBasePath
+     * @param recipeParas
+     * @return
+     */
+    public List<RecipePara> saveUpLoadRcpInfo(String rcpRemoteBasePath, Recipe recipe, List<RecipePara> recipeParas) {
+        String rcpNewId = UUID.randomUUID().toString();
+        recipe.setId(rcpNewId);
+        saveRecipe(recipe);
+        List<Recipe> recipes = new ArrayList();
+        recipes.add(recipe);
+        if (recipeParas != null && !recipeParas.isEmpty()) {
+            recipeParas = setParasRCProwId(recipeParas, recipe.getId());
+//            this.saveRcpParaBatch(recipeParas);
+            //存储之后查询，得到id
+            //recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+        }
+        //本地路径需要到文件
+        String recipeLocalPath = GlobalConstants.localRecipePath + organizeRecipePath(recipe) + recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt";
+        //ftp路径需要到目录
+        String recipeRemotePath = organizeUploadRecipePath(recipe);
+        try {
+            if (!GlobalConstants.stage.hostManager.uploadRcpFile2FTP(recipeLocalPath, rcpRemoteBasePath, recipe)) {
+                logger.info("上传recipe文件到ftp时失败");
+            }
+        } catch (Exception e) {
+            logger.error("上传recipe:" + recipe.getRecipeName() + "]到ftp时异常." + e.getMessage());
+            return null;
+        }
+        return recipeParas;
+
+    }
+
 
     /*
      * 保存recipe升级信息（来自server的信息）

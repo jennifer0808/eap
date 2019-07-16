@@ -3400,7 +3400,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
                 activeWrapper.sendS12F4out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
-                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, codeFormat, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
             } catch (Exception ex) {

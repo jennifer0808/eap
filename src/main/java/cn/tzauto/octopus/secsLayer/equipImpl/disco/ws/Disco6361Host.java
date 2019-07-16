@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cn.tzauto.octopus.secsLayer.equipImpl.disco.ws;
 
 
@@ -282,10 +278,13 @@ public class Disco6361Host extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-            ArrayList reportList = (ArrayList) data.get("REPORT");
-            List idList = (List) reportList.get(1);
-            long offset1 = (long) idList.get(0);
-            long offset2 = (long) idList.get(1);
+//            ArrayList reportList = (ArrayList) data.get("REPORT");
+//            List idList = (List) reportList.get(1);
+//            long offset1 = (long) idList.get(0);
+//            long offset2 = (long) idList.get(1);
+
+            long offset1 = 0L;
+            long offset2 = 0L;
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");
@@ -331,7 +330,7 @@ public class Disco6361Host extends EquipHost {
                     Recipe recipe = setRecipe(recipeName);
                     recipePath = super.getRecipePathByConfig(recipe);
                     TransferUtil.setPPBody(ppbody, recipeType, recipePath);
-                    logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
+                    logger.info("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
                     resultMap.put("msgType", "s7f6");
                     resultMap.put("deviceCode", deviceCode);
                     resultMap.put("recipe", recipe);
@@ -342,8 +341,9 @@ public class Disco6361Host extends EquipHost {
                 }
             }
         } catch (Exception ex) {
-            logger.error("Exception occur:" + ex.getMessage());
+            logger.error("Exception occur:" , ex);
         }
+        logger.info("s7f6 resultmap: "+ resultMap);
         return resultMap;
     }
 
