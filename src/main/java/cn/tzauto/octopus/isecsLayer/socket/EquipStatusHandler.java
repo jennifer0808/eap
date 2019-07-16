@@ -81,11 +81,11 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             statusmap.put("EquipStatus", status);
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
             if (equipModel != null) {
-                if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-                    prestatus = equipModel.equipStatus;
-                    Thread.sleep(1000);
-                    status = equipModel.getEquipStatus();
-                }
+//                if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
+//                    prestatus = equipModel.equipStatus;
+//                    Thread.sleep(1000);
+//                    status = equipModel.getEquipStatus();
+//                }
                 equipModel.changeEquipPanel(statusmap);
                 equipModel.preEquipStatus = prestatus.trim();
                 equipModel.equipStatus = status.trim();
