@@ -285,13 +285,11 @@ public class AsmAD8312Host extends EquipHost {
     @Override
     public Map sendS7F1out(String localFilePath, String targetRecipeName) {
         long length = TransferUtil.getPPLength(localFilePath);
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
-            targetRecipeName = targetRecipeName + ".rcp";
-        }
+
         DataMsgMap data = null;
         byte ppgnt = -1;
         try {
-            data = activeWrapper.sendS7F1out(targetRecipeName, length, svFormat);
+            data = activeWrapper.sendS7F1out(targetRecipeName + ".rcp", length, svFormat);
             ppgnt = (byte) data.get("PPGNT");
             logger.debug("Request send ppid= " + targetRecipeName + " to Device " + deviceCode);
         } catch (Exception e) {
@@ -310,11 +308,9 @@ public class AsmAD8312Host extends EquipHost {
     public Map sendS7F3out(String localRecipeFilePath, String targetRecipeName) {
         DataMsgMap data = null;
         byte[] ppbody = (byte[]) TransferUtil.getPPBody(recipeType, localRecipeFilePath).get(0);
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
-            targetRecipeName = targetRecipeName + ".rcp";
-        }
+
         try {
-            data = activeWrapper.sendS7F3out(targetRecipeName, ppbody, SecsFormatValue.SECS_BINARY);
+            data = activeWrapper.sendS7F3out(targetRecipeName + ".rcp", ppbody, SecsFormatValue.SECS_BINARY);
         } catch (Exception e) {
             logger.error("Exception:", e);
             return null;
@@ -333,14 +329,12 @@ public class AsmAD8312Host extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
 
         recipeName = recipeName.replace(".rcp", "");
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
-            recipeName = recipeName + ".rcp";
-        }
+
         Recipe recipe = setRecipe(recipeName);
         recipePath = super.getRecipePathByConfig(recipe);
         List<RecipePara> recipeParaList = null;
         List<RecipePara> recipeParaListExtra = null;
-        byte[] ppbody = (byte[]) getPPBODY(recipeName);
+        byte[] ppbody = (byte[]) getPPBODY(recipeName+ ".rcp");
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
 //            recipeParaList = AsmAD8312RecipeUtil.transferRcpFromDB(recipePath, deviceType);
@@ -370,11 +364,9 @@ public class AsmAD8312Host extends EquipHost {
     @SuppressWarnings("unchecked")
     @Override
     public Map sendS7F17out(String recipeName) {
-        if (!"ASMAD8312PLUS".equals(deviceType)) {
-            recipeName = recipeName + ".rcp";
-        }
+
         List list = new ArrayList();
-        list.add(recipeName);
+        list.add(recipeName + ".rcp");
         byte ackc7 = -1;
         try {
             DataMsgMap data = activeWrapper.sendS7F17out(list);

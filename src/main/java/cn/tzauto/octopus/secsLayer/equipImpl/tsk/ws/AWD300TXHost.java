@@ -42,6 +42,8 @@ public class AWD300TXHost extends EquipHost {
     private static final Logger logger = Logger.getLogger(AWD300TXHost.class);
     public Map<Integer, Boolean> pressUseMap = new HashMap<>();
 
+    private boolean kerfCheck = true;
+
     public AWD300TXHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         EquipStateChangeCeid = 301L;
@@ -62,16 +64,18 @@ public class AWD300TXHost extends EquipHost {
                     AWD300TXHost.sleep(200);
                 }
                 if (this.getCommState() != AWD300TXHost.COMMUNICATING) {
-                    Thread.sleep(2000);
+//                    Thread.sleep(2000);
                     sendS1F13out();
                 }
 
-                if (rptDefineNum < 1) {
-                    initRptPara();
-                    rptDefineNum++;
+                if (this.getControlState() == null ? GlobalConstant.CONTROL_REMOTE_ONLINE != null : !this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)) {
+                    sendS1F17out();
+                    sendS1F1out();
+
+                    super.findDeviceRecipe();
                 }
 
-                DataMsgMap msg = null;
+                    DataMsgMap msg = null;
                 msg = this.inputMsgQueue.take();
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in") || msg.getMsgSfName().equalsIgnoreCase("s5f1ypmin")) {
                     processS5F1in(msg);
@@ -305,11 +309,6 @@ public class AWD300TXHost extends EquipHost {
         return newEquip;
     }
 
-    private void initRptPara() {
-        sendS1F17out();
-        sendS1F1out();
-        super.findDeviceRecipe();
-    }
 
     @Override
     public Map holdDevice() {
@@ -487,12 +486,68 @@ public class AWD300TXHost extends EquipHost {
                 this.processS6F11EquipStatusChange(data);
             } else if (ceid == 272 || ceid == 273) {
                 findDeviceRecipe();
+            }else  if (ceid == 254){
+                processS6F11KerfCheck(data);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         if (commState != 1) {
             this.setCommState(1);
+        }
+    }
+
+    protected void processS6F11KerfCheck(DataMsgMap data) {
+
+        try {
+            long offset1 =0L;
+            long offset2 =0L;
+            Map map = new HashMap();
+            map.put("msgName", "KerfCheck");
+            map.put("Z1", String.valueOf(offset1));
+            map.put("Z2", String.valueOf(offset2));
+            map.put("deviceCode", deviceCode);
+            map.put("type", "add");
+            List svidList = new ArrayList();
+            svidList.add("80519");
+//            svidList.add("1413");
+            Map svValue = this.getSpecificSVData(svidList);
+            map.put("Z1WIDTH", String.valueOf(svValue.get("80519")));
+            map.put("Z2WIDTH", "");
+            logger.info("send kerfcheck width:" + map + " offset1:" + offset1 + " offset2:" + offset2 + " Z1WIDTH:" + svValue.get("80519"));
+            GlobalConstants.C2SSpecificDataQueue.sendMessage(map);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+        if (!kerfCheck) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要刀痕检测,设备将自动暂停.");
+            pauseDevice();
+            kerfCheck = true;
+        }
+    }
+
+    public Map pauseDevice() {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
+        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+        sqlSession.close();
+        if (deviceInfoExt == null) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            return null;
+        }
+        if ("Engineer".equals(deviceInfoExt.getBusinessMod())) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式,取消刀痕检测.");
+            return null;
+        }
+        if ("Y".equals(deviceInfoExt.getLockSwitch())) {
+            Map cmdMap = this.sendS2f41Cmd("PAUSE");
+            if (cmdMap.get("HCACK").toString().equals("0")) {
+                setAlarmState(2);
+            }
+            return cmdMap;
+        } else {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            return null;
         }
     }
 

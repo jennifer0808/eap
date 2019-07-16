@@ -772,7 +772,15 @@ public class MultipleEquipHostManager {
      * @return
      */
     public String deleteAllRcpFromDevice(String deviceId, String currentRecipeName) {
+        EquipHost currentEquipHost = null;
+        String successRecipeName = "";
+        String failRecipeName = "";
         String resultString = "0";
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<Recipe> recipes = recipeService.searchRecipeByRcpType(null, "Y");
+        sqlSession.close();
+
         List<String> recipeNameList = (List<String>) getRecipeListFromDevice(deviceId).get("eppd");
         for (String recipeName : recipeNameList) {
             if (recipeName.equals(currentRecipeName)) {
@@ -806,9 +814,39 @@ public class MultipleEquipHostManager {
                     }
                 }
             }
-            deleteRecipeFromDevice(deviceId, recipeName);
-        }
 
+            boolean needKeep = false;
+            for (Recipe recipe : recipes) {
+                if (recipe.getRecipeName().equals(recipeName)) {
+                    needKeep = true;
+                }
+                if (needKeep) {
+                    break;
+                }
+            }
+            if (needKeep) {
+                continue;
+            }
+
+            Map resultMap = deleteRecipeFromDevice(deviceId, recipeName);
+            if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
+                successRecipeName = successRecipeName + recipeName + ",";
+                UiLogUtil.getInstance().appendLog2EventTab(equipHosts.get(deviceId)!=null?equipHosts.get(deviceId).getDeviceCode():deviceId, recipeName + "在设备上删除成功!");
+            } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) { //这里4表示 PPID not found
+                successRecipeName = successRecipeName + recipeName + ",";
+                UiLogUtil.getInstance().appendLog2EventTab(equipHosts.get(deviceId)!=null?equipHosts.get(deviceId).getDeviceCode():deviceId, recipeName + "在设备上不存在，无需删除!");
+            } else {
+                failRecipeName = failRecipeName + ";" + recipeName + "删除失败,原因:" + String.valueOf(resultMap.get("Description")) + ";";
+                UiLogUtil.getInstance().appendLog2EventTab(equipHosts.get(deviceId)!=null?equipHosts.get(deviceId).getDeviceCode():deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+            }
+        }
+        if (currentEquipHost != null) {
+            /*
+               标志需要延迟的删除的recipe已经结束
+               只有DB730/DB800/2100有此flag
+             */
+            currentEquipHost.ppselectFlag = false;
+        }
         return resultString;
     }
 
@@ -816,23 +854,32 @@ public class MultipleEquipHostManager {
      * 从设备删除Recipe
      */
     public Map deleteRecipeFromDevice(String deviceId, String recipeName) {
+        Map resultMap = null;
         if (equipHosts.get(deviceId) != null) {
             EquipHost equipHost = equipHosts.get(deviceId);
-            Map resultMap = equipHost.sendS7F17out(recipeName);
-            if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上删除成功!");
-            } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) { //这里4表示 PPID not found
-                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上不存在，无需删除!");
-            } else {
-                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
-            }
+            resultMap = equipHost.sendS7F17out(recipeName);
+//            if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
+//                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上删除成功!");
+//            } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) { //这里4表示 PPID not found
+//                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "在设备上不存在，无需删除!");
+//            } else {
+//                UiLogUtil.getInstance().appendLog2EventTab(equipHost.getDeviceCode(), recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+//            }
             return resultMap;
         }
         if (equipModels.get(deviceId) != null) {
+            resultMap = new HashMap<String, String>();
             String deleteResult = equipModels.get(deviceId).deleteRecipe(recipeName);
             UiLogUtil.getInstance().appendLog2EventTab(deviceId, "[" + recipeName + "]" + deleteResult);
+            if ("删除成功".equals(deleteResult)) {
+                resultMap.put("ACKC7", "0");
+                resultMap.put("Description", "删除成功！");
+            } else {
+                resultMap.put("ACKC7", "6");
+                resultMap.put("Description", "DOS删除失败！");
+            }
         }
-        Map resultMap = null;
+
         return resultMap;
     }
 

@@ -830,10 +830,13 @@ public class Disco6340Host extends EquipHost {
         long ceid = 0L;
         try {
             ceid = (long) data.get("CEID");
-            ArrayList reportList = (ArrayList) data.get("REPORT");
-            List idList = (List) reportList.get(1);
-            long offset1 = (long) idList.get(0);
-            long offset2 = (long) idList.get(1);
+//            ArrayList reportList = (ArrayList) data.get("REPORT");
+//            List idList = (List) reportList.get(1);
+//            long offset1 = (long) idList.get(0);
+//            long offset2 = (long) idList.get(1);
+            long offset1 = 0L;
+            long offset2 = 0L;
+
 
             Map map = new HashMap();
             map.put("msgName", "KerfCheck");
@@ -843,11 +846,10 @@ public class Disco6340Host extends EquipHost {
             map.put("type", "add");
             List svidList = new ArrayList();
             svidList.add("1412");
-            svidList.add("1413");
             Map svValue = this.getSpecificSVData(svidList);
             map.put("Z1WIDTH", String.valueOf(svValue.get("1412")));
-            map.put("Z2WIDTH", String.valueOf(svValue.get("1413")));
-            logger.info("send kerfcheck width:" + map + " offset1:" + offset1 + " offset2:" + offset2 + " Z1WIDTH:" + svValue.get("1412") + " Z2WIDTH:" + svValue.get("1413"));
+            map.put("Z2WIDTH","");
+            logger.info("send kerfcheck width:" + map + " offset1:" + offset1 + " offset2:" + offset2 + " Z1WIDTH:" + svValue.get("1412") );
             GlobalConstants.C2SSpecificDataQueue.sendMessage(map);
         } catch (Exception e) {
             logger.error("Exception:", e);

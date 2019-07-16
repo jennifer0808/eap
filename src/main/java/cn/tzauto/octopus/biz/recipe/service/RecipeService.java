@@ -443,69 +443,6 @@ public class RecipeService extends BaseService {
         return result;
     }
 
-    /**
-     * 下载指定的recipe，同时根据类型执行不同的删除recipe操作，最后选中Recipe
-     *
-     * @param deviceInfo
-     * @param recipe
-     * @param type
-     * @return
-     */
-    public String downLoadRcp2DeviceByType(DeviceInfo deviceInfo, Recipe recipe, String type) {
-        String result = "0";//默认返回OK
-        //获取机台状态，判断是否可以下载Recipe
-        //验证机台状态
-        MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceCode();
-        String recipeName = recipe.getRecipeName();
-        String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
-        if (!"0".equals(checkResult)) {
-            return checkResult;
-        }
-        if (type.contains("Delete")) {
-            hostManager.deleteRecipeFromDevice(deviceId, recipeName);
-            //如果删除失败，流程继续
-        }
-        if (deviceInfo.getDeviceType().contains("DGP8761") && type.contains("DeleteAll")) {
-            hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-        }
-        if (type.contains("Download")) {
-            //下载指定Recipe到机台上
-            String recipeFilePath = organizeRecipeDownloadFullFilePath(recipe);
-            String downLoadResult = null;
-            if (deviceInfo.getDeviceType().equalsIgnoreCase("NITTODR3000III")) {
-                downLoadResult = hostManager.downLoadRcp2DeviceCompleteForTP(recipeFilePath, deviceInfo, recipe);
-            } else {
-                downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
-            }
-            if (!"0".equals(downLoadResult)) {
-                result = result + " " + downLoadResult;
-                return result;//如果下载失败，直接return
-            }
-        }
-        if (type.contains("Select")) {
-            //选中Recipe
-            String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
-            if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")) {
-                ppselectResult = "0";
-            }
-            if (!"0".equals(ppselectResult)) {
-                result = result + " " + ppselectResult;
-                if (type.contains("DeleteAll")) {
-                    String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-                    //如果删除失败，流程继续
-                }
-                return result;
-            }
-        }
-        if (!deviceInfo.getDeviceType().contains("DGP8761")) {
-            if (type.contains("DeleteAll")) {
-                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-                //如果删除失败，流程继续
-            }
-        }
-        return result;
-    }
 
     /**
      * MES调用下载接口时使用的自动下载方法
