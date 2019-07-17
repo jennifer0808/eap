@@ -51,10 +51,9 @@ public class HTDB730Host extends EquipHost {
     private String Mdln = "DB730";
     private String SoftRev = "02.155";
     private boolean canDownladMap = true;
-    //private boolean startCheckPass = true;
+    private boolean startCheckPass = true;
     private boolean recipeParaChange = false;
-    private boolean checkNameFlag = true;
-    private boolean checkParaFlag = true;
+
 
     public HTDB730Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -114,18 +113,15 @@ public class HTDB730Host extends EquipHost {
                     processS14f3in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11inStripMapUpload")) {
-                    if (msg.get("CEID") != null) {
-                        long ceid = (long) msg.get("CEID");
-                        if (ceid == StripMapUpCeid) {
-                            processS6F11inStripMapUpload(msg);
-                        } else {
-                            this.processS6F11StatusChange(msg);
-                        }
+                }   else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f1in")) {
+                    long ceid = (long) msg.get("CEID");
+                    if (ceid == StripMapUpCeid ) {
+                        processS6F11inStripMapUpload(msg);
+                    } else if(ceid == 0L ||ceid == 1L || ceid == 2L|| ceid == 3L|| ceid == 4L|| ceid == 5L|| ceid == 6L|| ceid == 7L|| ceid == 8L
+                            || ceid == 38L|| ceid == 88L|| ceid == 98L|| ceid == 80L){
+                        processS6F11StatusChange(msg);
                     }
-                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11equipstatuschange")) {
-                    processS6F11StatusChange(msg);
-                } else {
+                }else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -168,10 +164,14 @@ public class HTDB730Host extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 long ceid = (long) data.get("CEID");
-                if (ceid == 26 || ceid == 27) {
-                    processS6F11SpecialEvent(data);
-                } else {
-                    processS6F11in(data);
+                if (ceid == StripMapUpCeid ) {
+                    this.inputMsgQueue.put(data);
+                }  else {
+                    replyS6F12WithACK(data,(byte)0);
+                    if(ceid == 0L ||ceid == 1L || ceid == 2L|| ceid == 3L|| ceid == 4L|| ceid == 5L|| ceid == 6L|| ceid == 7L|| ceid == 8L
+                            || ceid == 38L|| ceid == 88L|| ceid == 98L|| ceid == 80L){
+                        this.inputMsgQueue.put(data);
+                    }
                 }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
                 this.inputMsgQueue.put(data);
@@ -215,12 +215,8 @@ public class HTDB730Host extends EquipHost {
 
     public String initRptPara() {
         try {
-//            //重新定义ppselect事件报告
-//            sendS2F33out(10002l, 50070l);//
-//            sendS2F35out(80l, 10002l);
-//            sendS2F37out(80l);
+
             //重新定义processing INIT·SETUP·READY·EXECUTING·PAUSE·ERROR·WAIT LOT status
-//            sendS2F35outSpecialDelete();
             List list = new ArrayList();
             list.add(50062L);
             list.add(50070L);
@@ -237,107 +233,24 @@ public class HTDB730Host extends EquipHost {
             ceids2[7] = 80L;
             ceids2[8] = 88L;
             for (int i = 0; i < ceids2.length; i++) {
-                activeWrapper.sendS2F35out(99999, svFormat, ceids2[i], ceFormat, null, rptFormat);
-                sendS2F35out(ceids2[i], 10002L);
-                ceids2list.add(ceids2[i]);
+                sendS2F35out(1001L,ceids2[i],10002L);
             }
-            //发送s2f33
-            String ack = "";
-            long rptid = 10001l;
-            long vid = 50200l;
-            long ceid = 115l;
-            sendS2F33out(rptid, vid);//115
-
-            //SEND S2F35
-
-            sendS2F35out(115l, 10001l);//115 10001
-
-
             //SEND S2F37
+            for (int i = 0; i < ceids2.length; i++) {
+                sendS2F37out( ceids2[i]);
+            }
 
-//            sendS2F37outAll(false);
-//            activeWrapper.sendS2F37out(false, null, ceFormat);
-            this.sendS2F37outCloseAll();
-            activeWrapper.sendS2F37out(true, ceids2list, ceFormat);
-//            sendS2F37out(true, ceids2);
-            logger.debug("sendS2F37outAll:==" + ack);
+            //发送s2f33
+            long rptid = 10001L;
+            long vid = 50200L;
+            List<Long> svList = new ArrayList<>();
+            svList.add(vid);
+            sendS2F33out(1001L,rptid, svList);//115
+            //SEND S2F35
+            sendS2F35out(115l, rptid);//115 10001
             //SEND S2F37 115 发送lf unload事件
-//            if (!"".equals(ack)) {
-//                ack = "";
-//                long[] ceids = new long[26];
-//                ceids[0] = 0l;
-//                ceids[1] = 1l;
-//                ceids[2] = 2l;
-//                ceids[3] = 3l;
-//                ceids[4] = 4l;
-//                ceids[5] = 5l;
-//                ceids[6] = 6l;
-//                ceids[7] = 7l;
-//                ceids[8] = 8l;
-//                ceids[9] = 88l;
-//                ceids[10] = 12;
-//                ceids[11] = 52l;
-//                ceids[12] = 80l;
-//                ceids[13] = 83l;
-//                ceids[14] = 84l;
-//                ceids[15] = 86l;
-//                ceids[16] = 87l;
-//                ceids[17] = 90l;
-//                ceids[18] = 93l;
-//                ceids[19] = 98l;
-//                ceids[20] = 100l;
-//                ceids[21] = 103l;
-//                ceids[22] = 107l;
-//                ceids[23] = 115l;
-//                ceids[24] = 11L;
-//                ceids[25] = 85L;
-//                sendS2F37outMuilt(true, ceids);
-////                long[] stripMapCeids = new long[1];
-////                stripMapCeids[0] = 115l;
-////                sendS2F37outMuilt(true, stripMapCeids);
             sendS2F37out(115L);
-//            }
-//          开启CEID==27(BONDING INSPECTION事件)
-            /*
-            <CEID list>
-                ・CEID(26)：BONDING REC REG
-                ・CEID(27)：BONDING INSPECTION
-                ・CEID(28)：WAFER REC REG
-                ・CEID(29)：PREFORM REC REG
-                ・CEID(30)：PREFORM REC REG FAIL MARK
-                ・CEID(31)：Preform Height Offset Teach
-                ・CEID(32)：Bonding Stage Height Offset Teach
-                ・CEID(33)：Pickup Height Offset Teach
-             */
-            //解锁绑定
-            sendS2f33outDelete(10003L);
-            sendS2F35outDelete(26L, 26L);
-            sendS2F35outDelete(27L, 27L);
-            //开启特殊事件报告
 
-            List list1 = new ArrayList();
-            list1.add(50062L);
-            list1.add(50070L);
-            list1.add(50063L);
-//            sendS2F33out(10003L, 50062L, 50070L, 50063L);
-            sendS2F33out(10003L, 50062L, list1);
-            sendS2F35out(26L, 10003L);
-            sendS2F37out(26L);
-            sendS2F35out(27L, 10003L);
-            sendS2F37out(27L);
-            //全部开始时
-//            long[] ceidsSpecial = new long[8];
-//            ceids2[0] = 26L;
-//            ceids2[1] = 27L;
-//            ceids2[2] = 28L;
-//            ceids2[3] = 29L;
-//            ceids2[4] = 30L;
-//            ceids2[5] = 31L;
-//            ceids2[6] = 32L;
-//            ceids2[7] = 33L;
-//            for (int i = 0; i < ceids2.length; i++) {
-//                sendS2F35out(ceidsSpecial[i], 10003L);
-//            }
             //开启报警
             sendS5F3out(false);
             sendS5F3out(true);
@@ -369,48 +282,6 @@ public class HTDB730Host extends EquipHost {
 
     // </editor-fold> 
 
-
-    private void processS6F11SpecialEvent(DataMsgMap data) {
-        long ceid = 0L;
-        String event = "";
-        try {
-            ceid = (long) data.get("CEID");
-            if (ceid == 26) {
-                event = "BONDING REC REG";
-            } else if (ceid == 27) {
-                event = "BONDING INSPECTION";
-            } else if (ceid == 28) {
-                event = "WAFER REC REG";
-            } else if (ceid == 29) {
-                event = "PREFORM REC REG";
-            } else if (ceid == 30) {
-                event = "PREFORM REC REG FAIL MARK";
-            } else if (ceid == 31) {
-                event = "Preform Height Offset Teach";
-            } else if (ceid == 32) {
-                event = "Bonding Stage Height Offset Teach";
-            } else if (ceid == 33) {
-                event = "Pickup Height Offset Teach";
-            }
-            logger.info("检测到设备触发[" + event + "]事件,设备即将被锁!请联系ME进行检查!");
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "检测到设备触发[" + event + "]事件,设备即将被锁!请联系ME进行检查!");
-            // TODO 需要检查下MES状态，判断是否需要发送锁机指令
-            //sendS2F15outLearnDevice();
-
-            Map resultMap = new HashMap();
-            resultMap.put("msgType", "s5f1");
-            resultMap.put("deviceCode", deviceCode);
-            resultMap.put("deviceId", deviceId);
-            resultMap.put("ALID", "DB730H000" + ceid);
-            resultMap.put("ALCD", 0);
-            resultMap.put("ALTX", event);
-            resultMap.put("Description", "Other categories");
-            resultMap.put("TransactionId", data.getTransactionId());
-            AutoAlter.alter(resultMap);
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-    }
 
     public void processS6F11StatusChange(DataMsgMap data) {
         long ceid = 0l;
@@ -478,13 +349,10 @@ public class HTDB730Host extends EquipHost {
         long ceid = 0l;
         try {
             ceid = (long) data.get("CEID");
-            if (ceid == 80) {
-                findDeviceRecipe();
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe切换为[" + ppExecName + "]");
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        findDeviceRecipe();
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         DeviceService deviceService = new DeviceService(sqlSession);
         RecipeService recipeService = new RecipeService(sqlSession);
@@ -494,7 +362,6 @@ public class HTDB730Host extends EquipHost {
             // 更新设备模型
             if (deviceInfoExt == null) {
                 logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
-                holdDevice();
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备模型信息,不允许开机！请联系ME处理！");
             } else {
                 deviceInfoExt.setDeviceStatus(equipStatus);
@@ -504,115 +371,78 @@ public class HTDB730Host extends EquipHost {
             //保存到设备操作记录数据库
             saveOplogAndSend2Server(ceid, deviceService, deviceInfoExt);
             sqlSession.commit();
-            if (equipStatus.equalsIgnoreCase("READY")) {
-                //TODO 校验2D的开关是否已经开启，若关闭弹窗显示
-                List<Long> svlist = new ArrayList<>();
-                svlist.add(54121L);//2D开关
-                Map svValue = this.getSpecificSVData(svlist);
-                if (svValue.get("54121").equals("0")) {
-                    String dateStr = GlobalConstants.dateFormat.format(new Date());
-                    this.sendTerminalMsg2EqpSingle("(" + dateStr + ")" + "2D Mark has already been closed！！");
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "2D已被关闭！");
-                }
-            }
-            if (AxisUtility.isEngineerMode(deviceCode)) {
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工程模式，取消开机Check卡控！");
-                sqlSession.close();
-                return;
-            }
             //设备状态切换到run时检查开机check是否通过的
-            //UiLogUtil.appendLog2EventTab(deviceCode, "查询服务端锁机状态：" + this.checkLockFlagFromServerByWS(deviceCode) + "本地锁机状态：" + startCheckPass);
-            if (equipStatus.equalsIgnoreCase("RUN")) {
-                if (holdFlag || this.checkLockFlagFromServerByWS(deviceCode)) {
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备已被锁");
+            if (equipStatus.equalsIgnoreCase("run")) {
+                if (AxisUtility.checkBusinessMode(deviceCode)) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "处于工程模式,取消开机检查");
+                    sqlSession.close();
+                    return;
+                }
+                if (!startCheckPass || this.checkLockFlagFromServerByWS(deviceCode)) {
                     holdDevice();
                 }
             }
             //获取设备状态为ready时检查领料记录
             if (equipStatus.equalsIgnoreCase("READY")) {
+                if (AxisUtility.checkBusinessMode(deviceCode)) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "处于工程模式,取消开机检查");
+                    sqlSession.close();
+                    return;
+                }
                 if (this.checkLockFlagFromServerByWS(deviceCode)) {
-                    holdDeviceAndShowDetailInfo("RepeatAlarm LOCK");
+
                 }
                 //1、获取设备需要校验的信息类型,
                 if (deviceInfoExt.getRecipeId() == null || "".equals(deviceInfoExt.getRecipeId())) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Trackin数据不完整，未设置当前机台应该执行的Recipe,设备被锁定!");
-                    //startCheckPass = false;
-                    holdFlag = true;
+                    startCheckPass = false;
                 }
                 if (!checkRecipeName(deviceInfoExt.getRecipeName())) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序不一致，核对不通过，设备被锁定！");
-                    //startCheckPass = false;
-                    checkNameFlag = false;
-                    //holdFlag= true;
+                    startCheckPass = false;
                 } else {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe名称为:[" + ppExecName + "]，与改机后程序一致，核对通过！");
-                    checkNameFlag = true;
+                    startCheckPass = true;
+                    this.setAlarmState(0);
                 }
                 if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机检查模式!");
                 }
-
-//                if (recipeParaChange) {
-                if (checkNameFlag && "A".equals(deviceInfoExt.getStartCheckMod())) {
-                    //查询trackin时的recipe和GoldRecipe
-                    Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
-                    List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
-                    boolean hasGoldRecipe = true;
-                    //查询客户端数据库是否存在GoldRecipe
-                    if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
-                        hasGoldRecipe = false;
-                    }
-                    //首先判断下载的Recipe类型
-                    //1、如果下载的是Unique版本，那么执行完全比较
-                    String downloadRcpVersionType = downLoadRecipe.getVersionType();
-                    if (false) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数绝对值Check");
-                        this.startCheckRecipePara(downLoadRecipe, "abs");
-                    } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
-                        if (!hasGoldRecipe) {
-                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
-                            //不允许开机
-                            checkParaFlag = false;
-                            //holdFlag = true;
-                        } else {
-                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
-                            checkParaFlag = this.startCheckRecipeParaReturnFlag(downLoadGoldRecipe.get(0));
-                            if (!checkParaFlag) {
-                                sendStatus2Server("LOCK");
+                if (recipeParaChange) {
+                    if ("A".equals(deviceInfoExt.getStartCheckMod())) {
+                        //查询trackin时的recipe和GoldRecipe
+                        Recipe downLoadRecipe = recipeService.getRecipe(deviceInfoExt.getRecipeId());
+                        List<Recipe> downLoadGoldRecipe = recipeService.searchRecipeGoldByPara(deviceInfoExt.getRecipeName(), deviceType, "GOLD", String.valueOf(deviceInfoExt.getVerNo()));
+                        boolean hasGoldRecipe = true;
+                        //查询客户端数据库是否存在GoldRecipe
+                        if (downLoadGoldRecipe == null || downLoadGoldRecipe.isEmpty()) {
+                            hasGoldRecipe = false;
+                        }
+                        //首先判断下载的Recipe类型
+                        //1、如果下载的是Unique版本，那么执行完全比较
+                        String downloadRcpVersionType = downLoadRecipe.getVersionType();
+                        if ("Unique".equals(downloadRcpVersionType)) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数绝对值Check");
+                            this.startCheckRecipePara(downLoadRecipe, "abs");
+                        } else {//2、如果下载的Gold版本，那么根据EXT中保存的版本号获取当时的Gold版本号，比较参数
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开始执行Recipe:[" + ppExecName + "]参数WICheck");
+                            if (!hasGoldRecipe) {
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: [" + ppExecName + "]的Gold版本,无法执行开机检查,设备被锁定!");
+                                //不允许开机
+                                startCheckPass = false;
+                            } else {
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe:[" + ppExecName + "]开始WI参数Check");
+                                this.startCheckRecipePara(downLoadGoldRecipe.get(0));
                             }
                         }
                     }
-                } else if (deviceInfoExt.getStartCheckMod() == null || "".equals(deviceInfoExt.getStartCheckMod())) {
-                    //如果未设置参数比对模式，默认参数比对通过
-                    checkParaFlag = true;
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "没有设置开机check");
                 }
-//                } else {
-//                    //如果参数未改变，默认参数比对通过
-//                    checkParaFlag = true;
-//                }
             }
         } catch (Exception e) {
             e.printStackTrace();
             sqlSession.rollback();
         } finally {
             sqlSession.close();
-            //总结是否需要锁机
-            if (checkNameFlag && checkParaFlag) {
-                //不锁机
-                holdFlag = false;
-            } else {
-                holdFlag = true;
-                //锁机
-                //sendStatus2Server("LOCK");
-            }
-            //更新界面
-            if (!this.checkLockFlagFromServerByWS(deviceCode) && !holdFlag) {
-                this.setAlarmState(0);
-            } else {
-                this.setAlarmState(2);
-            }
         }
     }
 
@@ -869,33 +699,19 @@ public class HTDB730Host extends EquipHost {
         DeviceService deviceService = new DeviceService(sqlSession);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         sqlSession.close();
-        Map resultMap = null;
+        if (!"run".equalsIgnoreCase(equipStatus)) {
+            startCheckPass = false;
+            recipeParaChange = false;
+            return null;
+        }
         if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            if (!"RUN".equalsIgnoreCase(equipStatus)) {
-                //不在RUN状态，假装已被锁
-                resultMap = new HashMap();
-                resultMap.put("msgType", "s2f42");
-                resultMap.put("deviceCode", deviceCode);
-                resultMap.put("prevCmd", "STOP");
-                resultMap.put("HCACK", 0);
-                resultMap.put("Description", "设备已被锁,将无法开机");
+//            super.sendS2f41Cmd("STOP");
+            Map map = this.sendS2f41Cmd("STOP");//Map map = this.sendS2f41Cmd("LOCK");
+            if ((byte) map.get("HCACK") == 0 || (byte) map.get("HCACK") == 4) {
                 this.setAlarmState(2);
-            } else {
-                //RUN状态，发送停机指令
-                //            super.sendS2f41Cmd("STOP");
-                resultMap = this.sendS2f41Cmd("STOP");
-                if ((byte) resultMap.get("HCACK") == 0 || (byte) resultMap.get("HCACK") == 4) {
-                    this.setAlarmState(2);
-                }
             }
-            //锁机状态发送给服务端并修改锁机标识
-            //sendStatus2Server("LOCK");
-            //重置标识
-            holdFlag = true;
-            //startCheckPass = false;
-            //此时默认未被修改，不再上传recipe，待ceid=88，才上传recipe进行修改
-//            recipeParaChange = false;
-            return resultMap;
+            this.sendTerminalMsg2EqpSingle("StartCheck not pass, equipment locked!");
+            return map;
         } else {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             return null;
@@ -906,12 +722,10 @@ public class HTDB730Host extends EquipHost {
     @Override
     public Map releaseDevice() {
         this.setAlarmState(0);
-        //startCheckPass = true;
-        holdFlag = false;
-//        recipeParaChange = false;
+        startCheckPass = true;
+        recipeParaChange = false;
         return null;
     }
-
     /**
      * 初始化设备支持的命令格式
      */
