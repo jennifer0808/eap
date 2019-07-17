@@ -36,6 +36,8 @@ public class AsmAD832iHost extends EquipHost {
     public String Datelength;
     public Long ceid = 0L;
 
+    public Boolean connFlag = false;
+
     public AsmAD832iHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
@@ -63,27 +65,23 @@ public class AsmAD832iHost extends EquipHost {
                 }
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
-                    sendS1F1out();
+//                    sendS1F1out();
+                    Thread.sleep(5000);
                 }
 
-                logger.info("rptDefineNum；" + rptDefineNum);
+                if(!connFlag){
+                    Thread.sleep(2000);
+                }
+
                 if (rptDefineNum < 1) {
                     //为了能调整为online remote
 //                    sendS1F17out();
 //                    sendS2f41Cmd("ONLINE_REMOTE");
 
-
                     super.findDeviceRecipe();
-
+                    initRptPara();
                     rptDefineNum++;
 
-                    // Enable/Disable s2f37
-                    sendS2F37outCloseAll();
-                    sendS2F37out(1L);
-                    sendS2F37out(8L);
-                    sendS2F37out(237L);
-
-                    sendS5F3out(true);
                     sendStatus2Server(equipStatus);
                 }
 
@@ -148,6 +146,36 @@ public class AsmAD832iHost extends EquipHost {
         }
     }
 
+    private void initRptPara() {
+        // Enable/Disable s2f37
+        sendS2F37outCloseAll();
+        sendS2F37out(1L);
+        sendS2F37out(8L);
+        sendS2F37out(237L);
+
+        sendS5F3out(true);
+    }
+
+    @Override
+    public void processS1F1in(DataMsgMap data) {
+        super.processS1F1in(data);
+        connFlag = true;
+        if(rptDefineNum>0) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    initRptPara();
+                }
+            }).start();
+        }
+    }
+
+    @Override
+    public void processS1F13in(DataMsgMap data) {
+        super.processS1F13in(data);
+        connFlag =false;
+
+    }
 
     public void processS6F11in(DataMsgMap data) {
 

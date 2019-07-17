@@ -82,9 +82,7 @@ public class EsecDB2100Host extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
-                if(!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)){
-                    findDeviceRecipe();
-                }
+
                 if (rptDefineNum < 1) {
 //                    sendS1F1out();
                     //为了能调整为online remote
