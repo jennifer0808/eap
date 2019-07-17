@@ -135,7 +135,29 @@ public class AsmAD8312FCHost extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s10f1in")) {
                 processS10F1in(data);
-            } else {
+            } else if (tagName.equalsIgnoreCase("s12f1in")) {
+                processS12F1in(data);
+            } else if (tagName.equalsIgnoreCase("s12f3in")) {
+                processS12F3in(data);
+            } else if (tagName.equalsIgnoreCase("s12f5in")) {
+                processS12F5in(data);
+            } else if (tagName.equalsIgnoreCase("s12f7in")) {
+                processS12F7in(data);
+            } else if (tagName.equalsIgnoreCase("s12f9in")) {
+                processS12F9in(data);
+            } else if (tagName.equalsIgnoreCase("s12f11in")) {
+                processS12F11in(data);
+            } else if (tagName.equalsIgnoreCase("s12f13in")) {
+                processS12F13in(data);
+            } else if (tagName.equalsIgnoreCase("s12f15in")) {
+                processS12F15in(data);
+            } else if (tagName.equalsIgnoreCase("s12f17in")) {
+                processS12F17in(data);
+            } else if (tagName.equalsIgnoreCase("s12f19in")) {
+                processS12F19in(data);
+            } else if (tagName.equalsIgnoreCase("s12f67in")) {
+                processS12F67in(data);
+            }else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }
