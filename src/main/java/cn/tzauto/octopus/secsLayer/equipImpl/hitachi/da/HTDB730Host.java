@@ -5,7 +5,6 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
 
 import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
-import cn.tzauto.octopus.biz.alarm.service.AutoAlter;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.monitor.service.MonitorService;
@@ -113,15 +112,15 @@ public class HTDB730Host extends EquipHost {
                     processS14f3in(msg);
                 } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s5f1in")) {
                     processS5F1in(msg);
-                }   else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f1in")) {
+                } else if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("s6f11in")) {
                     long ceid = (long) msg.get("CEID");
-                    if (ceid == StripMapUpCeid ) {
+                    if (ceid == StripMapUpCeid) {
                         processS6F11inStripMapUpload(msg);
-                    } else if(ceid == 0L ||ceid == 1L || ceid == 2L|| ceid == 3L|| ceid == 4L|| ceid == 5L|| ceid == 6L|| ceid == 7L|| ceid == 8L
-                            || ceid == 38L|| ceid == 88L|| ceid == 98L|| ceid == 80L){
+                    } else if (ceid == 0L || ceid == 1L || ceid == 2L || ceid == 3L || ceid == 4L || ceid == 5L || ceid == 6L || ceid == 7L || ceid == 8L
+                            || ceid == 38L || ceid == 88L || ceid == 98L || ceid == 80L) {
                         processS6F11StatusChange(msg);
                     }
-                }else {
+                } else {
                     logger.info("A message in queue with tag = " + msg.getMsgSfName()
                             + " which I do not want to process! ");
                 }
@@ -164,12 +163,12 @@ public class HTDB730Host extends EquipHost {
                 this.inputMsgQueue.put(data);
             } else if (tagName.equalsIgnoreCase("s6f11in")) {
                 long ceid = (long) data.get("CEID");
-                if (ceid == StripMapUpCeid ) {
+                if (ceid == StripMapUpCeid) {
                     this.inputMsgQueue.put(data);
-                }  else {
-                    replyS6F12WithACK(data,(byte)0);
-                    if(ceid == 0L ||ceid == 1L || ceid == 2L|| ceid == 3L|| ceid == 4L|| ceid == 5L|| ceid == 6L|| ceid == 7L|| ceid == 8L
-                            || ceid == 38L|| ceid == 88L|| ceid == 98L|| ceid == 80L){
+                } else {
+                    replyS6F12WithACK(data, (byte) 0);
+                    if (ceid == 0L || ceid == 1L || ceid == 2L || ceid == 3L || ceid == 4L || ceid == 5L || ceid == 6L || ceid == 7L || ceid == 8L
+                            || ceid == 38L || ceid == 88L || ceid == 98L || ceid == 80L) {
                         this.inputMsgQueue.put(data);
                     }
                 }
@@ -233,11 +232,11 @@ public class HTDB730Host extends EquipHost {
             ceids2[7] = 80L;
             ceids2[8] = 88L;
             for (int i = 0; i < ceids2.length; i++) {
-                sendS2F35out(1001L,ceids2[i],10002L);
+                sendS2F35out(1001L, ceids2[i], 10002L);
             }
             //SEND S2F37
             for (int i = 0; i < ceids2.length; i++) {
-                sendS2F37out( ceids2[i]);
+                sendS2F37out(ceids2[i]);
             }
 
             //发送s2f33
@@ -245,7 +244,7 @@ public class HTDB730Host extends EquipHost {
             long vid = 50200L;
             List<Long> svList = new ArrayList<>();
             svList.add(vid);
-            sendS2F33out(1001L,rptid, svList);//115
+            sendS2F33out(1001L, rptid, svList);//115
             //SEND S2F35
             sendS2F35out(115l, rptid);//115 10001
             //SEND S2F37 115 发送lf unload事件
@@ -726,6 +725,7 @@ public class HTDB730Host extends EquipHost {
         recipeParaChange = false;
         return null;
     }
+
     /**
      * 初始化设备支持的命令格式
      */
