@@ -40,6 +40,8 @@ public class AsmAD838Host extends EquipHost {
     public String Lead_Frame_Type_Id;
     public Long ceid = 0L;
 
+    public Boolean connFlag = false;
+
     public AsmAD838Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
         StripMapUpCeid = 237L;
@@ -59,14 +61,15 @@ public class AsmAD838Host extends EquipHost {
                 while (!this.isSdrReady()) {
                     AsmAD838Host.sleep(200);
                 }
-                if (this.getCommState() != AsmAD838Host.COMMUNICATING) {
+                if (this.getCommState() != AsmAD838Host.COMMUNICATING  ) {
                     sendS1F13out();
 //                    sendS1F1out();
-                }
-                if(!this.getControlState().equals(GlobalConstant.CONTROL_REMOTE_ONLINE)){
-                   findDeviceRecipe();
+                    Thread.sleep(5000);
                 }
 
+                if(!connFlag){
+                    Thread.sleep(2000);
+                }
 
                 if (rptDefineNum < 1) {
 
@@ -77,11 +80,12 @@ public class AsmAD838Host extends EquipHost {
 //                    sendS2f41Cmd("ONLINE_REMOTE");
                     //获取设备开机状态
                     super.findDeviceRecipe();
-                    initRptPara();
                     sendStatus2Server(equipStatus);
+
+                    initRptPara();
                     rptDefineNum++;
-                    logger.info("inputMsgQueue.size():" + inputMsgQueue.size());
                 }
+                logger.info("inputMsgQueue.size():" + inputMsgQueue.size());
                 msg = this.inputMsgQueue.take();
 
                 if (msg.getMsgSfName() != null && msg.getMsgSfName().equalsIgnoreCase("S1F1IN")) {
@@ -106,6 +110,7 @@ public class AsmAD838Host extends EquipHost {
             }
         }
     }
+
 
 
     @Override
@@ -175,8 +180,9 @@ public class AsmAD838Host extends EquipHost {
     }
 
     @Override
-    public void processS1F13in(DataMsgMap data) {
-        super.processS1F13in(data);
+    public void processS1F1in(DataMsgMap data) {
+        super.processS1F1in(data);
+        connFlag = true;
         if(rptDefineNum>0) {
             new Thread(new Runnable() {
                 @Override
@@ -185,6 +191,13 @@ public class AsmAD838Host extends EquipHost {
                 }
             }).start();
         }
+    }
+
+    @Override
+    public void processS1F13in(DataMsgMap data) {
+        super.processS1F13in(data);
+        connFlag =false;
+
     }
 
     @Override
