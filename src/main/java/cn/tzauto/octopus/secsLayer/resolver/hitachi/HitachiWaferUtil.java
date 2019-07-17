@@ -31,19 +31,20 @@ public class HitachiWaferUtil {
 //    private static String maxColumnCount = "0";
 
     public static Map getWaferFileInfo(String waferId, String angle, String deviceCode) {
+        logger.info("开始获取waferMapping 文件：" + waferId + "||" + deviceCode);
         Map resultMap = new HashMap();
         InputStream in = null;
         BufferedReader br = null;
         List<String> list = new ArrayList<>();
         SqlSession sqlSession = null;
-        UUID uuid = UUID.randomUUID();
-        String random = uuid.toString();
+        List<String> randomList = new ArrayList<>();
+
         try {
             sqlSession = MybatisSqlSession.getSqlSession();
             DeviceService deviceService = new DeviceService(sqlSession);
             String waferName = waferId.split("-")[0];
-            String remotePath = deviceService.queryWaferPath(waferName);
-            if (StringUtils.isEmpty(remotePath)) {
+            List<String> remotePathList = deviceService.queryWaferPath(waferName);
+            if (remotePathList.size() == 0) {
                 logger.warn(waferId + "在数据库中没有对应的文件地址！！！");
                 String path = getPath(waferId, deviceCode);
                 File file = new File(path);
@@ -55,33 +56,52 @@ public class HitachiWaferUtil {
                     br.readLine();
                     br.readLine();
                     while ((tmpString = br.readLine()) != null) {
-                        list.add(tmpString);
+                        list.add(tmpString.replaceAll("\\.", " "));
                     }
                 } else {
                     logger.error(path + ",该路径下没有文件");
                     return null;
                 }
-//                remotePath = HtFtpUtil.getMapping(waferName);
+//                remotePath = HtFtpUtil.getMapping(waferName);  //从ftp上查找文件
             } else {
+                List<File> fileList = new ArrayList<>();
+                List<String> pathList = new ArrayList<>();
+                for (String remotePath : remotePathList) {
+                    UUID uuid = UUID.randomUUID();
+                    String random = uuid.toString();
+                    randomList.add(random);
+                    logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
+                    String localPath = HtFtpUtil.tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
+                    HtFtpUtil.downloadFile(localPath, remotePath);
+                    boolean unrar = HtFtpUtil.unrar(localPath, HtFtpUtil.tempPath + random);
+                    if (unrar) {
+                        File file = HtFtpUtil.getFile(new File(HtFtpUtil.tempPath + random), waferId);
+                        if (file != null) {
+                            fileList.add(file);
+                            pathList.add(remotePath);
+                        }
 
-                logger.info(waferId + "-->ftp压缩文件地址为：" + remotePath);
-                String localPath = HtFtpUtil.tempPath + random + remotePath.substring(remotePath.lastIndexOf("/"));
-                HtFtpUtil.downloadFile(localPath, remotePath);
-                boolean unrar = HtFtpUtil.unrar(localPath, HtFtpUtil.tempPath + random);
-                if (unrar) {
-                    File file = HtFtpUtil.getFile(new File(HtFtpUtil.tempPath + random), waferId);
-                    in = new FileInputStream(file);
+                    }
+                }
+                if (fileList.size() == 1) {
+                    in = new FileInputStream(fileList.get(0));
                     br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
                     String tmpString = null;
                     br.readLine();
                     br.readLine();
                     br.readLine();
                     while ((tmpString = br.readLine()) != null) {
-                        list.add(tmpString);
+                        list.add(tmpString.replaceAll("\\.", " "));
                     }
+                } else if (fileList.size() > 1) {
+                    String temp = "";
+                    for (String s : pathList) {
+                        temp = temp + s + "|";
+                    }
+                    logger.error("重复文件地址为：" + temp + ",重复文件为：" + waferId);
+                    return null;
                 }
             }
-
         } catch (Exception e) {
             logger.error("获取mapping文件失败", e);
             return null;
@@ -101,7 +121,9 @@ public class HitachiWaferUtil {
                 }
             }
             try {
-                FileUtils.deleteDirectory(new File(HtFtpUtil.tempPath + random));
+                for (String random : randomList) {
+                    org.apache.commons.io.FileUtils.deleteDirectory(new File(HtFtpUtil.tempPath + random));
+                }
             } catch (IOException e) {
             }
             sqlSession.close();
@@ -109,6 +131,7 @@ public class HitachiWaferUtil {
 
         String[] results = new String[list.size()];
         list.toArray(results);
+        results = transferAngle(results, angle, results.length, results[0].length());
 
         resultMap.put("BinList", results);
         resultMap.put("RowCountInDieIncrements", results.length);
@@ -559,7 +582,6 @@ public class HitachiWaferUtil {
         return new int[]{sucess, fail};
 
     }
-
     private static String[] transferAngle(String[] src, String angle, int row, int col) {
         if ("0".equals(angle)) {
             return src;
@@ -578,48 +600,6 @@ public class HitachiWaferUtil {
         }
         logger.error("旋转角度数值有误：" + angle);
         return null;
-    }
-
-    private static long[] transferArgs(long[] src, int row, int col) {
-
-        int i, j;
-        long[][] num;
-        num = new long[row][col];
-        int count = 0;
-        for (i = 0; i < row; i++) {
-            for (j = 0; j < col; j++) {
-                if (i == 0) {
-                    num[i][j] = src[j];
-                } else {
-                    num[i][j] = src[count];
-                }
-                count++;
-            }
-        }
-
-        long[][] num2;
-        num2 = new long[col][row];
-
-        for (i = 0; i < num.length; i++) {
-            for (j = 0; j < num[i].length; j++) {
-                num2[j][i] = num[i][j];
-            }
-        }
-        System.out.println("-----------分割------------");
-        long[] result = new long[src.length];
-        List results = new LinkedList();
-        for (i = 0; i < num2.length; i++) {
-            for (j = 0; j < num2[i].length; j++) {
-                results.add(num2[i][j]);
-                // System.out.println("num2" + "[" + i + "]" + "[" + j + "]" + "---" + num2[i][j]);
-            }
-        }
-        for (i = 0; i < results.size(); i++) {
-            result[i] = Long.parseLong(String.valueOf(results.get(i)));
-            System.out.println(result[i] + " ");
-
-        }
-        return result;
     }
 
     private static String[] transferArgs1(String[] src, int row, int col) {
@@ -648,41 +628,13 @@ public class HitachiWaferUtil {
     }
 
     private static String getPath(String waferId, String deviceCode) {
-//        String lot = waferId.split("-")[0];
         if (!deviceCode.endsWith("-M")) {
             deviceCode = deviceCode + "-M";
         }
         String path = waferMappingPath + "\\" + deviceCode + "\\" + waferId;
-
-//        String savePath = waferSavePath + "\\" + deviceCode + "\\" + lot + "\\" + waferId;
-//        String[] arr = new String[]{path, savePath};
-
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\tmb\\NF10A-08.tmb";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\out\\H00H37-08.out";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\asc\\HYMJC-01.asc";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\cp1\\RCSYN-18.CP1";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\dat\\SI11494-03.dat";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\EMT\\P1B122-01.EMT";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\ETC\\BPR296-18.ETC";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\smic\\SL1460-08.smic";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\tma\\28-20111-0-01.tma";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\tmc\\862368-18.tmc";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\wfp\\S13195-18.wfp";
-//         path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\WIN\\A738190-18.WIN";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\XML\\CP1042857-18.XML";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\UMC\\S1LP6-08.UMC";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\UTR\\P1M742-08.UTR";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\1.txt";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\2.txt";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\3.txt";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\4.txt";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\5.txt";
-//         path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\6.txt";
-//        path = "C:\\Users\\86180\\Desktop\\新建文件夹 (2)\\不同格式的MAP\\txt\\7.txt";
         logger.info("waferpath：" + path);
         return path;
     }
-
     public static void main(String[] args) {
         long l = Instant.now().toEpochMilli();
         Map map = getWaferFileInfo("HYKP12-15.xml", "270", "DA-123-M");

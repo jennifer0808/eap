@@ -600,7 +600,7 @@ public class DeviceService extends BaseService {
         return deviceInfoExtMapper.getAllDeviceInfoExts();
     }
 
-    public String queryWaferPath(String waferId) {
+    public List<String> queryWaferPath(String waferId) {
         return deviceInfoMapper.queryWaferPath(waferId);
     }
 
