@@ -552,9 +552,10 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 if (!src.getEquipStateProperty().isNetConnect()) {
                     logger.info("network disconnect==========================");
                     EquipHost equipHost = equipHosts.get(src.getDeviceCode());
-                    equipHost.commState = 0;
+                    equipHost.setCommState(0);
                     Map map = new HashMap();
                     map.put("NetState", 0);
+                    map.put("CommState",0);
                     equipHost.changeEquipPanel(map);
                 } else {
                     if (src.getEquipStateProperty().isCommOn()) {

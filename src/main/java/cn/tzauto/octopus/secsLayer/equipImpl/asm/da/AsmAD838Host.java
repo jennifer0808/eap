@@ -80,10 +80,11 @@ public class AsmAD838Host extends EquipHost {
 //                    sendS2f41Cmd("ONLINE_REMOTE");
                     //获取设备开机状态
                     super.findDeviceRecipe();
-                    sendStatus2Server(equipStatus);
+
 
                     initRptPara();
                     rptDefineNum++;
+                    sendStatus2Server(equipStatus);
                 }
                 logger.info("inputMsgQueue.size():" + inputMsgQueue.size());
                 msg = this.inputMsgQueue.take();

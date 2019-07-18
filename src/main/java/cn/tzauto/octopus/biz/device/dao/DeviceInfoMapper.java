@@ -34,7 +34,7 @@ public interface DeviceInfoMapper {
 
     int delete(String id);
 
-    String queryWaferPath(String waferId);
+    List<String> queryWaferPath(String waferId);
 
     void insertWaferMappingPath(@Param("name") String name, @Param("filePath")String filePath, @Param("month")String month);
 }
