@@ -247,8 +247,25 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
             if (str.contains("Mode = ")) {
                 String[] HITACHILaserDrillalarms = str.split(",");
-                String lot = HITACHILaserDrillalarms[3];
+                if (HITACHILaserDrillalarms.length > 2) {
+                    String lot = HITACHILaserDrillalarms[3];
+                    String recipeNameTemp = HITACHILaserDrillalarms[2];
+                    String recipeName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("\\") + 1).replace("\"", "");
+                    if (!lot.equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId)) {
+                        LocalDateTime now = LocalDateTime.now();
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotStartTime = now.format(AvaryAxisUtil.dtf2);
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId = lot;
+                    }
+                    if (!recipeName.equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName)) {
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName = recipeName;
+                    }
+                }
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "Run";
+                Map map = new HashMap();
+                map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
+                map.put("EquipStatus", "Run");
+                map.put("PPExecName", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName);
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
             }
             if (str.contains("HEAT-RUN = START")) {
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
@@ -267,6 +284,9 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                         e.printStackTrace();
                     }
                 }
+                Map map = new HashMap();
+                map.put("EquipStatus", "HEAT-RUN");
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
             }
             if (str.contains("HEAT-RUN = END")) {
                 try {
@@ -284,7 +304,8 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                         = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "PCHK";
                 LocalDateTime now = LocalDateTime.now();
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setStartTime(now.format(AvaryAxisUtil.dtf2));
+//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setStartTime(now.format(AvaryAxisUtil.dtf2));
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
                 if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Run")) {
                     try {
                         GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生产");
@@ -299,10 +320,10 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
 
             }
             if (str.contains("PCHK = END") || str.contains("GCOMP/GCHK = END")) {
-                LocalDateTime now = LocalDateTime.now();
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setEndTime(now.format(AvaryAxisUtil.dtf2));
+//                LocalDateTime now = LocalDateTime.now();
+//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setEndTime(now.format(AvaryAxisUtil.dtf2));
                 try {
-                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("保养");
+                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("待料");
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (ServiceException e) {

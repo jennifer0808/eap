@@ -9,13 +9,13 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 
 import java.io.IOException;
 import java.util.Date;
+
 import org.apache.log4j.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 /**
- *
  * @author rain
  */
 public class SessionControlTask implements Job {
@@ -33,16 +33,17 @@ public class SessionControlTask implements Job {
                 if (GlobalConstants.sysUser != null) {
                     String userName = GlobalConstants.sysUser.getLoginName();
 //                    GlobalConstants.sysUser = null;
-                   UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
-                }
+                    UiLogUtil.getInstance().appendLog2EventTab(null, "用户：" + userName + " 长时间未进行关键操作，登录已自动注销...");
+
 //                GlobalConstants.stage.setPartsInvisible();//超过设定时间系统自动注销
-                try {
-                    GlobalConstants.stage.loginOut();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    try {
+                        GlobalConstants.stage.loginOut();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    GlobalConstants.loginTime = null;
+                    logger.debug("长时间未进行关键性操作，登录已被注销");
                 }
-                GlobalConstants.loginTime = null;
-                logger.debug("长时间未进行关键性操作，登录已被注销");
             }
         }
 

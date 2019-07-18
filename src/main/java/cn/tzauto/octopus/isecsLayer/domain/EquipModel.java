@@ -89,6 +89,7 @@ public abstract class EquipModel extends Thread {
     public PMState pmState;
     public LaserCrystal laserCrystalPower;
     public LaserCrystal laserCrystalAccuracy;
+    public String partRecipe;
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;

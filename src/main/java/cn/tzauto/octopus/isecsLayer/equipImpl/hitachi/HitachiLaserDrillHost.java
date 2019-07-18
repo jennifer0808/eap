@@ -889,11 +889,11 @@ public class HitachiLaserDrillHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
-        if (macstate.equals("生产")) {
-            if (!confirmLotCount()) {
-                return false;
-            }
-        }
+//        if (macstate.equals("生产")) {
+//            if (!confirmLotCount()) {
+//                return false;
+//            }
+//        }
         LocalDateTime now = LocalDateTime.now();
 
         /**

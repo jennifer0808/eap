@@ -81,9 +81,9 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
             if (equipModel != null) {
                 if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-                    prestatus = equipModel.equipStatus;
-                    Thread.sleep(1000);
-                    status = equipModel.getEquipStatus();
+//                    prestatus = equipModel.equipStatus;
+//                    Thread.sleep(1000);
+//                    status = equipModel.getEquipStatus();
                 }
                 equipModel.changeEquipPanel(statusmap);
                 equipModel.preEquipStatus = prestatus.trim();
@@ -112,9 +112,9 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 if ("run".equalsIgnoreCase(preEquipstatus) && equipstatus.equalsIgnoreCase("idle")) {
-                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-                        equipModel.uploadData("生产");
-                    }
+//                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
+//                        equipModel.uploadData("生产");
+//                    }
                 }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {
 //                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {

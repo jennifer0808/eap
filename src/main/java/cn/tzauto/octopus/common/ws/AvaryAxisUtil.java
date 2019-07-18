@@ -1099,7 +1099,7 @@ public class AvaryAxisUtil {
                 logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
 //                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
                 //報錯:獲取途程信息失敗
-                return null;
+                return map4;
             }
         } catch (Exception e) {
             return null;
