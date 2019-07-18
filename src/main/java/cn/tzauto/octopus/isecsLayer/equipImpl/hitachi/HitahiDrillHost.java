@@ -559,12 +559,7 @@ public class HitahiDrillHost extends EquipModel {
                         equipStatus = "HRUN";
                     }
                 }
-                List<String> pchkColors = this.iSecsHost.executeCommand("readrectcolor 1160 878 1170 880");
-                for (String startColorTemp : pchkColors) {
-                    if (startColorTemp.equals("0x99ff00")) {
-                        equipStatus = "PCHK";
-                    }
-                }
+
                 List<String> gchkColors = this.iSecsHost.executeCommand("readrectcolor 1160 983 1170 985");
                 for (String startColorTemp : gchkColors) {
                     if (startColorTemp.equals("0x99ff00")) {

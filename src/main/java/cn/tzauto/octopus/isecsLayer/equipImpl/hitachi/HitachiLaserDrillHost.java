@@ -569,6 +569,7 @@ public class HitachiLaserDrillHost extends EquipModel {
                 for (String startColorTemp : pchkColors) {
                     if (startColorTemp.equals("0x99ff00")) {
                         equipStatus = "PCHK";
+                        this.pmState.setPM(true);
                     }
                 }
                 List<String> gchkColors = this.iSecsHost.executeCommand("readrectcolor 1160 983 1170 985");
@@ -892,6 +893,9 @@ public class HitachiLaserDrillHost extends EquipModel {
                 return false;
             }
         }
+        if (macstate.equals("待料") && pmState.isPM()) {
+            macstate = "保养";
+        }
         LocalDateTime now = LocalDateTime.now();
 
         /**
@@ -1020,11 +1024,15 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(laserHeadLife);
 
         String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
-        lotStartTime = now.format(AvaryAxisUtil.dtf2);
+
         if ("".equals(uploadReportDetailResult)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
-            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
-            FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
+            if (macstate.equals("生产")) {
+                lotStartTime = now.format(AvaryAxisUtil.dtf2);
+                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
+                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
+            }
+            pmState.setPM(false);
             return true;
         }
         logger.error("报表数据上传中，明細表數據插入失败：" + uploadReportDetailResult);
@@ -1040,7 +1048,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(MacState);
         if (MacState.equals("保养") || MacState.equals("待料")) {
             if (MacState.equals("待料")) {
-                paraValueList.add(lotStartTime);
+                paraValueList.add(idleStartTime);
                 LocalDateTime now = LocalDateTime.now();
                 paraValueList.add(now.format(AvaryAxisUtil.dtf2));
             } else {
@@ -1083,6 +1091,9 @@ public class HitachiLaserDrillHost extends EquipModel {
 
         Map powerMap = new HashMap();
         List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
+        if (CrystalPowerList == null) {
+            return new HashMap();
+        }
         for (String str : CrystalPowerList) {
             String[] strs = str.split("=");
             powerMap.put(strs[0], strs[1]);
@@ -1093,6 +1104,9 @@ public class HitachiLaserDrillHost extends EquipModel {
     private Map getCrystalAccuracyMap() {
         Map accuracyMap = new HashMap();
         List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
+        if (CrystalAccuracyList == null) {
+            return new HashMap();
+        }
         for (String str : CrystalAccuracyList) {
             String[] strs = str.split("=");
             accuracyMap.put(strs[0], strs[1]);

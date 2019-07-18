@@ -81,11 +81,11 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
             statusmap.put("EquipStatus", status);
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
             if (equipModel != null) {
-//                if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-//                    prestatus = equipModel.equipStatus;
-//                    Thread.sleep(1000);
-//                    status = equipModel.getEquipStatus();
-//                }
+                if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
+                    prestatus = equipModel.equipStatus;
+                    Thread.sleep(1000);
+                    status = equipModel.getEquipStatus();
+                }
                 equipModel.changeEquipPanel(statusmap);
                 equipModel.preEquipStatus = prestatus.trim();
                 equipModel.equipStatus = status.trim();
@@ -113,14 +113,16 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 if ("run".equalsIgnoreCase(preEquipstatus) && equipstatus.equalsIgnoreCase("idle")) {
-                    if (equipModel.deviceType.equals("HITACHI-LASERDRILL")) {
+                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
                         equipModel.uploadData("生产");
                     }
                 }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {
-                    if (equipModel.deviceType.equals("HITACHI-LASERDRILL")) {
+                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
                         if (needCare(equipModel)) {
                             equipModel.uploadData("待料");
+                            LocalDateTime now = LocalDateTime.now();
+                            equipModel.idleStartTime = now.format(AvaryAxisUtil.dtf2);
                         }
                     }
                     logger.info("设备:" + deviceCode + "开机作业.");

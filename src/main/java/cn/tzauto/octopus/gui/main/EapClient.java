@@ -421,23 +421,19 @@ public class EapClient extends Application implements JobListener, PropertyChang
 
     @Override
     public String getName() {
-        logger.debug(GlobalConstants.SYNC_CONFIG_JOB_NAME + "：获取job名称...");
         return GlobalConstants.SYNC_CONFIG_JOB_NAME;
     }
 
     @Override
     public void jobToBeExecuted(JobExecutionContext jec) {
-        logger.debug(GlobalConstants.SYNC_CONFIG_JOB_NAME + "：执行前...");
     }
 
     @Override
     public void jobExecutionVetoed(JobExecutionContext jec) {
-        logger.debug(GlobalConstants.SYNC_CONFIG_JOB_NAME + "：运行中...");
     }
 
     @Override
     public void jobWasExecuted(JobExecutionContext jec, JobExecutionException jee) {
-        logger.debug(GlobalConstants.SYNC_CONFIG_JOB_NAME + "：执行后...");
     }
 
     public void startComByEqp(EquipNodeBean equipNodeBean) {

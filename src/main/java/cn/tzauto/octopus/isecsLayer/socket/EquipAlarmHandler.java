@@ -70,7 +70,10 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             for (String str : alarmStringList) {
                 String alarm = "";
                 String remark = "";
-                switch (deviceInfo.getDeviceType()) { //添加机台类型即添加case处理str
+                String deviceType = deviceInfo.getDeviceType();
+                String[] deviceTypes = deviceType.split("-");
+                deviceType = deviceTypes[0] + "-" + deviceTypes[1];
+                switch (deviceType) { //添加机台类型即添加case处理str
                     case "SCREEN-LEDIA":
                         if (str.contains(",")) {
                             String[] alarmstrs = str.split(",");
@@ -81,100 +84,8 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                         }
                         break;
                     case "HITACHI-LASERDRILL":
-                        if (str.contains("._PC")) {
-                            if (str.contains("Alarm =")) {
-                                String[] HITACHILaserDrillalarms = str.split(",");
-                                alarm = HITACHILaserDrillalarms[1].replace("Alarm =", "").trim();
-                                logger.info("收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                            }
-                            if (str.contains("AlarmClear =")) {
-                                String[] HITACHILaserDrillalarms = str.split(",");
-                                alarm = HITACHILaserDrillalarms[1].replace("AlarmClear =", "").trim();
-                                logger.info("收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                            }
-                            String[] keys = String.valueOf(GlobalConstants.getProperty("HITACHI_LASER_DRILL_FILE_KEYS")).split(",");
-                            for (String key : keys) {
-                                if (str.contains(key)) {
-                                    logger.info("HITACHILaserDrill " + str);
-                                }
-                            }
-                        }
-                        if (str.contains(".UVP")) {
-                            str = str.split("\\|\\|\\|\\|")[1];
-                            if (str.contains("Date")) {
-                                logger.info("power check data:Date:" + str.split(",")[1]);
-//                            ((HitachiLaserDrillHost) GlobalConstants.eapView.equipModels.get(deviceInfo.getDeviceCode())).setPCHK(str.split(",")[1], null, null, null);
-                                return null;
-                            }
-                            if (str.contains("Crystal No.")) {
-                                logger.info("power check data:CrystalNo:" + str.split(",")[1]);
-                                return null;
-                            }
-                            if (str.contains("Crystal_Time")) {
-                                logger.info("power check data:Crystal_Time:" + str.split(",")[1]);
-                                return null;
-                            }
-                            if (str.contains("Axis")) {
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAxis(str.split(",")[1].substring(0, 2));
-                                logger.info("power check data:Axis:" + str.split(",")[1]);
-                            }
-                            if (str.contains("AP_No")) {
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAp_no(str.split(",")[1]);
-//                                crystalPower = crystalPower + "_" + str + "_POWER";
-                                logger.info("power check data:AP_No:" + str.split(",")[1]);
-                            }
-                            if (str.contains("Power")) {
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setPower(str.split(",")[1]);
-//                                crystalPower = crystalPower + "=" + str;
-                                logger.info("power check data:Power:" + str.split(",")[1]);
-
-                            }
-                            crystalPowerCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower);
-                            return null;
-                        }
-                        if (str.contains(".GLV")) {
-                            if (str.contains("GCHK,")) {
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(true);
-//                                isCrystalAccuracy = true;
-                            }
-                            if (str.contains("GCOMP,")) {
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(false);
-//                                isCrystalAccuracy = false;
-                                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceInfo.getDeviceCode());
-                            }
-
-                            if (str.contains(",XY,")) {
-                                String[] stringss = str.split(",");
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAp_no(stringss[1].trim());
-
-                            }
-                            if (str.contains("MAX_1")) {
-                                String[] strs = str.split(",");
-                                str = strs[strs.length - 1];
-                                str = str.split("=")[1];
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z1");
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
-//                                String crystalAccuracyTemp = "Z1_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
-//                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_1:" + str);
-//                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
-                            }
-                            if (str.contains("MAX_2")) {
-                                String[] strs = str.split(",");
-                                str = strs[strs.length - 1];
-                                str = str.split("=")[1];
-//                                String crystalAccuracyTemp = "Z2_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
-//                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_2:" + str);
-//                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
-//                                    crystalAccuracy = "";
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z2");
-                                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
-                            }
-                            accuracyCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy);
-                            return null;
-                        }
-                        break;
+                        delHitachiLaserLogMsg(str, deviceInfo);
+                        return null;
                     default:
                         alarm = str;
                         break;
@@ -312,5 +223,102 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         }
         return newStrs;
+    }
+
+    private void delHitachiLaserLogMsg(String str, DeviceInfo deviceInfo) {
+        if (str.contains("._PC")) {
+            String alarm = "";
+            if (str.contains("Alarm =")) {
+                String[] HITACHILaserDrillalarms = str.split(",");
+                alarm = HITACHILaserDrillalarms[1].replace("Alarm =", "").trim();
+                logger.info("收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+            }
+            if (str.contains("AlarmClear =")) {
+                String[] HITACHILaserDrillalarms = str.split(",");
+                alarm = HITACHILaserDrillalarms[1].replace("AlarmClear =", "").trim();
+                logger.info("收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+            }
+            String[] keys = String.valueOf(GlobalConstants.getProperty("HITACHI_LASER_DRILL_FILE_KEYS")).split(",");
+            for (String key : keys) {
+                if (str.contains(key)) {
+                    logger.info("HITACHILaserDrill " + str);
+                }
+            }
+        }
+        if (str.contains(".UVP")) {
+            str = str.split("\\|\\|\\|\\|")[1];
+            if (str.contains("Date")) {
+                logger.info("power check data:Date:" + str.split(",")[1]);
+//                            ((HitachiLaserDrillHost) GlobalConstants.eapView.equipModels.get(deviceInfo.getDeviceCode())).setPCHK(str.split(",")[1], null, null, null);
+                return;
+            }
+            if (str.contains("Crystal No.")) {
+                logger.info("power check data:CrystalNo:" + str.split(",")[1]);
+                return;
+            }
+            if (str.contains("Crystal_Time")) {
+                logger.info("power check data:Crystal_Time:" + str.split(",")[1]);
+                return;
+            }
+            if (str.contains("Axis")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAxis(str.split(",")[1].substring(0, 2));
+                logger.info("power check data:Axis:" + str.split(",")[1]);
+            }
+            if (str.contains("AP_No")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setAp_no(str.split(",")[1]);
+//                                crystalPower = crystalPower + "_" + str + "_POWER";
+                logger.info("power check data:AP_No:" + str.split(",")[1]);
+            }
+            if (str.contains("Power")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower.setPower(str.split(",")[1]);
+//                                crystalPower = crystalPower + "=" + str;
+                logger.info("power check data:Power:" + str.split(",")[1]);
+
+            }
+            crystalPowerCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalPower);
+            return;
+        }
+        if (str.contains(".GLV")) {
+            if (str.contains("GCHK,")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(true);
+//                                isCrystalAccuracy = true;
+            }
+            if (str.contains("GCOMP,")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setCrystalAccuracy(false);
+//                                isCrystalAccuracy = false;
+                FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceInfo.getDeviceCode());
+            }
+
+            if (str.contains(",XY,")) {
+                String[] stringss = str.split(",");
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAp_no(stringss[1].trim());
+
+            }
+            if (str.contains("MAX_1")) {
+                String[] strs = str.split(",");
+                str = strs[strs.length - 1];
+                str = str.split("=")[1];
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z1");
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
+//                                String crystalAccuracyTemp = "Z1_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
+//                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_1:" + str);
+//                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
+            }
+            if (str.contains("MAX_2")) {
+                String[] strs = str.split(",");
+                str = strs[strs.length - 1];
+                str = str.split("=")[1];
+//                                String crystalAccuracyTemp = "Z2_" + GlobalConstants.laserCrystalAccuracy.getAp_no() + "_" + "ACCURACY" + str;
+//                                    logger.info("ACCURACY check data:" + crystalAccuracy + " RMAX_2:" + str);
+//                                accuracyCheck(deviceInfo.getDeviceCode(), crystalAccuracyTemp);
+//                                    crystalAccuracy = "";
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAxis("Z2");
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy.setAccuracy(str);
+            }
+            accuracyCheck(deviceInfo.getDeviceCode(), GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).laserCrystalAccuracy);
+            return;
+        }
     }
 }

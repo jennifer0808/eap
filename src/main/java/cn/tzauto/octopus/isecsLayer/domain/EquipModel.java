@@ -82,7 +82,8 @@ public abstract class EquipModel extends Thread {
     public boolean isEngineerMode = false;
     public boolean isLocalMode = false;
     public String tableNum = "";
-    public String lotStartTime = ""; //开始时间
+    public String lotStartTime = ""; //批次开始时间
+    public String idleStartTime = ""; //过程状态开始时间
     public List<Material> materials = new ArrayList<>();
     public List<Tooling> toolings = new ArrayList<>();
     public PMState pmState;

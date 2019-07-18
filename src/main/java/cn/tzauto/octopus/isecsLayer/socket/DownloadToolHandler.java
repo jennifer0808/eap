@@ -70,7 +70,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                 DeviceInfo deviceInfo = deviceInfos.get(0);
                 if (!"0".equals(AvaryAxisUtil.workLicense(deviceInfo.getDeviceName(), userId))) {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
-                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("上岗证验证失败!!work permit not been grant");
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("上崗証驗證失敗!!work permit not been grant");
                     return;
                 }
                 //验证原材料
@@ -84,14 +84,14 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     material.setName(realMname);
                     GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
                     if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料驗證失敗!Material check error!");
                         return;
                     }
                 }
                 //串联sfc系统，确认产品在当站
                 if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo);
-                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
                     return;
                 }
                 //验证治具
@@ -101,7 +101,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     tooling.setCode(fixtureno);
                     GlobalConstants.stage.equipModels.get(deviceCode).toolings.add(tooling);
                 } else {
-                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具验证失败!Tooling check error!");
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具驗證失敗!Tooling check error!");
                     return;
                 }
 
@@ -121,7 +121,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         material.setName(realMname);
                         GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
                         if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
-                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料验证失败!Material check error!");
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料驗證失敗!Material check error!");
                             return;
                         }
                     }
@@ -130,7 +130,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
                     if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo2, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo2);
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("SFC Check failed!");
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
                         return;
                     }
                     if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo2, fixtureno2)) {
@@ -139,7 +139,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         tooling.setCode(fixtureno2);
                         GlobalConstants.stage.equipModels.get(deviceCode).toolings.add(tooling);
                     } else {
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具验证失败!Tooling check error!");
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("治具驗證失敗!Tooling check error!");
                         return;
                     }
                 }
@@ -154,13 +154,13 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_NEED_CHECK")) && AvaryAxisUtil.isInitialPart(partNoTemp, deviceCode, "0")) {
                         if ("1".equals(lottype)) {
                             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "需要开初件!!");
-                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("Need check isfirst!");
+                            new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("初件檢查失敗!Need check isfirst!");
                             return;
                         }
                     }
                     if ("1".equals(GlobalConstants.getProperty("FIRST_PRODUCTION_CHECK")) && !AvaryAxisUtil.firstProductionIsOK(deviceInfo.getDeviceName(), lotNo, partNoTemp, "SFCZ4_ZD_DIExposure")) {
                         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "初件检查未通过!!");
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("初件检查未通过");
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("初件檢查失敗");
                         return;
                     }
                 } catch (Exception e) {
@@ -168,7 +168,8 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     e.printStackTrace();
                 }
 
-                if (deviceInfo.getDeviceType().equals("HITACHI-LASERDRILL")) {
+                if (deviceInfo.getDeviceType().contains("HITACHI-LASERDRILL")) {
+
                     recipeName = GlobalConstants.stage.equipModels.get(deviceCode).organizeRecipe(faceno, lotNo);
                     try {
                         Thread.sleep(1000);
@@ -207,6 +208,9 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                                 recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "GOLD");
                                 if (recipes == null || recipes.isEmpty()) {
                                     recipes = recipeService.searchRecipeOrderByVerNo(recipeName, deviceCode, "Engineer");
+                                    if (recipes == null || recipes.isEmpty()) {
+                                        recipes = recipeService.searchRecipeOrderByVerNo(recipeName, null, "Engineer");
+                                    }
                                 }
                             }
                             if (recipes != null && !recipes.isEmpty()) {
@@ -216,7 +220,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                                     downloadresult = "Connect error,please check it and try later.";
                                 }
                             } else {
-                                downloadresult = "Can not find any recipe,please upload recipe" + recipeName;
+                                downloadresult = "程序未上傳!Can not find any recipe,please upload recipe" + recipeName;
                             }
                         }
                     }
