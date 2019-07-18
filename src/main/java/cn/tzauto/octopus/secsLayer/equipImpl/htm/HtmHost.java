@@ -5,14 +5,15 @@ import cn.tzauto.generalDriver.api.MsgArrivedEvent;
 import cn.tzauto.generalDriver.api.SecsDriverFactory;
 import cn.tzauto.generalDriver.entity.cnct.ConnRegInfo;
 import cn.tzauto.generalDriver.entity.msg.DataMsgMap;
-
 import cn.tzauto.generalDriver.entity.msg.SecsFormatValue;
+import cn.tzauto.generalDriver.entity.msg.MsgSection;
 import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
@@ -22,13 +23,16 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.htm.HtmRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
+import org.apache.ibatis.jdbc.Null;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import java.io.IOException;
 import java.util.*;
 
 public class HtmHost extends EquipHost {
@@ -58,19 +62,19 @@ public class HtmHost extends EquipHost {
         long[] alidsOfHtm4623 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50};
         for (long alid : alidsOfHtm4623) {
-            alidMap.put(alid, "HTM-4623");
+            alidMap.put(alid, "DF-001");
         }
         long[] alidsOfHtm3661 = {51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73,
                 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103};
         for (long alid : alidsOfHtm3661) {
-            alidMap.put(alid, "HTM-3661");
+            alidMap.put(alid, "DF-004");
         }
 
         // 添加所有设备的状态变化的ceid，用于转发事件
-        ceidMap.put(44, "HTM-3661");
-        ceidMap.put(81, "HTM-3661");
-        ceidMap.put(42, "HTM-4623");
-        ceidMap.put(43, "HTM-4623");
+        ceidMap.put(44, "DF-004");
+        ceidMap.put(81, "DF-004");
+        ceidMap.put(42, "DF-001");
+        ceidMap.put(43, "DF-001");
 
         // 添加公共事件(目前仅用于secs连接状态)
         popularCeidList.add(1l);
@@ -78,12 +82,12 @@ public class HtmHost extends EquipHost {
         popularCeidList.add(3l);
 
         // 添加所有设备的设备切换指令，用于在获取recipe列表，下载recipe文件等事件之前，用于模组确认向哪台设备进行操作
-        machineMap.put("HTM-4623", "MACHINE1");
-        machineMap.put("HTM-3661", "MACHINE2");
+        machineMap.put("DF-001", "MACHINE1");
+        machineMap.put("DF-004", "MACHINE2");
 
         // 添加所有设备的停机指令
-        stopCmdMap.put("HTM-4623", "STOP1");
-        stopCmdMap.put("HTM-3661", "STOP2");
+        stopCmdMap.put("DF-001", "STOP1");
+        stopCmdMap.put("DF-004", "STOP2");
 
         // 添加所有设备的状态查询用的svid
 
@@ -91,12 +95,12 @@ public class HtmHost extends EquipHost {
         svidMap1.put("equipStatussvid", 27l);
         svidMap1.put("pPExecNamesvid", 22l);
         svidMap1.put("controlStatesvid", 26l);
-        stateMap.put("HTM-4623", svidMap1);
+        stateMap.put("DF-001", svidMap1);
         Map<String, Object> svidMap2 = new HashMap<>();
         svidMap2.put("equipStatussvid", 25l);
         svidMap2.put("pPExecNamesvid", 41l);
         svidMap2.put("controlStatesvid", 26l);
-        stateMap.put("HTM-3661", svidMap2);
+        stateMap.put("DF-004", svidMap2);
 
     }
 
@@ -106,13 +110,13 @@ public class HtmHost extends EquipHost {
         activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         synchronized (GlobalConstants.connectHostMap) {
-            if (null != GlobalConstants.connectHostMap.get(this.deviceType)) {
-                this.activeWrapper = GlobalConstants.connectHostMap.get(this.deviceType).getActiveWrapper();
+            if (null != GlobalConstants.connectHostMap.get("HTM")) {
+                this.activeWrapper = GlobalConstants.connectHostMap.get("HTM").getActiveWrapper();
                 GlobalConstants.hostMap.put(this.deviceCode, HtmHost.this);
 //                logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             } else {
                 activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
-                GlobalConstants.connectHostMap.put(this.deviceType, HtmHost.this);
+                GlobalConstants.connectHostMap.put("HTM", HtmHost.this);
                 GlobalConstants.hostMap.put(this.deviceCode, HtmHost.this);
 //                logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             }
@@ -168,19 +172,10 @@ public class HtmHost extends EquipHost {
     public void run() {
         threadUsed = true;
         MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, this.deviceCode);
-//        if (null != GlobalConstants.activeWrapperMap.get(this.deviceType)) {
-//            this.activeWrapper = GlobalConstants.activeWrapperMap.get(this.deviceType);
-//        } else {
-//            GlobalConstants.activeWrapperMap.put(this.deviceType, this.activeWrapper);
-//            logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//        }
-//        if (null == this.activeWrapper && null != GlobalConstants.activeWrapperMap.get(this.deviceType)) {
-//            this.activeWrapper = GlobalConstants.activeWrapperMap.get(this.deviceType);
-//        }
         while (!this.isInterrupted()) {
             try {
                 synchronized (GlobalConstants.connectHostMap) {
-                    EquipHost connectHost = GlobalConstants.connectHostMap.get(this.deviceType);
+                    EquipHost connectHost = GlobalConstants.connectHostMap.get("HTM");
                     while (!this.isSdrReady()) {
                         this.sleep(200);
                         if (null != connectHost && connectHost.isSdrReady()) {
@@ -192,7 +187,7 @@ public class HtmHost extends EquipHost {
                             setCommState(1);
                         } else {
                             sendS1F13out();
-                            GlobalConstants.connectHostMap.put(this.deviceType, HtmHost.this);
+                            GlobalConstants.connectHostMap.put("HTM", HtmHost.this);
                         }
                     }
                 }
@@ -287,7 +282,7 @@ public class HtmHost extends EquipHost {
                     this.inputMsgQueue.put(data);
                     logger.info(deviceCode + " occerred a error,alid:" + alid);
                 } else {
-                    if (!"".equals(reportDeviceCode)) {
+                    if (null != reportDeviceCode && !"".equals(reportDeviceCode)) {
                         GlobalConstants.hostMap.get(reportDeviceCode).inputMessageArrived(event);
                     }
                 }
@@ -406,6 +401,40 @@ public class HtmHost extends EquipHost {
         }
     }
 
+    /**
+     * hold设备，并且显示具体的hold设备具体信息
+     *
+     * @return
+     */
+    @Override
+    public boolean holdDeviceAndShowDetailInfo() {
+        Map resultMap = new HashMap();
+        resultMap = holdDevice();
+
+        if (resultMap != null) {
+            if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
+                try {
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                sendTerminalMsg2EqpSingle("StartCheck not pass, equipment locked!");
+                return true;
+            } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
+                return true;
+            } else {
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
+                Map eqptStateMap = this.findEqptStatus();
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
@@ -498,11 +527,11 @@ public class HtmHost extends EquipHost {
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         List<RecipePara> recipeParaList = null;
         // recipe文件解析
-//        try {
-//            recipeParaList = HtmRecipeUtil.analysisRecipe(recipePath, deviceType, deviceCode);
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
+        try {
+            recipeParaList = HtmRecipeUtil.analysisRecipe(recipePath, deviceType);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -522,16 +551,7 @@ public class HtmHost extends EquipHost {
         resultMap.put("Description", "Get eppd from equip " + deviceCode);
         DataMsgMap data = null;
         try {
-            String cmd = machineMap.get(deviceCode);
-            DataMsgMap msgdata = activeWrapper.sendS2F41out(cmd, null, null, null, null);
-            byte hcack = (byte) msgdata.get("HCACK");
-            if (hcack != 0) {
-                data = null;
-                resultMap.put("ppgnt", 9);
-                resultMap.put("Description", ACKDescription.description(hcack, "HCACK") + "; error occurred while send message '" + cmd + "'");
-            } else {
-                data = activeWrapper.sendS7F19out();
-            }
+            data = activeWrapper.sendS7F19out();
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -542,10 +562,21 @@ public class HtmHost extends EquipHost {
         ArrayList list = (ArrayList) data.get("EPPD");
         if (list == null || list.isEmpty()) {
             resultMap.put("eppd", new ArrayList<>());
-//            resultMap.put("EPPD", new ArrayList<>());
         } else {
             logger.info("recipeNameList:" + list);
-            resultMap.put("eppd", list);
+            ArrayList recipeList = new ArrayList<>();
+            if ("DF-001".equals(deviceCode)) {
+                if (!"  ".equals(list.get(0))) recipeList.add(list.get(0));
+            } else if ("DF-004".equals(deviceCode)) {
+                if (!"  ".equals(list.get(1))) recipeList.add(list.get(1));
+            }
+//            for (Object recipeName : list) {
+//                if (recipeName.toString().contains("Production")) {
+//                    recipeList.add(recipeName);
+//                }
+//            }
+            resultMap.put("eppd", recipeList);
+//            resultMap.put("eppd", list);
 //            resultMap.put("EPPD", list);
         }
         return resultMap;

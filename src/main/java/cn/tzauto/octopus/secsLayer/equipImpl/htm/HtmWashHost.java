@@ -23,6 +23,7 @@ import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.exception.NotInitializedException;
 import cn.tzauto.octopus.secsLayer.exception.UploadRecipeErrorException;
+import cn.tzauto.octopus.secsLayer.resolver.htm.HtmWashRecipeUtil;
 import cn.tzauto.octopus.secsLayer.util.ACKDescription;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
@@ -46,6 +47,8 @@ public class HtmWashHost extends EquipHost {
     private static Map<String, String> stripLoadCmdMap = new HashMap<>();
 
     private static Map<String, Map<String, Object>> stateMap = new HashMap<>();
+
+    private static Map<String, int[]> recipeNameIndexMap = new HashMap<>();
 
     public HtmWashHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -172,6 +175,22 @@ public class HtmWashHost extends EquipHost {
         svidMap7.put("pPExecNamesvid", 46l);
         svidMap7.put("controlStatesvid", 36l);
         stateMap.put("PLA-027", svidMap7);
+
+        // 用于获取recipe名称列表的下标
+        int[] recipeNameIndexListOfPLA011 = {0, 1, 2, 3, 4};
+        recipeNameIndexMap.put("PLA-011", recipeNameIndexListOfPLA011);
+        int[] recipeNameIndexListOfPLA012 = {5, 6, 7, 8, 9};
+        recipeNameIndexMap.put("PLA-012", recipeNameIndexListOfPLA012);
+        int[] recipeNameIndexListOfPLA013 = {10, 11, 12, 13, 14};
+        recipeNameIndexMap.put("PLA-013", recipeNameIndexListOfPLA013);
+        int[] recipeNameIndexListOfPLA014 = {15, 16, 17, 18, 19};
+        recipeNameIndexMap.put("PLA-014", recipeNameIndexListOfPLA014);
+        int[] recipeNameIndexListOfPLA017 = {20, 21, 22, 23, 24};
+        recipeNameIndexMap.put("PLA-017", recipeNameIndexListOfPLA017);
+        int[] recipeNameIndexListOfPLA018 = {25, 26, 27, 28, 29};
+        recipeNameIndexMap.put("PLA-018", recipeNameIndexListOfPLA018);
+        int[] recipeNameIndexListOfPLA027 = {30, 31, 32, 33, 34};
+        recipeNameIndexMap.put("PLA-027", recipeNameIndexListOfPLA027);
     }
 
     @Override
@@ -180,13 +199,13 @@ public class HtmWashHost extends EquipHost {
         activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         synchronized (GlobalConstants.connectHostMap) {
-            if (null != GlobalConstants.connectHostMap.get(this.deviceType)) {
-                this.activeWrapper = GlobalConstants.connectHostMap.get(this.deviceType).getActiveWrapper();
+            if (null != GlobalConstants.connectHostMap.get("htmWash")) {
+                this.activeWrapper = GlobalConstants.connectHostMap.get("htmWash").getActiveWrapper();
                 GlobalConstants.hostMap.put(this.deviceCode, HtmWashHost.this);
 //                logger.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             } else {
                 activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
-                GlobalConstants.connectHostMap.put(this.deviceType, HtmWashHost.this);
+                GlobalConstants.connectHostMap.put("htmWash", HtmWashHost.this);
                 GlobalConstants.hostMap.put(this.deviceCode, HtmWashHost.this);
 //                logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             }
@@ -245,7 +264,7 @@ public class HtmWashHost extends EquipHost {
         while (!this.isInterrupted()) {
             try {
                 synchronized (GlobalConstants.connectHostMap) {
-                    EquipHost connectHost = GlobalConstants.connectHostMap.get(this.deviceType);
+                    EquipHost connectHost = GlobalConstants.connectHostMap.get("htmWash");
                     while (!this.isSdrReady()) {
                         this.sleep(200);
                         if (null != connectHost && connectHost.isSdrReady()) {
@@ -257,7 +276,7 @@ public class HtmWashHost extends EquipHost {
                             setCommState(1);
                         } else {
                             sendS1F13out();
-                            GlobalConstants.connectHostMap.put(this.deviceType, HtmWashHost.this);
+                            GlobalConstants.connectHostMap.put("htmWash", HtmWashHost.this);
                         }
                     }
                 }
@@ -326,10 +345,10 @@ public class HtmWashHost extends EquipHost {
                 if (this.deviceCode.equals(reportDeviceCode)) {
                     this.inputMsgQueue.put(data);
                 } else {
-                    if (!"".equals(reportDeviceCode)) {
+                    if (null != reportDeviceCode && !"".equals(reportDeviceCode)) {
                         GlobalConstants.hostMap.get(reportDeviceCode).inputMessageArrived(event);
                     } else if (ceid == 44) {
-
+                        this.inputMsgQueue.put(data);
                     }
                 }
             } else if (tagName.equalsIgnoreCase("s14f1in")) {
@@ -460,6 +479,40 @@ public class HtmWashHost extends EquipHost {
         }
     }
 
+    /**
+     * hold设备，并且显示具体的hold设备具体信息
+     *
+     * @return
+     */
+    @Override
+    public boolean holdDeviceAndShowDetailInfo() {
+        Map resultMap = new HashMap();
+        resultMap = holdDevice();
+
+        if (resultMap != null) {
+            if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
+                try {
+                    Thread.sleep(200);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                sendTerminalMsg2EqpSingle("StartCheck not pass, equipment locked!");
+                return true;
+            } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将稍后执行锁机");
+                return true;
+            } else {
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "HCACK:" + resultMap.get("HCACK") + " Description:" + String.valueOf(resultMap.get("Description")));
+                Map eqptStateMap = this.findEqptStatus();
+                UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "锁机失败，当前机台状态无法进行锁机，机台状态为：" + String.valueOf(eqptStateMap.get("EquipStatus")) + "/" + String.valueOf(eqptStateMap.get("ControlState")));
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     protected void sends2f41stripReply(boolean isOk) {
         try {
             String confirnStr = stripLoadCmdMap.get(deviceCode);
@@ -488,14 +541,12 @@ public class HtmWashHost extends EquipHost {
                 ceid = Long.parseLong(data.get("CEID").toString());
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
-            if (ceid == StripMapUpCeid) {
-                processS6F11inStripMapUpload(data);
-            } else if (ceid == 43 || ceid == 84 || ceid == 109 || ceid == 137 || ceid == 165 || ceid == 193 || ceid == 221
+            if (ceid == 43 || ceid == 84 || ceid == 109 || ceid == 137 || ceid == 165 || ceid == 193 || ceid == 221
                     || ceid == 54 || ceid == 55 || ceid == 56 || ceid == 57 || ceid == 58 || ceid == 59 || ceid == 60 || ceid == 44) {
                 processS6F11EquipStatusChange(data);
                 if (ceid == 44) {
-                    for (Map.Entry equipHost : GlobalConstants.hostMap.entrySet()) {
-                        if (this.deviceCode.equals(equipHost.getKey())) {
+                    for (Map.Entry<String, EquipHost> equipHost : GlobalConstants.hostMap.entrySet()) {
+                        if (this.deviceCode.equals(equipHost.getKey()) || !this.deviceType.equals(equipHost.getValue().getDeviceType())) {
                             continue;
                         }
                         GlobalConstants.hostMap.get(equipHost.getKey()).findDeviceRecipe();
@@ -527,37 +578,39 @@ public class HtmWashHost extends EquipHost {
             e.printStackTrace();
         }
         Map msgMap = new HashMap();
-
-        if (ceid == 41L || ceid == 42L) {
-            msgMap.put("msgName", "ceStripLoad");
-            funcType = "MesAolotLoadCheck";
-            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+        msgMap.put("msgName", "ceStripLoad");
+        funcType = "MesAolotLoadCheck";
+        logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
 //        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
 
-            msgMap.put("deviceCode", deviceCode);
-            msgMap.put("stripId", stripId);
-            String result = "";
+        msgMap.put("deviceCode", deviceCode);
+        msgMap.put("stripId", stripId);
+        String result = "";
 //            result = "N";
-            try {
-                result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
-            } catch (Exception ex) {
-                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
-            }
-            if (result.equalsIgnoreCase("Y")) {
-                //todo 测试 if(true){
-                holdFlag = false;
-                this.sends2f41stripReply(true);
-            } else {
-                holdFlag = true;
-                this.sends2f41stripReply(false);
-                sendS2f41Cmd(stopCmdMap.get(deviceCode));
-                if ("".equals(result)) {
-                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
-                }
-            }
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+        try {
+            result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+        } catch (Exception ex) {
+            logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
         }
+        if (result.equalsIgnoreCase("Y")) {
+            //todo 测试 if(true){
+            holdFlag = false;
+            this.sends2f41stripReply(true);
+        } else {
+            holdFlag = true;
+            this.sends2f41stripReply(false);
+            try {
+                Thread.sleep(200);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            sendS2f41Cmd(stopCmdMap.get(deviceCode));
+            if ("".equals(result)) {
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+            }
+        }
+        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
 //        if (ceid == 41111L || ceid == 421111L) {
 //            msgMap.put("msgName", "ceStripUnload");
 //            funcType = "MesAolotUnLoadCheck";
@@ -637,11 +690,11 @@ public class HtmWashHost extends EquipHost {
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
         List<RecipePara> recipeParaList = null;
         // recipe文件解析
-//        try {
-//            recipeParaList = HtmWashRecipeUtil.analysisRecipe(recipePath, deviceType, deviceCode);
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
+        try {
+            recipeParaList = HtmWashRecipeUtil.analysisRecipe(recipePath, deviceType, deviceCode);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         Map resultMap = new HashMap();
         resultMap.put("msgType", "s7f6");
         resultMap.put("deviceCode", deviceCode);
@@ -684,8 +737,13 @@ public class HtmWashHost extends EquipHost {
 //            resultMap.put("EPPD", new ArrayList<>());
         } else {
             logger.info("recipeNameList:" + list);
-            resultMap.put("eppd", list);
-//            resultMap.put("EPPD", list);
+            ArrayList recipeNamelist = new ArrayList();
+            for (int index : recipeNameIndexMap.get(this.deviceCode)) {
+                if (null != list.get(index) && !"".equals(list.get(index).toString().trim()))
+                    recipeNamelist.add(list.get(index));
+            }
+            resultMap.put("eppd", recipeNamelist);
+//            resultMap.put("eppd", list);
         }
         return resultMap;
     }

@@ -19,7 +19,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 
-public class ShinkawaRecipeUtil {
+public class UTC5000RecipeUtil {
 
     //filePath 是PPBODY原文件的存储路径(非文件夹)
     public static Map transferFromFile(String filePath) {
@@ -29,6 +29,7 @@ public class ShinkawaRecipeUtil {
             String cfgline = null;
             File cfgfile = new File(filePath);
             br = new BufferedReader(new InputStreamReader(new FileInputStream(cfgfile), "GBK"));
+            String title = "";
             String partTitle = "";
             String key = "";
             String value = "";
@@ -39,54 +40,59 @@ public class ShinkawaRecipeUtil {
             while ((cfgline = br.readLine()) != null) {
                 if (cfgline.startsWith(",")) {
                     String[] lineStrs = cfgline.split(",");
+                    int strCol = 0;
                     for (String str : lineStrs) {
                         if ("".equals(str)) {
                             continue;
                         }
                         if (!keyFlag) {
-                            if (!"Loop".equals(str) && !"2nd Bond".equals(str)) {
-                                key = key + str.trim() + "_";
-                                keyFlag = true;
-                                if ("Wire".equals(str) && "Special".equals(partTitle)) {
-                                    keyFlag = false;
-                                }
-                            } else {
-                                partTitle = partTitle + "_" + str.trim();
-                            }
+                            key = key + str.trim() + ":";
+                            keyFlag = true;
                         } else {
                             value = value + str.trim() + ",";
                             valueFlag = true;
                         }
+                        strCol++;
                     }
                     if (keyFlag && valueFlag) {
                         key = key.substring(0, key.length() - 1);
                         value = value.substring(0, value.length() - 1);
 //                        value = StringUtils.substringBeforeLast(value, "(");
-                        map.put(partTitle + "_" + key, value);
+//                        if (null != map.get((title.isEmpty() ? title : (title + ":")) + partTitle + ":" + key)) {
+//                            System.out.println((title.isEmpty() ? title : (title + ":")) + partTitle + ":" + key);
+//                        }
+                        map.put(title + partTitle + ":" + key, value);
                         key = "";
                         value = "";
                         keyFlag = false;
                         valueFlag = false;
                     }
                 } else {
-                    partTitle = cfgline.trim();
-                    if (partTitle.contains(".csv")) {
-                        // Base Parameter标题与recipe文件地址一起放在第一行
-                        partTitle = cfgline.split(".csv")[1].trim();
-                    } else if (partTitle.contains(",") && !partTitle.contains("Group_LOOP")) {
-                        String[] lineStrs = cfgline.split(",");
-                        String lineKey = "";
-                        String lineValue = "";
-                        for (String str : lineStrs) {
-                            if ("".equals(lineKey)) {
-                                lineKey = str.trim();
-                            } else {
-                                lineValue = lineValue + str.trim() + ",";
-                            }
+                    if (cfgline.trim().contains("[") && cfgline.trim().contains("]")) {
+                        partTitle = title + cfgline.trim() + ":";
+                    } else if (cfgline.trim().contains(",") && !cfgline.trim().contains("Group_LOOP")) {
+                        if (cfgline.trim().contains("Device name")) {
+                            title = cfgline.trim().split(",")[1] + ":";
+                        } else if (cfgline.trim().contains("Chip name")) {
+                            title = title + cfgline.trim().split(",")[1] + ":";
+                        } else {
+                            partTitle = title + cfgline.trim().split(",")[1];
                         }
-                        map.put(lineKey, lineValue.substring(0, lineValue.length() - 1));
-                    } else if ("Special".equals(partTitle)) {
-                        partTitle = partTitle + specialCount++;
+                    } else if (cfgline.trim().contains("Group_") && cfgline.trim().contains("LOOP")) {
+                        title = "";
+                        partTitle = cfgline.trim();
+                    } else {
+                        if (partTitle.contains("[") && partTitle.contains("]")) {
+                            partTitle = StringUtils.substringBeforeLast(partTitle, ":").replace(title, "") + ":" + cfgline.trim();
+                        } else {
+                            partTitle = cfgline.trim();
+                        }
+                        if (cfgline.trim().contains(".csv")) {
+                            // Base Parameter标题与recipe文件地址一起放在第一行
+                            partTitle = cfgline.split(".csv")[1].trim();
+                        } else if ("Special".equals(cfgline.trim())) {
+                            partTitle = partTitle + specialCount++;
+                        }
                     }
                 }
             }
@@ -115,7 +121,7 @@ public class ShinkawaRecipeUtil {
                 recipePara.setParaCode(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaCode());
                 recipePara.setParaName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaName());
                 recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
-                recipePara.setSetValue(e.getValue());
+                recipePara.setSetValue(StringUtils.substringBeforeLast(e.getValue(), "("));
                 recipePara.setMinValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMinValue());
                 recipePara.setMaxValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMaxValue());
                 recipePara.setParaMeasure(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaUnit());
@@ -129,9 +135,9 @@ public class ShinkawaRecipeUtil {
     public static boolean saveRecipeTemplateList(Map paraMap) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            String deviceTypeId = "4AFD9962300901B4E053AC11AD667892";
-            String deviceTypeCode = "SHINKAWA";
-            String deviceTypeName = "SHINKAWA";
+            String deviceTypeId = "b42eb65b03c1471baf9289d25cffdcf9";
+            String deviceTypeCode = "UTC-5000 NeocuZ1";
+            String deviceTypeName = "UTC-5000 NeocuZ1";
             RecipeService recipeService = new RecipeService(sqlSession);
             List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceTypeCode, "RecipePara");
 //        sqlSession.close();
@@ -192,7 +198,7 @@ public class ShinkawaRecipeUtil {
     }
 
     public static void main(String[] args) {
-        Map paraMap = ShinkawaRecipeUtil.transferFromFile("D:\\RECIPE\\A3\\DieAttach\\SHINKAWA\\Engineer\\SHINKAWA\\00V00YKR012QFN060004-PC20-28080355-04-C.csv\\00V00YKR012QFN060004-PC20-28080355-04-C.csv_V0.csv");
+        Map paraMap = UTC5000RecipeUtil.transferFromFile("D:\\YAC03DFN008109-AG20-25080303-05-B.csv_V0.txt");
 //        Set<Map.Entry<String, String>> entry = paraMap.entrySet();
 //        int maxLength = 0;
 //        for (Map.Entry<String, String> e : entry) {
@@ -210,16 +216,16 @@ public class ShinkawaRecipeUtil {
 //            }
 //            System.out.println(key + "=" + e.getValue());
 //        }
-//        // 保存recipe参数的方法
-//        boolean flag = saveRecipeTemplateList(paraMap);
-//        if (!flag) {
-//            System.out.println("保存失败");
-//        }
-//
-        List<RecipePara> list = ShinkawaRecipeUtil.transferFromDB(paraMap, "SHINKAWA");
-        for (int i = 0; i < list.size(); i++) {
-            System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
+        // 保存recipe参数的方法
+        boolean flag = saveRecipeTemplateList(paraMap);
+        if (!flag) {
+            System.out.println("保存失败");
         }
+
+//        List<RecipePara> list = UTC5000RecipeUtil.transferFromDB(paraMap, "UTC-5000 NeocuZ1");
+//        for (int i = 0; i < list.size(); i++) {
+//            System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue() + "=====" + list.get(i).getParaMeasure());
+//        }
     }
 
 }
