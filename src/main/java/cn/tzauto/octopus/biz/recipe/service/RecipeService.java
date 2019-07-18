@@ -680,7 +680,7 @@ public class RecipeService extends BaseService {
         //附件信息
 
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
