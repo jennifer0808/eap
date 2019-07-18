@@ -16,8 +16,6 @@ public class ISecsHost implements ISecsInterface {
     private static Logger logger = Logger.getLogger(ISecsHost.class.getName());
 
     public ISecsConnection iSecsConnection;
-    private List<ISecsPara> paraList;
-    private Map<String, ScreenDomain> screenMap;
     public boolean isConnect;
     public String ip;
     private String port;
@@ -230,46 +228,6 @@ public class ISecsHost implements ISecsInterface {
 
     }
 
-    public Map getMuiltiPara(Map<String, String> paraMap) {
-        Map<String, String> resultMap = new HashMap<>();
-        //首先查询参数对应的IsecsPara的屏幕所在
-        Map<String, List<String>> screenParaMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : paraMap.entrySet()) {
-            String paraCode = entry.getKey();
-            String paraType = entry.getValue();
-            if (paraType.equalsIgnoreCase("isecs")) {
-                //获取isecsPara的属性信息
-                ISecsPara targetPara = getParaByCode(paraCode);
-                if (targetPara != null) {
-                    if (screenParaMap.get(targetPara.getScreenName()) != null) {
-                        screenParaMap.get(targetPara.getScreenName()).add(targetPara.getIsecsParaName());
-                    } else {
-                        List paraList = new ArrayList<String>();
-                        paraList.add(targetPara.getIsecsParaName());
-                        screenParaMap.put(targetPara.getScreenName(), paraList);
-                    }
-                }
-            }
-        }
-        //遍历屏幕，并取值
-        for (Map.Entry<String, List<String>> screenPara : screenParaMap.entrySet()) {
-            String screenName = screenPara.getKey();
-            List<String> paraList = screenPara.getValue();
-            //获取isecsPara的属性信息
-            ScreenDomain screenDomain = screenMap.get(screenName);
-            if (screenDomain != null) {
-                //首先跳转到指定屏幕
-                String gotoResult = gotoScreen(screenName, screenDomain.getCommandRepeatNum());
-                //然后去屏幕上读取数据
-                if (gotoResult.equals("done")) {
-                    resultMap.putAll(readDataMuilti(screenDomain.getReadMode(), paraList, screenDomain.getBeforeReadDelay(), 500));
-                }
-            } else {
-                logger.error("can not find this screen info==>" + screenName);
-            }
-        }
-        return resultMap;
-    }
 
     public Map<String, String> readDataMuilti(String readMode, List<String> paraList, long beforeRead, long readInteval) {
         Map<String, String> resultMap = new HashMap<String, String>();
@@ -308,15 +266,6 @@ public class ISecsHost implements ISecsInterface {
             logger.error("获取数据失败===>" + e.getMessage());
         }
         return resultMap;
-    }
-
-    private ISecsPara getParaByCode(String paraCode) {
-        for (ISecsPara iSecsPara : paraList) {
-            if (paraCode.equals(iSecsPara.getParaCode())) {
-                return iSecsPara;
-            }
-        }
-        return null;
     }
 
     @Override

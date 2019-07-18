@@ -7,6 +7,7 @@ import cn.tzauto.octopus.biz.tooling.LaserCrystal;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
@@ -17,6 +18,10 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
+import javax.xml.rpc.ServiceException;
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -240,10 +245,70 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                 logger.info("收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
                 UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
             }
-            String[] keys = String.valueOf(GlobalConstants.getProperty("HITACHI_LASER_DRILL_FILE_KEYS")).split(",");
-            for (String key : keys) {
-                if (str.contains(key)) {
-                    logger.info("HITACHILaserDrill " + str);
+            if (str.contains("Mode = ")) {
+                String[] HITACHILaserDrillalarms = str.split(",");
+                String lot = HITACHILaserDrillalarms[3];
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "Run";
+            }
+            if (str.contains("HEAT-RUN = START")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
+                        = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "HEAT-RUN";
+                LocalDateTime now = LocalDateTime.now();
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
+                if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Run")) {
+                    try {
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生产");
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    } catch (ServiceException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if (str.contains("HEAT-RUN = END")) {
+                try {
+                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("待料");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                } catch (ServiceException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (str.contains("PCHK = START") || str.contains("GCOMP/GCHK = START")) {
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
+                        = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "PCHK";
+                LocalDateTime now = LocalDateTime.now();
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setStartTime(now.format(AvaryAxisUtil.dtf2));
+                if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Run")) {
+                    try {
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生产");
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    } catch (ServiceException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+            if (str.contains("PCHK = END") || str.contains("GCOMP/GCHK = END")) {
+                LocalDateTime now = LocalDateTime.now();
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setEndTime(now.format(AvaryAxisUtil.dtf2));
+                try {
+                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("保养");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                } catch (ServiceException e) {
+                    e.printStackTrace();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
                 }
             }
         }

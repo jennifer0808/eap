@@ -5,21 +5,24 @@
  */
 package cn.tzauto.octopus.isecsLayer.socket;
 
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceOplog;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -27,10 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import org.apache.ibatis.session.SqlSession;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
 
 /**
  * @author luosy
@@ -118,13 +117,13 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {
-                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-                        if (needCare(equipModel)) {
-                            equipModel.uploadData("待料");
-                            LocalDateTime now = LocalDateTime.now();
-                            equipModel.idleStartTime = now.format(AvaryAxisUtil.dtf2);
-                        }
-                    }
+//                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
+//                        if (needCare(equipModel)) {
+//                            equipModel.uploadData("待料");
+//                            LocalDateTime now = LocalDateTime.now();
+//                            equipModel.idleStartTime = now.format(AvaryAxisUtil.dtf2);
+//                        }
+//                    }
                     logger.info("设备:" + deviceCode + "开机作业.");
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
                     boolean businessmode = false;

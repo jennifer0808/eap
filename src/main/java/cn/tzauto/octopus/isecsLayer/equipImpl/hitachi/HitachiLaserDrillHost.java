@@ -31,6 +31,7 @@ import javax.xml.rpc.ServiceException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -893,9 +894,6 @@ public class HitachiLaserDrillHost extends EquipModel {
                 return false;
             }
         }
-        if (macstate.equals("待料") && pmState.isPM()) {
-            macstate = "保养";
-        }
         LocalDateTime now = LocalDateTime.now();
 
         /**
@@ -1032,7 +1030,6 @@ public class HitachiLaserDrillHost extends EquipModel {
                 FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
                 FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
             }
-            pmState.setPM(false);
             return true;
         }
         logger.error("报表数据上传中，明細表數據插入失败：" + uploadReportDetailResult);
@@ -1146,5 +1143,27 @@ public class HitachiLaserDrillHost extends EquipModel {
                 return false;
             }
         }
+    }
+
+    /**
+     * EAP启动时将设备的_PClog获取过来，统计生产数据
+     * 形成一个本地记录，记录次设备当天做了什么
+     * 如果已存在记录，则对记录进行补充
+     */
+    private void reloadPClog() {
+        String localftpip = GlobalConstants.ftpIP;
+        String ftpip = GlobalConstants.ftpIP;
+        String ftpPort = GlobalConstants.ftpPort;
+        String ftpUser = GlobalConstants.ftpUser;
+        String ftpPwd = GlobalConstants.ftpPwd;
+        DateTimeFormatter yyyyMMdd = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDateTime now = LocalDateTime.now();
+        TransferUtil.setPPBody(deviceCode, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + "PCLOG/TMP");
+        if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + "PCLOG/TMP", GlobalConstants.ftpPath + deviceCode + "temp/", "TMP", ftpip, ftpPort, ftpUser, ftpPwd)) {
+
+        }
+        List<String> result = sendCmdMsg2Equip("ftp " + localftpip + " "
+                + ftpUser + " " + ftpPwd + "C:\\MARK50\\LOG\\  " + GlobalConstants.ftpPath + deviceCode + "PCLOG/" + " \"mput "
+                + now.format(yyyyMMdd) + ".PC \"");
     }
 }
