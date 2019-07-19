@@ -533,22 +533,22 @@ public class ASM120THost extends EquipHost {
 
     @Override
     public void sendUphData2Server() {
-        String output = this.getOutputData() == null ? "" : this.getOutputData();
-        //获取前一状态与当前状态
-        sendS1F3Check();
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "UphDataTransfer");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("equipStatus", equipStatus);
-        mqMap.put("preEquipStatus", preEquipStatus);
-        mqMap.put("currentRecipe", ppExecName);
-        mqMap.put("lotId", lotId);
-        mqMap.put("output", output);
-        mqMap.put("unit", "");
-        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
-        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
-        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
+//        String output = this.getOutputData() == null ? "" : this.getOutputData();
+//        //获取前一状态与当前状态
+//        sendS1F3Check();
+//        Map mqMap = new HashMap();
+//        mqMap.put("msgName", "UphDataTransfer");
+//        mqMap.put("deviceCode", deviceCode);
+//        mqMap.put("equipStatus", equipStatus);
+//        mqMap.put("preEquipStatus", preEquipStatus);
+//        mqMap.put("currentRecipe", ppExecName);
+//        mqMap.put("lotId", lotId);
+//        mqMap.put("output", output);
+//        mqMap.put("unit", "");
+//        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
+//        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+//       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+//        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
 //       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 
