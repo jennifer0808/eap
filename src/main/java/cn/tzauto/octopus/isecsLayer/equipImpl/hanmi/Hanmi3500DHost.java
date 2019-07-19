@@ -11,6 +11,7 @@ import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.resolver.RecipeFileResolver;
 import cn.tzauto.octopus.common.resolver.RecipeFileUtil;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.resolver.disco.RecipeEdit;
@@ -27,8 +28,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Hanmi3500DHost extends EquipModel {
@@ -267,6 +267,8 @@ public class Hanmi3500DHost extends EquipModel {
         Recipe recipe = setRecipe(recipeName);
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         String ftpRecipePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
         sqlSession.close();
 
         String path = recipeNameMappingMap.get(recipeName).split(":")[0];
@@ -287,6 +289,69 @@ public class Hanmi3500DHost extends EquipModel {
                     resultMap.put("recipe", recipe);
                     resultMap.put("deviceCode", deviceCode);
                     resultMap.put("recipeFTPPath", ftpRecipePath);
+                    List<RecipePara> recipeParas = RecipeFileUtil.transfer2DB(new RecipeFileResolver() {
+                        @Override
+                        public Map<String, String> resolve(File file) {
+                            Map<String, String> map = new HashMap<>();
+                            BufferedReader br = null;
+                            String cfgline;
+                            try {
+                                br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "GBK"));
+                                while ((cfgline = br.readLine()) != null) {
+                                    if (cfgline.contains("$Now") || cfgline.contains("PH_ID") || cfgline.contains("DEV_ID")) {
+                                        String[] cfg = cfgline.split("=");
+                                        //因为文件的第一行有乱码，如果读取的是第一行，要把乱码去除
+                                        String key = cfg[0];
+                                        if (cfg.length > 2) {
+                                            cfg[0] = cfg[1];
+                                            cfg[1] = cfg[2];
+                                        }
+                                        if (cfg[0].contains("DEV_ID")) {
+                                            key = "DEV_ID";
+                                        }
+                                        if (cfg[0].contains("PH_ID")) {
+                                            key = "PH_ID";
+                                        }
+                                        if (key.contains("[")) { //去除[]
+                                            key = key.substring(0, key.indexOf("["));
+                                        }
+                                        String[] cfg2 = cfg[1].split("\\$");
+                                        String value = cfg2[0];
+                                        if (value.contains("{")) {  //去除{}
+                                            value = value.substring(value.indexOf("{") + 1, value.indexOf("}"));
+                                        }
+                                        if (value.contains("\"")) { //去除引号
+                                            value = value.replaceAll("\"", "");
+                                        }
+                                        key = key.replaceAll(" ", ""); //去除空格
+                                        value = value.replaceAll(" ", "");
+                                        if (value.contains(",")) {
+                                            String[] values = value.split(",");
+                                            String keyTemp = "";
+                                            for (int j = 0; j < values.length; j++) {
+                                                keyTemp = key + String.valueOf(j + 1);
+                                                map.put(keyTemp, values[j]);
+                                            }
+                                        } else {
+                                            map.put(key, value);
+                                        }
+                                    }
+                                }
+                            }catch (Exception e) {
+                                logger.info(String.format("%s resolve recipe failed, the %s.DFD file was not found!",deviceCode,recipeName));
+                                return null;
+                            }finally {
+                                if(br != null) {
+                                    try {
+                                        br.close();
+                                    } catch (IOException e) {
+                                    }
+                                }
+                            }
+                            return map;
+                        }
+                    },new File(absolutePath+recipeName+".DFD"), recipeTemplates,false);
+                    resultMap.put("recipeParaList", recipeParas);
                     break;
                 } else if (str.contains("rror")) {
                     UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
@@ -860,12 +925,11 @@ public class Hanmi3500DHost extends EquipModel {
     public Map getEquipRecipeList() {
         List<String> recipeNameList = new ArrayList<>();
         Map eppd = new HashMap();
-        eppd.put("eppd", recipeNameList);
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+        synchronized (sawHost.iSecsConnection.getSocketClient()) {
 
             List<String> result = new ArrayList<>();
             try {
-                result = iSecsHost.executeCommand("dos \"dir " + sawRecipePath + " /ad/w\"");
+                result = sawHost.executeCommand("dos \"dir " + sawRecipePath + " /ad/w\"");
             } catch (Exception e) {
                 return eppd;
             }
@@ -880,7 +944,7 @@ public class Hanmi3500DHost extends EquipModel {
                         if (dir.contains(".") || dir.contains("..")) {
                             continue;
                         }
-                        List<String> singleDirRecipe = iSecsHost.executeCommand("dos \"type " + sawRecipePath + "\\" + dir + "\\DEV.LST\"");
+                        List<String> singleDirRecipe = sawHost.executeCommand("dos \"type " + sawRecipePath + "\\" + dir + "\\DEV.LST\"");
                         if (singleDirRecipe.size() > 0) {
                             for (String strTmp : singleDirRecipe) {
                                 if (strTmp.contains(",")) {
@@ -899,7 +963,7 @@ public class Hanmi3500DHost extends EquipModel {
                         }
                     }
                 }
-                List<String> singleDirRecipe1 = iSecsHost.executeCommand("dos \"type " + sawRecipePath + "\\DEV.LST\"");
+                List<String> singleDirRecipe1 = sawHost.executeCommand("dos \"type " + sawRecipePath + "\\DEV.LST\"");
                 if (singleDirRecipe1.size() > 0) {
                     for (String strTmp : singleDirRecipe1) {
                         if (strTmp.contains(",")) {
