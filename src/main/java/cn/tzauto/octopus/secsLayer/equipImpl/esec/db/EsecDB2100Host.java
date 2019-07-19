@@ -82,6 +82,7 @@ public class EsecDB2100Host extends EquipHost {
                 if (this.getCommState() != this.COMMUNICATING) {
                     sendS1F13out();
                 }
+
                 if (rptDefineNum < 1) {
 //                    sendS1F1out();
                     //为了能调整为online remote
@@ -174,7 +175,10 @@ public class EsecDB2100Host extends EquipHost {
                 processS12F19in(data);
             } else if (tagName.equalsIgnoreCase("s12f67in")) {
                 processS12F67in(data);
-            } else {
+            }else if (tagName.equalsIgnoreCase("f0")) {
+                sendSnF0();
+                logger.info("tagName===========>" + tagName);
+            }  else {
                 logger.info("Received a message with tag = " + tagName
                         + " which I do not want to process! ");
             }

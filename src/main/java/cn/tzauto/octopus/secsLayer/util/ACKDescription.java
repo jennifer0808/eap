@@ -956,7 +956,7 @@ public class ACKDescription {
             } else if (ack.equals("9")) {
                 description = "PAUSE ";
             }
-        } else if (deviceType.contains("AD3000T")) {
+        } else if (deviceType.contains("ACCRETECHAD3000Z1")) {
             if (ack.equals("0")) {
                 description = "Initial";
             } else if (ack.equals("1")) {
@@ -1444,7 +1444,7 @@ public class ACKDescription {
                     descriControlState = GlobalConstant.CONTROL_REMOTE_ONLINE;// Online/remote
                     break;
             }
-        } else if (deviceType.contains("AD3000T")) {
+        } else if (deviceType.contains("ACCRETECHAD3000Z1")) {
             switch (String.valueOf(obj)) {
                 case "0":
                     descriControlState = GlobalConstant.STATUS_INIT;// Offline/machine offline

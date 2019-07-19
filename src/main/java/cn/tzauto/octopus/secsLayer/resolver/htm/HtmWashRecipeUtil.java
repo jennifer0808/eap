@@ -19,16 +19,45 @@ import java.util.*;
 public class HtmWashRecipeUtil {
 
     //filePath 是PPBODY原文件的存储路径(非文件夹)
-    public static Map transferFromFile(String filePath) {
+    public static Map transferFromFile(String filePath, String deviceCode) {
         Map map = new LinkedHashMap();
         BufferedReader br = null;
         try {
             FileInputStream in = new FileInputStream(filePath);
             byte[] temp = new byte[100];
             in.read(temp);
-            int i = 1;
-            for (byte a : temp) {
-                map.put(String.valueOf(i++), a);
+            List list = new ArrayList<>();
+            for (int i = 0; i < temp.length; i++) {
+                list.add(Integer.toHexString(temp[i]));
+            }
+            int paraCode = 1;
+            int startIndex = 0;
+            int endIndex = list.size();
+            if ("PLA-011".equals(deviceCode)) {
+                startIndex = 0;
+                endIndex = 10;
+            } else if ("PLA-012".equals(deviceCode)) {
+                startIndex = 11;
+                endIndex = 21;
+            } else if ("PLA-013".equals(deviceCode)) {
+                startIndex = 22;
+                endIndex = 32;
+            } else if ("PLA-014".equals(deviceCode)) {
+                startIndex = 33;
+                endIndex = 43;
+            } else if ("PLA-017".equals(deviceCode)) {
+                startIndex = 44;
+                endIndex = 54;
+            } else if ("PLA-018".equals(deviceCode)) {
+                startIndex = 55;
+                endIndex = 65;
+            } else if ("PLA-027".equals(deviceCode)) {
+                startIndex = 66;
+                endIndex = 76;
+            }
+            for (int i = startIndex; i < endIndex; i++) {
+                int value = Integer.parseInt(list.get(i).toString().replace("f", "") + list.get(++i).toString().replace("f", ""), 16);
+                map.put(String.valueOf(paraCode++), value);
             }
             return map;
         } catch (Exception e) {
@@ -42,23 +71,23 @@ public class HtmWashRecipeUtil {
         RecipeService recipeService = new RecipeService(sqlSession);
         List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
         sqlSession.close();
-        List<String> paraNameList = new ArrayList<>();
+        Map<String, RecipeTemplate> paraNameMap = new HashMap<>();
         for (int i = 0; i < recipeTemplates.size(); i++) {
-            paraNameList.add(recipeTemplates.get(i).getParaCode());
+            paraNameMap.put(recipeTemplates.get(i).getParaCode(), recipeTemplates.get(i));
         }
         List<RecipePara> recipeParaList = new ArrayList<>();
         Set<Map.Entry<String, String>> entry = paraMap.entrySet();
         for (Map.Entry<String, String> e : entry) {
-            if (paraNameList.contains(e.getKey())) {
+            if (null != paraNameMap.get(e.getKey())) {
                 RecipePara recipePara = new RecipePara();
-                recipePara.setParaCode(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaCode());
-                recipePara.setParaName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaName());
-                recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
+                recipePara.setParaCode(paraNameMap.get(e.getKey()).getParaCode());
+                recipePara.setParaName(paraNameMap.get(e.getKey()).getParaName());
+                recipePara.setParaShotName(paraNameMap.get(e.getKey()).getParaShotName());
                 recipePara.setSetValue(String.valueOf(e.getValue()));
-                recipePara.setMinValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMinValue());
-                recipePara.setMaxValue(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getMaxValue());
-                recipePara.setParaMeasure(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaUnit());
-                recipePara.setParaShotName(recipeTemplates.get(paraNameList.indexOf(e.getKey())).getParaShotName());
+                recipePara.setMinValue(paraNameMap.get(e.getKey()).getMinValue());
+                recipePara.setMaxValue(paraNameMap.get(e.getKey()).getMaxValue());
+                recipePara.setParaMeasure(paraNameMap.get(e.getKey()).getParaUnit());
+                recipePara.setParaShotName(paraNameMap.get(e.getKey()).getParaShotName());
                 recipeParaList.add(recipePara);
             }
         }
@@ -68,9 +97,9 @@ public class HtmWashRecipeUtil {
     public static boolean saveRecipeTemplateList(Map paraMap) {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         try {
-            String deviceTypeId = "4AFD9962300901B4E053AC11AD668792";
-            String deviceTypeCode = "HTM";
-            String deviceTypeName = "HTM";
+            String deviceTypeId = "4AFD9962300901B4E053AC11AD668700";
+            String deviceTypeCode = "HTMWash";
+            String deviceTypeName = "HTMWash";
             RecipeService recipeService = new RecipeService(sqlSession);
             List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceTypeCode, "RecipePara");
 //        sqlSession.close();
@@ -132,8 +161,14 @@ public class HtmWashRecipeUtil {
         return true;
     }
 
+    public static List analysisRecipe(String recipePath, String deviceType, String deviceCode) {
+        Map paraMap = HtmWashRecipeUtil.transferFromFile(recipePath, deviceCode);
+        List<RecipePara> recipeParaList = HtmWashRecipeUtil.transferFromDB(paraMap, deviceType);
+        return recipeParaList;
+    }
+
     public static void main(String[] args) {
-        Map paraMap = HtmWashRecipeUtil.transferFromFile("D:\\11_V2.txt");
+        Map paraMap = HtmWashRecipeUtil.transferFromFile("D:\\QFNDFN-4B_V10.txt", "PLA-012");
 
         // 保存recipe参数的方法
 //        boolean flag = saveRecipeTemplateList(paraMap);
@@ -141,7 +176,7 @@ public class HtmWashRecipeUtil {
 //            System.out.println("保存失败");
 //        }
 //
-        List<RecipePara> list = HtmWashRecipeUtil.transferFromDB(paraMap, "HTM");
+        List<RecipePara> list = HtmWashRecipeUtil.transferFromDB(paraMap, "HTMWash");
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
         }

@@ -126,7 +126,7 @@
                            <tabs>
                               <Tab id="TB_EventLog" text="Event Log">
                                  <content>
-                                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                    <AnchorPane prefHeight="180.0" prefWidth="200.0">
                                        <children>
                                           <TextArea fx:id="eventLog" editable="false" prefHeight="225.0" prefWidth="648.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                        </children>
@@ -135,7 +135,7 @@
                               </Tab>
                               <Tab id="TB_SecsLog" text="Secs Log">
                                  <content>
-                                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                    <AnchorPane prefHeight="180.0" prefWidth="200.0">
                                        <children>
                                           <TextArea fx:id="secsLog" editable="false" prefHeight="225.0" prefWidth="648.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                        </children>
@@ -144,7 +144,7 @@
                               </Tab>
                               <Tab id="TB_ServerLog" text="Server Comm Log">
                                  <content>
-                                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                    <AnchorPane prefHeight="180.0" prefWidth="200.0">
                                        <children>
                                           <TextArea fx:id="serverLog" editable="false" prefHeight="225.0" prefWidth="648.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                        </children>

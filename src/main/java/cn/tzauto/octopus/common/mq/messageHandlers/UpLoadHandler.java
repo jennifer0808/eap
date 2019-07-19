@@ -61,7 +61,6 @@ public class UpLoadHandler implements MessageHandler {
             }
             recipeParaList = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList);
 
-            System.out.println(recipeParaList.get(0).getSetValue());
             sqlSession.commit();
             Map mqMap = new HashMap();
             mqMap.put("msgName", "UpLoad");

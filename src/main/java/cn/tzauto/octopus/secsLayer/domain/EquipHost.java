@@ -440,7 +440,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         logger.info("START CHECK: ready to upload recipe:" + new Date());
         List<RecipePara> equipRecipeParas = null;
         try {
-            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceId, checkRecipe.getRecipeName()).get("recipeParaList");
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
         } catch (UploadRecipeErrorException upe) {
             logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
         }
