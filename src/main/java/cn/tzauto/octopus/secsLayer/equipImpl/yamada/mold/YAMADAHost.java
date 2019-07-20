@@ -30,11 +30,10 @@ public class YAMADAHost extends EquipHost {
 
     private static final long serialVersionUID = -8427516257654563776L;
     private static final Logger logger = Logger.getLogger(YAMADAHost.class);
-    private long ppselectfinishCeid = 601L;
 
     public YAMADAHost(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
-        EquipStateChangeCeid = 605L;
+        EquipStateChangeCeid = 101L;
         svFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         ecFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
         ceFormat = SecsFormatValue.SECS_4BYTE_UNSIGNED_INTEGER;
@@ -159,7 +158,7 @@ public class YAMADAHost extends EquipHost {
             } else if (ceid == EquipStateChangeCeid) {
                 processS6F11EquipStatusChange(data);
                 return;
-            } else if (ceid == ppselectfinishCeid) { //601L
+            } else if (ceid == 601L) { //601L
                 findDeviceRecipe();
             }
 

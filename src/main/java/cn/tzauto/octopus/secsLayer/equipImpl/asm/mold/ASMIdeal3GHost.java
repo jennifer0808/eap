@@ -480,35 +480,35 @@ public class ASMIdeal3GHost extends EquipHost {
     }
 
     @Override
-    public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
-        String output = this.getOutputData() == null ? "" : this.getOutputData();
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        RecipeService recipeService = new RecipeService(sqlSession);
-        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
-        sqlSession.close();
-
-        Map shotCountMap = null;
-        if(svidlist != null && svidlist.size() != 0){
-            List<Long> svids = new ArrayList<>();
-            for(Object svid:svidlist){
-                svids.add(Long.parseLong(svid.toString()));
-            }
-            shotCountMap = activeWrapper.sendS1F3out(svids, svFormat);
-        }
-        Map mqMap = new HashMap();
-        mqMap.put("msgName", "UphDataTransfer");
-        mqMap.put("deviceCode", deviceCode);
-        mqMap.put("equipStatus", equipStatus);
-        mqMap.put("preEquipStatus", preEquipStatus);
-        mqMap.put("currentRecipe", ppExecName);
-        mqMap.put("lotId", lotId);
-        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
-        mqMap.put("output", output);
-        mqMap.put("unit", "");
-        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
-        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
-        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
-        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
+        public void sendUphData2Server() throws IOException, BrokenProtocolException, T6TimeOutException, T3TimeOutException, InterruptedException, StateException, IntegrityException, InvalidDataException {
+//        String output = this.getOutputData() == null ? "" : this.getOutputData();
+//        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+//        RecipeService recipeService = new RecipeService(sqlSession);
+//        List svidlist = recipeService.searchShotSVByDeviceType(deviceType);
+//        sqlSession.close();
+//
+//        Map shotCountMap = null;
+//        if(svidlist != null && svidlist.size() != 0){
+//            List<Long> svids = new ArrayList<>();
+//            for(Object svid:svidlist){
+//                svids.add(Long.parseLong(svid.toString()));
+//            }
+//            shotCountMap = activeWrapper.sendS1F3out(svids, svFormat);
+//        }
+//        Map mqMap = new HashMap();
+//        mqMap.put("msgName", "UphDataTransfer");
+//        mqMap.put("deviceCode", deviceCode);
+//        mqMap.put("equipStatus", equipStatus);
+//        mqMap.put("preEquipStatus", preEquipStatus);
+//        mqMap.put("currentRecipe", ppExecName);
+//        mqMap.put("lotId", lotId);
+//        mqMap.put("shotCount", JsonMapper.toJsonString(shotCountMap));
+//        mqMap.put("output", output);
+//        mqMap.put("unit", "");
+//        mqMap.put("currentTime", GlobalConstants.dateFormat.format(new Date()));
+//        GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+//        UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "发送设备UPH参数至服务端");
+//        logger.info("设备 " + deviceCode + " UPH参数为:" + mqMap);
 //       UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "UPH参数为:" + mqMap);
     }
 

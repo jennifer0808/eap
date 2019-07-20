@@ -581,9 +581,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
         if (listtmp != null && !listtmp.isEmpty()) {
-                equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
-                ppExecName = String.valueOf(listtmp.get(1));
-                controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0)), deviceType);
+            ppExecName = String.valueOf(listtmp.get(1));
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
         }
         Map panelMap = new HashMap();
         panelMap.put("EquipStatus", equipStatus);
@@ -596,8 +596,9 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected List getNcessaryData() {
         DataMsgMap data = null;
         List<Long> statusList = new ArrayList<>();
+        SqlSession sqlSession = null;
         try {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            sqlSession = MybatisSqlSession.getSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
             long equipStatussvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "EquipStatus").get(0).getDeviceVariableId());
             long pPExecNamesvid = Long.parseLong(recipeService.searchRecipeTemplateByDeviceCode(deviceCode, "PPExecName").get(0).getDeviceVariableId());
@@ -605,14 +606,17 @@ public abstract class EquipHost extends Thread implements MsgListener {
             statusList.add(equipStatussvid);
             statusList.add(pPExecNamesvid);
             statusList.add(controlStatesvid);
+
         } catch (Exception e) {
-            logger.error("error while querying database：" , e);
+            logger.error("error while querying database：", e);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "数据库查询报错，请检查EAP日志确认原因.");
             return null;
+        }finally {
+            sqlSession.close();
         }
         try {
             data = activeWrapper.sendS1F3out(statusList, svFormat);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.error("Wait for get meessage directly error：" + e);
             setControlState(GlobalConstant.CONTROL_OFFLINE);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "获取设备当前状态信息失败，请检查设备状态.");
@@ -722,7 +726,6 @@ public abstract class EquipHost extends Thread implements MsgListener {
             return false;
         }
     }
-
 
 
     @SuppressWarnings("unchecked")
@@ -845,7 +848,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public void sendS2F15out(long ecid, String ecv) {
         DataMsgMap s2f15out = new DataMsgMap("S2F15OUT", activeWrapper.getDeviceId());
         s2f15out.setTransactionId(activeWrapper.getNextAvailableTransactionId());
-        long tmpL = ecid ;
+        long tmpL = ecid;
         long l[] = new long[1];
         l[0] = tmpL;
         float tmpF = Float.parseFloat(ecv);
@@ -1174,7 +1177,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
             logger.error("Exception:", e);
         }
         byte ALCD = (byte) data.get("ALCD");
-        if(ALCD>-1&&(deviceType.contains("6361")||deviceType.contains("HANMI"))){
+        if (ALCD > -1 && (deviceType.contains("6361") || deviceType.contains("HANMI"))) {
             return null;
         }
         long ALID = (long) data.get("ALID");
@@ -1207,7 +1210,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         long ceid = -12345679;
         try {
             if (data.get("CEID") != null) {
-                ceid = (long)data.get("CEID");
+                ceid = (long) data.get("CEID");
                 logger.info("Received a s6f11in with CEID = " + ceid);
             }
 //            if (equipSecsBean.collectionReports.get(ceid) != null) {
@@ -1242,7 +1245,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
         //回复s6f11消息
         long ceid = 0l;
         try {
-            ceid = (long)data.get("CEID");
+            ceid = (long) data.get("CEID");
         } catch (Exception e) {
             logger.error("Exception:", e);
         }
@@ -1541,7 +1544,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     protected Object getPPBODY(String recipeName) throws UploadRecipeErrorException {
         try {
             Object result = activeWrapper.sendS7F5out(recipeName).get("PPBODY");
-            if("".equalsIgnoreCase(String.valueOf(result))){
+            if ("".equalsIgnoreCase(String.valueOf(result))) {
                 return null;
             }
             return result;
@@ -1925,7 +1928,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
     public Map getSpecificSVData(List dataIdList) {
         Map resultMap = new HashMap();
         List<Long> svidList = new ArrayList();
-        for(Object dataId:dataIdList){
+        for (Object dataId : dataIdList) {
             svidList.add(Long.parseLong(String.valueOf(dataId)));
         }
         List svValueList = new ArrayList();
@@ -2252,7 +2255,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
      * @return
      */
     public boolean holdDeviceAndShowDetailInfo() {
-        Map resultMap   = holdDevice();
+        Map resultMap = holdDevice();
 
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
@@ -3313,6 +3316,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
 //            String NullBinCodeValue = (String) ((MsgSection) DataMsgMap.get("NullBinCodeValue")).getData();
             Object BinCodeEquivalents = DataMsgMap.get("BCEQU");
             Object NullBinCodeValue = DataMsgMap.get("NULBC");
+            short codeFormat = (short) DataMsgMap.get("BCEFM");
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "机台请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
             UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端请求WaferMapping设置信息！WaferId：[" + MaterialID + "]");
             Map<String, String> mappingInfo = AxisUtility.downloadWaferMap(deviceCode, MaterialID);
@@ -3322,7 +3326,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
                 activeWrapper.sendS12F4out(null, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
-                        , 0, 0, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, 0 * 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                        , 0, 0, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, codeFormat, 0 * 0, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 this.sendTerminalMsg2EqpSingle(mappingInfo.get("msg"));
                 return null;
@@ -3400,7 +3404,7 @@ public abstract class EquipHost extends Thread implements MsgListener {
                 s12f4out.setTransactionId(DataMsgMap.getTransactionId());
 
                 activeWrapper.sendS12F4out(MaterialID, SecsFormatValue.SECS_ASCII, IDTYP, downFlatNotchLocation, OriginLocation, 0, null, SecsFormatValue.SECS_LIST, "um", 1231, 1231, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER
-                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, SecsFormatValue.SECS_ASCII, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
+                        , mapRow, mapCol, -1, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, BinCodeEquivalents, NullBinCodeValue, codeFormat, mapRow * mapCol, SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, DataMsgMap.getTransactionId()
                 );
                 UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "发送WaferMapping设置信息至机台！WaferId：[" + MaterialID + "]");
             } catch (Exception ex) {

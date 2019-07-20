@@ -40,7 +40,7 @@ public class RecipeService extends BaseService {
     private DeviceInfoMapper deviceInfoMapper;
     public SysOfficeMapper sysOfficeMapper;
     private RecipeNameMappingMapper recipeNameMappingMapper;
-//    private static Logger logger = Logger.getLogger(RecipeService.class);
+    //    private static Logger logger = Logger.getLogger(RecipeService.class);
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UpdateVerNoHandler.class);
 
     public RecipeService(SqlSession sqlSession) {
@@ -443,69 +443,6 @@ public class RecipeService extends BaseService {
         return result;
     }
 
-    /**
-     * 下载指定的recipe，同时根据类型执行不同的删除recipe操作，最后选中Recipe
-     *
-     * @param deviceInfo
-     * @param recipe
-     * @param type
-     * @return
-     */
-    public String downLoadRcp2DeviceByType(DeviceInfo deviceInfo, Recipe recipe, String type) {
-        String result = "0";//默认返回OK
-        //获取机台状态，判断是否可以下载Recipe
-        //验证机台状态
-        MultipleEquipHostManager hostManager = GlobalConstants.stage.hostManager;
-        String deviceId = deviceInfo.getDeviceCode();
-        String recipeName = recipe.getRecipeName();
-        String checkResult = hostManager.checkBeforeDownload(deviceId, recipeName);
-        if (!"0".equals(checkResult)) {
-            return checkResult;
-        }
-        if (type.contains("Delete")) {
-            hostManager.deleteRecipeFromDevice(deviceId, recipeName);
-            //如果删除失败，流程继续
-        }
-        if (deviceInfo.getDeviceType().contains("DGP8761") && type.contains("DeleteAll")) {
-            hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-        }
-        if (type.contains("Download")) {
-            //下载指定Recipe到机台上
-            String recipeFilePath = organizeRecipeDownloadFullFilePath(recipe);
-            String downLoadResult = null;
-            if (deviceInfo.getDeviceType().equalsIgnoreCase("NITTODR3000III")) {
-                downLoadResult = hostManager.downLoadRcp2DeviceCompleteForTP(recipeFilePath, deviceInfo, recipe);
-            } else {
-                downLoadResult = hostManager.downLoadRcp2DeviceComplete(recipeFilePath, deviceInfo, recipe);
-            }
-            if (!"0".equals(downLoadResult)) {
-                result = result + " " + downLoadResult;
-                return result;//如果下载失败，直接return
-            }
-        }
-        if (type.contains("Select")) {
-            //选中Recipe
-            String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
-            if (deviceInfo.getDeviceType().contains("DISCO") || deviceInfo.getDeviceType().contains("DB-800HSD")) {
-                ppselectResult = "0";
-            }
-            if (!"0".equals(ppselectResult)) {
-                result = result + " " + ppselectResult;
-                if (type.contains("DeleteAll")) {
-                    String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-                    //如果删除失败，流程继续
-                }
-                return result;
-            }
-        }
-        if (!deviceInfo.getDeviceType().contains("DGP8761")) {
-            if (type.contains("DeleteAll")) {
-                String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
-                //如果删除失败，流程继续
-            }
-        }
-        return result;
-    }
 
     /**
      * MES调用下载接口时使用的自动下载方法
@@ -562,7 +499,7 @@ public class RecipeService extends BaseService {
         }
         if (type.contains("Select")) {
             //先删除其余recipe
-            if (type.contains("DeleteAll")&&(deviceInfo.getDeviceType().contains("ICOST340")||deviceInfo.getDeviceType().contains("ICOST380"))) {
+            if (type.contains("DeleteAll") && (deviceInfo.getDeviceType().contains("ICOST340") || deviceInfo.getDeviceType().contains("ICOST380"))) {
                 String delAllResult = hostManager.deleteAllRcpFromDevice(deviceId, recipeName);
                 //如果删除失败，流程继续
 //                String ppselectResult = hostManager.selectSpecificRecipe(deviceId, recipe.getRecipeName());
@@ -577,7 +514,7 @@ public class RecipeService extends BaseService {
             }
             if (!"0".equals(ppselectResult)) {
                 result = "2";
-                if(deviceInfo.getDeviceType().contains("CCTECH")){
+                if (deviceInfo.getDeviceType().contains("CCTECH")) {
                     result = "Busy , try later";
                 }
                 if (type.contains("DeleteAll")) {
@@ -653,20 +590,20 @@ public class RecipeService extends BaseService {
 
     private void sendUploadInfo2Server(String deviceCode, List<Recipe> recipes, List<RecipePara> recipeParas, List<RecipeOperationLog> recipeOperationLogs, List<Attach> attachs) {
         Map mqMap = new HashMap();
-            mqMap.put("msgName", "Upload");
-            mqMap.put("deviceCode", deviceCode);
-            mqMap.put("recipe", JSON.toJSONString(recipes));
-            mqMap.put("recipePara", JSON.toJSONString(recipeParas));
-            mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
-            mqMap.put("attach", JSON.toJSONString(attachs));
-            String eventId = "";
-            try {
-                eventId = AxisUtility.getReplyMessage();
-            }catch (Exception e){
+        mqMap.put("msgName", "Upload");
+        mqMap.put("deviceCode", deviceCode);
+        mqMap.put("recipe", JSON.toJSONString(recipes));
+        mqMap.put("recipePara", JSON.toJSONString(recipeParas));
+        mqMap.put("recipeOperationLog", JSON.toJSONString(recipeOperationLogs));
+        mqMap.put("attach", JSON.toJSONString(attachs));
+        String eventId = "";
+        try {
+            eventId = AxisUtility.getReplyMessage();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        mqMap.put("eventId", eventId==null?"":eventId);
+        mqMap.put("eventId", eventId == null ? "" : eventId);
         GlobalConstants.C2SRcpUpLoadQueue.sendMessage(mqMap);
         GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipes) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLogs));
     }
@@ -743,7 +680,7 @@ public class RecipeService extends BaseService {
         //附件信息
 
         DeviceInfo deviceInfo = deviceInfoMapper.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceId(), recipe);
+        List<Attach> attachs = GlobalConstants.stage.hostManager.getEquipRecipeAttarch(deviceInfo.getDeviceCode(), recipe);
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         if (!GlobalConstants.isLocalMode) {
@@ -774,7 +711,7 @@ public class RecipeService extends BaseService {
                     String relLocalPath = GlobalConstants.localRecipePath + organizeUploadRecipePath(recipe) + item + "_V" + recipe.getVersionNo() + ".txt";
                     String relRemotePath = organizeUploadRecipePath(recipe);
                     FtpUtil.uploadFile(relLocalPath, relRemotePath, item + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-                    if(re) {
+                    if (re) {
                         boolean existFlag = FtpUtil.checkFileExist(recipeRemotePath, item.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
                         re &= existFlag;
                     }
@@ -813,10 +750,10 @@ public class RecipeService extends BaseService {
         this.saveRecipeOperationLog(recipeOperationLog);
         recipeParas = setParasRCProwId(recipeParas, recipe.getId());
         //  new RecipeParaDao().saveRecipeParaBatch(recipeParaList);
-//        this.saveRcpParaBatch(recipeParas);
+        this.saveRcpParaBatch(recipeParas);
         //存储之后查询，得到id
         //这里太慢，于是在setParasRCProwId给赋值了
-        //recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+        recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
         List<RecipeOperationLog> recipeOperationLogs = new ArrayList<>();
         recipeOperationLogs.add(recipeOperationLog);
         //附件信息         
@@ -841,16 +778,51 @@ public class RecipeService extends BaseService {
             // 上传ftp
             FtpUtil.uploadFile(recipeLocalPath, recipeRemotePath, recipeName.replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
             existFlag = FtpUtil.checkFileExist(recipeRemotePath, recipeName.replaceAll("/", "@") + "_V" + recipe.getVersionNo() + ".txt", GlobalConstants.ftpIP, GlobalConstants.ftpPort, GlobalConstants.ftpUser, GlobalConstants.ftpPwd);
-            if (!existFlag) {
-//                return false;
-            }
+
             //日志
 //       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "用户 " + GlobalConstants.sysUser.getName() + "上传Recipe： " + recipeName + " 到工控机：" + GlobalConstants.clientId);
             GlobalConstants.sysLogger.info(" MQ发送记录：Recipe= " + JSON.toJSONString(recipe) + " recipePara= " + JSON.toJSONString(recipeParas) + " recipeOperationLog= " + JSON.toJSONString(recipeOperationLog));
         }
         UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Recipe文件存储位置：" + recipeLocalPath);
-        return true;
+        return existFlag;
     }
+
+    /**
+     * UploadHandler使用
+     *
+     * @param recipe
+     * @param rcpRemoteBasePath
+     * @param recipeParas
+     * @return
+     */
+    public List<RecipePara> saveUpLoadRcpInfo(String rcpRemoteBasePath, Recipe recipe, List<RecipePara> recipeParas) {
+        String rcpNewId = UUID.randomUUID().toString();
+        recipe.setId(rcpNewId);
+        saveRecipe(recipe);
+        List<Recipe> recipes = new ArrayList();
+        recipes.add(recipe);
+        if (recipeParas != null && !recipeParas.isEmpty()) {
+            recipeParas = setParasRCProwId(recipeParas, recipe.getId());
+//            this.saveRcpParaBatch(recipeParas);
+            //存储之后查询，得到id
+            //recipeParas = recipeParaMapper.searchByRcpRowId(recipe.getId());
+        }
+        //本地路径需要到文件
+        String recipeLocalPath = GlobalConstants.localRecipePath + organizeRecipePath(recipe) + recipe.getRecipeName().replaceAll("/", "@").replace("\\", "@") + "_V" + recipe.getVersionNo() + ".txt";
+        //ftp路径需要到目录
+        String recipeRemotePath = organizeUploadRecipePath(recipe);
+        try {
+            if (!GlobalConstants.stage.hostManager.uploadRcpFile2FTP(recipeLocalPath, rcpRemoteBasePath, recipe)) {
+                logger.info("上传recipe文件到ftp时失败");
+            }
+        } catch (Exception e) {
+            logger.error("上传recipe:" + recipe.getRecipeName() + "]到ftp时异常." + e.getMessage());
+            return null;
+        }
+        return recipeParas;
+
+    }
+
 
     /*
      * 保存recipe升级信息（来自server的信息）
@@ -1278,7 +1250,7 @@ public class RecipeService extends BaseService {
         SysOffice sysOffice = sysOfficeMapper.selectSysOfficeByPrimaryKey(deviceInfo.getOfficeId());
         String returnPath = "";
         returnPath = "/RECIPE/" + sysOffice.getPlant() + "/" + sysOffice.getName() + "/" + deviceInfo.getDeviceType() + "/" + recipe.getVersionType() + "/" + deviceInfo.getDeviceCode() + "/" + recipe.getRecipeName().replace("/", "@").replace("\\", "@") + "/";
-        logger.info("recipe上传时的存储路径:"+returnPath);
+        logger.info("recipe上传时的存储路径:" + returnPath);
         return returnPath;
     }
 
