@@ -108,6 +108,7 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
                     //EAP不处理协议，只变动界面
                     logger.info("Network closed, SECS prototcol has been terminated.");
                     newState.setNetConnect(false);
+                    newState.setCommOn(false);
                     sync++;
                     publish(newState);
                     continue;
@@ -191,8 +192,9 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
     public void notificationOfCloseNetwork(int deviceId) {
         logger.info("notificationOfCloseNetwork Invoked at device id " + deviceId + " equip name "
                 + equipNodeBean.getDeviceCode());
-        eventQueue.add(new CommFailureEvent(null, deviceId));
-
+        UiLogUtil.getInstance().appendLog2EventTab(equipNodeBean.getDeviceCode(),"SECS连接已断线...");
+        eventQueue.add(new CommFailureEvent(deviceId));
+        stage.equipHosts.get(equipNodeBean.getDeviceCode()).setSdrReady(false);
     }
 
     @Override

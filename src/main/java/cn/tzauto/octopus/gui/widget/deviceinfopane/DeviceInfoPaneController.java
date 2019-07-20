@@ -181,9 +181,8 @@ public class DeviceInfoPaneController implements Initializable {
             };
             new Thread(task).start();
         }else if(commState==NOT_COMMUNICATING ){
-//            CommonUiUtil.alert(Alert.AlertType.WARNING, "设备不在通讯状态", stage);
             equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态+1");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
 
         }
         getData(deviceInfoExt , deviceInfo, root, recipeService, sysService);

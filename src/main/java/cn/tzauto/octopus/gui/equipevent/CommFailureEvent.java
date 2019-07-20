@@ -12,6 +12,11 @@ public class CommFailureEvent extends ControlEvent
         anyExeption = e;
     }
 
+    public CommFailureEvent(int deviceId)
+    {
+        super(deviceId);
+    }
+
     /**
      * @return the anyExeption
      */

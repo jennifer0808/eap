@@ -334,6 +334,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                 //开启MQ监听
                 startMq();
 
+                UiLogUtil.getInstance().appendLog2EventTab(null,"系统启动...");
+
             } catch (Exception ex) {
                 logger.error("Exception:", ex);
                 closeApp(window, stage);
@@ -542,9 +544,8 @@ public class EapClient extends Application implements JobListener, PropertyChang
                         }
                     }
                 } else {
-
+                    logger.info(deviceCode + "---------------------comm-off");
                     equipStatusPane.setCommLabelForegroundColorCommOff();
-                    logger.error(deviceCode + "---------------------comm-off");
                 }
 //                equipStatusPane.updateUI();
             }
@@ -555,7 +556,7 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     equipHost.setCommState(0);
                     Map map = new HashMap();
                     map.put("NetState", 0);
-                    map.put("CommState",0);
+                    map.put("ControlState",GlobalConstant.CONTROL_OFFLINE);
                     equipHost.changeEquipPanel(map);
                 } else {
                     if (src.getEquipStateProperty().isCommOn()) {
@@ -563,12 +564,14 @@ public class EapClient extends Application implements JobListener, PropertyChang
                         EquipHost equipHost = equipHosts.get(src.getDeviceCode());
                         Map map = new HashMap();
                         map.put("NetState", 1);
+                        map.put("ControlState",GlobalConstant.CONTROL_LOCAL_ONLINE);
                         equipHost.changeEquipPanel(map);
                     } else {
                         logger.info("CommOff==========================");
                         EquipHost equipHost = equipHosts.get(src.getDeviceCode());
                         Map map = new HashMap();
                         map.put("NetState", 0);
+                        map.put("ControlState",GlobalConstant.CONTROL_OFFLINE);
                         equipHost.setCommState(0);
                         equipHost.changeEquipPanel(map);
                         //监听到通信失败事件，重新启动线程通信
