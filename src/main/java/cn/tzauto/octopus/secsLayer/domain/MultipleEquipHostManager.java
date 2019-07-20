@@ -42,6 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MultipleEquipHostManager {
 
     private static final Logger logger = Logger.getLogger(MultipleEquipHostManager.class.getName());
+    public Map<String, DeviceType> deviceTypeDic;
+    public List<DeviceInfo> deviceInfos;
     private HashMap<String, EquipHost> equipHosts; //store pairs <deviceId, Equip>
     private String clientId = ""; //used for naming DB connection Cache
     private String hostXmlFilePath = null;
@@ -49,8 +51,12 @@ public class MultipleEquipHostManager {
     private EquipModel equipModel;
     private EquipHost equipHost;
     private ConcurrentHashMap<String, EquipModel> equipModels;
-    public Map<String, DeviceType> deviceTypeDic;
-    public List<DeviceInfo> deviceInfos;
+
+    private static String getTagValue(String sTag, Element eElement) {
+        NodeList nlList = eElement.getElementsByTagName(sTag).item(0).getChildNodes();
+        Node nValue = (Node) nlList.item(0);
+        return nValue.getNodeValue();
+    }
 
     public boolean initializeSecs(List<DeviceInfo> deviceInfos)
             throws ParserConfigurationException, SAXException, IOException, SecurityException,
@@ -307,12 +313,6 @@ public class MultipleEquipHostManager {
                         devId, remoteIpAddress, remoteTcpPort, connectMode, deviceType, deviceCode
                 });
 
-    }
-
-    private static String getTagValue(String sTag, Element eElement) {
-        NodeList nlList = eElement.getElementsByTagName(sTag).item(0).getChildNodes();
-        Node nValue = (Node) nlList.item(0);
-        return nValue.getNodeValue();
     }
 
     /**
@@ -1491,12 +1491,12 @@ public class MultipleEquipHostManager {
         if (equipModels.get(recipe.getDeviceCode()) != null) {
             return equipModels.get(recipe.getDeviceCode()).uploadRcpFile2FTP(localRcpPath, remoteRcpPath, recipe);
         } else {
-            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-            DeviceService deviceService = new DeviceService(sqlSession);
-            DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
-            sqlSession.close();
-            if (equipHosts.get(deviceInfo.getDeviceCode()) != null) {
-                return equipHosts.get(deviceInfo.getDeviceCode()).uploadRcpFile2FTP(localRcpPath, remoteRcpPath, recipe);
+//            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+//            DeviceService deviceService = new DeviceService(sqlSession);
+//            DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(recipe.getDeviceCode());
+//            sqlSession.close();
+            if (equipHosts.get(recipe.getDeviceCode()) != null) {
+                return equipHosts.get(recipe.getDeviceCode()).uploadRcpFile2FTP(localRcpPath, remoteRcpPath, recipe);
             } else {
                 return false;
             }
