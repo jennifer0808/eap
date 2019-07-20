@@ -37,9 +37,6 @@ public class EsecDB2100Host extends EquipHost {
     public String Lot_Id;
     public String Left_Epoxy_Id;
     public String Lead_Frame_Type_Id;
-    //wafermapping相关属性
-    protected long downFlatNotchLocation;
-    protected long upFlatNotchLocation;
 
     public EsecDB2100Host(String devId, String IpAddress, int TcpPort, String connectMode, String deviceType, String deviceCode) {
         super(devId, IpAddress, TcpPort, connectMode, deviceType, deviceCode);
@@ -787,31 +784,6 @@ public class EsecDB2100Host extends EquipHost {
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="S12FX Code"> 
 
-    public Map processS12F1in(DataMsgMap dataMsgMap) {
-        try {
-            String MaterialID = (String) dataMsgMap.get("MID");
-            MaterialID = MaterialID.trim();
-            byte IDTYP = ((byte) dataMsgMap.get("IDTYP"));
-            upFlatNotchLocation = (long) dataMsgMap.get("FNLOC");
-            byte OriginLocation = ((byte) dataMsgMap.get("ORLOC"));
-            long RowCountInDieIncrements = (long) dataMsgMap.get("ROWCT");
-            long ColumnCountInDieIncrements = (long) dataMsgMap.get("COWCT");
-
-            uploadWaferMappingRow = String.valueOf(RowCountInDieIncrements);
-            uploadWaferMappingCol = String.valueOf(ColumnCountInDieIncrements);
-            //kong
-            //String NullBinCodeValue = (String)((MsgSection) dataMsgMap.get("NullBinCodeValue")).getData();
-            //byte[] ProcessAxis = ((byte[]) ((MsgSection) dataMsgMap.get("ProcessAxis")).getData());
-            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "接受到机台上传WaferId：[" + MaterialID + "]设置信息！");
-            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "向服务端上传机台WaferId：[" + MaterialID + "]设置信息！");
-            DataMsgMap s12f2out = new DataMsgMap("s12f2out", activeWrapper.getDeviceId());
-            //TODO 调用webservices回传waferMapping信息
-            activeWrapper.sendS12F2out((byte) 0, dataMsgMap.getTransactionId());
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-        return null;
-    }
 
     /**
      * WaferMapping Upload (Simple)

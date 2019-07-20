@@ -27,6 +27,9 @@ import org.apache.log4j.MDC;
 
 import java.util.*;
 
+/**
+ * 共用此类
+ */
 public class C6800SECSHost extends EquipHost {
 
     private static final long serialVersionUID = 1L;

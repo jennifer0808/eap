@@ -296,8 +296,8 @@ public class UploadPaneController implements Initializable {
                         }
                     };
                     new Thread(task).start();
-
-                }}
+                }
+            }
             }catch(Exception e){
                 sqlSession.rollback();
                 logger.error("Exception:", e);

@@ -78,6 +78,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
             return false;
         }
     }
+
     @Override
     public Map getEquipRealTimeStateNow() {
         // 实时check到当前Recipe
@@ -90,7 +91,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                         String readResult = iSecsHost.executeCommand("read recipeName").get(0);
                         if (!readResult.contains("Error")) {
                             ppExecName = readResult;
-                        }else{
+                        } else {
                             ppExecName = "Error";
                         }
                     } else if ("control".equals(result.get(0))) {
@@ -98,10 +99,10 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                         String readResult = iSecsHost.executeCommand("read recipeName").get(0);
                         if (!readResult.contains("Error")) {
                             ppExecName = readResult;
-                        }else{
+                        } else {
                             ppExecName = "Error";
                         }
-                    }else if (result.get(0).contains("socket write error")){
+                    } else if (result.get(0).contains("socket write error")) {
                         ppExecName = "Error";
                     }
                 }
@@ -130,7 +131,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                         String readResult = iSecsHost.executeCommand("read recipeName").get(0);
                         if (!readResult.contains("Error")) {
                             ppExecName = readResult;
-                        }else{
+                        } else {
                             ppExecName = "Error";
                         }
                     } else if ("control".equals(result.get(0))) {
@@ -139,11 +140,11 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                             String readResult = iSecsHost.executeCommand("read recipeName").get(0);
                             if (!readResult.contains("Error")) {
                                 ppExecName = readResult;
-                            }else{
+                            } else {
                                 ppExecName = "Error";
                             }
                         }
-                    }else if (result.get(0).contains("socket write error")){
+                    } else if (result.get(0).contains("socket write error")) {
                         ppExecName = "Error";
                     }
                 }
@@ -476,23 +477,24 @@ public class MarchFlexTRAKCDHost extends EquipModel {
                 if ("control".equalsIgnoreCase(curscreenResult.get(0))) {
                     iSecsHost.executeCommand("playback gotomain.txt");
                     curscreenResult = iSecsHost.executeCommand("curscreen");
-                    if(!"main".equals(curscreenResult.get(0))){
+                    if (!"main".equals(curscreenResult.get(0))) {
                         return "选中失败,未跳至main界面!";
                     }
                 }
                 //登录权限
-                if(!loginEngineer()){
+                if (!loginEngineer()) {
                     return "选中失败,未机台未登录至Engineer权限!";
                 }
+
                 List<String> result = iSecsHost.executeCommand("playback select.txt");
                 if ("done".equals(result.get(0))) {
                     //跳转页面成功后，读取recipelist的值
                     result = iSecsHost.executeCommand("goto select");
                     result = iSecsHost.executeCommand("curscreen");
-                    if(!"select".equals(result.get(0))){
+                    if (!"select".equals(result.get(0))) {
                         result = iSecsHost.executeCommand("playback select.txt");
                         result = iSecsHost.executeCommand("curscreen");
-                        if(!"select".equals(result.get(0))){
+                        if (!"select".equals(result.get(0))) {
                             return "选中失败,未跳至select界面!";
                         }
                     }
@@ -550,6 +552,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
 //                    }
                 }
                 Thread.sleep(1000);
+
                 //查询recipe是否有更改成功
                 String currentRecipeName = getCurrentRecipeName();
                 if (currentRecipeName.equals(recipeName)) {
@@ -560,7 +563,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
         } catch (Exception e) {
             logger.error("Select recipe " + recipeName + " error:" + e.getMessage(), e);
             return "选中失败";
-        }finally {
+        } finally {
             Thread thread = new Thread(new MyThread(this));
             thread.start();
         }
@@ -594,12 +597,12 @@ public class MarchFlexTRAKCDHost extends EquipModel {
             result = false;
         } else {
             List<String> loginResult = iSecsHost.executeCommand("playback login.txt");
-            if(!"done".equalsIgnoreCase(loginResult.get(0))){
+            if (!"done".equalsIgnoreCase(loginResult.get(0))) {
                 logger.info("执行login失败！");
                 result = false;
-            }else{
+            } else {
                 loginResult = iSecsHost.executeCommand("playback login_ok.txt");
-                if(!"done".equalsIgnoreCase(loginResult.get(0))){
+                if (!"done".equalsIgnoreCase(loginResult.get(0))) {
                     logger.info("执行login_ok失败！");
                     result = false;
                 }
@@ -633,6 +636,7 @@ public class MarchFlexTRAKCDHost extends EquipModel {
         }
         return result;
     }
+
 
     @Override
     public List<RecipePara> getRecipeParasFromMonitorMap() {

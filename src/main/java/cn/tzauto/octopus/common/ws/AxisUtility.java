@@ -420,7 +420,7 @@ public class AxisUtility {
     public static boolean isEngineerMode(String eqptId) {
         DeviceInfoExt deviceInfoExt = new DeviceInfoExt();
         try {
-//            String endpoint = "http://172.17.173.11/autoServer/services/eqptService";
+//            String endpoint = "http://172.17.162.187:8080/services/eqptService";
             String endpoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/eqptService";
             Service service = new Service();
             Call call = (Call) service.createCall();
@@ -641,6 +641,11 @@ public class AxisUtility {
             lockFlag = true;
         }
         return lockFlag;
+    }
+
+
+    public static void main(String[] args) {
+        AxisUtility.isEngineerMode("E3200-0366");
     }
 
 }

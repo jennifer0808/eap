@@ -40,7 +40,7 @@ public class C6800Util {
                         }
                         if (line.contains("=")) {
                             String[] kv;
-                            if (prefix.startsWith("[ProductParam") || prefix.startsWith("[TestParam")) {
+                            if (prefix.startsWith("[ProductParam") || prefix.startsWith("[TestParam")||prefix.startsWith("[SysTestParam")) {
                                 String key = line.split("=")[1];
                                 line = bufferedReader.readLine();
                                 String[] vals = line.split("=");
@@ -75,5 +75,13 @@ public class C6800Util {
             }
         }, new File(recipePath), recipeTemplates, false);
     }
+
+    public static void main(String[] args) {
+       List<RecipePara> list =  C6800Util.getRecipePara("E:\\AIB-11X11-S805X-B-FT_V5.txt","CCTECHC6Q420");
+       for(RecipePara recipePara:list){
+           System.out.println(recipePara.getParaName()+":"+recipePara.getSetValue());
+       }
+    }
+
 
 }
