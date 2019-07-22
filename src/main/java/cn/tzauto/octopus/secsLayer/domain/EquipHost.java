@@ -3641,4 +3641,25 @@ public abstract class EquipHost extends Thread implements MsgListener {
         this.iconPath = iconPath;
     }
 
+    public void processS14f3in(DataMsgMap data) {
+        try {
+            Map objMap = new HashMap();
+            Map attrMap = new HashMap();
+            attrMap.put("Orientation", "0");
+            attrMap.put("OriginLocation", "UpperRight");
+            attrMap.put("SubstrateSide", "TopSide");
+            attrMap.put("AxisDirection", "DownLeft");
+            objMap.put(new String(), attrMap);
+            Map stripIDformatMap = new HashMap();
+            stripIDformatMap.put("Orientation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("OriginLocation", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("SubstrateSide", SecsFormatValue.SECS_ASCII);
+            stripIDformatMap.put("AxisDirection", SecsFormatValue.SECS_ASCII);
+            activeWrapper.sendS14F4out(objMap, SecsFormatValue.SECS_ASCII, SecsFormatValue.SECS_ASCII, stripIDformatMap,
+                    (byte) 0, new HashMap<>(), SecsFormatValue.SECS_2BYTE_UNSIGNED_INTEGER, data.getTransactionId());
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        }
+    }
+
 }
