@@ -171,16 +171,19 @@ public class AsmAD8312FCHost extends EquipHost {
     @Override
     public Map sendS1F3Check() {
         List listtmp = getNcessaryData();
-        equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
-        ppExecName = (String) listtmp.get(1);
-        ppExecName = ppExecName.replace(".rcp", "");
-        Map panelMap = new HashMap();
-        panelMap.put("EquipStatus", equipStatus);
-        panelMap.put("PPExecName", ppExecName);
-        controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
-        panelMap.put("ControlState", controlState);
-        changeEquipPanel(panelMap);
-        return panelMap;
+        if(!listtmp.isEmpty()) {
+            equipStatus = ACKDescription.descriptionStatus(String.valueOf(listtmp.get(0).toString()), deviceType);
+            ppExecName = (String) listtmp.get(1);
+            ppExecName = ppExecName.replace(".rcp", "");
+            Map panelMap = new HashMap();
+            panelMap.put("EquipStatus", equipStatus);
+            panelMap.put("PPExecName", ppExecName);
+            controlState = ACKDescription.describeControlState(listtmp.get(2), deviceType);
+            panelMap.put("ControlState", controlState);
+            changeEquipPanel(panelMap);
+            return panelMap;
+        }
+        return null;
     }
 
     // </editor-fold>
