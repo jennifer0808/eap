@@ -392,7 +392,7 @@ public class HitachiLaserDrillHost extends EquipModel {
     public String selectRecipe(String recipeName) {
         try {
             getCurrentRecipeName();
-            uploadData("生产");
+            uploadData("生產");
         } catch (Exception e) {
             logger.error("报表上传出错", e);
         }
@@ -889,7 +889,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
-//        if (macstate.equals("生产")) {
+//        if (macstate.equals("生產")) {
 //            if (!confirmLotCount()) {
 //                return false;
 //            }
@@ -946,7 +946,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         //添加程序名
         paraValueList.add(ppExecName);
         //是否初件
-        if (isFirstPro) {
+        if (isFirstPro && macstate.equals("生產")) {
             paraValueList.add("1");
         } else {
             paraValueList.add("0");
@@ -1022,11 +1022,10 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(laserHeadLife);
 
         String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
-
+        lotStartTime = now.format(AvaryAxisUtil.dtf2);
         if ("".equals(uploadReportDetailResult)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
-            if (macstate.equals("生产")) {
-                lotStartTime = now.format(AvaryAxisUtil.dtf2);
+            if (macstate.equals("生產")) {
                 FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
                 FileUtil.writeStrListFile(new ArrayList<>(), GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
             }
@@ -1045,7 +1044,8 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(MacState);
         if (MacState.equals("保养") || MacState.equals("待料")) {
             if (MacState.equals("待料")) {
-                paraValueList.add(idleStartTime);
+//                paraValueList.add(idleStartTime);
+                paraValueList.add(lotStartTime);
                 LocalDateTime now = LocalDateTime.now();
                 paraValueList.add(now.format(AvaryAxisUtil.dtf2));
             } else {

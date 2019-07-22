@@ -253,7 +253,9 @@ public class EapClient extends Application implements JobListener, PropertyChang
                     }
 
                     equipHosts = hostManager.getAllEquipHosts();
+                    logger.info("equipHosts=" + equipHosts == null);
                     equipModels = hostManager.getAllEquipModels();
+                    logger.info("equipModels=" + equipModels == null);
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                     System.exit(0);

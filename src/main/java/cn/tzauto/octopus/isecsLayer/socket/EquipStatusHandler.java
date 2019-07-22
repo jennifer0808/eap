@@ -113,7 +113,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                 }
                 if ("run".equalsIgnoreCase(preEquipstatus) && equipstatus.equalsIgnoreCase("idle")) {
 //                    if (equipModel.deviceType.contains("HITACHI-LASERDRILL")) {
-//                        equipModel.uploadData("生产");
+//                        equipModel.uploadData("生產");
 //                    }
                 }
                 if ((preEquipstatus.contains("eady") || (preEquipstatus.contains("dle"))) && "RUN".equalsIgnoreCase(equipstatus)) {

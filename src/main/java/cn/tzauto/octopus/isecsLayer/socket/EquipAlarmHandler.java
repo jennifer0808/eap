@@ -47,7 +47,11 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         }
         String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
+        logger.info("alarm message ip=====> " + eqpIp);
         String deviceCode = map.get(eqpIp);
+        if (deviceCode == null) {
+            return;
+        }
         DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
         MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         logger.info("alarm message =====> " + message);
@@ -237,45 +241,82 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                 String[] HITACHILaserDrillalarms = str.split(",");
                 alarm = HITACHILaserDrillalarms[1].replace("Alarm =", "").trim();
                 logger.info("收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到报警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
             }
             if (str.contains("AlarmClear =")) {
                 String[] HITACHILaserDrillalarms = str.split(",");
                 alarm = HITACHILaserDrillalarms[1].replace("AlarmClear =", "").trim();
                 logger.info("收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
-                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
+//                UiLogUtil.getInstance().appendLog2EventTab(deviceInfo.getDeviceCode(), "收到消警信息:时间:" + HITACHILaserDrillalarms[0] + "报警:" + alarm);
             }
             if (str.contains("Mode = ")) {
+                str = str.replaceAll("\"", "");
                 String[] HITACHILaserDrillalarms = str.split(",");
                 if (HITACHILaserDrillalarms.length > 2) {
                     String lot = HITACHILaserDrillalarms[3];
                     String recipeNameTemp = HITACHILaserDrillalarms[2];
                     String recipeName = recipeNameTemp.substring(recipeNameTemp.lastIndexOf("\\") + 1).replace("\"", "");
                     if (!lot.equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId)) {
-                        LocalDateTime now = LocalDateTime.now();
-                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotStartTime = now.format(AvaryAxisUtil.dtf2);
+                        //發生批次更換，先把當前批次報表上傳
+                        try {
+                            GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生產");
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        } catch (ServiceException e) {
+                            e.printStackTrace();
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        }
+
+//                        LocalDateTime now = LocalDateTime.now();
+//                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotStartTime = now.format(AvaryAxisUtil.dtf2);
                         GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId = lot;
+                        Map map = new HashMap();
+                        map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
+
                     }
                     if (!recipeName.equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName)) {
                         GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName = recipeName;
                     }
                 }
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
+                        = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "Run";
                 Map map = new HashMap();
                 map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
                 map.put("EquipStatus", "Run");
                 map.put("PPExecName", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName);
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
+                if (!GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.
+                        equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus)) {
+                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
+                }
+//                if (!"".equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime)) {
+                if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Idle")) {
+                    try {
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("待料");
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    } catch (ServiceException e) {
+                        e.printStackTrace();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+//                LocalDateTime now = LocalDateTime.now();
+//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotStartTime = now.format(AvaryAxisUtil.dtf2);
+//                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = "";
+//                }
             }
-            if (str.contains("HEAT-RUN = START")) {
+            if (str.contains("HEAT-RUN = START") || str.contains("PCHK = START") || str.contains("GCOMP/GCHK = START")) {
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
                         = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "HEAT-RUN";
+                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "Idle";
                 LocalDateTime now = LocalDateTime.now();
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
+//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
                 if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Run")) {
                     try {
-                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生产");
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生產");
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     } catch (ServiceException e) {
@@ -285,52 +326,17 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 Map map = new HashMap();
-                map.put("EquipStatus", "HEAT-RUN");
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
-            }
-            if (str.contains("HEAT-RUN = END")) {
-                try {
-                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("待料");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                } catch (ServiceException e) {
-                    e.printStackTrace();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
+                map.put("EquipStatus", "Idle");
+                if (!GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.
+                        equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus)) {
+                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
                 }
-            }
-            if (str.contains("PCHK = START") || str.contains("GCOMP/GCHK = START")) {
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
-                        = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "PCHK";
-                LocalDateTime now = LocalDateTime.now();
-//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setStartTime(now.format(AvaryAxisUtil.dtf2));
-                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
-                if (GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.equals("Run")) {
-                    try {
-                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("生产");
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    } catch (ServiceException e) {
-                        e.printStackTrace();
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            }
-            if (str.contains("PCHK = END") || str.contains("GCOMP/GCHK = END")) {
-//                LocalDateTime now = LocalDateTime.now();
-//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).pmState.setEndTime(now.format(AvaryAxisUtil.dtf2));
-                try {
-                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).uploadData("待料");
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                } catch (ServiceException e) {
-                    e.printStackTrace();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+//                now = LocalDateTime.now();
+//                GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotStartTime = now.format(AvaryAxisUtil.dtf2);
+//                if ("".equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime)) {
+//                    now = LocalDateTime.now();
+//                    GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime = now.format(AvaryAxisUtil.dtf2);
+//                }
             }
         }
         if (str.contains(".UVP")) {

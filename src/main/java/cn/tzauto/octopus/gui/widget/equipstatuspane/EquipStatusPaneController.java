@@ -184,7 +184,7 @@ public class EquipStatusPaneController implements Initializable {
     private void reportInfoReUp(String deviceCode) {
         try {
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
-            boolean data = equipModel.uploadData("生产");
+            boolean data = equipModel.uploadData("生產");
             if (data) {
                 equipModel.firstLot = true;
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据重传成功.");

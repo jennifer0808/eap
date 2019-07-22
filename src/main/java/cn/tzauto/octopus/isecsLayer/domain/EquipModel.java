@@ -77,7 +77,8 @@ public abstract class EquipModel extends Thread {
     public String partNo = "";
     public String deviceName = "";
     public String lotCount = "";
-    public boolean isFirstPro = true;//是否初件
+    //是否初件
+    public boolean isFirstPro = false;
     public boolean firstLot = true; // 第一批次，标志位    手动重传数据后标志为重置
     public boolean isEngineerMode = false;
     public boolean isLocalMode = false;
@@ -977,6 +978,16 @@ public abstract class EquipModel extends Thread {
             @Override
             public void run() {
                 iSecsHost = new ISecsHost(remoteIPAddress, String.valueOf(remoteTCPPort), deviceType, deviceCode);
+                if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
+                    if (testOcrConnect()) {
+                        Map map = new HashMap();
+                        map.put("ControlState", controlState);
+                        changeEquipPanel(map);
+                        getEquipRealTimeState();
+                        iSecsHostList.remove(iSecsHost);
+                        iSecsHostList.add(iSecsHost);
+                    }
+                }
             }
         }).start();
         return iSecsHost;

@@ -1454,6 +1454,8 @@ public class MultipleEquipHostManager {
             } else {
                 logger.error("devicetype " + deviceInfo.getDeviceType() + " id" + deviceInfo.getDeviceId() + " not found. ");
                 logger.error("device " + deviceInfo.getDeviceCode() + " can not instantiation. ");
+                logger.error("設備類型配置錯誤,启动已取消...devicetype error");
+                return null;
             }
         }
         Map<String, List<DeviceInfo>> deviceInfoMap = new HashMap<>();

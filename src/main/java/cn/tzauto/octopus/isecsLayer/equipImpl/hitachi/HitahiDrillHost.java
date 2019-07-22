@@ -385,7 +385,7 @@ public class HitahiDrillHost extends EquipModel {
     public String selectRecipe(String recipeName) {
         try {
             getCurrentRecipeName();
-            uploadData("生产");
+            uploadData("生產");
         } catch (Exception e) {
             logger.error("报表上传出错", e);
         }
@@ -876,7 +876,7 @@ public class HitahiDrillHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
-        if (macstate.equals("生产")) {
+        if (macstate.equals("生產")) {
             if (!confirmLotCount()) {
                 return false;
             }
