@@ -15,11 +15,13 @@ import cn.tzauto.octopus.common.ws.AvaryAxisUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
+import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 import javax.xml.rpc.ServiceException;
 import java.io.UnsupportedEncodingException;
@@ -43,6 +45,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
         LinkedHashMap downloadMessageMap = (LinkedHashMap) JsonMapper.fromJsonString(message, Map.class);
         String command = String.valueOf(downloadMessageMap.get("command"));
         String deviceCode = String.valueOf(downloadMessageMap.get("machineno"));
+        MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
         if (command.equals("download")) {
             SqlSession sqlSession = MybatisSqlSession.getBatchSqlSession();
             RecipeService recipeService = new RecipeService(sqlSession);
@@ -80,7 +83,13 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     Material material = new Material();
                     material.setCode(mstrs[0]);
                     material.setId(mstrs[0]);
-                    String realMname = mstrs[1].split("-")[1];
+                    String realMname = mstrs[1];
+                    if (realMname.contains(" ")) {
+                        realMname = realMname.substring(realMname.indexOf(" ") + 1);
+                    }
+                    if (realMname.contains("-")) {
+                        realMname = realMname.substring(realMname.indexOf("-") + 1);
+                    }
                     material.setName(realMname);
                     GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
                     if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
@@ -117,7 +126,10 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         Material material = new Material();
                         material.setCode(mstrs[0]);
                         material.setId(mstrs[0]);
-                        String realMname = mstrs[1].split("-")[1];
+                        String realMname = mstrs[1];
+                        if (mstrs[1].contains("-")) {
+                            realMname = mstrs[1].substring(mstrs[1].indexOf("-") + 1);
+                        }
                         material.setName(realMname);
                         GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
                         if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {

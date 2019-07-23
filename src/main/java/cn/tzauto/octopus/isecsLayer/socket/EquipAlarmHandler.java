@@ -3,7 +3,10 @@ package cn.tzauto.octopus.isecsLayer.socket;
 
 import cn.tzauto.octopus.biz.alarm.domain.AlarmRecord;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.tooling.LaserCrystal;
+import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.tool.FileUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
@@ -15,6 +18,7 @@ import cn.tzauto.octopus.secsLayer.util.NormalConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
@@ -47,13 +51,16 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
             }
         }
         String eqpIp = ctx.channel().remoteAddress().toString().split(":")[0].replaceAll("/", "");
-        logger.info("alarm message ip=====> " + eqpIp);
+
         String deviceCode = map.get(eqpIp);
         if (deviceCode == null) {
             return;
         }
-        DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
         MDC.put(NormalConstant.WHICH_EQUIPHOST_CONTEXT, deviceCode);
+        logger.info("alarm message ip=====> " + eqpIp + "===devicecode===>" + deviceCode);
+
+        DeviceInfo deviceInfo = GlobalConstants.stage.hostManager.getDeviceInfo(null, deviceCode);
+
         logger.info("alarm message =====> " + message);
 
         List<String> alarmStringList = new ArrayList<>();
@@ -274,21 +281,31 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                         Map map = new HashMap();
                         map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
                         GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
-
+                        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+                        DeviceService deviceService = new DeviceService(sqlSession);
+                        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
+                        deviceInfoExt.setLotId(lot);
+                        deviceInfoExt.setRecipeName(recipeName);
+                        deviceService.modifyDeviceInfoExt(deviceInfoExt);
+                        sqlSession.commit();
+                        sqlSession.close();
                     }
                     if (!recipeName.equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName)) {
+                        Map map = new HashMap();
+                        map.put("PPExecName", recipeName);
+                        GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
                         GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName = recipeName;
                     }
                 }
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus
                         = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus;
                 GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus = "Run";
-                Map map = new HashMap();
-                map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
-                map.put("EquipStatus", "Run");
-                map.put("PPExecName", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName);
                 if (!GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).preEquipStatus.
                         equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).equipStatus)) {
+                    Map map = new HashMap();
+                    map.put("WorkLot", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).lotId);
+                    map.put("EquipStatus", "Run");
+                    map.put("PPExecName", GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).ppExecName);
                     GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).changeEquipPanel(map);
                 }
 //                if (!"".equals(GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode()).idleStartTime)) {

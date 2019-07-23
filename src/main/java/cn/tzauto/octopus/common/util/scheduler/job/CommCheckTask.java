@@ -34,7 +34,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- *
  * @author rain
  */
 public class CommCheckTask implements Job {
@@ -62,9 +61,9 @@ public class CommCheckTask implements Job {
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                  
             String deviceId = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
             //EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
-            if ( GlobalConstants.stage.equipHosts.get(deviceId) == null) {
+            if (GlobalConstants.stage.equipHosts.get(deviceId) == null) {
                 //  EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceId);
-                easyCheck( GlobalConstants.stage.equipModels.get(deviceId));
+                easyCheck(GlobalConstants.stage.equipModels.get(deviceId));
                 continue;
             }
             currentHost = hostsManager.getAllEquipHosts().get(deviceId);
@@ -76,7 +75,7 @@ public class CommCheckTask implements Job {
             }
             EquipNodeBean src = null;
             for (EquipNodeBean equipNodeBean : GlobalConstants.stage.equipBeans) {
-                if (equipNodeBean.getDeviceIdProperty().equals( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceId())) {
+                if (equipNodeBean.getDeviceIdProperty().equals(GlobalConstants.stage.equipHosts.get(deviceId).getDeviceId())) {
                     src = equipNodeBean;
                     break;
                 }
@@ -113,8 +112,8 @@ public class CommCheckTask implements Job {
                         logger.info("检测到初始化未通信、====checkNotComm======" + currentHost.checkNotComm);
                         //如果网络连接正常，通信异常情况下，重新启动连接
                         if (currentHost.checkNotComm >= checkTimes) {
-                           UiLogUtil.getInstance().appendLog2EventTab(currentHost.getDeviceCode(), " Not comm 次数超过" + checkTimes + "次");
-                            setPanelCommFail( GlobalConstants.stage.equipHosts.get(deviceId));
+                            UiLogUtil.getInstance().appendLog2EventTab(currentHost.getDeviceCode(), " Not comm 次数超过" + checkTimes + "次");
+                            setPanelCommFail(GlobalConstants.stage.equipHosts.get(deviceId));
                             currentHost.checkNotComm = 0;
                             checkNetAndDealer(deviceId, src);
                             continue;
@@ -131,7 +130,7 @@ public class CommCheckTask implements Job {
                         currentHost.secsMsgTimeoutTime = 0;
                     }
                     if ("3".equals(testResult) && !currentHost.isIsRestarting()) {
-                        resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
+                        resetFlagAndRestart(GlobalConstants.stage.equipHosts.get(deviceId), src);
                     }
                 } else {
                     //如果有通信，那么检测上次通信的时间
@@ -149,7 +148,7 @@ public class CommCheckTask implements Job {
                         if (!"0".equals(testResult)) {
                             if ("3".equals(testResult)) {//secs通信异常
                                 logger.info("Secs Exception occur");
-                                resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
+                                resetFlagAndRestart(GlobalConstants.stage.equipHosts.get(deviceId), src);
                             } else {
                                 testType = "2";
                                 //发送S1F13指令，建立连接
@@ -157,7 +156,7 @@ public class CommCheckTask implements Job {
                                 testResult = comTestFunction(testType, currentHost);
                                 if (!"0".equals(testResult)) {
                                     logger.info("DeviceID:" + deviceId + "===========InitLinkResult:" + testResult);
-                                    resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
+                                    resetFlagAndRestart(GlobalConstants.stage.equipHosts.get(deviceId), src);
 //                                    currentHost.secsMsgTimeoutTime++;
 //                                    msgTimeoutCountAndRestart(deviceId, src);
                                 } else {//设备正常回复S1F14
@@ -168,7 +167,7 @@ public class CommCheckTask implements Job {
                                         logger.info("DeviceID:" + deviceId + ";Recall are u there result:" + testResult);
                                         if (!"0".equals(testResult) && !currentHost.isIsRestarting()) {
                                             logger.info("DeviceID:" + deviceId + "再次Are u there异常，:" + testResult);
-                                            resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
+                                            resetFlagAndRestart(GlobalConstants.stage.equipHosts.get(deviceId), src);
 //                                            currentHost.secsMsgTimeoutTime++;
 //                                            msgTimeoutCountAndRestart(deviceId, src);
                                         }
@@ -191,7 +190,7 @@ public class CommCheckTask implements Job {
     }
 
     private void checkNetAndDealer(String deviceId, EquipNodeBean src) {
-        if (checkNet( GlobalConstants.stage.equipHosts.get(deviceId).iPAddress) < 3) {
+        if (checkNet(GlobalConstants.stage.equipHosts.get(deviceId).iPAddress) < 3) {
             doWhenNetRight(deviceId, src);
         } else {
             netBrokenDealer(deviceId);
@@ -205,12 +204,12 @@ public class CommCheckTask implements Job {
      * @param src
      */
     private void doWhenNetRight(String deviceId, EquipNodeBean src) {
-        if (! GlobalConstants.stage.equipHosts.get(deviceId).isIsRestarting()) {
+        if (!GlobalConstants.stage.equipHosts.get(deviceId).isIsRestarting()) {
             GlobalConstants.stage.equipHosts.get(deviceId).checkNotReady = 0;
-           UiLogUtil.getInstance().appendLog2EventTab( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode(), "工控机与设备网络连接正常，开始重启SECS连接...");
+            UiLogUtil.getInstance().appendLog2EventTab(GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode(), "工控机与设备网络连接正常，开始重启SECS连接...");
             //自动重连发送日志给服务端
-            GlobalConstants.sendStartLog2Server( GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode());
-            resetFlagAndRestart( GlobalConstants.stage.equipHosts.get(deviceId), src);
+            GlobalConstants.sendStartLog2Server(GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode());
+            resetFlagAndRestart(GlobalConstants.stage.equipHosts.get(deviceId), src);
         }
         if (GlobalConstants.hadHoldLotFlagMap.containsKey(deviceId)) {
             GlobalConstants.hadHoldLotFlagMap.remove(deviceId);
@@ -224,17 +223,17 @@ public class CommCheckTask implements Job {
      */
     private void netBrokenDealer(String deviceId) {
         String deviceCode = "";
-        if ( GlobalConstants.stage.equipHosts.get(deviceId) != null) {
+        if (GlobalConstants.stage.equipHosts.get(deviceId) != null) {
             deviceCode = GlobalConstants.stage.equipHosts.get(deviceId).getDeviceCode();
         } else {
             deviceCode = deviceId;
         }
-       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控机与设备网络连接异常，等待网络恢复后重启通讯连接");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控机与设备网络连接异常，等待网络恢复后重启通讯连接");
         //锁批次
         if (!GlobalConstants.hadHoldLotFlagMap.containsKey(deviceId)) {
             String holdLotFlag = GlobalConstants.getProperty("NET_BREAK_HOLD_LOT");
             if (holdLotFlag != null && !"".equals(holdLotFlag) && "1".equals(holdLotFlag)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "DeviceCode:" + deviceCode + "检测到网络中断，需要HoldLot");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "DeviceCode:" + deviceCode + "检测到网络中断，需要HoldLot");
                 logger.info("DeviceCode:" + deviceCode + "已配置HoldLot标志，开始HoldLot...");
                 holdLot(deviceId);
             }
@@ -291,7 +290,6 @@ public class CommCheckTask implements Job {
     }
 
     /**
-     *
      * @param type
      * @return testResult 0:正常;1:收到回复、是取消会话；2：异常；3：SECS通信异常
      */
@@ -303,46 +301,46 @@ public class CommCheckTask implements Job {
         FutureTask<String> future = new FutureTask<>(
                 new Callable<String>() {
 
-            public String call() {
-                boolean initLinkResult = false;
-                String ruThereResult = "0";
-                try {
-                    if (currentHost != null) {
-                        //测试S1F1， Are you there
-                        if ("1".equals(testType)) {
-                            ruThereResult = currentHost.testRUThere();
-                            currentHost.setLastComDate(new Date().getTime());
-                            currentHost.secsMsgTimeoutTime = 0;
-                            return ruThereResult;
-                        } else {
-                            //测试S1F13， 初始化连接
-                            initLinkResult = currentHost.testInitLink();
-                            logger.info("InitLinkResult:" + initLinkResult);
-                            currentHost.setLastComDate(new Date().getTime());
-                            currentHost.secsMsgTimeoutTime = 0;
-                            if (initLinkResult) {
-                                //设置设备通信状态
-                                logger.info("设置设备通信状态:" + initLinkResult);
-                                currentHost.setCommState(1);
-                                return "0";
+                    public String call() {
+                        boolean initLinkResult = false;
+                        String ruThereResult = "0";
+                        try {
+                            if (currentHost != null) {
+                                //测试S1F1， Are you there
+                                if ("1".equals(testType)) {
+                                    ruThereResult = currentHost.testRUThere();
+                                    currentHost.setLastComDate(new Date().getTime());
+                                    currentHost.secsMsgTimeoutTime = 0;
+                                    return ruThereResult;
+                                } else {
+                                    //测试S1F13， 初始化连接
+                                    initLinkResult = currentHost.testInitLink();
+                                    logger.info("InitLinkResult:" + initLinkResult);
+                                    currentHost.setLastComDate(new Date().getTime());
+                                    currentHost.secsMsgTimeoutTime = 0;
+                                    if (initLinkResult) {
+                                        //设置设备通信状态
+                                        logger.info("设置设备通信状态:" + initLinkResult);
+                                        currentHost.setCommState(1);
+                                        return "0";
+                                    } else {
+                                        return "1";
+                                    }
+                                }
                             } else {
-                                return "1";
+                                //如果currentHost销毁了就返回错误
+                                return "2";
                             }
-                        }
-                    } else {
-                        //如果currentHost销毁了就返回错误
-                        return "2";
-                    }
 
-                } catch ( BrokenProtocolException e) {
-                    logger.error("Secs Exception:", e);
-                    return "3";
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                    return "2";
-                }
-            }
-        });
+                        } catch (BrokenProtocolException e) {
+                            logger.error("Secs Exception:", e);
+                            return "3";
+                        } catch (Exception e) {
+                            logger.error("Exception:", e);
+                            return "2";
+                        }
+                    }
+                });
         try {
             executor.execute(future);
             result = future.get(3000, TimeUnit.MILLISECONDS);
@@ -416,10 +414,10 @@ public class CommCheckTask implements Job {
         }
         if (lotId != null && !"".equals(lotId)) {
             if (!GlobalConstants.holdLotMap.containsKey(lotId)) {
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "开始HoldLot...Lot:" + lotId);
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "开始HoldLot...Lot:" + lotId);
                 holdResult = AxisUtility.holdLotByMES(userId, deviceCode, lotId, holdCode, reason);
                 GlobalConstants.holdLotMap.put(lotId, true);
-               UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "HoldLot结束...Lot:" + lotId + "，结果为:" + holdResult);
+                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "HoldLot结束...Lot:" + lotId + "，结果为:" + holdResult);
                 if ("OK".equalsIgnoreCase(holdResult)) {
                     //邮件通知
                     List<String> toList = new ArrayList();
@@ -443,7 +441,7 @@ public class CommCheckTask implements Job {
             if (iSecsHost.iSecsConnection == null
                     || iSecsHost.iSecsConnection.getSocketClient() == null
                     || !iSecsHost.iSecsConnection.getSocketClient().isConnected()
-                    || !iSecsHost.iSecsConnection.checkConenctionStatus()) {
+                    || !equipModel.testOcrConnect()) {
                 if (iSecsHost.iSecsConnection.getSocketClient() == null) {
                     logger.info(equipModel.deviceCode + "Check equipModel:getSocketClient() == null");
                     needInit = true;
@@ -474,7 +472,16 @@ public class CommCheckTask implements Job {
                     equipModel.changeEquipPanel(map);
                     iSecsHost.isConnect = false;
                     equipModel.equipState.setCommOn(false);
-                    equipModel.initialize();
+                    try {
+                        equipModel.iSecsHost.iSecsConnection.getSocketClient().shutdownOutput();
+                        equipModel.iSecsHost.iSecsConnection.getSocketClient().close();
+                    } catch (Exception e) {
+                        logger.error("close device：" + equipModel.deviceCode + " port error");
+                    } finally {
+                        equipModel.initialize();
+                    }
+
+
                 }
 
                 //  GlobalConstants.stage.equipModels.remove(equipModel.deviceCode);

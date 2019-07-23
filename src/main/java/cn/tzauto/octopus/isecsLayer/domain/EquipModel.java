@@ -993,7 +993,7 @@ public abstract class EquipModel extends Thread {
         return iSecsHost;
     }
 
-    private boolean testOcrConnect() {
+    public boolean testOcrConnect() {
         List list = sendMsg2Equip("curscreen");
         if (list != null) {
             this.equipState.setCommOn(true);
