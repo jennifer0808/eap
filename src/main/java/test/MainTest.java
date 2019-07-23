@@ -15,7 +15,8 @@ import java.util.*;
 public class MainTest {
 
     public static void main(String[] args) {
-        String startTime = "12345644889900";
+        String startTime = "123-456-44-889-900";
+      String  realMname = startTime.substring(startTime.indexOf("-")+1);
         LocalDateTime now = LocalDateTime.now();
         String nowTime = now.format(AvaryAxisUtil.dtf2);
         String startTimeM = startTime.substring(10, 12);

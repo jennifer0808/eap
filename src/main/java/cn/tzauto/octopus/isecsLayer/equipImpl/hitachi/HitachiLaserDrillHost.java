@@ -390,12 +390,7 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
-        try {
-            getCurrentRecipeName();
-            uploadData("生產");
-        } catch (Exception e) {
-            logger.error("报表上传出错", e);
-        }
+
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
@@ -1022,7 +1017,7 @@ public class HitachiLaserDrillHost extends EquipModel {
         paraValueList.add(laserHeadLife);
 
         String uploadReportDetailResult = AvaryAxisUtil.uploadReportDetail(deviceType, paraValueList);
-        lotStartTime = now.format(AvaryAxisUtil.dtf2);
+
         if ("".equals(uploadReportDetailResult)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传成功，明細表數據上传成功");
             if (macstate.equals("生產")) {
@@ -1047,7 +1042,8 @@ public class HitachiLaserDrillHost extends EquipModel {
 //                paraValueList.add(idleStartTime);
                 paraValueList.add(lotStartTime);
                 LocalDateTime now = LocalDateTime.now();
-                paraValueList.add(now.format(AvaryAxisUtil.dtf2));
+                lotStartTime = now.format(AvaryAxisUtil.dtf2);
+                paraValueList.add(lotStartTime);
             } else {
                 paraValueList.add(pmState.getStartTime());
                 paraValueList.add(pmState.getEndTime());
@@ -1067,7 +1063,8 @@ public class HitachiLaserDrillHost extends EquipModel {
             paraValueList.add(lotStartTime);
             //todo 这个endtime不准确，想办法处理掉
             LocalDateTime now = LocalDateTime.now();
-            paraValueList.add(now.format(AvaryAxisUtil.dtf2));
+            lotStartTime = now.format(AvaryAxisUtil.dtf2);
+            paraValueList.add(lotStartTime);
 
             paraValueList.add(lotId);
             paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));

@@ -1061,7 +1061,12 @@ public class AvaryAxisUtil {
             }
             bom = list.get(0).get("LASTVALUE");
             if (bom.contains("(")) {
-                bom = bom.split("\\(")[0];
+                String[] bomtemp = bom.replaceAll("\\)", "").split("\\(&#x540C;");
+                if (bomtemp[0].equals(toolingNo) || bomtemp[1].equals(toolingNo)) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         } catch (Exception e) {
             logger.error("get Tooling failed Tooling:" + bom);
