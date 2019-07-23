@@ -916,17 +916,22 @@ public class HitahiDrillHost extends EquipModel {
         }
         //添加程序名
         paraValueList.add(ppExecName);
-        //添加叠板数
-        //添加上限，下限
-        paraValueList.add("");
-        paraValueList.add("");
+        //添加叠板数 添加上限，下限
+        listtemp = getUpLower(partNo);
+        for (Object o : listtemp) {
+            paraValueList.add(o);
+        }
+
         //添加直径
         //添加转速
         // 添加进刀速度
         // 添加退刀速度
         // 添加补偿
         // 添加寿命
-
+        listtemp = getProduceData();
+        for (Object o : listtemp) {
+            paraValueList.add(o);
+        }
         //是否初件
         if (isFirstPro) {
             paraValueList.add("1");
@@ -1052,6 +1057,16 @@ public class HitahiDrillHost extends EquipModel {
                 return false;
             }
         }
+    }
+
+    private List getUpLower(String partNo) {
+        //todo 从文件中获取到料号相关的叠板数和上限下限信息
+
+        return null;
+    }
+
+    private List getProduceData() {
+        return null;
     }
 }
 

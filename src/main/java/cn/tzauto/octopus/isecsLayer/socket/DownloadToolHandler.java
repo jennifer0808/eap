@@ -63,14 +63,18 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
 
 
             String recipeName = "";
-            // {"command":"download","lotno":"PH22","machineno":"JTH44","partno":"LH11","userid":"YGH33"}
-            logger.info("download request userId:" + userId + " deviceCode" + deviceCode + " lotNo:" + lotNo + " lottype:" + lottype);
             List<DeviceInfo> deviceInfos = deviceService.getDeviceInfoByDeviceCode(deviceCode);
             if (deviceInfos != null && !deviceInfos.isEmpty()) {
                 DeviceInfo deviceInfo = deviceInfos.get(0);
                 if (!"0".equals(AvaryAxisUtil.workLicense(deviceInfo.getDeviceName(), userId))) {
                     UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "上岗证验证失败!!");
                     new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("上崗証驗證失敗!!work permit not been grant");
+                    return;
+                }
+                //串联sfc系统，确认产品在当站
+                if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo);
+                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
                     return;
                 }
                 //验证原材料
@@ -87,12 +91,6 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料驗證失敗!Material check error!");
                         return;
                     }
-                }
-                //串联sfc系统，确认产品在当站
-                if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
-                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo);
-                    new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
-                    return;
                 }
                 //验证治具
                 if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo, fixtureno)) {
@@ -111,6 +109,13 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    //串联sfc系统，确认产品在当站
+                    if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo2, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo2);
+                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
+                        return;
+                    }
+                    //批次2材料验证
                     String mstr2 = AvaryAxisUtil.getMaterialInfo(deviceInfo.getDeviceType(), lotNo2);
                     if (mstr2.contains("|")) {
                         String[] mstrs = mstr2.split("\\|");
@@ -120,19 +125,12 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         String realMname = mstrs[1].split("-")[1];
                         material.setName(realMname);
                         GlobalConstants.stage.equipModels.get(deviceCode).materials.add(material);
-                        if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno.equals(realMname))) {
+                        if ((GlobalConstants.getProperty("MATERIAL_CHECK").equals("1") && !materialno2.equals(realMname))) {
                             new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("材料驗證失敗!Material check error!");
                             return;
                         }
                     }
-
-                    //串联sfc系统，确认产品在当站
-
-                    if ("1".equals(GlobalConstants.getProperty("SFC_CHECK")) && AvaryAxisUtil.getProductionMap(lotNo2, GlobalConstants.stage.equipModels.get(deviceCode).tableNum, deviceCode) == null) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "串联SFC系统失败，确认产品是否在当站!!批号：" + lotNo2);
-                        new ISecsHost(GlobalConstants.stage.equipModels.get(deviceCode).remoteIPAddress, GlobalConstants.getProperty("DOWNLOAD_TOOL_RETURN_PORT"), "", deviceCode).sendSocketMsg("批次不在本站!SFC Check failed!");
-                        return;
-                    }
+                    //批次2治具验证
                     if (AvaryAxisUtil.checkTooling(deviceInfo.getDeviceType(), lotNo2, fixtureno2)) {
                         Tooling tooling = new Tooling();
                         tooling.setId(fixtureno2);
