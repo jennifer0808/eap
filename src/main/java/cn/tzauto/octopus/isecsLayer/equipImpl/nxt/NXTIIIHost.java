@@ -25,8 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -41,7 +44,7 @@ public class NXTIIIHost extends EquipModel {
 
     public NXTIIIHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -101,6 +104,11 @@ public class NXTIIIHost extends EquipModel {
                             + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                             + recipeNameTemp + ".JOB\"");
                     for (String uploadstr : result) {
+                        if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                            resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                            return resultMap;
+                        }
                         if ("done".equals(uploadstr)) {
                             List<RecipePara> recipeParaList = new ArrayList<>();
                             try {
@@ -195,6 +203,10 @@ public class NXTIIIHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".JOB\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         //执行导入
                         if (!checkEquipCodeLocation()) {
@@ -327,6 +339,7 @@ public class NXTIIIHost extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 

@@ -5,41 +5,38 @@
  */
 package cn.tzauto.octopus.isecsLayer.equipImpl.rokko;
 
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfo;
+import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.domain.DeviceType;
+import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.biz.recipe.service.RecipeService;
-import cn.tzauto.octopus.common.resolver.disco.DiscoRecipeUtil;
-import cn.tzauto.octopus.common.util.ftp.FtpUtil;
-import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
-import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
-import cn.tzauto.octopus.biz.device.service.DeviceService;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
-import cn.tzauto.octopus.common.util.tool.FileUtil;
-import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
-import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
+import cn.tzauto.octopus.common.resolver.disco.DiscoRecipeUtil;
+import cn.tzauto.octopus.common.util.ftp.FtpUtil;
+import cn.tzauto.octopus.common.util.tool.FileUtil;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+
+import java.util.*;
+import java.util.logging.Level;
 
 /**
  *
  * @author luosy
  */
-public class Rokko8000pHost extends EquipModel {
+public class Rokko8000pHostUpload extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(Rokko8000pHost.class.getName());
+    private static Logger logger = Logger.getLogger(Rokko8000pHostUpload.class.getName());
     private Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
     private ISecsHost sawISecsHost;
     private ISecsHost visionISecsHost;
@@ -49,7 +46,7 @@ public class Rokko8000pHost extends EquipModel {
     private final Map<String, String> handleRecipeMap = new HashMap();
     String handleRecipeName = "";
 
-    public Rokko8000pHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
+    public Rokko8000pHostUpload(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
         MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
@@ -144,35 +141,34 @@ public class Rokko8000pHost extends EquipModel {
             try {
                 List<String> result = iSecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    handleRecipeName = iSecsHost.executeCommand("read recipe1").get(0);
-                    visionRecipeName = iSecsHost.executeCommand("read recipe2").get(0);
+                    if ("any".equals(result.get(0))) {
+                        handleRecipeName = iSecsHost.executeCommand("read recipe1").get(0);
+                        visionRecipeName = iSecsHost.executeCommand("read recipe2").get(0);
+                    }
                 }
+                handleRecipeName = handleRecipeName + "-" + visionRecipeName;
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
         }
-        if (deviceType.contains("Z2") && !ppExecName.equals("--")) {
-            if (!"".equals(ppExecName) && !trimUOID(ppExecName).equals(handleRecipeName)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
-            }
-        } else {
-            if (!"".equals(ppExecName) && !ppExecName.equals(handleRecipeName)) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
-            }
+        if (!"".equals(ppExecName) && !ppExecName.equals(handleRecipeName)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
         }
         synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> result = visionISecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    visionRecipeName = visionISecsHost.executeCommand("read recipe1").get(0);
-//                    visionRecipeName = visionISecsHost.executeCommand("read recipe2").get(0);
+                    if ("any".equals(result.get(0))) {
+                        visionRecipeName = visionISecsHost.executeCommand("read recipe1").get(0);
+                        visionRecipeName = visionISecsHost.executeCommand("read recipe2").get(0);
+                    }
                 }
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
         }
-        if (!handleRecipeName.equals(visionRecipeName)) {
-            logger.info("Handle程序与Vision程序不符.Handle:" + handleRecipeName + " Vision:" + visionRecipeName);
+        if (!"".equals(ppExecName) && !ppExecName.equals(visionRecipeName)) {
+            logger.info("Saw程序与Vision程序不符.Saw:" + ppExecName + " Vision:" + visionRecipeName);
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -233,7 +229,7 @@ public class Rokko8000pHost extends EquipModel {
                 } catch (Exception e) {
                 }
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
                 stopResult = "未设置锁机！";
             }
         }
@@ -248,7 +244,7 @@ public class Rokko8000pHost extends EquipModel {
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
         sqlSession.close();
         if (deviceInfoExt == null || !"Y".equals(deviceInfoExt.getLockSwitch())) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
             stopResult = "未设置锁机！";
             return stopResult;
         }
@@ -269,8 +265,17 @@ public class Rokko8000pHost extends EquipModel {
                             }
                             if ("0xff0000".equals(colorstr)) {
                                 equipStatus = "Run";
-                                if (repeatStop()) {
-                                    return "0";
+                                result = sawISecsHost.executeCommand("playback stop.txt");
+                                for (String start : result) {
+                                    if ("done".equals(start)) {
+                                        result = sawISecsHost.executeCommand("readrectcolor 970 160 990 174");
+                                        for (String colorstr2 : result) {
+                                            if ("0x33cc33".equals(colorstr2)) {
+                                                equipStatus = "Idle";
+                                                return "0";
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -351,11 +356,6 @@ public class Rokko8000pHost extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD\"");
                 for (String uploadstr : result) {
-                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
-                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
-                        return resultMap;
-                    }
                     if ("done".equals(uploadstr)) {
                         try {
                             Map paraMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".DFD");
@@ -377,27 +377,19 @@ public class Rokko8000pHost extends EquipModel {
                     }
                 }
             }
-            String handleRecipeNameTmp = recipeName;
-            if (deviceType.contains("Z2")) {
-                handleRecipeNameTmp = trimUOID(recipeName);
-            }
+            String handleRecipeNameTmp = trimUOID(recipeName);
             //导出，上传handle部分程序
             if (exportHandleRecipe(handleRecipeNameTmp)) {
                 List<String> handleRecipeUploadresult = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + handleRecipeNameTmp + ".han\"");
                 for (String uploadstr : handleRecipeUploadresult) {
-                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
-                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
-                        return resultMap;
-                    }
                     if (uploadstr.contains("Not connected")) {
                         ocrUploadOk = false;
                     }
                 }
             } else {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败,上传Recipe:" + recipeName + " 时,导出handle部分失败.");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传失败,上传Recipe:" + recipeName + " 时,导出handle部分失败.");
                 return null;
             }
             String visionRecipeTemp = handleRecipeNameTmp + "_" + handleRecipeNameTmp;
@@ -412,8 +404,6 @@ public class Rokko8000pHost extends EquipModel {
             visionISecsHost.executeCommand(command + commandAdd);
             commandAdd = visionRecipeTemp + ".ini " + visionRecipeTemp + ".IN0para \"";
             visionISecsHost.executeCommand(command + commandAdd);
-            commandAdd = "DeviceName.ini\"";
-            visionISecsHost.executeCommand(command + commandAdd);
             if ("L".equals(getPackageType(visionRecipeTemp)) || "Q".equals(getPackageType(visionRecipeTemp))) {
                 commandAdd = visionRecipeTemp + ".PtrnSip_0 " + visionRecipeTemp + ".PtrnSip_1 \"";
                 visionISecsHost.executeCommand(command + commandAdd);
@@ -424,15 +414,9 @@ public class Rokko8000pHost extends EquipModel {
             }
 
             List<String> visionRecipeUploadresult = visionISecsHost.executeCommand(command + commandAdd);
-            commandAdd = "pkgdata.dat\"";
-            visionISecsHost.executeCommand(command + commandAdd);
+
             for (String uploadstr : visionRecipeUploadresult) {
                 if ("done".equals(uploadstr)) {
-                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
-                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
-                        return resultMap;
-                    }
                     List<RecipePara> recipeParaListTmp = new ArrayList<>();
                     try {
                         Map paraMap = null;//RokkoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + handleRecipeNameTmp + ".DFD");
@@ -451,9 +435,9 @@ public class Rokko8000pHost extends EquipModel {
                 }
             }
             //创建配套的DeviceName.ini文件
-//            createDeviceNameFile(recipeName);
+            createDeviceNameFile(recipeName);
             if (!ocrUploadOk) {
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
                 resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
             }
         } catch (Exception e) {
@@ -470,13 +454,10 @@ public class Rokko8000pHost extends EquipModel {
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         String recipeName = recipe.getRecipeName();
         String ftpRecipePath = new RecipeService(sqlSession).organizeUploadRecipePath(recipe);
-        String handleRecipeName = recipeName;
-        if (deviceType.contains("Z2")) {
-            handleRecipeName = recipeName.replace(recipeName.split("-")[0] + "-", "");
-        }
-        String VisionRecipeName = handleRecipeName + "_" + handleRecipeName;
+        String recipeNameWithoutUvid = recipeName.replace(recipeName.split("-")[0] + "-", "");
+        String handleVisionRecipeName = recipeNameWithoutUvid + "_" + recipeNameWithoutUvid;
         List<Attach> attachs = new ArrayList<>();
-        for (int i = 0; i < 18; i++) {
+        for (int i = 0; i < 17; i++) {
             Attach attach = new Attach();
             attach.setId(UUID.randomUUID().toString());
             attach.setRecipeRowId(recipe.getId());
@@ -512,7 +493,7 @@ public class Rokko8000pHost extends EquipModel {
             } else if (i == 14) {
                 attach.setAttachName(recipeName + ".han_V" + recipe.getVersionNo());
             }
-            if ("B".equals(getPackageType(handleRecipeName))) {
+            if ("B".equals(getPackageType(recipeNameWithoutUvid))) {
                 if (i == 15) {
                     attach.setAttachName(recipeName + ".dat_V" + recipe.getVersionNo());
                 }
@@ -520,15 +501,13 @@ public class Rokko8000pHost extends EquipModel {
                     attach.setAttachName(recipeName + ".dat_V" + recipe.getVersionNo());
                 }
             }
-            if ("L".equals(getPackageType(handleRecipeName)) || "Q".equals(getPackageType(handleRecipeName))) {
+            if ("L".equals(getPackageType(recipeNameWithoutUvid)) || "Q".equals(getPackageType(recipeNameWithoutUvid))) {
                 if (i == 15) {
                     attach.setAttachName(recipeName + ".PtrnSip_0_V" + recipe.getVersionNo());
                 }
                 if (i == 16) {
                     attach.setAttachName(recipeName + ".PtrnSip_1_V" + recipe.getVersionNo());
                 }
-            } else if (i == 17) {
-                attach.setAttachName("pkgdata.dat_V" + recipe.getVersionNo());
             }
             attach.setAttachType("");
             attach.setSortNo(0);
@@ -547,177 +526,7 @@ public class Rokko8000pHost extends EquipModel {
 
     @Override
     public String downloadRecipe(Recipe recipe) {
-        cleanRootDir();
-        //ftp ip user pwd lpath rpath \"mget 001.ALU 001.CLN 001.DFD DEV.LST DEVID.LST\"       
-//        synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        try {
-            String localftpip = GlobalConstants.clientInfo.getClientIp();
-            String ftpip = GlobalConstants.ftpIP;
-            String ftpUser = GlobalConstants.ftpUser;
-            String ftpPwd = GlobalConstants.ftpPwd;
-            String ftpPort = GlobalConstants.ftpPort;
-
-            String ftpPath = new RecipeService(sqlSession).organizeRecipeDownloadFullFilePath(recipe);
-            String handleRecipeNameTmp = recipe.getRecipeName();
-            if (deviceType.contains("Z2")) {
-                handleRecipeNameTmp = trimUOID(recipe.getRecipeName());
-            }
-            String visionRecipeName = handleRecipeNameTmp + "_" + handleRecipeNameTmp;
-            String ftpPathTmp = ftpPath.substring(0, ftpPath.lastIndexOf("/") + 1);
-            String equipRecipeName = "001";//equipRecipeNames[0];
-            String bodyTmp = "001," + recipe.getRecipeName() + ",";
-            TransferUtil.setPPBody(bodyTmp, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST");
-            TransferUtil.setPPBody(bodyTmp, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST");
-            if (!FtpUtil.connectFtp(ftpip, ftpPort, ftpUser, ftpPwd)) {
-                return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
-            }
-            String pkgType = getPackageType(handleRecipeNameTmp);
-            if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
-                //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                // FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST", ftpPathTmp + "DEVID.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1para", ftpPathTmp + recipe.getRecipeName() + ".MK1para_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1pref", ftpPathTmp + recipe.getRecipeName() + ".MK1pref_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1timg", ftpPathTmp + recipe.getRecipeName() + ".MK1timg_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".pedg", ftpPathTmp + recipe.getRecipeName() + ".pedg_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".BQ2para", ftpPathTmp + recipe.getRecipeName() + ".BQ2para_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".BQ2pref", ftpPathTmp + recipe.getRecipeName() + ".BQ2pref_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".ini", ftpPathTmp + recipe.getRecipeName() + ".ini_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".IN0para", ftpPathTmp + recipe.getRecipeName() + ".IN0para_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DeviceName.ini", ftpPathTmp + "DeviceName.ini_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".han", ftpPathTmp + recipe.getRecipeName() + ".han_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-
-                if ("B".equals(pkgType)) {
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".dat", ftpPathTmp + recipe.getRecipeName() + ".dat_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                }
-                if ("L".equals(pkgType) || "Q".equals(pkgType)) {
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".DibSip", ftpPathTmp + recipe.getRecipeName() + ".DibSip_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".PtrnSip_0", ftpPathTmp + recipe.getRecipeName() + ".PtrnSip_0_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".PtrnSip_1", ftpPathTmp + recipe.getRecipeName() + ".PtrnSip_1_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                }
-//                if (deviceType.contains("Z2")) {
-//                    editRecipeFileAdduoid(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", handleRecipeNameTmp, recipe.getRecipeName());
-//                }
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/pkgdata.dat", ftpPathTmp + "pkgdata.dat_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-            } else {
-                //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd);
-
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1para", ftpPathTmp + recipe.getRecipeName() + ".MK1para", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1pref", ftpPathTmp + recipe.getRecipeName() + ".MK1pref", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".MK1timg", ftpPathTmp + recipe.getRecipeName() + ".MK1timg", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".pedg", ftpPathTmp + recipe.getRecipeName() + ".pedg", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".BQ2para", ftpPathTmp + recipe.getRecipeName() + ".BQ2para", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".BQ2pref", ftpPathTmp + recipe.getRecipeName() + ".BQ2pref", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".ini", ftpPathTmp + recipe.getRecipeName() + ".ini", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".IN0para", ftpPathTmp + recipe.getRecipeName() + ".IN0para", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + "DeviceName.ini", ftpPathTmp + "DeviceName.ini", ftpip, ftpPort, ftpUser, ftpPwd);
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".han", ftpPathTmp + recipe.getRecipeName() + ".han", ftpip, ftpPort, ftpUser, ftpPwd);
-
-                if ("B".equals(pkgType)) {
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".dat", ftpPathTmp + recipe.getRecipeName() + ".dat", ftpip, ftpPort, ftpUser, ftpPwd);
-                }
-                if ("L".equals(pkgType) || "Q".equals(pkgType)) {
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".DibSip", ftpPathTmp + recipe.getRecipeName() + ".DibSip", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".PtrnSip_0", ftpPathTmp + recipe.getRecipeName() + ".PtrnSip_0", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + visionRecipeName + ".PtrnSip_1", ftpPathTmp + recipe.getRecipeName() + ".PtrnSip_1", ftpip, ftpPort, ftpUser, ftpPwd);
-                }
-                FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/pkgdata.dat", ftpPathTmp + "pkgdata.dat", ftpip, ftpPort, ftpUser, ftpPwd);
-
-//                if (deviceType.contains("Z2")) {
-//                    editRecipeFileAdduoid(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", handleRecipeNameTmp, recipe.getRecipeName());
-//                }
-            }
-            synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
-                List<String> result = sawISecsHost.executeCommand("ftp " + localftpip + " "
-                        + ftpUser + " " + ftpPwd + " " + sawRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD DEV.LST DEVID.LST\"");
-                for (String str : result) {
-                    if (str.contains("rror")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
-                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
-                    }
-                    if ("done".equals(str)) {
-
-                    }
-                    if (str.contains("Not connected")) {
-                        return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
-                    }
-                }
-            }    //下载handle程序
-            String handleRecipeNameTemp = trimUOID(recipe.getRecipeName());
-            synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-                List<String> handleDownloadresult = iSecsHost.executeCommand("ftp " + localftpip + " "
-                        + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + handleRecipeNameTemp + ".han\"");
-                for (String str : handleDownloadresult) {
-                    if (str.contains("rror")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
-                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
-                    }
-                    if (str.contains("done")) {
-                        continue;
-                    }
-                    if (str.contains("Not connected")) {
-                        return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
-                    }
-                }
-            }
-            //导入handle程序
-            if (!importHandleRecipe(handleRecipeNameTemp)) {
-                return "Handle程序导入失败.Download recipe " + recipe.getRecipeName() + " failed";
-            }
-            //下载vision程序
-            String visionRecipeNameTemp = handleRecipeNameTemp + "_" + handleRecipeNameTemp;
-            String command = "ftp " + localftpip + " "
-                    + ftpUser + " " + ftpPwd + " " + visionRecipePathAdd(visionRecipeNameTemp) + "  " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget ";
-
-            synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
-                String commandAdd = visionRecipeNameTemp + ".MK1para " + visionRecipeNameTemp + ".MK1pref \"";
-                visionISecsHost.executeCommand(command + commandAdd);
-                commandAdd = visionRecipeNameTemp + ".pedg " + visionRecipeNameTemp + ".MK1timg \"";
-                visionISecsHost.executeCommand(command + commandAdd);
-                commandAdd = visionRecipeNameTemp + ".BQ2para " + visionRecipeNameTemp + ".BQ2pref \"";
-                visionISecsHost.executeCommand(command + commandAdd);
-                commandAdd = visionRecipeNameTemp + ".ini " + visionRecipeNameTemp + ".IN0para \"";
-                visionISecsHost.executeCommand(command + commandAdd);
-
-                if ("L".equals(getPackageType(visionRecipeNameTemp)) || "Q".equals(getPackageType(visionRecipeNameTemp))) {
-                    commandAdd = visionRecipeNameTemp + ".PtrnSip_0 " + visionRecipeNameTemp + ".PtrnSip_1 \"";
-                    visionISecsHost.executeCommand(command + commandAdd);
-                    commandAdd = " DeviceName.ini " + visionRecipeNameTemp + ".DibSip \"";
-                }
-                if ("B".equals(getPackageType(visionRecipeNameTemp))) {
-                    commandAdd = " DeviceName.ini " + visionRecipeNameTemp + ".dat \"";
-                }
-                List<String> visionDownloadresult = visionISecsHost.executeCommand(command + commandAdd);
-                commandAdd = "pkgdata.dat \"";
-                visionISecsHost.executeCommand(command + commandAdd);
-                for (String str : visionDownloadresult) {
-                    if (str.contains("rror")) {
-                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
-                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
-                    }
-                    if ("done".equals(str)) {
-                        return "0";
-                    }
-                    if (str.contains("Not connected")) {
-                        return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Download recipe " + recipe.getRecipeName() + " error:" + e.getMessage());
-            return "下载失败,出现异常:" + e.getMessage();
-        } finally {
-            sqlSession.close();
-//            this.deleteTempFile(recipe.getRecipeName());
-        }
-//        }
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Upload专用，不支持下载");
         return "Download recipe " + recipe.getRecipeName() + " failed";
     }
 
@@ -787,47 +596,21 @@ public class Rokko8000pHost extends EquipModel {
                     iSecsHost.executeCommand("playback gotomachine.txt");
                     Thread.sleep(100);
                     iSecsHost.executeCommand("playback gotodevice.txt");
-//                    iSecsHost.executeCommand("playback password.txt");
-                    iSecsHost.executeCommand("replay password.exe");
-                    Thread.sleep(500);
-                    iSecsHost.executeCommand("curscreen");
-                    for (int k = 0; k < 10; k++) {
-                        List<String> numberList = iSecsHost.executeCommand("read number");
-                        if (numberList.contains("1")) {
-                            break;
-                        } else {
-                            iSecsHost.executeCommand("playback devicelast.txt");
-                        }
-                    }
-                    String handleRecipeTemp = recipeName;
-                    if (deviceType.contains("Z2")) {
-                        handleRecipeTemp = trimUOID(recipeName);
-                    }
-                    boolean selHandleOk = false;
-                    for (int i = 0; i < 10; i++) {
-                        for (int j = 1; j < 6; j++) {
-                            List<String> devices = iSecsHost.executeCommand("read device" + j);
-                            if (devices.contains(handleRecipeTemp)) {
-                                iSecsHost.executeCommand("playback seldevicetype" + j + ".txt");
-                                iSecsHost.executeCommand("playback selvisiontype1.txt");
-                                iSecsHost.executeCommand("playback devicechange.txt");
-                                iSecsHost.executeCommand("replay password.exe");
-                                Thread.sleep(100);
-                                iSecsHost.executeCommand("playback changeconfirm.txt");
-                                selHandleOk = true;
-                                break;
-                            }
-                        }
-                        if (selHandleOk) {
-                            break;
-                        }
-                        iSecsHost.executeCommand("playback devicenext.txt");
-                    }
-
+                    iSecsHost.executeCommand("playback password.txt");
+                    Thread.sleep(100);
+                    iSecsHost.executeCommand("playback seldevicetype1.txt");
+                    iSecsHost.executeCommand("playback selvisiontype1.txt");
+                    List<String> devicechange = iSecsHost.executeCommand("playback devicechange.txt");
+                    iSecsHost.executeCommand("playback password.txt");
+                    Thread.sleep(100);
+                    iSecsHost.executeCommand("playback changeconfirm.txt");
                 }
+                //  iSecsHost.executeCommand("read devicetype1");
+
                 //return "handle部分程序选中失败";
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
+
             }
         }
         //执行vision的处理
@@ -841,14 +624,12 @@ public class Rokko8000pHost extends EquipModel {
             List<String> exitvisionResult = visionISecsHost.executeCommand("playback exitvision.txt");
             for (String string : exitvisionResult) {
                 if ("done".equals(string)) {
-                    String pkgType = getPackageType(trimUOID(recipeName));
-                    if (deviceType.contains("Z2")) {
-                        pkgType = getPackageType(trimUOID(recipeName));
-                    }
-                    runVisionSoft(pkgType);
+                    runVisionSoft(getPackageType(trimUOID(recipeName)));
                 }
             }
+
         }
+
         return "0";
     }
 
@@ -863,7 +644,6 @@ public class Rokko8000pHost extends EquipModel {
 
     @Override
     public Map getEquipMonitorPara() {
-        getEquipRecipeList();
         Map map = new HashMap();
         synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
             try {
@@ -872,13 +652,10 @@ public class Rokko8000pHost extends EquipModel {
                 String ftpUser = GlobalConstants.ftpUser;
                 String ftpPwd = GlobalConstants.ftpPwd;
                 String equipRecipeName = equipRecipeNames[1];
-                String equipRecipePathtmp = sawRecipePath;
+                String equipRecipePathtmp = equipRecipePath;
                 if (!"".equals(equipRecipeNames[0])) {
                     equipRecipePathtmp = sawRecipePath + "\\" + equipRecipeNames[0];
                 }
-                String body = equipRecipeName + "," + ppExecName + ",";
-                TransferUtil.setPPBody(body, 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/TMP");
-
                 List<String> result = sawISecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + " \"mput "
                         + equipRecipeName + ".DFD\"");
@@ -896,6 +673,21 @@ public class Rokko8000pHost extends EquipModel {
                         }
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Get equip status error:" + e.getMessage());
+            }
+        }
+        synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
+            try {
+                List<String> curscreen = iSecsHost.executeCommand("curscreen");
+                if ("run".equals(curscreen.get(0))) {
+                    iSecsHost.executeCommand("playback gotosetup");
+                }
+                iSecsHost.executeCommand("playback gotoqfn");
+                //TODO read QNF parameter
+                //List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
+                iSecsHost.executeCommand("playback gotomark");
+                //TODO read Mark parameter
             } catch (Exception e) {
                 logger.error("Get equip status error:" + e.getMessage());
             }
@@ -938,8 +730,8 @@ public class Rokko8000pHost extends EquipModel {
                                         if (i == recipeNameMappings.length - 1) {
                                             break;
                                         }
-                                        recipeNameMappingMap.put(recipeNameMappings[i + 1], dir + ":" + recipeNameMappings[i]);
-                                        recipeNameList.add(recipeNameMappings[i + 1]);
+                                        recipeNameMappingMap.put(recipeNameMappings[i] + "-" + recipeNameMappings[i + 1], dir + ":" + recipeNameMappings[i]);
+                                        recipeNameList.add(recipeNameMappings[i] + "-" + recipeNameMappings[i + 1]);
                                         i = i + 1;
 
                                     }
@@ -957,8 +749,8 @@ public class Rokko8000pHost extends EquipModel {
                                 if (i == recipeNameMappings.length - 1) {
                                     break;
                                 }
-                                recipeNameMappingMap.put(recipeNameMappings[i + 1], ":" + recipeNameMappings[i]);
-                                recipeNameList.add(recipeNameMappings[i + 1]);
+                                recipeNameMappingMap.put(recipeNameMappings[i] + "-" + recipeNameMappings[i + 1], ":" + recipeNameMappings[i]);
+                                recipeNameList.add(recipeNameMappings[i] + "-" + recipeNameMappings[i + 1]);
                                 i = i + 1;
 
                             }
@@ -977,7 +769,7 @@ public class Rokko8000pHost extends EquipModel {
 
     @Override
     public Object clone() {
-        Rokko8000pHost newEquip = new Rokko8000pHost(deviceId, remoteIPAddress, remoteTCPPort, deviceType, iconPath, equipRecipePath);
+        Rokko8000pHostUpload newEquip = new Rokko8000pHostUpload(deviceId, remoteIPAddress, remoteTCPPort, deviceType, iconPath, equipRecipePath);
         newEquip.startUp = this.startUp;
         //newEquip.equipState = this.equipState;
         this.clear();
@@ -989,15 +781,19 @@ public class Rokko8000pHost extends EquipModel {
         List<String> alarmStrings = new ArrayList<>();
         synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> alidresult = sawISecsHost.executeCommand("read alarmid");
-                if (alidresult.size() > 1) {
-                    alarmStrings.add(alidresult.get(0));
-                    logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
-                } else {
-                    alarmStrings.add("");
-                }
-                if (alidresult == null || alidresult.isEmpty()) {
-                    return null;
+                List<String> result = sawISecsHost.executeCommand("readrectcolor 730 50 750 60 ");
+                for (String colorstr : result) {
+                    if ("0xc0c0c0".equals(colorstr)) {
+                        alarmStrings.add("");
+                    }
+                    if ("0xff0000".equals(colorstr)) {
+                        logger.info("The equip state changged to alarm...");
+                        List<String> alidresult = sawISecsHost.executeCommand("read alarmid");
+                        if (alidresult.size() > 1) {
+                            alarmStrings.add(alidresult.get(0));
+                            logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
+                        }
+                    }
                 }
             } catch (Exception e) {
                 logger.error("Get EquipAlarm error:" + e.getMessage());
@@ -1007,29 +803,19 @@ public class Rokko8000pHost extends EquipModel {
         if (alarmStrings.size() > 0) {
             alarmStrings.remove("0xff0000");
         }
-//        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-//            try {
-//                //    List<String> result = iSecsHost.executeCommand("read alarm");
-//                logger.info("The equip state changged to alarm...");
-//                List<String> alidresult = iSecsHost.executeCommand("read alarm");
-//                if (alidresult.size() > 1) {
-//                    for (String string : alidresult) {
-//                        if (string.contains("]")) {
-//                            alarmStrings.add(string.split("]")[0].replaceAll("\\[", ""));
-//                            logger.info("Get alarm ALID=[" + alarmStrings.get(0) + "]");
-//                        }
-//                    }
-//                }
-//            } catch (Exception e) {
-//                logger.error("Get EquipAlarm error:" + e.getMessage());
-//            }
-//        }
-        if (alarmStrings.size() < 2 && "".equals(String.valueOf(alarmStrings.get(0)))) {
-            if (preAlarm.equals(alarmStrings.get(0))) {
-                return null;
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            try {
+                //    List<String> result = iSecsHost.executeCommand("read alarm");
+                logger.info("The equip state changged to alarm...");
+                List<String> alidresult = iSecsHost.executeCommand("read alarm");
+                if (alidresult.size() > 1) {
+                    alarmStrings.add(alidresult.get(0));
+                    logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
+                }
+            } catch (Exception e) {
+                logger.error("Get EquipAlarm error:" + e.getMessage());
             }
         }
-        preAlarm = alarmStrings.get(0);
         return alarmStrings;
     }
 
@@ -1054,16 +840,21 @@ public class Rokko8000pHost extends EquipModel {
             try {
                 List<String> result = this.sawISecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    if (result.get(0).contains("pause")) {
+                    if ("pause".equals(result.get(0))) {
                         equipStatus = "Pause";
-                    } else if (result.get(0).contains("work") || result.get(0).contains("run")) {
-                        equipStatus = "Run";
+                    } else if ("work".equals(result.get(0))) {
+                        List<String> result2 = iSecsHost.executeCommand("readrectcolor 970 160 990 174");
+                        if ("0xff0000".equals(result2.get(0))) {
+                            equipStatus = "Run";
+                        } else {
+                            equipStatus = "Idle";
+                        }
                     } else if ("main".equals(result.get(0)) || "any".equals(result.get(0))) {
                         equipStatus = "Idle";
-                    } else if (result.get(0).contains("ready")) {
+                    } else if ("ready".equalsIgnoreCase(result.get(0))) {
                         equipStatus = "Ready";
                     } else if ("param".equals(result.get(0))) {
-                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备处于参数设置页面,暂时无法刷新设备状态.页面改变后将会定时刷新");
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备处于参数设置页面,暂时无法刷新设备状态.页面改变后将会定时刷新");
                     }
                 }
             } catch (Exception e) {
@@ -1076,7 +867,7 @@ public class Rokko8000pHost extends EquipModel {
         return equipStatus;
     }
 
-  
+
     public boolean checkBladeCode() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -1129,10 +920,7 @@ public class Rokko8000pHost extends EquipModel {
     @Override
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
         String recipeName = recipe.getRecipeName();
-        String handlerRecipeName = recipeName;
-        if (deviceType.contains("Z2")) {
-            handlerRecipeName = trimUOID(recipeName);
-        }// recipeName.replace(recipeName.split("-")[0] + "-", "");
+        String handlerRecipeName = trimUOID(recipeName);// recipeName.replace(recipeName.split("-")[0] + "-", "");
         String visionRecipeName = handlerRecipeName + "_" + handlerRecipeName;
         String[] equipRecipeNames = recipeNameMappingMap.get(recipeName).split(":");
         String equipRecipeName = equipRecipeNames[1];
@@ -1156,8 +944,7 @@ public class Rokko8000pHost extends EquipModel {
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + "DeviceName.ini", remoteRcpPath, "DeviceName.ini_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + visionRecipeName + ".ini", remoteRcpPath, recipeName + ".ini_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                 || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + visionRecipeName + ".IN0para", remoteRcpPath, recipeName + ".IN0para_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
-                || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + handlerRecipeName + ".han", remoteRcpPath, recipeName + ".han_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
-                || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/pkgdata.dat", remoteRcpPath, "pkgdata.dat_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+                || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + handlerRecipeName + ".han", remoteRcpPath, recipeName + ".han_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
             UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
             return false;
         }
@@ -1171,7 +958,7 @@ public class Rokko8000pHost extends EquipModel {
             FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + visionRecipeName + ".PtrnSip_1", remoteRcpPath, recipeName + ".PtrnSip_1_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
 
         }
-       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+        UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }
@@ -1226,7 +1013,6 @@ public class Rokko8000pHost extends EquipModel {
                     String[] strTmps = str1.replaceAll("\"", "").replaceAll("\\t\\[", "").split(",");
                     Map<String, String> map = new HashMap();
                     for (String strTmp : strTmps) {
-                        strTmp = strTmp.replaceAll("\\[", "");
                         if ("".equals(strTmp.trim())) {
                             continue;
                         }
@@ -1260,6 +1046,9 @@ public class Rokko8000pHost extends EquipModel {
     private boolean exportHandleRecipe(String recipeName) {
         List<String> exportResultList = handleRecipeHost.executeCommand("Export " + getMapHandleRecipeName(recipeName) + " " + equipRecipePath + "\\" + recipeName + ".han");
         for (String string : exportResultList) {
+            if (string.contains("Error:Export")) {
+                return false;
+            }
             if (string.contains("done")) {
                 return true;
             }
@@ -1301,10 +1090,9 @@ public class Rokko8000pHost extends EquipModel {
     }
 
     private void createDeviceNameFile(String recipeName) {
-        String mapHandleRecipeName = recipeName;
-        if (deviceType.contains("Z2")) {
-            mapHandleRecipeName = trimUOID(recipeName);
-        }
+
+        String mapHandleRecipeName = trimUOID(recipeName);
+
         String groupName = mapHandleRecipeName;
 
         String visionName = mapHandleRecipeName;
@@ -1360,14 +1148,13 @@ public class Rokko8000pHost extends EquipModel {
         if (clientType.equals("Q")) {
             cmd = visionRecipePath + "QFN\\Master6.exe";
         }
-
         try {
-            //        visionISecsHost.executeCommand("dos  " + cmd + " ");
-            Thread.sleep(8000);
+            Thread.sleep(10000);
         } catch (InterruptedException ex) {
-
+            java.util.logging.Logger.getLogger(Rokko8000pHostUpload.class.getName()).log(Level.SEVERE, null, ex);
         }
-        visionISecsHost.executeCommand("dos $start " + cmd + " $");
+        visionISecsHost.executeCommand("dos  " + cmd + " ");
+//        visionISecsHost.executeCommand("dos $start " + cmd + " $");
     }
 
     private String getPackageType(String recipeName) {
@@ -1392,280 +1179,5 @@ public class Rokko8000pHost extends EquipModel {
             fullPath = fullPath + "BGA\\DATA";
         }
         return fullPath;
-    }
-
-    @Override
-    public Map getSpecificData(Map<String, String> dataIdMap) {
-        Map valueMap = new HashMap();
-        synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
-            String curscreen = sawISecsHost.executeCommand("curscreen").get(0);
-            if (curscreen.contains("work")) {
-                if (dataIdMap.containsKey("drlcz1")) {
-                    //加入刀刃厚度取值，单独取值
-                    sawISecsHost.executeCommand("playback gotodpqb.txt");
-                    try {
-                        Thread.sleep(500);
-                    } catch (Exception e) {
-                    }
-                    sawISecsHost.executeCommand("curscreen");
-                    valueMap = sawISecsHost.readAllParaByScreen("dpqb");
-                    logger.debug("dpqbMap:" + valueMap);
-                    sawISecsHost.executeCommand("playback gotoworkscreen.txt");
-                    return valueMap;
-                }
-            }
-        }
-        getCurrentRecipeName();
-        String pkgType = "";
-        if (ppExecName.equals("--")) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
-            return new HashMap();
-        }
-        if (deviceType.contains("Z2")) {
-            String handleRecipeNameTmp = trimUOID(ppExecName);
-            pkgType = getPackageType(handleRecipeNameTmp);
-        }
-
-        synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
-            String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
-            if (curscreen.equals("stop")) {
-                visionISecsHost.executeCommand("playback stop.txt");
-            }
-            visionISecsHost.executeCommand("playback gotosetup.txt");
-            visionISecsHost.executeCommand("playback gotomark.txt");
-            if (pkgType.equals("B")) {
-                visionISecsHost.executeCommand("playback gotomarkins.txt");
-                Map amarkinsMap = visionISecsHost.readAllParaByScreen("amarkins");
-                valueMap.putAll(amarkinsMap);
-                logger.debug("amarkins:" + valueMap);
-                visionISecsHost.executeCommand("playback gotomarkset.txt");
-                Map amarksetMap = visionISecsHost.readAllParaByScreen("amarkset");
-                logger.debug("amarksetMap:" + amarksetMap);
-                valueMap.putAll(amarksetMap);
-            } else {
-                visionISecsHost.executeCommand("playback gotomarksetlga.txt");
-                Map amarksetlgaMap = visionISecsHost.readAllParaByScreen("amarksetlga");
-                valueMap.putAll(amarksetlgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-                visionISecsHost.executeCommand("playback gotomarkinslga.txt");
-                Map amarkinslgaMap = visionISecsHost.readAllParaByScreen("amarkinslga");
-                valueMap.putAll(amarkinslgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-
-                visionISecsHost.executeCommand("playback gotomarkxmlga.txt");
-                Map amarkxmlgaMap = visionISecsHost.readAllParaByScreen("amarkxmlga");
-                valueMap.putAll(amarkxmlgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-
-            }
-
-            visionISecsHost.executeCommand("playback gotoball.txt");
-            visionISecsHost.executeCommand("playback gotoballins.txt");
-
-            if (pkgType.equals("B")) {
-                try {
-                    Thread.sleep(500);
-                } catch (Exception e) {
-                }
-                Map aballinsMap = visionISecsHost.readAllParaByScreen("aballins");
-                valueMap.putAll(aballinsMap);
-                visionISecsHost.executeCommand("playback gotoballset.txt");
-                Map aballsetMap = visionISecsHost.readAllParaByScreen("aballset");
-                valueMap.putAll(aballsetMap);
-
-            } else {
-
-                visionISecsHost.executeCommand("playback gotosipinslpp.txt");
-                Map asipinslppMap = visionISecsHost.readAllParaByScreen("asipinslpp");
-                valueMap.putAll(asipinslppMap);
-                visionISecsHost.executeCommand("playback gotomainsip.txt");
-
-                visionISecsHost.executeCommand("playback gotosipinsxm.txt");
-                Map asipinsxmMap = visionISecsHost.readAllParaByScreen("asipinsxm");
-                valueMap.putAll(asipinsxmMap);
-                visionISecsHost.executeCommand("playback gotomainsip.txt");
-            }
-            visionISecsHost.executeCommand("playback stop.txt");
-        }
-        return valueMap;
-    }
-
-    private boolean repeatStop() {
-        List<String> result = sawISecsHost.executeCommand("playback stop.txt");
-        for (String string : result) {
-            if ("done".equals(string)) {
-                List<String> curscreens = sawISecsHost.executeCommand("curscreen");
-                for (String curscreen : curscreens) {
-                    if ("pause".equals(curscreen)) {
-                        return true;
-                    } else if (curscreen.contains("work")) {
-
-                        for (int i = 0; i < 10; i++) {
-                            try {
-                                Thread.sleep(500);
-                                sawISecsHost.executeCommand("playback stop.txt");
-                            } catch (InterruptedException ex) {
-
-                            }
-                            List<String> result3 = sawISecsHost.executeCommand("curscreen");
-                            for (String string1 : result3) {
-                                if (!string1.contains("work")) {
-                                    return true;
-                                }
-                            }
-
-                        }
-
-                    } else if ("main".equals(curscreen) || "any".equals(curscreen)) {
-                        return true;
-                    } else if ("ready".equalsIgnoreCase(curscreen)) {
-                        return true;
-                    } else if ("param".equals(curscreen)) {
-                        return true;
-                    }
-                }
-            }
-
-        }
-        return false;
-    }
-
-    @Override
-    public void sendMessage2Eqp(String message) {
-        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
-        DeviceService deviceService = new DeviceService(sqlSession);
-        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        sqlSession.close();
-        if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
-            synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-                try {
-                    if (message.length() > 300) {
-                        logger.info("准备向设备发送的消息为:" + message + ",长度超过限制，将被截取");
-                        message = message.substring(0, 300) + "...";
-                        logger.info("实际向设备发送的消息为:" + message);
-                    }
-                    iSecsHost.executeCommand("message " + message);
-                    sawISecsHost.executeCommand("message " + message);
-                } catch (Exception e) {
-                    logger.error("向设备发送消息时发生异常:" + e.getMessage());
-                }
-            }
-        }
-    }
-
-    private void editRecipeFileAdduoid(String recipePath, String recipeName, String uoidRecipeName) {
-        DiscoRecipeUtil.editRecipeName(recipePath, recipeName, uoidRecipeName);
-    }
-
-
-    public Map getSpecificDataTemp(Map<String, String> dataIdMap) {
-        Map dpqbMap = new HashMap();
-        Map paramMap = new HashMap();
-        synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
-            String curscreen = sawISecsHost.executeCommand("curscreen").get(0);
-
-            if (curscreen.contains("dpqb1")) {
-                dpqbMap = sawISecsHost.readAllParaByScreen("dpqb1");
-                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
-            }
-            if (curscreen.contains("main")) {
-                sawISecsHost.executeCommand("playback idletodpqb.txt");
-                try {
-                    Thread.sleep(500);
-                } catch (Exception e) {
-                }
-                dpqbMap = sawISecsHost.readAllParaByScreen("dpqb1");
-                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
-            }
-            if (curscreen.contains("work")) {
-                sawISecsHost.executeCommand("playback gotoparams.txt");
-                try {
-                    Thread.sleep(500);
-                } catch (Exception e) {
-                }
-                sawISecsHost.executeCommand("curscreen");
-                paramMap = sawISecsHost.readAllParaByScreen("param");
-                logger.debug("paramMap:" + paramMap);
-                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
-//                return paramMap;
-            }
-        }
-        Map valueMap = new HashMap();
-        valueMap.putAll(dpqbMap);
-        valueMap.putAll(paramMap);
-        getCurrentRecipeName();
-        String pkgType = "";
-        if (ppExecName.equals("--")) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
-            return new HashMap();
-        }
-        if (deviceType.contains("Z2")) {
-            String handleRecipeNameTmp = trimUOID(ppExecName);
-            pkgType = getPackageType(handleRecipeNameTmp);
-        }
-
-        synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
-            String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
-            if (curscreen.equals("stop")) {
-                visionISecsHost.executeCommand("playback stop.txt");
-            }
-            visionISecsHost.executeCommand("playback gotosetup.txt");
-            visionISecsHost.executeCommand("playback gotomark.txt");
-            if (pkgType.equals("B")) {
-                visionISecsHost.executeCommand("playback gotomarkins.txt");
-                Map amarkinsMap = visionISecsHost.readAllParaByScreen("amarkins");
-                valueMap.putAll(amarkinsMap);
-                logger.debug("amarkins:" + valueMap);
-                visionISecsHost.executeCommand("playback gotomarkset.txt");
-                Map amarksetMap = visionISecsHost.readAllParaByScreen("amarkset");
-                logger.debug("amarksetMap:" + amarksetMap);
-                valueMap.putAll(amarksetMap);
-            } else {
-                visionISecsHost.executeCommand("playback gotomarksetlga.txt");
-                Map amarksetlgaMap = visionISecsHost.readAllParaByScreen("amarksetlga");
-                valueMap.putAll(amarksetlgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-                visionISecsHost.executeCommand("playback gotomarkinslga.txt");
-                Map amarkinslgaMap = visionISecsHost.readAllParaByScreen("amarkinslga");
-                valueMap.putAll(amarkinslgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-
-                visionISecsHost.executeCommand("playback gotomarkxmlga.txt");
-                Map amarkxmlgaMap = visionISecsHost.readAllParaByScreen("amarkxmlga");
-                valueMap.putAll(amarkxmlgaMap);
-                visionISecsHost.executeCommand("playback gotomainlga.txt");
-
-            }
-
-            visionISecsHost.executeCommand("playback gotoball.txt");
-            visionISecsHost.executeCommand("playback gotoballins.txt");
-
-            if (pkgType.equals("B")) {
-                try {
-                    Thread.sleep(500);
-                } catch (Exception e) {
-                }
-                Map aballinsMap = visionISecsHost.readAllParaByScreen("aballins");
-                valueMap.putAll(aballinsMap);
-                visionISecsHost.executeCommand("playback gotoballset.txt");
-                Map aballsetMap = visionISecsHost.readAllParaByScreen("aballset");
-                valueMap.putAll(aballsetMap);
-
-            } else {
-
-                visionISecsHost.executeCommand("playback gotosipinslpp.txt");
-                Map asipinslppMap = visionISecsHost.readAllParaByScreen("asipinslpp");
-                valueMap.putAll(asipinslppMap);
-                visionISecsHost.executeCommand("playback gotomainsip.txt");
-
-                visionISecsHost.executeCommand("playback gotosipinsxm.txt");
-                Map asipinsxmMap = visionISecsHost.readAllParaByScreen("asipinsxm");
-                valueMap.putAll(asipinsxmMap);
-                visionISecsHost.executeCommand("playback gotomainsip.txt");
-            }
-            visionISecsHost.executeCommand("playback stop.txt");
-        }
-        logger.debug("valueMap:" + dpqbMap);
-        return dpqbMap;
     }
 }

@@ -20,8 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 public class DGP8760Host extends EquipModel {
 
@@ -30,7 +33,7 @@ public class DGP8760Host extends EquipModel {
 
     public DGP8760Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -449,6 +452,7 @@ public class DGP8760Host extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 

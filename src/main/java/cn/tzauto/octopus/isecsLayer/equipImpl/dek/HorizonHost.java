@@ -49,7 +49,7 @@ public class HorizonHost extends EquipModel {
             try {
                 List<String> result = iSecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    if ("main".equals(result.get(0))) {
+                    if ("main".equals(result.get(0)) || "any".equals(result.get(0))) {
                         ppExecName = iSecsHost.executeCommand("read recipename").get(0);
                     } else if ("recipedetail1".equals(result.get(0))) {
                         ppExecName = iSecsHost.executeCommand("read recipedetail1recipename").get(0);
@@ -58,6 +58,9 @@ public class HorizonHost extends EquipModel {
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
+        }
+        if ("".equals(ppExecName) || ppExecName.contains("rror")) {
+            ppExecName = "--";
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -152,18 +155,35 @@ public class HorizonHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + ".ISD" + " \"mput "
                         + recipeName + ".ISD\"");
-
+                for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
+                }
                 TransferUtil.setPPBody(recipeName + ".PR1", 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + ".PR1" + "/TMP");
                 List<String> resultTemp1 = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + ".PR1" + " \"mput "
                         + recipeName + ".PR1\"");
-
+                for (String uploadstr : resultTemp1) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
+                }
                 TransferUtil.setPPBody(recipeName + ".pxf", 0, GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + ".pxf" + "/TMP");
                 List<String> resultTemp2 = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + ".pxf" + " \"mput "
                         + recipeName + ".pxf\"");
                 Map map = new HashMap();
                 for (String uploadstr : resultTemp2) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         List<String> result1 = iSecsHost.executeCommand("curscreen");
@@ -322,11 +342,33 @@ public class HorizonHost extends EquipModel {
                 }
                 List<String> result1 = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + ".ISD/" + " \"mget " + recipe.getRecipeName() + ".ISD\"");
+                for (String str : result1) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
+                    if (str.contains("Not connected")) {
+                        return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
+                    }
+                }
                 List<String> result2 = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + ".PR1/" + " \"mget " + recipe.getRecipeName() + ".PR1\"");
+                for (String str : result2) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
+                    if (str.contains("Not connected")) {
+                        return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
+                    }
+                }
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + ".pxf/" + " \"mget " + recipe.getRecipeName() + ".pxf\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -533,6 +575,7 @@ public class HorizonHost extends EquipModel {
         return newEquip;
     }
 
+    @Override
     public List<String> getEquipAlarm() {
         List<String> alarmStrings = new ArrayList<>();
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
@@ -543,6 +586,14 @@ public class HorizonHost extends EquipModel {
                     byte[] b = alidresult.get(0).getBytes("GBK");
                     String result3 = new String(b, "UTF-8");
                     if (alidresult.size() > 1) {
+                        if (result3.contains("设定值与机器测量值不同")) {
+                            if (result3.contains("前刮刀压力异常")) {
+                                result3 = "";
+                            }
+                            if (result3.contains("后刮刀压力异常")) {
+                                result3 = "";
+                            }
+                        }
                         alarmStrings.add(result3);
                         logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
                     }
@@ -620,6 +671,21 @@ public class HorizonHost extends EquipModel {
         Map map = new HashMap();
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             List<String> result1 = iSecsHost.executeCommand("curscreen");
+            if (dataIdMap.containsKey("qxms")) {
+                if (result1.contains("main")) {
+                    iSecsHost.executeCommand("replay gotoszhc.exe");
+                    List<String> result4 = iSecsHost.executeCommand("curscreen");
+                    if (result4.contains("szhc")) {
+                        List<String> resultPara = iSecsHost.executeCommand("read qxms");
+                        map.put("qxms", resultPara.get(0));
+                    }
+                    iSecsHost.executeCommand("replay szhcbackmian.exe");
+                } else if (result1.contains("szhc")) {
+                    List<String> resultPara = iSecsHost.executeCommand("read qxms");
+                    map.put("qxms", resultPara.get(0));
+                    iSecsHost.executeCommand("replay szhcbackmian.exe");
+                }
+            }
             if (result1.contains("main")) {
                 iSecsHost.executeCommand("playback gotorecipepara.txt");
             }

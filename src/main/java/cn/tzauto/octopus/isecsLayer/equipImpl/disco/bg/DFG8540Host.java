@@ -26,8 +26,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -40,7 +43,7 @@ public class DFG8540Host extends EquipModel {
 
     public DFG8540Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override

@@ -649,4 +649,42 @@ public class AxisUtility {
         return lockFlag;
     }
 
+
+    public static String getPressUseFromServerByWS(String deviceCode) {
+        String PressUse = "";
+        String endPoint = "http://192.168.99.130/MESProject/services/eqpManageWebService";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("getSlotPosByEqp");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{"MES", deviceCode}));
+            logger.info("get http://192.168.99.130/MESProject/services/eqpManageWebService return:=" + jsonResult);
+            PressUse = jsonResult;
+//            PressUse = (String) JsonMapper.fromJsonString(jsonResult, String.class);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return PressUse;
+        }
+        return PressUse;
+    }
+
+    public static boolean getPressCheckFlag(String deviceCode) {
+        String PressUse = "";
+        String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/eqptService";
+        try {
+            Service service = new Service();
+            Call call = (Call) service.createCall();
+            call.setTargetEndpointAddress(new java.net.URL(endPoint));
+            call.setOperationName("checkMoldToolingStart");
+            String jsonResult = String.valueOf(call.invoke(new Object[]{deviceCode}));
+            logger.info("get checkMoldToolingStart return:=" + jsonResult);
+            PressUse = jsonResult;
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return false;
+        }
+        return "Y".equals(PressUse);
+    }
+
 }

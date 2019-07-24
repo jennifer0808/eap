@@ -23,8 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -36,7 +39,7 @@ public class AptVST60AHost extends EquipModel {
 
     public AptVST60AHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -52,6 +55,7 @@ public class AptVST60AHost extends EquipModel {
                 @Override
                 public void run() {
                     getEquipRealTimeState();
+                    sendStatus2Server(equipStatus);
                 }
             }).start();
         } else {
@@ -157,6 +161,13 @@ public class AptVST60AHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "\\" + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + "00000.Recipe\"");
+                for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
+                }
             } catch (Exception e) {
             } finally {
                 sqlSession.close();
@@ -191,6 +202,12 @@ public class AptVST60AHost extends EquipModel {
             }
             List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                     + ftpUser + " " + ftpPwd + " " + equipRecipePath + "\\ " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget 00000.Recipe\"");
+            for (String string : result) {
+                if (string.contains("rror")) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                    return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                }
+            }
 
             iSecsHost.executeCommand("playback gotosetup.txt");
             iSecsHost.executeCommand("playback gotorestore.txt");

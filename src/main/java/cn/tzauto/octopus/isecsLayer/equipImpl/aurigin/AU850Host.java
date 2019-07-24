@@ -31,8 +31,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -44,7 +47,7 @@ public class AU850Host extends EquipModel {
 
     public AU850Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -306,10 +309,10 @@ public class AU850Host extends EquipModel {
     public String deleteRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\" + recipeName + ".xml\"");
+                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\*.xml\"");
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        return "删除成功";
+                        return "0";
                     }
                 }
                 return "删除失败";
@@ -388,6 +391,7 @@ public class AU850Host extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 

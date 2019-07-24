@@ -20,8 +20,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 public class VSP88AHHost extends EquipModel {
 
@@ -30,7 +33,7 @@ public class VSP88AHHost extends EquipModel {
 
     public VSP88AHHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -237,6 +240,11 @@ public class VSP88AHHost extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + recipeName + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + recipeName + ".rcp\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -332,6 +340,10 @@ public class VSP88AHHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".rcp\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }

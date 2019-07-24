@@ -28,8 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -42,7 +45,7 @@ public class Y1EHost extends EquipModel {
 
     public Y1EHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -194,6 +197,11 @@ public class Y1EHost extends EquipModel {
                             + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "\\" + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                             + recipeName + ".rsp\"");
                     for (String uploadstr : result) {
+                        if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                            resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                            return resultMap;
+                        }
                         if ("done".equals(uploadstr)) {
                             List<RecipePara> recipeParaList = new ArrayList<>();
                             try {
@@ -301,6 +309,10 @@ public class Y1EHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + "\\ " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".rsp\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         logger.info("recipe:" + recipe.getRecipeName() + " 下载文件成功,开始执行导入");
                         //执行导入
@@ -500,6 +512,7 @@ public class Y1EHost extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -654,7 +667,7 @@ public class Y1EHost extends EquipModel {
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
         FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName + ".rsp", remoteRcpPath, recipeName + ".rsp_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-       UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
+        UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件存储位置：" + GlobalConstants.localRecipePath + remoteRcpPath);
         this.deleteTempFile(recipeName);
         return true;
     }

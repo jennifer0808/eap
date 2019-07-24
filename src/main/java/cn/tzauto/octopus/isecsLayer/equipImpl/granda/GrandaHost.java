@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -40,7 +41,7 @@ public class GrandaHost extends EquipModel {
 
     public GrandaHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -61,6 +62,9 @@ public class GrandaHost extends EquipModel {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
         }
+        if (!isGetLegalRecipeName(ppExecName)) {
+            ppExecName = "--";
+        }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
         changeEquipPanel(map);
@@ -80,7 +84,7 @@ public class GrandaHost extends EquipModel {
                 try {
                     String equipStatusTemp = this.getEquipStatus();
                     if (equipStatusTemp.equals("STOP")) {
-                        return "设备已经处于Pause状态！";
+                        return "0";
                     }
                     result = iSecsHost.executeCommand("playback pause.txt");
                     for (String start : result) {
@@ -111,7 +115,7 @@ public class GrandaHost extends EquipModel {
                 try {
                     String equipStatusTemp = this.getEquipStatus();
                     if (equipStatusTemp.equals("STOP")) {
-                        return "设备已经处于Pause状态！";
+                        return "0";
                     }
                     result = iSecsHost.executeCommand("playback pause.txt");
                     for (String start : result) {
@@ -160,6 +164,11 @@ public class GrandaHost extends EquipModel {
                         + recipeName + ".pkg\"");
                 Map map = new HashMap();
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -233,18 +242,14 @@ public class GrandaHost extends EquipModel {
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".pkg", ftpPathTmp + recipe.getRecipeName() + ".pkg_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
                 } else {
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".pkg", ftpPathTmp + recipe.getRecipeName() + ".pkg", ftpip, ftpPort, ftpUser, ftpPwd);
-                    if (RecipeEdit.hasGoldPara(deviceType)) {
-                        RecipeService recipeService = new RecipeService(sqlSession);
-                        List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipe.getRecipeName(), null, "GOLD");
-                        List<RecipePara> recipeParas = recipeService.searchRcpParaByRcpRowIdAndParaCode(recipes.get(0).getId(), null);
-                        FileUtil.renameFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".pkg", GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/002.pkg");
-                        List list = RecipeEdit.setGoldPara(recipeParas, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/002.pkg", deviceType);
-                        RecipeEdit.writeRecipeFile(list, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".pkg");
-                    }
                 }
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".pkg\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -283,7 +288,7 @@ public class GrandaHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\*.pkg\"");
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        return "删除成功";
+                        return "0";
                     }
                 }
                 return "删除失败";
@@ -360,6 +365,7 @@ public class GrandaHost extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 

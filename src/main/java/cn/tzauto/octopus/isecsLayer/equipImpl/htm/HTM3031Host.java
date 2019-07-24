@@ -4,7 +4,7 @@ import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
-import org.slf4j.MDC;
+import org.apache.log4j.MDC;
 
 import java.util.HashMap;
 import java.util.List;

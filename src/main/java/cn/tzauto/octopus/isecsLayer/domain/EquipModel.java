@@ -966,4 +966,23 @@ public abstract class EquipModel extends Thread {
             return false;
         }
     }
+
+    public void sendStatus2Server(String deviceStatus) {
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        DeviceService deviceService = new DeviceService(sqlSession);
+        try {
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+            deviceInfoExt.setDeviceStatus(deviceStatus);
+            DeviceOplog deviceOplog = setDeviceOplog( preEquipStatus, lotId);
+            deviceOplog.setOpDesc("equip status report" + deviceStatus);
+            GlobalConstants.stage.hostManager.sendDeviceInfoExtAndOplog2Server(deviceInfoExt, deviceOplog);
+            logger.info("*************equip status report*********");
+            sqlSession.commit();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        } finally {
+            sqlSession.close();
+        }
+    }
+
 }

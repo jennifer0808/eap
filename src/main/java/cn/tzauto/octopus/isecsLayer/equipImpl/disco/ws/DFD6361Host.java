@@ -22,8 +22,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 public class DFD6361Host extends EquipModel {
 
@@ -32,28 +35,34 @@ public class DFD6361Host extends EquipModel {
 
     public DFD6361Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
     public String getCurrentRecipeName() {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            try {
-                List<String> result = iSecsHost.executeCommand("curscreen");
-                if (result != null && !result.isEmpty()) {
-                    if ("pause".equals(result.get(0))) {
-                        ppExecName = iSecsHost.executeCommand("read pdevid").get(0);
-                    } else {
-                        if ("param".equals(result.get(0))) {
-                            ppExecName = iSecsHost.executeCommand("read devid").get(0);
-                        } else if ("work".equals(result.get(0))) {
-                            ppExecName = iSecsHost.executeCommand("read workdevid").get(0);
+        if (getPassport()) {
+            synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+                try {
+                    List<String> result = iSecsHost.executeCommand("curscreen");
+                    if (result != null && !result.isEmpty()) {
+                        if ("pause".equals(result.get(0))) {
+                            ppExecName = iSecsHost.executeCommand("read pdevid").get(0);
+                        } else {
+                            if ("param".equals(result.get(0))) {
+                                ppExecName = iSecsHost.executeCommand("read devid").get(0);
+                            } else if ("work".equals(result.get(0))) {
+                                ppExecName = iSecsHost.executeCommand("read workdevid").get(0);
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    logger.error("Get equip ExecName error:" + e.getMessage());
                 }
-            } catch (Exception e) {
-                logger.error("Get equip ExecName error:" + e.getMessage());
             }
+            if (!isGetLegalRecipeName(ppExecName)) {
+                ppExecName = "--";
+            }
+            this.returnPassport();
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -235,6 +244,11 @@ public class DFD6361Host extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -336,18 +350,19 @@ public class DFD6361Host extends EquipModel {
                 if (!FtpUtil.connectFtp(ftpip, ftpPort, ftpUser, ftpPwd)) {
                     return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
                 }
+                boolean ftpDownloadOK = false;
                 if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
-                    //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    // FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST", ftpPathTmp + "DEVID.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
+                    if (FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+                        ftpDownloadOK = true;
+                    }
                 } else {
-                    //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd);
-                    // FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST", ftpPathTmp + "DEVID.LST", ftpip, ftpPort, ftpUser, ftpPwd);
+                    if (FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU", ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN", ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd)) {
+                        ftpDownloadOK = true;
+                    }
                     if (RecipeEdit.hasGoldPara(deviceType) || recipe.getVersionType().equalsIgnoreCase("Unique")) {
                         RecipeService recipeService = new RecipeService(sqlSession);
                         List<Recipe> recipes = recipeService.searchRecipeOrderByVerNo(recipe.getRecipeName(), null, "GOLD");
@@ -357,10 +372,17 @@ public class DFD6361Host extends EquipModel {
                         RecipeEdit.writeRecipeFile(list, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD");
                     }
                 }
-
+                if (!ftpDownloadOK) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 到工控机时失败,请检查FTP是否存在此程序.");
+                    return "下载Recipe:" + recipe.getRecipeName() + " 到工控机时失败,请检查FTP是否存在此程序.";
+                }
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD DEV.LST DEVID.LST\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -373,9 +395,10 @@ public class DFD6361Host extends EquipModel {
                 return "下载失败,出现异常:" + e.getMessage();
             } finally {
                 sqlSession.close();
-                this.deleteTempFile(recipe.getRecipeName());
+//                this.deleteTempFile(recipe.getRecipeName());
             }
         }
+        this.deleteTempFile(recipe.getRecipeName());
         return "Download recipe " + recipe.getRecipeName() + " failed";
     }
 
@@ -478,6 +501,7 @@ public class DFD6361Host extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -598,25 +622,43 @@ public class DFD6361Host extends EquipModel {
 
     public List<String> getEquipAlarm() {
         List<String> alarmStrings = new ArrayList<>();
+        if (deviceType.contains("Z1WS")) {
+            if ("1".equals(GlobalConstants.getProperty("ISECS_WAFERSAW_BLADE_WIDTH_CHECK"))) {
+                getBladeWidth();
+            }
+        }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("readrectcolor 730 50 750 60 ");
-                for (String colorstr : result) {
-                    if ("0xc0c0c0".equals(colorstr)) {
-                        alarmStrings.add("");
-                    } else if ("0xff0000".equals(colorstr)) {
-                        logger.info("The equip state changged to alarm...");
-                        List<String> alidresult = iSecsHost.executeCommand("read alarmid");
-                        if (alidresult.size() > 1) {
-                            alarmStrings.add(alidresult.get(0));
-                            logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
-                        }
-                    } else {
-                        alarmStrings.add("");
-                    }
+                List<String> alidresult = iSecsHost.executeCommand("read alarmid");
+                if (alidresult.size() > 1) {
+                    alarmStrings.add(alidresult.get(0));
+                    logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
                 }
+                if (alidresult.isEmpty()) {
+                    alarmStrings.add("");
+                }
+
+//                List<String> result = iSecsHost.executeCommand("readrectcolor 730 50 750 60 ");
+//                if (result == null || result.isEmpty()) {
+//                    return null;
+//                }
+//                for (String colorstr : result) {
+//                    if ("0xc0c0c0".equals(colorstr)) {
+//                        alarmStrings.add("");
+//                    } else if ("0xff0000".equals(colorstr)) {
+//                        logger.info("The equip state changged to alarm...");
+//                        List<String> alidresult = iSecsHost.executeCommand("read alarmid");
+//                        if (alidresult.size() > 1) {
+//                            alarmStrings.add(alidresult.get(0));
+//                            logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
+//                        }
+//                    } else {
+//                        alarmStrings.add("");
+//                    }
+//                }
             } catch (Exception e) {
                 logger.error("Get EquipAlarm error:" + e.getMessage());
+                return null;
             }
         }
         //添加了一个过滤，异常时可能会将
@@ -809,7 +851,7 @@ public class DFD6361Host extends EquipModel {
 
     @Override
     protected boolean specialCheck() {
-        if (deviceType.contains("DISCO")) {
+        if (deviceType.contains("SAW")) {
             return true;
         }
         getCurrentRecipeName();
@@ -820,26 +862,53 @@ public class DFD6361Host extends EquipModel {
             logger.info("server 获取到的刀片信息:" + serverMap.toString());
             String serverZ1 = String.valueOf(serverMap.get("Z1"));
             String serverZ2 = String.valueOf(serverMap.get("Z2"));
-            Map equipMap = getBladeCode();
-            if (equipMap != null && !equipMap.isEmpty()) {
-                String equipZ1 = String.valueOf(equipMap.get("dppzz1"));
-                String equipZ2 = String.valueOf(equipMap.get("dppzz2"));
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组编号[" + bladeGroup + "]");
-               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组信息Z1[" + serverZ1 + "]Z2[" + serverZ2 + "]");
+            Map<String, String> equipMap = getBladeInfo();
+            if (equipMap != null && !equipMap.isEmpty() && equipMap.size() > 0) {
+                String equipZ1 = String.valueOf(equipMap.get("Z1"));
+                String equipZ2 = String.valueOf(equipMap.get("Z2"));
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组编号[" + bladeGroup + "]");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:刀片组信息Z1[" + serverZ1 + "]Z2[" + serverZ2 + "]");
                 if (serverZ1.equals(equipZ1)) {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对一致,检查通过");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对一致,检查通过");
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],比对不一致,检查不通过");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z1[" + equipZ1 + "],服务端型号[" + serverZ1 + "]比对不一致,检查不通过");
+                    sendMessage2Eqp("Blade Check Error:/r/n [Z1] Need:[" + serverZ1 + "] Actual:[" + equipZ1 + "]");
                     return false;
                 }
                 if (serverZ2.equals(equipZ2)) {
                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对一致,检查通过");
                 } else {
-                   UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],比对不一致,检查不通过");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机刀片检测:设备刀片信息Z2[" + equipZ2 + "],服务端型号[" + serverZ2 + "]比对不一致,检查不通过");
+                    sendMessage2Eqp("Blade Check Error:/r/n [Z2] Need:[" + serverZ2 + "] Actual:[" + equipZ2 + "]");
                     return false;
                 }
+                double z1width = Double.valueOf(equipMap.get("Z1Width"))/1000;
+                double z2width = Double.valueOf(equipMap.get("Z2Width"))/1000;
+                if(ppExecName.contains("AT11")) {
+                    if(z1width - z2width < 7) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片厚度与Z2刀片厚度差小于7um！");
+                        sendMessage2Eqp("BLADE_THICK1 IS NOT 7um MORE THAN BLADE_THICK2!");
+                        return false;
+                    }else {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片厚度与Z2刀片厚度大于等于7um，检查通过！");
+                    }
+                }else{
+                    if(z1width - z2width < 0) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片厚度小于Z2刀片厚度！");
+                        sendMessage2Eqp("BLADE_THICK1 IS LESS THAN BLADE_THICK2!");
+                        return false;
+                    }else {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Z1刀片厚度大于等于Z2刀片厚度，检查通过！");
+                    }
+                }
+            } else {
+                logger.info("从设备获取到的刀片信息失败,检查不通过.");
+                this.sendMessage2Eqp("Failed to obtain blade information,equip stopped.");
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "从设备获取到的刀片信息失败,检查不通过.");
+                return false;
             }
         }
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode,"刀片检查通过！");
         return true;
     }
 
@@ -890,7 +959,7 @@ public class DFD6361Host extends EquipModel {
         Map valueMap = new HashMap();
         if (deviceType.contains("Z1WS")) {
             String curscreen = iSecsHost.executeCommand("curscreen").get(0);
-            if ("work".equals(curscreen)) {
+            if (curscreen.contains("work")) {
                 //dpqb
                 iSecsHost.executeCommand("playback gotodpqb.txt");
                 try {
@@ -913,11 +982,138 @@ public class DFD6361Host extends EquipModel {
                 iSecsHost.executeCommand("playback gotoworkscreen.txt");
             }
         } else if (deviceType.contains("Z1SAW")) {
+            String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+            if (curscreen.contains("work")) {
+                if (dataIdMap.containsKey("drlcz1")) {
+                    //加入刀刃厚度取值，单独取值
+                    iSecsHost.executeCommand("playback gotodpqb.txt");
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception e) {
+                    }
+                    iSecsHost.executeCommand("curscreen");
+                    valueMap = iSecsHost.readAllParaByScreen("dpqb");
+                    logger.debug("dpqbMap:" + valueMap);
+                    iSecsHost.executeCommand("playback gotoworkscreen.txt");
+                    return valueMap;
+                }
+            }
             Map reciepMap = getEquipMonitorPara();
             logger.debug("reciepMap:" + reciepMap);
             valueMap.putAll(reciepMap);
+        } else if (deviceType.contains("6362")) {
+            String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+            if ("work".equals(curscreen)) {
+                //dpqb
+                iSecsHost.executeCommand("playback gotodpqb.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map dpqbMap = iSecsHost.readAllParaByScreen("dpqb");
+                logger.debug("dpqbMap:" + dpqbMap);
+                valueMap.putAll(dpqbMap);
+                iSecsHost.executeCommand("playback gotoworkscreen.txt");
+                //param
+                iSecsHost.executeCommand("playback gotoparam.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map paramMap = iSecsHost.readAllParaByScreen("param");
+                logger.debug("paramMap:" + paramMap);
+                valueMap.putAll(paramMap);
+                iSecsHost.executeCommand("playback gotoworkscreen.txt");
+            }
         }
         logger.debug("valueMap:" + valueMap);
         return valueMap;
+    }
+
+    private void getBladeWidth() {
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            try {
+                String widthz1 = "";
+
+                List<String> result = iSecsHost.executeCommand("curscreen");
+                if (result.contains("work")) {
+                    List<String> widths1 = iSecsHost.executeCommand("read widthz1 ");
+                    if (widths1.size() > 1) {
+                        widthz1 = widths1.get(0);
+                        logger.info("读取刀痕宽度:z1" + widthz1);
+                    } else {
+                        List<String> widths2 = iSecsHost.executeCommand("read widthz11");
+                        if (widths2.size() > 1) {
+                            widthz1 = widths2.get(0);
+                            logger.info("读取刀痕宽度:z1" + widthz1);
+                        }
+                    }
+                    if (!widthz1.contains("rror") && widthz1.contains("mm")) {
+                        Map mqMap = new HashMap();
+                        mqMap.put("msgName", "BladeWidth");
+                        mqMap.put("Z1", widthz1);
+//                    mqMap.put("z2", widthz2);
+                        mqMap.put("deviceCode", deviceCode);
+                        GlobalConstants.C2SSpecificDataQueue.sendMessage(mqMap);
+                    }
+                }
+
+            } catch (Exception e) {
+                logger.info("读取刀痕宽度失败" + e.getMessage());
+            }
+        }
+    }
+
+
+    public Map getSpecificDataTemp(Map<String, String> dataIdMap) {
+        Map dpqbMap = new HashMap();
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+            if (curscreen.contains("dpqb1")) {
+                dpqbMap = iSecsHost.readAllParaByScreen("dpqb1");
+                iSecsHost.executeCommand("playback gotoworkscreen.txt");
+            }
+            if (curscreen.contains("main")) {
+                iSecsHost.executeCommand("playback idletodpqb.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                dpqbMap = iSecsHost.readAllParaByScreen("dpqb1");
+                iSecsHost.executeCommand("playback gotoworkscreen.txt");
+            }
+        }
+        logger.debug("valueMap:" + dpqbMap);
+        return dpqbMap;
+    }
+
+    protected Map<String, String> getBladeInfo() {
+        Map<String, String> map = new HashMap<>();
+        String path = equipRecipePath.substring(0, equipRecipePath.lastIndexOf("\\")+1) + "data\\BlADEINF.DAT";
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            List<String> list = iSecsHost.executeCommand("dos $type \"" + path + "\"$");
+            boolean end = false;
+            for(String str : list) {
+                if(str.startsWith("BLADE_ID")) {
+                    String blade = str.split("=")[1];
+                    if("BLADE_ID".equals(str.split("=")[0].trim())) {
+                        map.put("Z1",blade.substring(0,blade.lastIndexOf("$")).trim().replaceAll("\"",""));
+                    }else {
+                        map.put("Z2",blade.substring(0,blade.lastIndexOf("$")).trim().replaceAll("\"",""));
+                    }
+                }else if(str.startsWith("BLADE_THIC")) {
+                    String width = str.split("=")[1];
+                    if("BLADE_THICK".equals(str.split("=")[0].trim())) {
+                        map.put("Z1Width", width.substring(0,width.lastIndexOf("$")).trim().replaceAll("\"",""));
+                    }else {
+                        map.put("Z2Width", width.substring(0,width.lastIndexOf("$")).trim().replaceAll("\"",""));
+                        end = true;
+                    }
+                }
+                if (end)
+                    break;
+            }
+        }
+        return map;
     }
 }

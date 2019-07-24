@@ -28,8 +28,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -42,7 +45,7 @@ public class DFD6750Host extends EquipModel {
 
     public DFD6750Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
- 
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -64,6 +67,9 @@ public class DFD6750Host extends EquipModel {
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
+        }
+        if (!isGetLegalRecipeName(ppExecName)) {
+            ppExecName = "--";
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -479,8 +485,8 @@ public class DFD6750Host extends EquipModel {
 
     @Override
     public List<RecipePara> getRecipeParasFromMonitorMap() {
-        List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");        
-        if (recipeParas == null) {            
+        List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");
+        if (recipeParas == null) {
             return new ArrayList<>();
         }
         return recipeParas;
@@ -522,6 +528,7 @@ public class DFD6750Host extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
