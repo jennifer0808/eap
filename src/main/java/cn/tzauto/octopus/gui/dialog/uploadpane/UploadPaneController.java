@@ -336,11 +336,14 @@ public class UploadPaneController implements Initializable {
                     List<RecipePara> recipeParaList = (List<RecipePara>) recipeMap.get("recipeParaList");
                     RecipeNameMapping recipeNameMapping = (RecipeNameMapping) recipeMap.get("recipeNameMapping");
                     //保存数据
-                    boolean re;
+                    boolean re=false;
                     if (recipeNameMapping != null) {
                         re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode, recipeNameMapping);
                     } else {
-                        re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                        if(recipe!=null ){
+                            re = recipeService.saveUpLoadRcpInfo(recipe, recipeParaList, deviceCode);
+                        }
+
                     }
 
                     //打日志
