@@ -16,6 +16,8 @@ import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
+import cn.tzauto.octopus.isecsLayer.domain.ISecsHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import javafx.concurrent.Task;
@@ -155,8 +157,9 @@ public class DeviceInfoPaneController implements Initializable {
         DeviceInfoExt  deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceInfo.getDeviceCode());
         RecipeService recipeService = new RecipeService(sqlSession);
         SysService sysService = new SysService(sqlSession);
-        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
 
+        EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceCode);
+        EquipModel equipModel=GlobalConstants.stage.equipModels.get(deviceCode);
 //        boolean  testInitLink=false;
 //        try {
 //              testInitLink=equipHost.testInitLink();
@@ -165,11 +168,16 @@ public class DeviceInfoPaneController implements Initializable {
 //        } catch (HsmsProtocolNotSelectedException e) {
 //            e.printStackTrace();
 //        }
+        int commState=0;
+        if(equipHost!=null){
+             commState= equipHost.commState;
+        }
+        int modelcommState=0;
+        if(equipModel!=null){
+            modelcommState=equipModel.commState;
+        }
 
-
-        int commState= equipHost.commState;
-        logger.info("commState=====>"+commState);
-        if(commState==COMMUNICATING  ){
+        if(commState==EquipHost.COMMUNICATING  ||modelcommState==EquipModel.COMMUNICATING){
             Task task = new Task<Map>() {
                 @Override
                 public Map call() {
@@ -180,7 +188,7 @@ public class DeviceInfoPaneController implements Initializable {
                 }
             };
             new Thread(task).start();
-        }else if(commState==NOT_COMMUNICATING ){
+        }else if(commState==NOT_COMMUNICATING ||modelcommState==EquipModel.COMMUNICATING){
             equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
             UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "设备不在通讯状态");
 

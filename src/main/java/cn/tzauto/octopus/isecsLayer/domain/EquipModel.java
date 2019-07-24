@@ -34,7 +34,7 @@ public abstract class EquipModel extends Thread {
     private static Logger logger = Logger.getLogger(EquipModel.class.getName());
     public static final int COMMUNICATING = 1;
     public static final int NOT_COMMUNICATING = 0;
-    protected int commState = NOT_COMMUNICATING;
+    public int commState = NOT_COMMUNICATING;
     public String controlState = GlobalConstant.CONTROL_REMOTE_ONLINE;
     private int alarmState = 0;
     protected String protocolType;
