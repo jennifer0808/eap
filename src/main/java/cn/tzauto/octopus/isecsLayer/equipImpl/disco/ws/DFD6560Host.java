@@ -586,7 +586,8 @@ public class DFD6560Host extends EquipModel {
 
             List<String> result = new ArrayList<>();
             try {
-                result = iSecsHost.executeCommand("dos \"dir " + equipRecipePath + " /ad/w\"");
+                String cmd ="dos \"dir " + equipRecipePath + " /ad/w\"";
+                result = iSecsHost.executeCommand(cmd,"GBK");
             } catch (Exception e) {
                 return eppd;
             }
