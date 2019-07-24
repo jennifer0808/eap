@@ -41,7 +41,6 @@ public class HitachiLaserDrillHost extends EquipModel {
 
     private static Logger logger = Logger.getLogger(HitachiLaserDrillHost.class.getName());
     private String toolName = "";
-    private boolean hasAutoChangeRecipe = false;
 
     public HitachiLaserDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
@@ -340,7 +339,6 @@ public class HitachiLaserDrillHost extends EquipModel {
                 }
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        hasAutoChangeRecipe = false;
                         return "0";
                     }
                     if (str.contains("Not connected")) {
@@ -1031,55 +1029,6 @@ public class HitachiLaserDrillHost extends EquipModel {
         return false;
     }
 
-    private List setNormalData(String MacState, Map<String, String> productionMap) {
-        if (productionMap == null) {
-            productionMap = new HashMap<>();
-        }
-        List paraValueList = new ArrayList();
-        paraValueList.add(MacState);
-        if (MacState.equals("保养") || MacState.equals("待料")) {
-            if (MacState.equals("待料")) {
-//                paraValueList.add(idleStartTime);
-                paraValueList.add(lotStartTime);
-                LocalDateTime now = LocalDateTime.now();
-                lotStartTime = now.format(AvaryAxisUtil.dtf2);
-                paraValueList.add(lotStartTime);
-            } else {
-                paraValueList.add(pmState.getStartTime());
-                paraValueList.add(pmState.getEndTime());
-            }
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add("");
-            paraValueList.add("");
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add(0);
-            paraValueList.add(0);
-
-        } else {
-            paraValueList.add(lotStartTime);
-            //todo 这个endtime不准确，想办法处理掉
-            LocalDateTime now = LocalDateTime.now();
-            lotStartTime = now.format(AvaryAxisUtil.dtf2);
-            paraValueList.add(lotStartTime);
-
-            paraValueList.add(lotId);
-            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("PartNum"));
-            paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
-            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
-            paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
-            paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
-            paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
-        }
-        return paraValueList;
-
-    }
 
     private Map getCrystalPowerMap() {
 

@@ -241,6 +241,10 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
                         GlobalConstants.stage.equipModels.get(deviceCode).equipState.setWorkLot(lotNo);
                         GlobalConstants.stage.equipModels.get(deviceCode).lotCount = AvaryAxisUtil.getLotQty(lotNo);
                         deviceInfoExt.setLotId(lotNo);
+                        if (!lotNo2.equals("")) {
+                            deviceInfoExt.setLotId(lotNo + "/" + lotNo2);
+                            GlobalConstants.stage.equipModels.get(deviceCode).lotId = lotNo + "/" + lotNo2;
+                        }
                         deviceInfoExt.setPartNo(partNo);
                         deviceInfoExt.setRecipeName(recipeName);
                         deviceInfoExt.setRecipeId(recipe.getId());
@@ -284,7 +288,7 @@ public class DownloadToolHandler extends ChannelInboundHandlerAdapter {
             GlobalConstants.stage.equipModels.get(deviceCode).pmState.setEndTime(time);
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "结束保养.");
             try {
-                GlobalConstants.stage.equipModels.get(deviceCode).uploadData("保养");
+                GlobalConstants.stage.equipModels.get(deviceCode).uploadData("保養");
             } catch (RemoteException e) {
                 e.printStackTrace();
             } catch (ServiceException e) {

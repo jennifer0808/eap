@@ -34,7 +34,6 @@ public class HitahiDrillHost extends EquipModel {
 
     private static Logger logger = Logger.getLogger(HitachiLaserDrillHost.class.getName());
     private String toolName = "";
-    private boolean hasAutoChangeRecipe = false;
 
     public HitahiDrillHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
@@ -204,9 +203,7 @@ public class HitahiDrillHost extends EquipModel {
                 if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/TMP", GlobalConstants.ftpPath + deviceCode + recipeName + "temp/", "TMP", ftpip, ftpPort, ftpUser, ftpPwd)) {
 
                 }
-                //                List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
-//                        + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
-//                        + recipeName + "\"");
+
                 List<String> result = sendCmdMsg2Equip("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + recipeName + "\"");
@@ -333,7 +330,6 @@ public class HitahiDrillHost extends EquipModel {
                 }
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        hasAutoChangeRecipe = false;
                         return "0";
                     }
                     if (str.contains("Not connected")) {
@@ -383,12 +379,6 @@ public class HitahiDrillHost extends EquipModel {
 
     @Override
     public String selectRecipe(String recipeName) {
-        try {
-            getCurrentRecipeName();
-            uploadData("生產");
-        } catch (Exception e) {
-            logger.error("报表上传出错", e);
-        }
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
@@ -514,10 +504,6 @@ public class HitahiDrillHost extends EquipModel {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> alarmid = iSecsHost.executeCommand("read alarm");
-//                if (alarmid.size() < 2) {
-//                    alarmStrings.add("");
-//                    return alarmStrings;
-//                }
                 for (String string : alarmid) {
                     string = string.replaceAll("done", "").replaceAll("@", "");
                     if (string.equals("")) {
@@ -579,13 +565,6 @@ public class HitahiDrillHost extends EquipModel {
                         equipStatus = "Idle";
                     }
 
-//                    String abcColor = "";
-//                    List<String> abcColors = this.iSecsHost.executeCommand("readrectcolor 1040 556 1070 559");
-//                    for (String abcColorTemp : abcColors) {
-//                        if (abcColorTemp.contains("0x")) {
-//                            abcColor = abcColorTemp;
-//                        }
-//                    }
                     String startColor = "";
                     List<String> startColors = this.iSecsHost.executeCommand("readrectcolor 1040 368 1070 374");
                     for (String startColorTemp : startColors) {
@@ -595,12 +574,7 @@ public class HitahiDrillHost extends EquipModel {
                     }
                     if (shutterColor.equals("0x99ff00")) {
                         if (startColor.equals("0x99ff00")) {
-//                            if (abcColor.equals("0x99ff00")) {
-//                                equipStatus = "Run";
-//                            }
-//                            if (abcColor.equals("0xcbcbcb")) {
                             equipStatus = "Run";
-//                            }
                         } else {
                             equipStatus = "Idle";
                         }
@@ -608,28 +582,6 @@ public class HitahiDrillHost extends EquipModel {
                 } else {
                     equipStatus = "Idle";
                 }
-
-//                String startColor = "";
-//                List<String> startColors = this.iSecsHost.executeCommand("readrectcolor 1040 368 1070 374");
-//                for (String startColorTemp : startColors) {
-//                    if (startColorTemp.contains("0x")) {
-//                        startColor = startColorTemp;
-//                    }
-//                }
-//                String stopColor = "";
-//                List<String> stoptColors = this.iSecsHost.executeCommand("readrectcolor 1040 368 1070 374");
-//                for (String stopColorTemp : stoptColors) {
-//                    if (stopColorTemp.contains("0x")) {
-//                        stopColor = stopColorTemp;
-//                    }
-//                }
-//
-//                if (startColor.equals(stopColor)) {
-//                    equipStatus = "Idle";
-//                }
-//                if (startColor.equals("0x99ff00")) {
-//
-//                }
             } catch (Exception e) {
                 logger.error("Get equip status error:" + e.getMessage());
             }
@@ -650,18 +602,10 @@ public class HitahiDrillHost extends EquipModel {
         String ftpUser = GlobalConstants.ftpUser;
         String ftpPwd = GlobalConstants.ftpPwd;
         String ftpPort = GlobalConstants.ftpPort;
-//        if (FtpUtil.copyFile(GlobalConstants.ftpPath + deviceCode + recipeName + "temp/", recipeName, remoteRcpPath, recipeName + "_V" + recipe.getVersionNo())) {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + recipeName + " ftp路径:" + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
-//            return false;
-//        }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + recipeName, remoteRcpPath, recipeName + "_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + recipeName + " 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
         }
-//        if (FtpUtil.copyFile(GlobalConstants.ftpPath + deviceCode + recipeName + "temp/", toolName, remoteRcpPath, toolName + "_V" + recipe.getVersionNo())) {
-//            UiLogUtil.appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + toolName + " ftp路径:" + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
-//            return false;
-//        }
         if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + toolName, remoteRcpPath, toolName + "_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
             UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传ftp失败,文件名:" + toolName + " 工控路径:" + GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/");
             return false;
@@ -876,11 +820,11 @@ public class HitahiDrillHost extends EquipModel {
         if ("0".equals(GlobalConstants.getProperty("DATA_UPLOAD"))) {
             return true;
         }
-        if (macstate.equals("生產")) {
-            if (!confirmLotCount()) {
-                return false;
-            }
-        }
+//        if (macstate.equals("生產")) {
+//            if (!confirmLotCount()) {
+//                return false;
+//            }
+//        }
         LocalDateTime now = LocalDateTime.now();
 
         /**
@@ -909,7 +853,6 @@ public class HitahiDrillHost extends EquipModel {
 
         List paraValueList = new ArrayList();
         paraValueList.add(result1);
-//        paraValueList.addAll(setNormalData("正常", productionMap));
         List listtemp = setNormalData(macstate, productionMap);
         for (Object o : listtemp) {
             paraValueList.add(o);
@@ -957,89 +900,6 @@ public class HitahiDrillHost extends EquipModel {
         return false;
     }
 
-    private List setNormalData(String MacState, Map<String, String> productionMap) {
-        if (productionMap == null) {
-            productionMap = new HashMap<>();
-        }
-        List paraValueList = new ArrayList();
-        paraValueList.add(MacState);
-        if (MacState.equals("保养") || MacState.equals("待料")) {
-            if (MacState.equals("待料")) {
-                paraValueList.add(lotStartTime);
-                LocalDateTime now = LocalDateTime.now();
-                paraValueList.add(now.format(AvaryAxisUtil.dtf2));
-            } else {
-                paraValueList.add(pmState.getStartTime());
-                paraValueList.add(pmState.getEndTime());
-            }
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add("");
-            paraValueList.add("");
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add("");
-            paraValueList.add(0);
-            paraValueList.add(0);
-            paraValueList.add(0);
-
-        } else {
-            paraValueList.add(lotStartTime);
-            //todo 这个endtime不准确，想办法处理掉
-            LocalDateTime now = LocalDateTime.now();
-            paraValueList.add(now.format(AvaryAxisUtil.dtf2));
-
-            paraValueList.add(lotId);
-            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("PartNum"));
-            paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
-            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
-            paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
-            paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
-            paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
-            paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
-        }
-        return paraValueList;
-
-    }
-
-    private Map getCrystalPowerMap() {
-
-        Map powerMap = new HashMap();
-        List<String> CrystalPowerList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_POWER_LOG_FILE_PATH") + deviceCode);
-        for (String str : CrystalPowerList) {
-            String[] strs = str.split("=");
-            powerMap.put(strs[0], strs[1]);
-        }
-        return powerMap;
-    }
-
-    private Map getCrystalAccuracyMap() {
-        Map accuracyMap = new HashMap();
-        List<String> CrystalAccuracyList = FileUtil.getFileBodyAsStrList(GlobalConstants.getProperty("HITACHI_LASER_DRILL_CRYSTAL_ACCURACY_LOG_FILE_PATH") + deviceCode);
-        for (String str : CrystalAccuracyList) {
-            String[] strs = str.split("=");
-            accuracyMap.put(strs[0], strs[1]);
-        }
-        return accuracyMap;
-    }
-
-    private String getLaserHeadLife() {
-        String laserHeadLife = "";
-        synchronized (this.iSecsHost.iSecsConnection.getSocketClient()) {
-            List<String> results = iSecsHost.executeCommand("dos \"" + GlobalConstants.getProperty("HITACHI_LASER_DRILL_HEADLIFE_TOOL_PATH") + "\"");
-            if (results.contains("done")) {
-                results = iSecsHost.executeCommand("read laserlife");
-                laserHeadLife = results.get(0);
-                if (results.contains("done")) {
-                    iSecsHost.executeCommand("dos \"" + GlobalConstants.getProperty("HITACHI_LASER_DRILL_HEADLIFE_TOOL_PATH") + " hide \"");
-                }
-            }
-
-        }
-        return laserHeadLife;
-    }
 
     private boolean confirmLotCount() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
@@ -1065,7 +925,14 @@ public class HitahiDrillHost extends EquipModel {
         return null;
     }
 
+    /**
+     * 从recipe文件中获取到最小孔径
+     *
+     * @return
+     */
     private List getProduceData() {
+        List bodylist = FileUtil.getFileBodyAsStrList("");
+
         return null;
     }
 }

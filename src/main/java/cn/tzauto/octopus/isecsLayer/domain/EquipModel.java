@@ -1096,5 +1096,54 @@ public abstract class EquipModel extends Thread {
         return result1;
     }
 
+    protected List setNormalData(String MacState, Map<String, String> productionMap) {
+        if (productionMap == null) {
+            productionMap = new HashMap<>();
+        }
+        List paraValueList = new ArrayList();
+        paraValueList.add(MacState);
+        if (MacState.equals("保養") || MacState.equals("待料")) {
+            if (MacState.equals("待料")) {
+//                paraValueList.add(idleStartTime);
+                paraValueList.add(lotStartTime);
+                LocalDateTime now = LocalDateTime.now();
+                lotStartTime = now.format(AvaryAxisUtil.dtf2);
+                paraValueList.add(lotStartTime);
+            } else {
+                paraValueList.add(pmState.getStartTime());
+                paraValueList.add(pmState.getEndTime());
+            }
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add("");
+            paraValueList.add("");
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add("");
+            paraValueList.add(0);
+            paraValueList.add(0);
+            paraValueList.add(0);
+
+        } else {
+            paraValueList.add(lotStartTime);
+            LocalDateTime now = LocalDateTime.now();
+            lotStartTime = now.format(AvaryAxisUtil.dtf2);
+            paraValueList.add(lotStartTime);
+
+            paraValueList.add(lotId);
+            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("MainSerial") == null ? "" : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("PartNum") == null ? "" : productionMap.get("PartNum"));
+            paraValueList.add(productionMap.get("WorkNo") == null ? "" : productionMap.get("WorkNo"));
+            paraValueList.add(productionMap.get("Layer") == null ? 0 : productionMap.get("Layer"));
+            paraValueList.add(productionMap.get("LayerName") == null ? "" : productionMap.get("LayerName"));
+            paraValueList.add(productionMap.get("Serial") == null ? 0 : productionMap.get("Serial"));
+            paraValueList.add(productionMap.get("IsMain") == null ? 0 : productionMap.get("IsMain"));
+            paraValueList.add(productionMap.get("OrderId") == null ? 0 : productionMap.get("OrderId"));
+        }
+        return paraValueList;
+
+    }
+
 
 }

@@ -973,7 +973,7 @@ public class AvaryAxisUtil {
         Object[] params = new Object[]{"test", "test", "#01", arr[0], arr[1], createParm(partNum, mainSerial), LocalDateTime.now().format(dtf)};
         Schema result = (Schema) call.invoke(params); //方法执行后的返回值
         List<Map<String, String>> list = parseXml(result);
-        logger.info("根據料號，主途程序獲取曝光底片信息;" + partNum + ";" + mainSerial + ",结果为：" + list);
+        logger.info("根據料號，主途程序獲取bom程式信息;" + partNum + ";" + mainSerial + ",结果为：" + list);
         if (list.size() == 0) {
             return null;
         }
@@ -1093,16 +1093,17 @@ public class AvaryAxisUtil {
         Map<String, String> map4 = new HashMap<>();
         Map<String, String> map5 = new HashMap<>();
         try {
+            if (lotId.contains("/")) {
+                lotId = lotId.split("/")[0];
+            }
             map4 = AvaryAxisUtil.getParmByLotNum(lotId);
             if (map4.size() == 0) {
-                logger.error("报表数据上传中，批號獲料號,層別,數量 为空");
-                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，批號獲料號,層別,數量 为空");
+                logger.error("根據批號獲取料號,層別,數量等信息失敗");
                 return null;
             }
             map5 = AvaryAxisUtil.getParmByLotNumAndLayer(lotId, tableNum, map4.get("Layer"));
             if (map5.size() == 0) {
-                logger.error("报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
-//                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "报表数据上传中，根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
+                logger.error("根據 批號,層別 帶出 料號,在製層,途程序,主途程序,制程,主配件,層別名稱,第幾次過站,工令,BOM資料 失败");
                 //報錯:獲取途程信息失敗
                 return map4;
             }
