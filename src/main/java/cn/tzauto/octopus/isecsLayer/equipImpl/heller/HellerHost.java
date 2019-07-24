@@ -25,20 +25,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
  * @author luosy
  */
 public class HellerHost extends EquipModel {
-    
-private static Logger logger = Logger.getLogger(HellerHost.class.getName());
+
+    private static Logger logger = Logger.getLogger(HellerHost.class.getName());
 
     public HellerHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
- 
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -51,7 +54,7 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
                         ppExecName = iSecsHost.executeCommand("read recipename").get(0);
                     } else if ("recipedetail1".equals(result.get(0))) {
                         ppExecName = iSecsHost.executeCommand("read recipedetail1recipename").get(0);
-                    } 
+                    }
                 }
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
@@ -62,8 +65,6 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
         changeEquipPanel(map);
         return ppExecName;
     }
-
-
 
     @Override
     public String pauseEquip() {
@@ -201,6 +202,11 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + recipeName + ".dat\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -290,6 +296,10 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".dat\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -362,8 +372,8 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
 
     @Override
     public List<RecipePara> getRecipeParasFromMonitorMap() {
-           List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");        
-        if (recipeParas == null) {            
+        List<RecipePara> recipeParas = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");
+        if (recipeParas == null) {
             return new ArrayList<>();
         }
         return recipeParas;
@@ -403,6 +413,7 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -577,4 +588,3 @@ private static Logger logger = Logger.getLogger(HellerHost.class.getName());
     }
 
 }
-

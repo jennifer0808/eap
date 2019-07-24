@@ -170,8 +170,13 @@ public class Hanmi20000DAHost extends EquipModel {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
         }
-        if (!ppExecName.contains(handleRecipeName)) {
-           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
+        if ("".equals(handleRecipeName) || handleRecipeName.contains("rror")) {
+            handleRecipeName = "--";
+        }
+        if (!ppExecName.equals("--")) {
+            if (!ppExecName.contains(handleRecipeName)) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Saw程序与Handle程序不符.Saw:" + ppExecName + " Handle:" + handleRecipeName);
+            }
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -334,6 +339,11 @@ public class Hanmi20000DAHost extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -370,6 +380,11 @@ public class Hanmi20000DAHost extends EquipModel {
                     + ftpUser + " " + ftpPwd + " " + equipRecipePath + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                     + handleRecipeNameTmp + ".han\"");
             for (String uploadstr : handleRecipeUploadresult) {
+                if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                    resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                    return resultMap;
+                }
                 if ("done".equals(uploadstr)) {
                     //List<RecipePara> recipeParaList = new ArrayList<>();
                     try {
@@ -399,7 +414,7 @@ public class Hanmi20000DAHost extends EquipModel {
 
         commandAdd = handleRecipeNameTmp + ".MARK " + handleRecipeNameTmp + ".MARK.ldb ";
         visionISecsHost.executeCommand(command + commandAdd);
-        if (getPackageType(recipe.getRecipeName()).contains("Q") || getPackageType(recipe.getRecipeName()).contains("D") || getPackageType(recipe.getRecipeName()).contains("L")) {
+        if (getPackageType(handleRecipeNameTmp).contains("Q") || getPackageType(handleRecipeNameTmp).contains("D") || getPackageType(handleRecipeNameTmp).contains("L") || getPackageType(handleRecipeNameTmp).contains("X")) {
             commandAdd = handleRecipeNameTmp + ".QFN " + handleRecipeNameTmp + ".QFN.ldb ";
             visionISecsHost.executeCommand(command + commandAdd);
             commandAdd = handleRecipeNameTmp + ".QFN.roi ";
@@ -412,6 +427,11 @@ public class Hanmi20000DAHost extends EquipModel {
         }
         List<String> visionRecipeUploadresult = visionISecsHost.executeCommand(command + commandAdd);
         for (String uploadstr : visionRecipeUploadresult) {
+            if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                return resultMap;
+            }
             if ("done".equals(uploadstr)) {
                 List<RecipePara> recipeParaList = new ArrayList<>();
                 try {
@@ -483,21 +503,21 @@ public class Hanmi20000DAHost extends EquipModel {
             } else if (i == 12) {
                 attach.setAttachName(recipeName + ".MARK.roi_V" + versionNo);
             } else if (i == 13) {
-                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L")) {
+                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L") || getPackageType(handleRecipeName).contains("X")) {
                     attach.setAttachName(recipeName + ".QFN_V" + versionNo);
                 }
                 if (getPackageType(handleRecipeName).contains("B")) {
                     attach.setAttachName(recipeName + ".BGA_V" + versionNo);
                 }
             } else if (i == 14) {
-                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L")) {
+                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L") || getPackageType(handleRecipeName).contains("X")) {
                     attach.setAttachName(recipeName + ".QFN.ldb_V" + versionNo);
                 }
                 if (getPackageType(handleRecipeName).contains("B")) {
                     attach.setAttachName(recipeName + ".BGA.ldb_V" + versionNo);
                 }
             } else if (i == 15) {
-                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L")) {
+                if (getPackageType(handleRecipeName).contains("Q") || getPackageType(handleRecipeName).contains("D") || getPackageType(handleRecipeName).contains("L") || getPackageType(handleRecipeName).contains("X")) {
                     attach.setAttachName(recipeName + ".QFN.roi_V" + versionNo);
                 }
                 if (getPackageType(handleRecipeName).contains("B")) {
@@ -535,7 +555,7 @@ public class Hanmi20000DAHost extends EquipModel {
                 String ftpPath = new RecipeService(sqlSession).organizeRecipeDownloadFullFilePath(recipe);
 
                 String ftpPathTmp = ftpPath.substring(0, ftpPath.lastIndexOf("/") + 1);
-
+                logger.info("ftpPathTmp:" + ftpPathTmp);
                 if (!FtpUtil.connectFtp(ftpip, ftpPort, ftpUser, ftpPwd)) {
                     return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
                 }
@@ -552,6 +572,7 @@ public class Hanmi20000DAHost extends EquipModel {
                 String handleRecipeNameTmp = recipe.getRecipeName();
                 if (deviceType.contains("Z2")) {
                     handleRecipeNameTmp = trimUOID(recipe.getRecipeName());
+                    logger.info("handleRecipeNameTmp：" + handleRecipeNameTmp);
                 }
                 if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
                     //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
@@ -587,22 +608,22 @@ public class Hanmi20000DAHost extends EquipModel {
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd);
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".han", ftpPathTmp + recipe.getRecipeName() + ".han", ftpip, ftpPort, ftpUser, ftpPwd);
 
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET", ftpPathTmp + handleRecipeNameTmp + ".INLET", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET.ldb", ftpPathTmp + handleRecipeNameTmp + ".INLET.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET.roi", ftpPathTmp + handleRecipeNameTmp + ".INLET.roi", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK", ftpPathTmp + handleRecipeNameTmp + ".MARK", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK.ldb", ftpPathTmp + handleRecipeNameTmp + ".MARK.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK.roi", ftpPathTmp + handleRecipeNameTmp + ".MARK.roi", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET", ftpPathTmp + recipe.getRecipeName() + ".INLET", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET.ldb", ftpPathTmp + recipe.getRecipeName() + ".INLET.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".INLET.roi", ftpPathTmp + recipe.getRecipeName() + ".INLET.roi", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK", ftpPathTmp + recipe.getRecipeName() + ".MARK", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK.ldb", ftpPathTmp + recipe.getRecipeName() + ".MARK.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
+                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".MARK.roi", ftpPathTmp + recipe.getRecipeName() + ".MARK.roi", ftpip, ftpPort, ftpUser, ftpPwd);
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/dbindex.inf", ftpPathTmp + "dbindex.inf", ftpip, ftpPort, ftpUser, ftpPwd);
-                    if (getPackageType(handleRecipeNameTmp).contains("Q") || getPackageType(handleRecipeNameTmp).contains("D") || getPackageType(handleRecipeNameTmp).equals("L")) {
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN", ftpPathTmp + handleRecipeNameTmp + ".QFN", ftpip, ftpPort, ftpUser, ftpPwd);
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN.ldb", ftpPathTmp + handleRecipeNameTmp + ".QFN.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN.roi", ftpPathTmp + handleRecipeNameTmp + ".QFN.roi", ftpip, ftpPort, ftpUser, ftpPwd);
+                    if (getPackageType(handleRecipeNameTmp).contains("Q") || getPackageType(handleRecipeNameTmp).contains("D") || getPackageType(handleRecipeNameTmp).equals("L") || getPackageType(handleRecipeNameTmp).equals("X")) {
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN", ftpPathTmp + recipe.getRecipeName() + ".QFN", ftpip, ftpPort, ftpUser, ftpPwd);
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN.ldb", ftpPathTmp + recipe.getRecipeName() + ".QFN.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".QFN.roi", ftpPathTmp + recipe.getRecipeName() + ".QFN.roi", ftpip, ftpPort, ftpUser, ftpPwd);
                     }
                     if (getPackageType(handleRecipeNameTmp).contains("B")) {
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA", ftpPathTmp + handleRecipeNameTmp + ".BGA", ftpip, ftpPort, ftpUser, ftpPwd);
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA.ldb", ftpPathTmp + handleRecipeNameTmp + ".BGA.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
-                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA.roi", ftpPathTmp + handleRecipeNameTmp + ".BGA.roi", ftpip, ftpPort, ftpUser, ftpPwd);
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA", ftpPathTmp + recipe.getRecipeName() + ".BGA", ftpip, ftpPort, ftpUser, ftpPwd);
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA.ldb", ftpPathTmp + recipe.getRecipeName() + ".BGA.ldb", ftpip, ftpPort, ftpUser, ftpPwd);
+                        FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + handleRecipeNameTmp + ".BGA.roi", ftpPathTmp + recipe.getRecipeName() + ".BGA.roi", ftpip, ftpPort, ftpUser, ftpPwd);
                     }
 
                     if (RecipeEdit.hasGoldPara(sawISecsHost.deviceTypeCode)) {
@@ -620,6 +641,10 @@ public class Hanmi20000DAHost extends EquipModel {
                 List<String> result = sawISecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + sawRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD DEV.LST DEVID.LST\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if (str.contains("done")) {
                         continue;
                     }
@@ -629,8 +654,12 @@ public class Hanmi20000DAHost extends EquipModel {
                 }
                 //下载handle程序
                 List<String> handleDownloadresult = iSecsHost.executeCommand("ftp " + localftpip + " "
-                        + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".han\"");
+                        + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + handleRecipeNameTmp + ".han\"");
                 for (String str : handleDownloadresult) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if (str.contains("done")) {
                         continue;
                     }
@@ -639,12 +668,12 @@ public class Hanmi20000DAHost extends EquipModel {
                     }
                 }
                 //导入handle程序
-                if (!importHandleRecipe(recipe.getRecipeName())) {
+                if (!importHandleRecipe(handleRecipeNameTmp)) {
                     return "Handle程序导入失败.Download recipe " + recipe.getRecipeName() + " failed";
                 }
-                if (deviceType.contains("Z2")) {
-                    handleRecipeNameTmp = trimUOID(handleRecipeNameTmp);
-                }
+//                if (deviceType.contains("Z2")) {
+//                    handleRecipeNameTmp = trimUOID(handleRecipeNameTmp);
+//                }
                 String visionRecipeNameTemp = handleRecipeNameTmp; //trimBladeCode(recipe.getRecipeName());
                 //下载vision程序
                 String command = "ftp " + localftpip + " "
@@ -655,7 +684,7 @@ public class Hanmi20000DAHost extends EquipModel {
                 visionISecsHost.executeCommand(command + commandAdd);
                 commandAdd = visionRecipeNameTemp + ".MARK " + visionRecipeNameTemp + ".MARK.ldb " + visionRecipeNameTemp + ".MARK.roi ";
                 visionISecsHost.executeCommand(command + commandAdd);
-                if (getPackageType(visionRecipeNameTemp).equals("Q") || getPackageType(visionRecipeNameTemp).equals("D") || getPackageType(visionRecipeNameTemp).equals("L")) {
+                if (getPackageType(visionRecipeNameTemp).equals("Q") || getPackageType(visionRecipeNameTemp).equals("D") || getPackageType(visionRecipeNameTemp).equals("L") || getPackageType(visionRecipeNameTemp).contains("X")) {
                     commandAdd = visionRecipeNameTemp + ".QFN " + visionRecipeNameTemp + ".QFN.ldb " + visionRecipeNameTemp + ".QFN.roi ";
                     visionISecsHost.executeCommand(command + commandAdd);
                 }
@@ -664,6 +693,10 @@ public class Hanmi20000DAHost extends EquipModel {
                 }
                 List<String> visionDownloadresult = visionISecsHost.executeCommand(command + commandAdd);
                 for (String str : visionDownloadresult) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if (str.contains("Not connected")) {
                         return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
                     }
@@ -942,6 +975,7 @@ public class Hanmi20000DAHost extends EquipModel {
 //            }
 //        }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -1040,6 +1074,9 @@ public class Hanmi20000DAHost extends EquipModel {
         synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> alidresult = sawISecsHost.executeCommand("read alarmid");
+                if (alidresult == null || alidresult.isEmpty()) {
+                    return null;
+                }
                 if (alidresult.size() > 1) {
                     alarmStrings.add(alidresult.get(0));
                     logger.info("Get alarm ALID=[" + alidresult.get(0) + "]");
@@ -1203,7 +1240,7 @@ public class Hanmi20000DAHost extends EquipModel {
            UiLogUtil.getInstance().appendLog2EventTab(recipe.getDeviceCode(), "Recipe文件上传FTP失败");
             return false;
         }
-        if (getPackageType(hanmiRecipeName).equals("Q") || getPackageType(hanmiRecipeName).equals("D") || getPackageType(hanmiRecipeName).equals("L")) {
+        if (getPackageType(hanmiRecipeName).equals("Q") || getPackageType(hanmiRecipeName).equals("D") || getPackageType(hanmiRecipeName).equals("L") || getPackageType(hanmiRecipeName).contains("X")) {
             if (!FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN", remoteRcpPath, recipeName + ".QFN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN.ldb", remoteRcpPath, recipeName + ".QFN.ldb_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
                     || !FtpUtil.uploadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + hanmiRecipeName + ".QFN.roi", remoteRcpPath, recipeName + ".QFN.roi_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
@@ -1366,7 +1403,7 @@ public class Hanmi20000DAHost extends EquipModel {
             dbindexInfo.add("PKGNAME=" + recipeNameTmp);
             dbindexInfo.add("CAM1=" + recipeNameTmp);
             dbindexInfo.add("CAMACTIVE1=1");
-            if (getPackageType(recipeNameTmp).contains("Q") || getPackageType(recipeNameTmp).contains("D") || getPackageType(recipeNameTmp).contains("L")) {
+            if (getPackageType(recipeNameTmp).contains("Q") || getPackageType(recipeNameTmp).contains("D") || getPackageType(recipeNameTmp).contains("L") || getPackageType(recipeNameTmp).contains("X")) {
                 dbindexInfo.add("CAM2=" + recipeNameTmp);
                 dbindexInfo.add("CAMACTIVE2=1");
                 dbindexInfo.add("CAM3=");
@@ -1443,7 +1480,7 @@ public class Hanmi20000DAHost extends EquipModel {
     private String getPackageType(String recipeName) {
         String packageType = "";
         packageType = recipeName.substring(0, 1);
-        if (packageType.equals("L") || packageType.equals("Q") || packageType.equals("B") || packageType.equals("D")) {
+        if (packageType.equals("L") || packageType.equals("Q") || packageType.equals("B") || packageType.equals("D") || packageType.equals("X")) {
             return packageType;
         } else {
             return "";
@@ -1452,53 +1489,119 @@ public class Hanmi20000DAHost extends EquipModel {
 
     @Override
     public Map getSpecificData(Map<String, String> dataIdMap) {
+        Map valueMap = new HashMap();
+        synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
+            String curscreen = sawISecsHost.executeCommand("curscreen").get(0);
+            if (curscreen.contains("work")) {
+                if (dataIdMap.containsKey("drlcz1")) {
+                    //加入刀刃厚度取值，单独取值
+                    sawISecsHost.executeCommand("playback gotodpqb.txt");
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception e) {
+                    }
+                    sawISecsHost.executeCommand("curscreen");
+                    valueMap = sawISecsHost.readAllParaByScreen("dpqb");
+                    logger.debug("dpqbMap:" + valueMap);
+                    sawISecsHost.executeCommand("playback gotoworkscreen.txt");
+                    return valueMap;
+                }
+            }
+        }
         getCurrentRecipeName();
         String pkgType = "";
         if (ppExecName.equals("--")) {
            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
             return new HashMap();
         }
+
         if (deviceType.contains("Z2")) {
             String handleRecipeNameTmp = trimUOID(ppExecName);
             pkgType = getPackageType(handleRecipeNameTmp);
-        }
-        Map valueMap = new HashMap();
-        synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
-            String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
-            if (!"setup".equals(curscreen)) {
-                visionISecsHost.executeCommand("playback gotosetup.txt");
+            synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
+                String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
+                if ("setup".equals(curscreen)) {
+                    visionISecsHost.executeCommand("playback gotorun.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                }
+                visionISecsHost.executeCommand("playback gotodatabasesheet.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                if (pkgType.equals("B")) {
+                    visionISecsHost.executeCommand("playback gotobga.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                    Map bgaMap = visionISecsHost.readAllParaByScreen("bga");
+                    logger.debug("bgaMap:" + bgaMap);
+                    valueMap.putAll(bgaMap);
+                } else {
+                    visionISecsHost.executeCommand("playback gotoqfn.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                    Map lgaMap = visionISecsHost.readAllParaByScreen("lga");
+                    logger.debug("lgaMap:" + lgaMap);
+                    valueMap.putAll(lgaMap);
+                }
+                visionISecsHost.executeCommand("playback gotomark.txt");
                 try {
                     Thread.sleep(1000);
                 } catch (Exception e) {
                 }
+                Map markMap = visionISecsHost.readAllParaByScreen("mark");
+                logger.debug("markMap:" + markMap);
+                valueMap.putAll(markMap);
+                visionISecsHost.executeCommand("playback close.txt");
             }
-            visionISecsHost.executeCommand("playback gotodatabasesheet.txt");
-            try {
-                Thread.sleep(500);
-            } catch (Exception e) {
-            }
-            if (pkgType.equals("B")) {
-                visionISecsHost.executeCommand("playback gotobga.txt");
-                Map bgaMap = visionISecsHost.readAllParaByScreen("bga");
-                logger.debug("bgaMap:" + bgaMap);
-                valueMap.putAll(bgaMap);
-            } else {
-                visionISecsHost.executeCommand("playback gotoqfn.txt");
-                Map lgaMap = visionISecsHost.readAllParaByScreen("lga");
+        } else if (deviceType.contains("Z1")) {
+//            pkgType = getPackageType(ppExecName); // Z1当前不制造BGA，若添加则根据pkgType修改
+            synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
+                String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
+                if ("setup".equals(curscreen)) {
+                    visionISecsHost.executeCommand("playback gotorun.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                }
+                visionISecsHost.executeCommand("playback gotoasetupsheet.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map setupMap = visionISecsHost.readAllParaByScreen("asetupinlet");
+                logger.debug("setupMap:" + setupMap);
+                valueMap.putAll(setupMap);
+
+                visionISecsHost.executeCommand("playback gotosheetqfn.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map lgaMap = visionISecsHost.readAllParaByScreen("asetupqfn");
                 logger.debug("lgaMap:" + lgaMap);
                 valueMap.putAll(lgaMap);
-            }
-            visionISecsHost.executeCommand("playback gotomark.txt");
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-            }
-            Map markMap = visionISecsHost.readAllParaByScreen("mark");
-            logger.debug("markMap:" + markMap);
-            valueMap.putAll(markMap);
 
-            visionISecsHost.executeCommand("playback close.txt");
+                visionISecsHost.executeCommand("playback gotosheetmark.txt");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+                Map markMap = visionISecsHost.readAllParaByScreen("asetupmark");
+                logger.debug("markMap:" + markMap);
+                valueMap.putAll(markMap);
+                visionISecsHost.executeCommand("playback close.txt");
+            }
         }
+        logger.debug("valueMap:" + valueMap);
         return valueMap;
     }
 
@@ -1567,5 +1670,154 @@ public class Hanmi20000DAHost extends EquipModel {
 
     private void editRecipeFileAdduoid(String recipePath, String recipeName, String uoidRecipeName) {
         DiscoRecipeUtil.editRecipeName(recipePath, recipeName, uoidRecipeName);
+    }
+
+
+    public Map getSpecificDataTemp(Map<String, String> dataIdMap) {
+        Map dpqbMap = new HashMap();
+        Map paramMap = new HashMap();
+        synchronized (sawISecsHost.iSecsConnection.getSocketClient()) {
+            String curscreen = sawISecsHost.executeCommand("curscreen").get(0);
+
+            if (curscreen.contains("dpqb1")) {
+                dpqbMap = sawISecsHost.readAllParaByScreen("dpqb1");
+                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
+            }
+            if (curscreen.contains("main")) {
+                sawISecsHost.executeCommand("playback idletodpqb.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                dpqbMap = sawISecsHost.readAllParaByScreen("dpqb1");
+                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
+            }
+            if (curscreen.contains("work")) {
+                sawISecsHost.executeCommand("playback gotoparams.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                sawISecsHost.executeCommand("curscreen");
+                paramMap = sawISecsHost.readAllParaByScreen("param");
+                logger.debug("paramMap:" + paramMap);
+                sawISecsHost.executeCommand("playback gotoworkscreen.txt");
+//                return paramMap;
+            }
+        }
+
+        Map valueMap = new HashMap();
+        valueMap.putAll(dpqbMap);
+        valueMap.putAll(paramMap);
+//        getCurrentRecipeName();
+//        String pkgType = "";
+//        if (ppExecName.equals("--")) {
+//            UiLogUtil.appendLog2EventTab(deviceCode, "Disco部分程序未获取到,请先调整Disco设备状态以获取程序名.");
+//            return new HashMap();
+//        }
+
+        if (deviceType.contains("Z2")) {
+//            String handleRecipeNameTmp = trimUOID(ppExecName);
+//            pkgType = getPackageType(handleRecipeNameTmp);
+            synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
+                String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
+                if ("setup".equals(curscreen)) {
+                    visionISecsHost.executeCommand("playback gotorun.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                } else {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "需要调整到setup页面取值");
+                    return valueMap;
+                }
+//                visionISecsHost.executeCommand("playback gotodatabasesheet.txt");
+                visionISecsHost.executeCommand("playback gotoasetupsheet.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                visionISecsHost.executeCommand("curscreen");
+                Map inletMap = visionISecsHost.readAllParaByScreen("asetupinlet");
+                valueMap.putAll(inletMap);
+
+//                visionISecsHost.executeCommand("playback gotoqfn.txt");
+                visionISecsHost.executeCommand("playback gotosheetqfn.txt");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+                visionISecsHost.executeCommand("curscreen");
+                Map lgaMap = visionISecsHost.readAllParaByScreen("asetupqfn");
+                logger.debug("asetupqfn:" + lgaMap);
+                valueMap.putAll(lgaMap);
+
+//                visionISecsHost.executeCommand("playback gotobga.txt");
+                visionISecsHost.executeCommand("playback gotosheetbga.txt");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+                visionISecsHost.executeCommand("curscreen");
+                Map bgaMap = visionISecsHost.readAllParaByScreen("asetupbga");
+                logger.debug("asetupbgaMap:" + bgaMap);
+                valueMap.putAll(bgaMap);
+
+//                visionISecsHost.executeCommand("playback gotomark.txt");
+                visionISecsHost.executeCommand("playback gotosheetmark.txt");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+                visionISecsHost.executeCommand("curscreen");
+                Map markMap = visionISecsHost.readAllParaByScreen("asetupmark");
+                logger.debug("asetupmarkMap:" + markMap);
+                valueMap.putAll(markMap);
+                visionISecsHost.executeCommand("playback close.txt");
+                visionISecsHost.executeCommand("playback gotorun.txt");
+            }
+        } else if (deviceType.contains("Z1")) {
+//            pkgType = getPackageType(ppExecName); // Z1当前不制造BGA，若添加则根据pkgType修改
+            synchronized (visionISecsHost.iSecsConnection.getSocketClient()) {
+                String curscreen = visionISecsHost.executeCommand("curscreen").get(0);
+                if ("setup".equals(curscreen)) {
+                    visionISecsHost.executeCommand("playback gotorun.txt");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+                }
+                visionISecsHost.executeCommand("playback gotoasetupsheet.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map setupMap = visionISecsHost.readAllParaByScreen("asetupinlet");
+                logger.debug("setupMap:" + setupMap);
+                valueMap.putAll(setupMap);
+
+                visionISecsHost.executeCommand("playback gotosheetqfn.txt");
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                Map lgaMap = visionISecsHost.readAllParaByScreen("asetupqfn");
+                logger.debug("lgaMap:" + lgaMap);
+                valueMap.putAll(lgaMap);
+
+                visionISecsHost.executeCommand("playback gotosheetmark.txt");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+                Map markMap = visionISecsHost.readAllParaByScreen("asetupmark");
+                logger.debug("markMap:" + markMap);
+                valueMap.putAll(markMap);
+                visionISecsHost.executeCommand("playback close.txt");
+            }
+        }
+        logger.debug("valueMap:" + valueMap);
+        logger.debug("dpqbMap:" + dpqbMap);
+        return valueMap;
     }
 }

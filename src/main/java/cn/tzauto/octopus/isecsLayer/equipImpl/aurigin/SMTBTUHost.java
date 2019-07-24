@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -50,17 +49,31 @@ public class SMTBTUHost extends EquipModel {
     public String getCurrentRecipeName() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("curscreen");
-                if (result != null && !result.isEmpty()) {
-                    if ("any".equals(result.get(0))) {
-                        ppExecName = iSecsHost.executeCommand("read recipename").get(0);
-                    } else if ("recipedetail1".equals(result.get(0))) {
-                        ppExecName = iSecsHost.executeCommand("read recipename").get(0);
+                List<String> result1 = null;
+                List<String> result2 = iSecsHost.executeCommand("read recipename");
+                if (result2 != null && !result2.isEmpty()) {
+                    if (result2.get(0).contains("<")) {
+                        ppExecName = result2.get(0).split("<")[0].trim();
+                    } else {
+                        ppExecName = result2.get(0).replace("done", "").trim();
+                    }
+                }
+                if ("".equals(ppExecName) || ppExecName.contains("rror")) {
+                    result1 = iSecsHost.executeCommand("read recipename1");
+                    if (result1 != null && !result1.isEmpty()) {
+                        if (result1.get(0).contains("<")) {
+                            ppExecName = result1.get(0).split("<")[0].trim();
+                        } else {
+                            ppExecName = result1.get(0).trim();
+                        }
                     }
                 }
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
+        }
+        if ("".equals(ppExecName) || ppExecName.contains("rror")) {
+            ppExecName = "--";
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -182,6 +195,11 @@ public class SMTBTUHost extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + recipeName + ".rcp\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -295,6 +313,10 @@ public class SMTBTUHost extends EquipModel {
 //                        + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + rcpNameTemp + "temp/" + " \"mget $" + rcpNameTemp + ".rcp$\" ");
 
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -334,10 +356,10 @@ public class SMTBTUHost extends EquipModel {
     public String deleteRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\" + recipeName + ".rcp\"");
+                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\*.rcp\"");
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        return "删除成功";
+                        return "0";
                     }
                 }
                 return "删除失败";
@@ -446,6 +468,7 @@ public class SMTBTUHost extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 

@@ -6,8 +6,10 @@
 package cn.tzauto.octopus.isecsLayer.equipImpl.towa;
 
 import cn.tzauto.octopus.biz.recipe.domain.Attach;
+import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.resolver.towa.TowaISECSRecipeEdit;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
@@ -28,8 +30,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -42,7 +47,7 @@ public class Y1R1060Host extends EquipModel {
 
     public Y1R1060Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -87,9 +92,11 @@ public class Y1R1060Host extends EquipModel {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
         }
+        if ("".equals(ppExecName) || ppExecName.contains("rror")) {
+            ppExecName = "--";
+        }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
-        changeEquipPanel(map);
         return ppExecName;
     }
 
@@ -196,6 +203,11 @@ public class Y1R1060Host extends EquipModel {
                             + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "\\" + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                             + recipeName + ".rsp\"");
                     for (String uploadstr : result) {
+                        if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                            resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                            return resultMap;
+                        }
                         if ("done".equals(uploadstr)) {
                             List<RecipePara> recipeParaList = new ArrayList<>();
                             try {
@@ -274,9 +286,11 @@ public class Y1R1060Host extends EquipModel {
                 }
                 if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp", ftpPathTmp + recipe.getRecipeName() + ".rsp_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    List<String> edits = TowaISECSRecipeEdit.getUniqueRecipeParaMap(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp_V" + recipe.getVersionNo());
+                    FileUtil.renameFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp", GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/src.rsp");
+
+                    List<String> edits = TowaISECSRecipeEdit.getUniqueRecipeParaMap(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/src.rsp");
                     Thread.sleep(1000);
-                    TowaISECSRecipeEdit.writeRecipeFile(edits, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp_V" + recipe.getVersionNo());
+                    TowaISECSRecipeEdit.writeRecipeFile(edits, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp");
                     Thread.sleep(1000);
                 } else {
                     FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + recipe.getRecipeName() + ".rsp", ftpPathTmp + recipe.getRecipeName() + ".rsp", ftpip, ftpPort, ftpUser, ftpPwd);
@@ -300,6 +314,10 @@ public class Y1R1060Host extends EquipModel {
                 //执行导入
                 List<String> result1 = iSecsHost.executeCommand("playback downloadrecipe.txt");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -314,7 +332,7 @@ public class Y1R1060Host extends EquipModel {
                 logger.error(ex.getMessage());
             } finally {
                 sqlSession.close();
-//                this.deleteTempFile(recipe.getRecipeName());
+                this.deleteTempFile(recipe.getRecipeName());
             }
         }
         return "Download recipe " + recipe.getRecipeName() + " failed";
@@ -465,9 +483,6 @@ public class Y1R1060Host extends EquipModel {
                                 if (paraMap != null && !paraMap.isEmpty()) {
                                     List<RecipePara> recipeParaList = TowaRecipeUtil.transferFromDB4Isecs(paraMap, deviceType);
                                     map.put("recipeParaList", recipeParaList);
-                                    for (RecipePara rp : recipeParaList) {
-                                        map.put(rp.getParaName(), rp.getSetValue());
-                                    }
                                 } else {
                                     logger.error("解析recipe时出错,recipe文件不存在");
                                 }
@@ -481,6 +496,7 @@ public class Y1R1060Host extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -609,9 +625,6 @@ public class Y1R1060Host extends EquipModel {
                 }
             }
         }
-        Map map = new HashMap();
-        map.put("EquipStatus", equipStatus);
-        changeEquipPanel(map);
         return equipStatus;
     }
 
@@ -692,6 +705,7 @@ public class Y1R1060Host extends EquipModel {
                     List<String> shotcount = iSecsHost.executeCommand("readm p3s1 p3s2 ");
                     shotCountMap.put("p3s1", shotcount.get(0));
                     shotCountMap.put("p3s2", shotcount.get(1));
+                    iSecsHost.executeCommand("playback gotomain.txt");
                 }
             }
         }
@@ -726,15 +740,53 @@ public class Y1R1060Host extends EquipModel {
 
     @Override
     protected boolean specialCheck() {
-//        getPressStatus();
-//        getShotCount();
-        return true;
+        logger.info("塑封特殊卡控开始");
+        if (!AxisUtility.getPressCheckFlag(deviceCode)) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "模具使用校验开关未开启,跳过校验");
+            return true;
+        }
+        String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+        if ("main".equals(curscreen)) {
+            logger.info("main页面，执行特殊卡控取值");
+            Map mainPressMap = iSecsHost.readAllParaByScreen("main");
+            logger.info("main页面特殊卡控取值结果:" + mainPressMap);
+
+            if (mainPressMap != null && !mainPressMap.isEmpty()) {
+                String equipPress = "";
+                if (!String.valueOf(mainPressMap.get("lineauto1")).contains("no") && !String.valueOf(mainPressMap.get("lineauto1")).contains("NO") && !String.valueOf(mainPressMap.get("lineauto1")).trim().equals("")) {
+                    equipPress = equipPress + "MC1";
+                }
+                if (!String.valueOf(mainPressMap.get("lineauto2")).contains("no") && !String.valueOf(mainPressMap.get("lineauto2")).contains("NO") && !String.valueOf(mainPressMap.get("lineauto2")).trim().equals("")) {
+                    equipPress = equipPress + "MC2";
+                }
+                if (!String.valueOf(mainPressMap.get("lineauto3")).contains("no") && !String.valueOf(mainPressMap.get("lineauto3")).contains("NO") && !String.valueOf(mainPressMap.get("lineauto3")).trim().equals("")) {
+                    equipPress = equipPress + "MC3";
+                }
+                logger.info("设备press使用状况:" + equipPress);
+                String servString = AxisUtility.getPressUseFromServerByWS(deviceCode);
+                logger.info("从server取到的数据:" + servString);
+//                servString = servString.replace("{", "").replace("}", "").replace(";", "").replace("MC", "");
+                servString = servString.replace("{", "").replace("}", "").replace(";", "");
+                logger.info("整理后的server数据:" + servString);
+                if (servString.contains(equipPress)) {
+                    return true;
+                } else {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "模具使用校验失败...不允许开机");
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "MTMS提示:" + servString);
+                    return false;
+                }
+            }
+        }
+        logger.info("不在main页面，特殊卡控取值失败");
+        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "不在主页面，特殊卡控取值失败...不允许开机");
+        sendMessage2Eqp("Check press failed.");
+        return false;
     }
 
     @Override
     public Map getSpecificData(Map<String, String> dataIdMap) {
         Map resultMap = new HashMap();
-        if (dataIdMap.get("ShotCount") != null) {
+        if (dataIdMap.containsKey("ShotCount1")) {
             resultMap.putAll(getShotCount());
             return resultMap;
         }
@@ -742,28 +794,175 @@ public class Y1R1060Host extends EquipModel {
             resultMap.putAll(getPressStatus());
             return resultMap;
         }
-        //点检取值
-        Map valueMap = new HashMap();
-        if (deviceType.contains("Z1")) {
-            synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-                String curscreen = iSecsHost.executeCommand("curscreen").get(0);
-                if ("autorun".equals(curscreen)) {
-                    iSecsHost.executeCommand("playback gototransfer.txt");
-                    try {
-                        Thread.sleep(500);
-                    } catch (Exception e) {
-                    }
-                    valueMap = iSecsHost.readAllParaByScreen("autorun");
-                }
+        if (dataIdMap.get("shot1") != null) {
+            logger.info("main页面特殊取值开始");
+            String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+            if ("main".equals(curscreen)) {
+                logger.info("main页面，执行特殊取值");
+                Map mainPressMap = iSecsHost.readAllParaByScreen("main");
+                logger.info("main页面特殊取值结果:" + mainPressMap);
+                resultMap.putAll(mainPressMap);
+                return resultMap;
             }
-            resultMap.putAll(valueMap);
-            Map monitorMap = getEquipMonitorPara();
-            resultMap.putAll(monitorMap);
-        } else if (deviceType.contains("Z3")) {
-            Map monitorMap = getEquipMonitorPara();
-            resultMap.putAll(monitorMap);
+            logger.info("不在main页面，特殊取值取消");
+            return new HashMap();
         }
-        logger.debug("resultMap:"+resultMap);
+        //点检取值
+        String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+        iSecsHost.executeCommand("playback gotowdjsq.txt");
+        try {
+            Thread.sleep(5000);
+        } catch (Exception e) {
+        }
+        curscreen = iSecsHost.executeCommand("curscreen").get(0);
+        if ("main".equals(curscreen)) {
+            Map mainPressMap = iSecsHost.readAllParaByScreen("main");
+            resultMap.putAll(mainPressMap);
+        }
+        boolean needGetPara = false;
+        for (Map.Entry<String, String> entry : dataIdMap.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if ("RecipePara".equals(value)) {
+                needGetPara = true;
+            }
+        }
+        if (needGetPara) {
+            Map recipeMap = getRecipeValueMap();
+            resultMap.putAll(recipeMap);
+//        Map valueMap = new HashMap();
+//        if (deviceType.contains("Z1")) {
+//            synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+//                String curscreen = iSecsHost.executeCommand("curscreen").get(0);
+//                if ("autorun".equals(curscreen)) {
+//                    iSecsHost.executeCommand("playback gototransfer.txt");
+//                    try {
+//                        Thread.sleep(500);
+//                    } catch (Exception e) {
+//                    }
+//                    valueMap = iSecsHost.readAllParaByScreen("autorun");
+//                }
+//            }
+//            resultMap.putAll(valueMap);
+//            Map recipeMap = getRecipeValueMap();
+//            resultMap.putAll(recipeMap);
+//        } else if (deviceType.contains("Z3")) {
+//            Map recipeMap = getRecipeValueMap();
+//            resultMap.putAll(recipeMap);
+//        }
+            logger.debug("resultMap:" + resultMap);
+        }
         return resultMap;
     }
+
+    private Map getRecipeValueMap() {
+        List<RecipePara> recipeParaList = (List<RecipePara>) getEquipMonitorPara().get("recipeParaList");
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        List<RecipeTemplate> recipeTemplates = recipeService.searchRecipeTemplateByDeviceTypeCode(deviceType, "RecipePara");
+        sqlSession.close();
+        Map templateMap = new HashMap();
+        for (RecipeTemplate rt : recipeTemplates) {
+            templateMap.put(rt.getParaName(), rt.getDeviceVariableId());
+        }
+        Map recipeMap = new HashMap();
+        for (RecipePara rp : recipeParaList) {
+            recipeMap.put(templateMap.get(rp.getParaName()), rp.getSetValue());
+        }
+        return recipeMap;
+    }
+
+    public boolean startCheck() {
+        String screen = iSecsHost.executeCommand("curscreen").get(0);
+        if (!screen.equals("main")) {
+            iSecsHost.executeCommand("playback gotomain");
+        }
+        getCurrentRecipeName();
+        if (!specialCheck()) {
+            return false;
+        }
+        boolean pass = true;
+        String checkRecultDesc = "";
+        String checkRecultDescEng = "";
+        if (this.checkLockFlagFromServerByWS(deviceCode)) {
+            checkRecultDesc = "检测到设备被Server要求锁机,设备将被锁!";
+            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+            pass = false;
+        }
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        DeviceService deviceService = new DeviceService(sqlSession);
+        DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+        if (deviceInfoExt == null) {
+            logger.error("数据库中确少该设备模型配置；DEVICE_CODE:" + deviceCode);
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！");
+            checkRecultDesc = "工控上不存在设备:" + deviceCode + "模型信息，不允许开机！请联系ME处理！";
+            pass = false;
+        } else {
+            String trackInRcpName = deviceInfoExt.getRecipeName();
+            if (!ppExecName.equals(trackInRcpName)) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致，设备被锁定！请联系ME处理！领料程序：" + trackInRcpName + " 已选程序 " + ppExecName);
+                pass = false;
+                checkRecultDesc = "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + trackInRcpName + " 已选程序:" + ppExecName;
+                checkRecultDescEng = "The current recipe <" + ppExecName + "> in equipment is different from CIM system <" + trackInRcpName + ">,equipment will be locked.";
+            }
+        }
+        Recipe execRecipe = recipeService.getExecRecipe(ppExecName, deviceCode);
+        if (execRecipe == null) {
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理！");
+            checkRecultDesc = "工控上不存在: " + ppExecName + " 的Unique或Gold版本,将无法执行开机检查.请联系PE处理!";
+            checkRecultDescEng = " There's no GOLD or Unique version of current recipe <" + ppExecName + "> , equipment will be locked.";
+            pass = false;
+        }
+        Map mqMap = new HashMap();
+        mqMap.put("msgName", "eqpt.StartCheckWI");
+        mqMap.put("deviceCode", deviceCode);
+        mqMap.put("recipeName", ppExecName);
+        mqMap.put("EquipStatus", equipStatus);
+        mqMap.put("lotId", lotId);
+        if (pass) {
+            //MonitorService monitorService = new MonitorService(sqlSession);
+            // List<RecipePara> equipRecipeParas = getRecipeParasFromMonitorMap();
+            List<RecipePara> equipRecipeParas = getRecipeParasFromMonitorMap();
+            List<RecipePara> recipeParasdiff = checkRcpPara(deviceInfoExt.getRecipeId(), deviceCode, equipRecipeParas, "");
+            try {
+                String eventDesc = "";
+                String eventDescEng = "";
+                if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
+                    this.stopEquip();
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查未通过!");
+                    for (RecipePara recipePara : recipeParasdiff) {
+                        eventDesc = "开机Check参数异常参数编码为:" + recipePara.getParaCode() + ",参数名:" + recipePara.getParaName() + "其异常设定值为:" + recipePara.getSetValue() + ",默认值为：" + recipePara.getDefValue() + "其最小设定值为：" + recipePara.getMinValue() + ",其最大设定值为：" + recipePara.getMaxValue();
+                        String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                        checkRecultDesc = checkRecultDesc + eventDesc;
+                        eventDescEng = eventDescEng + eventDescEngtmp;
+                    }
+                    //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
+                    sendMessage2Eqp("Recipe parameter error,start check failed!The equipment has been stopped! Error parameter:/r/n" + eventDescEng);
+                    pass = false;
+                } else {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机参数检查通过！");
+                    eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
+                    logger.info("设备：" + deviceCode + " 开机Check成功");
+                    pass = true;
+                    checkRecultDesc = eventDesc;
+                }
+                sqlSession.commit();
+            } catch (Exception e) {
+                logger.error("Exception:", e);
+            } finally {
+                sqlSession.close();
+            }
+        } else {
+            if (!"".equalsIgnoreCase(checkRecultDescEng)) {
+                sendMessage2Eqp(checkRecultDescEng);
+            }
+            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查条件不具备,检查未通过!");
+        }
+        mqMap.put("eventDesc", checkRecultDesc);
+        GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+        return pass;
+    }
+
 }

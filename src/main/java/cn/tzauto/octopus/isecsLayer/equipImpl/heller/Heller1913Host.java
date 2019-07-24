@@ -125,6 +125,11 @@ public class Heller1913Host extends EquipModel {
                         + recipeName + ".JOB\"");
                 Map map = new HashMap();
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         List<String> result1 = iSecsHost.executeCommand("curscreen");
@@ -305,6 +310,10 @@ public class Heller1913Host extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " $" + equipRecipePath + "$ $" + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/$" + " \"mget " + recipe.getRecipeName() + ".JOB\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -568,7 +577,7 @@ public class Heller1913Host extends EquipModel {
                 ppmMap.put("ppm", resultPara2.get(3));
                 String rcpName = resultPara2.get(4);
                 String nameTemp = rcpName.replace("?", "").replace("<", "").replace(">", "").replace(":", "").trim().split(".JOB")[0];
-                if(nameTemp.charAt(0)=='-'){
+                if (nameTemp.charAt(0) == '-') {
                     nameTemp = nameTemp.substring(1);
                 }
                 if (nameTemp.contains("Oven Operating")) {
@@ -754,7 +763,12 @@ public class Heller1913Host extends EquipModel {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
     protected String checkEquipStatus() {
+        try {
+            iSecsHost.executeCommand("clearallmessage");
+        } catch (Exception e) {
+        }
         return "0";
     }
 }

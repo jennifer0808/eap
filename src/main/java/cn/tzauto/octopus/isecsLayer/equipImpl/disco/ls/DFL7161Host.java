@@ -27,8 +27,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -41,7 +44,7 @@ public class DFL7161Host extends EquipModel {
 
     public DFL7161Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-
+        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -202,7 +205,47 @@ public class DFL7161Host extends EquipModel {
 
     @Override
     public String pauseEquip() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String stopResult = "";
+        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+            DeviceService deviceService = new DeviceService(sqlSession);
+            DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
+            sqlSession.close();
+
+            if (deviceInfoExt != null && "Y".equals(deviceInfoExt.getLockSwitch())) {
+                List<String> result;
+                try {
+                    iSecsHost.executeCommand("playback gotoworkscreen.txt");
+                    result = iSecsHost.executeCommand("curscreen");
+                    if (result != null && !result.isEmpty()) {
+                        if ("pause".equals(result.get(0))) {
+                            return "0";//"main".equals(result.get(0)) ||
+                        } else if ("work".equals(result.get(0))) {
+                            result = iSecsHost.executeCommand("readrectcolor 980 150 1000 174");
+                            for (String colorstr : result) {
+                                if ("0x33cc33".equals(colorstr)) {
+                                    equipStatus = "Idle";
+                                    return "0";
+                                }
+                                if ("0xff0000".equals(colorstr)) {
+                                    equipStatus = "Run";
+                                    if (repeatStop()) {
+                                        return "0";
+                                    }
+                                }
+                            }
+                            stopResult = "锁机失败,当前状态无法执行锁机";
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("锁机时异常:" + e.getMessage());
+                }
+            } else {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "未设置锁机！");
+                stopResult = "未设置锁机！";
+            }
+        }
+        return stopResult;
     }
 
     @Override
@@ -319,6 +362,11 @@ public class DFL7161Host extends EquipModel {
                         + equipRecipeName + ".ALU " + equipRecipeName + ".CLN " + equipRecipeName + ".DFD "
                         + equipRecipeName + ".COT\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
 
 //                        FtpUtil.uploadFile(GlobalConstants.localRecipePath + ftpRecipePath + "DEV.LST_V" + recipe.getVersionNo(), ftpRecipePath, "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
@@ -334,6 +382,10 @@ public class DFL7161Host extends EquipModel {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
                             Map paraMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".DFD");
+                            Map CLNMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".CLN");
+                            Map CotMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + equipRecipeName + ".COT");
+                            paraMap.putAll(CLNMap);
+                            paraMap.putAll(CotMap);
                             if (paraMap != null && !paraMap.isEmpty()) {
                                 recipeParaList = DiscoRecipeUtil.transferFromDB(paraMap, deviceType);
                             } else {
@@ -434,19 +486,26 @@ public class DFL7161Host extends EquipModel {
                 if (!FtpUtil.connectFtp(ftpip, ftpPort, ftpUser, ftpPwd)) {
                     return "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
                 }
+                boolean ftpDownloadOK = false;
                 if (recipe.getVersionType().equalsIgnoreCase("Engineer")) {
                     //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".COT", ftpPathTmp + recipe.getRecipeName() + ".COT_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
+                    if (FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".COT", ftpPathTmp + recipe.getRecipeName() + ".COT_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd)) {
+                        ftpDownloadOK = true;
+                    }
+
                     //FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST", ftpPathTmp + "DEVID.LST_V" + recipe.getVersionNo(), ftpip, ftpPort, ftpUser, ftpPwd);
                 } else {
                     //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEV.LST", ftpPathTmp + "DEV.LST", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd);
-                    FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".COT", ftpPathTmp + recipe.getRecipeName() + ".COT", ftpip, ftpPort, ftpUser, ftpPwd);
+                    if (FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".ALU", ftpPathTmp + recipe.getRecipeName() + ".ALU", ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".CLN", ftpPathTmp + recipe.getRecipeName() + ".CLN", ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD", ftpPathTmp + recipe.getRecipeName() + ".DFD", ftpip, ftpPort, ftpUser, ftpPwd)
+                            && FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".COT", ftpPathTmp + recipe.getRecipeName() + ".COT", ftpip, ftpPort, ftpUser, ftpPwd)) {
+                        ftpDownloadOK = true;
+                    }
+
                     //  FtpUtil.downloadFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/DEVID.LST", ftpPathTmp + "DEVID.LST", ftpip, ftpPort, ftpUser, ftpPwd);
                     if (RecipeEdit.hasGoldPara(deviceType)) {
                         RecipeService recipeService = new RecipeService(sqlSession);
@@ -457,21 +516,29 @@ public class DFL7161Host extends EquipModel {
                         RecipeEdit.writeRecipeFile(list, GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + equipRecipeName + ".DFD");
                     }
                 }
+                if (!ftpDownloadOK) {
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 到工控机时失败,请检查FTP是否存在此程序.");
+                    return "下载Recipe:" + recipe.getRecipeName() + " 到工控机时失败,请检查FTP是否存在此程序.";
+                }
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + equipRecipeName + ".ALU "
                         + equipRecipeName + ".CLN " + equipRecipeName + ".DFD "
                         + equipRecipeName + ".COT DEV.LST DEVID.LST\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "到设备时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         downloadResult = "0";
                     }
                     if (str.contains("Not connected")) {
-                        downloadResult = "下载Recipe:" + recipe.getRecipeName() + "时,FTP连接失败,请检查FTP服务是否开启.";
+                        return "下载Recipe:" + recipe.getRecipeName() + "到设备时失败,FTP连接失败,请检查FTP服务是否开启.";
                     }
                 }
             } catch (Exception e) {
                 logger.error("Download recipe " + recipe.getRecipeName() + " error:" + e.getMessage());
-                downloadResult = "Download recipe " + recipe.getRecipeName() + " failed";
+                return "Download recipe " + recipe.getRecipeName() + " failed";
             } finally {
                 sqlSession.close();
             }
@@ -554,10 +621,20 @@ public class DFL7161Host extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + " \"mput "
                         + equipRecipeName + ".DFD\"");
+                iSecsHost.executeCommand("ftp " + localftpip + " "
+                        + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + " \"mput "
+                        + equipRecipeName + ".CLN\"");
+                iSecsHost.executeCommand("ftp " + localftpip + " "
+                        + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + " \"mput "
+                        + equipRecipeName + ".COT\"");
                 for (String uploadstr : result) {
                     if ("done".equals(uploadstr)) {
                         try {
                             Map paraMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + equipRecipeName + ".DFD");
+                            Map CLNMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + equipRecipeName + ".CLN");
+                            Map CotMap = DiscoRecipeUtil.transferFromFile(GlobalConstants.localRecipePath + GlobalConstants.ftpPath + deviceCode + ppExecName + "temp/" + equipRecipeName + ".COT");
+                            paraMap.putAll(CLNMap);
+                            paraMap.putAll(CotMap);
                             if (paraMap != null && !paraMap.isEmpty()) {
                                 List<RecipePara> recipeParaList = DiscoRecipeUtil.transferFromDB(paraMap, deviceType);
                                 map.put("recipeParaList", recipeParaList);
@@ -575,36 +652,6 @@ public class DFL7161Host extends EquipModel {
         logger.info("monitormap:" + map.toString());
         deleteTempFile(ppExecName);
         return map;
-    }
-
-    public List<String> getEquipEvent() {
-        List<String> result = new ArrayList<>();
-        try {
-            result = iSecsHost.executeCommand("dos \"type D:\\DoDiscoLog.txt\"");
-            for (String str : result) {
-                if ("done".equals(str)) {
-                    result.remove(str);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Get EquipEvent error:" + e.getMessage());
-        }
-        return result;
-    }
-
-    public String clearEquipEvent() {
-        try {
-            List<String> result = iSecsHost.executeCommand("dos \"del D:\\DoDiscoLog.txt\"");
-            for (String str : result) {
-                if ("done".equals(str)) {
-                    return "0";
-                }
-            }
-            return "Clear EquipEvent failed";
-        } catch (Exception e) {
-            logger.error("Clear EquipEvent error:" + e.getMessage());
-            return "Clear EquipEvent failed";
-        }
     }
 
     @Override
@@ -695,6 +742,9 @@ public class DFL7161Host extends EquipModel {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
                 List<String> result = iSecsHost.executeCommand("readrectcolor 740 60 760 65 ");
+                if (result == null || result.isEmpty()) {
+                    return null;
+                }
                 for (String colorstr : result) {
                     if ("0xc0c0c0".equals(colorstr)) {
                         alarmStrings.add("");

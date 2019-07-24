@@ -80,7 +80,10 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                     case "BTUPYRAM100NZ2BM":
                     case "BTUPYRAM125NZ3":
                     case "BTUPYRAM125NZ2BM":
-                        remark = str.substring(str.indexOf("PPM") - 4, str.indexOf("PPM") - 1);
+                        int indexStart = str.contains(",")==true? str.indexOf(",")+1:0;
+                        int indexEnd = str.contains("PPM")==true? str.indexOf("PPM"):0;
+//                        remark = str.substring(str.indexOf("PPM") - 4, str.indexOf("PPM") - 1);
+                         remark = str.substring(indexStart, indexEnd);
                         if ("".equals(remark)) {
                             logger.debug("no PPM in this alarm");
                             continue;

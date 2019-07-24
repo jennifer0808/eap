@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
-import org.slf4j.MDC;
+import org.apache.log4j.MDC;
 
 /**
  *
@@ -45,7 +45,7 @@ import org.slf4j.MDC;
  */
 public class BTUHost extends EquipModel {
 
-    private static Logger logger = Logger.getLogger(AU850Host.class.getName());
+    private static Logger logger = Logger.getLogger(BTUHost.class.getName());
 
     public BTUHost(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
@@ -58,7 +58,7 @@ public class BTUHost extends EquipModel {
             try {
                 List<String> result1 = null;
                 List<String> result2 = iSecsHost.executeCommand("read recipename");
-                if (result2.get(0) != null) {
+                if (result2 != null && !result2.isEmpty()) {
                     if (result2.get(0).contains("<")) {
                         ppExecName = result2.get(0).split("<")[0].trim();
                     } else {
@@ -67,19 +67,25 @@ public class BTUHost extends EquipModel {
                 }
                 if ("".equals(ppExecName) || ppExecName.contains("rror")) {
                     result1 = iSecsHost.executeCommand("read recipename1");
-                    if (result1.get(0).contains("<")) {
-                        ppExecName = result1.get(0).split("<")[0].trim();
-                    } else {
-                        ppExecName = result1.get(0).trim();
+                    if (result1 != null && !result1.isEmpty()) {
+                        if (result1.get(0).contains("<")) {
+                            ppExecName = result1.get(0).split("<")[0].trim();
+                        } else {
+                            ppExecName = result1.get(0).trim();
+                        }
                     }
 
 //                    else if (result1.get(0)==null) {
 //                        ppExecName = iSecsHost.executeCommand("");
 //                    }
                 }
+
             } catch (Exception e) {
                 logger.error("Get equip ExecName error:" + e.getMessage());
             }
+        }
+        if ("".equals(ppExecName) || ppExecName.contains("rror")) {
+            ppExecName = "--";
         }
         Map map = new HashMap();
         map.put("PPExecName", ppExecName);
@@ -93,12 +99,12 @@ public class BTUHost extends EquipModel {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
 //            String curscreen = iSecsHost.executeCommand("curscreen").get(0);
 //            if ("main".equals(curscreen)) {
-                valueMap = iSecsHost.readAllParaByScreen("main");
+            valueMap = iSecsHost.readAllParaByScreen("main");
 //            }
         }
         return valueMap;
     }
-    
+
     @Override
     public String pauseEquip() {
         String stopResult = "";
@@ -161,6 +167,11 @@ public class BTUHost extends EquipModel {
                         + ftpUser + " " + ftpPwd + " " + equipRecipePathtmp + "  " + GlobalConstants.ftpPath + deviceCode + recipeName + "temp/" + " \"mput "
                         + recipeName + ".rcp\"");
                 for (String uploadstr : result) {
+                    if (uploadstr.contains("rror") || uploadstr.contains("Not connected")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "上传Recipe:" + recipeName + " 时,FTP连接失败,请检查FTP服务是否开启.");
+                        resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
+                        return resultMap;
+                    }
                     if ("done".equals(uploadstr)) {
                         List<RecipePara> recipeParaList = new ArrayList<>();
                         try {
@@ -251,6 +262,10 @@ public class BTUHost extends EquipModel {
                 List<String> result = iSecsHost.executeCommand("ftp " + localftpip + " "
                         + ftpUser + " " + ftpPwd + " " + equipRecipePath + " " + GlobalConstants.ftpPath + deviceCode + recipe.getRecipeName() + "temp/" + " \"mget " + recipe.getRecipeName() + ".rcp\"");
                 for (String str : result) {
+                    if (str.contains("rror")) {
+                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "下载Recipe:" + recipe.getRecipeName() + " 时失败,请检查FTP服务是否开启.");
+                        return "下载Recipe:" + recipe.getRecipeName() + "时失败,请检查FTP服务是否开启.";
+                    }
                     if ("done".equals(str)) {
                         return "0";
                     }
@@ -285,10 +300,12 @@ public class BTUHost extends EquipModel {
     public String deleteRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\" + recipeName + ".rcp\"");
+//                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\" + recipeName + ".rcp\"");
+                List<String> result = iSecsHost.executeCommand("dos \"del /q " + equipRecipePath + "\\*.rcp\"");
+
                 for (String str : result) {
                     if ("done".equals(str)) {
-                        return "删除成功";
+                        return "0";
                     }
                 }
                 return "删除失败";
@@ -439,6 +456,7 @@ public class BTUHost extends EquipModel {
             }
         }
         logger.info("monitormap:" + map.toString());
+        deleteTempFile(ppExecName);
         return map;
     }
 
@@ -520,7 +538,7 @@ public class BTUHost extends EquipModel {
             try {
                 List<String> result = this.iSecsHost.executeCommand("curscreen");
                 if (result != null && !result.isEmpty()) {
-                    if ("main".equals(result.get(0))) {
+                    if ("main".equals(result.get(0)) || "any".equals(result.get(0))) {
                         List<String> result2 = iSecsHost.executeCommand("readrectcolor 100 54 103 60");
                         if ("0xffff00".equalsIgnoreCase(result2.get(0))) {
                             equipStatus = "Idle";
@@ -599,7 +617,12 @@ public class BTUHost extends EquipModel {
         }
     }
 
+    @Override
     protected String checkEquipStatus() {
+        try {
+            iSecsHost.executeCommand("clearallmessage");
+        } catch (Exception e) {
+        }
 
         return "0";
     }
