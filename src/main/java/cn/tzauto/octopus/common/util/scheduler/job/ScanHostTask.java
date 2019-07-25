@@ -40,9 +40,9 @@ public class ScanHostTask implements Job {
             // EAPGuiView.removeWatchDog(Integer.valueOf(list.get(i + 1)));                                    
             String deviceCode = GlobalConstants.stage.equipBeans.get(i).getDeviceCode();
             //start the Host Thread
-            logger.debug("ScanHostTask=====>DeviceID:" + deviceCode + "=========>状态:" + hostsManager.getAllEquipHosts().get(deviceCode).isInterrupted());
+            logger.debug("ScanHostTask=====>DeviceCode:" + deviceCode + "=========>状态:" + hostsManager.getAllEquipHosts().get(deviceCode).isInterrupted());
             if (hostsManager.getAllEquipHosts().get(deviceCode).isInterrupted() == true) {
-                logger.debug("ScanHostTask=====>检测到中断，DeviceID:" + deviceCode);
+                logger.debug("ScanHostTask=====>检测到中断，DeviceCode:" + deviceCode);
                 EquipmentEventDealer equipmentEventDealer = new EquipmentEventDealer(GlobalConstants.stage.equipBeans.get(i), GlobalConstants.stage);
                 //start the watch dog
                 equipmentEventDealer.execute();

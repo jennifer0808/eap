@@ -6,6 +6,8 @@
 package cn.tzauto.octopus.common.util.scheduler.job;
 
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
+import cn.tzauto.octopus.common.ws.AxisUtility;
+import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
@@ -34,6 +36,10 @@ public class MonitorAlarmLockTask implements Job {
                 }
                 try {
                     Thread.sleep(300);
+                    if (AxisUtility.checkBusinessMode(equipModel.deviceCode)) {
+                        UiLogUtil.getInstance().appendLog2SeverTab(equipModel.deviceCode, "检测到设备被设置为工程模式,跳过检查!");
+                        return;
+                    }
                     if (equipModel.checkLockFlagFromServerByWS(equipModel.deviceCode)) {
                         equipModel.stopEquip();
                     }

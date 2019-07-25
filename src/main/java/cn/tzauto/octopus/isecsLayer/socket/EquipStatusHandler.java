@@ -82,7 +82,7 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                 preEquipstatus = prestatus.trim();
                 equipstatus = status.trim();
                 logger.debug("设备:" + deviceCode + " preEquipstatus " + preEquipstatus + " equipstatus" + equipstatus);
-                if ("pause".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) {
+                if (("pause".equalsIgnoreCase(preEquipstatus) || "stop".equalsIgnoreCase(preEquipstatus)) && "RUN".equalsIgnoreCase(equipstatus)) {
                     boolean businessmode = false;
                     if ("1".equals(GlobalConstants.getProperty("START_CHECK_BUSINESSMODE"))) {
                         businessmode = AxisUtility.checkBusinessMode(deviceCode);
@@ -93,7 +93,15 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                                 String stopResult = equipModel.pauseEquip();
                                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
                             }
+                            if (GlobalConstants.ISECS_STOP2RUN_CHECK.contains(equipModel.deviceType) || GlobalConstants.ISECS_PAUSE2RUN_CHECK.contains(equipModel.deviceType)) {
+                                checkAndDel(equipModel);
+                            }
                         }
+//                        if (equipModel.deviceType.contains("GRANDGIS126Z1") || equipModel.deviceType.contains("GIS126CZ1") || equipModel.deviceType.contains("TOWAY1R1060")) {
+//                            checkAndDel(equipModel);
+//                        }
+                    } else {
+                        logger.info("设备:" + deviceCode + "处于工程模式,取消开机检查.");
                     }
 
                 }
@@ -126,6 +134,8 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
                                 GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
                             }
                         }
+                    } else {
+                        logger.info("设备:" + deviceCode + "处于工程模式,取消开机检查.");
                     }
 
                 }
@@ -193,5 +203,25 @@ public class EquipStatusHandler extends ChannelInboundHandlerAdapter {
         }
 
     }
-
+    private static void checkAndDel(EquipModel equipModel) {
+        if (!GlobalConstants.stage.equipModels.get(equipModel.deviceCode).startCheck()) {
+            String stopResult = GlobalConstants.stage.equipModels.get(equipModel.deviceCode).stopEquip();
+            UiLogUtil.getInstance().appendLog2EventTab(equipModel.deviceCode, "设备将被锁机...");
+            String holdDesc = "";
+            Map mqMap = new HashMap();
+            if ("0".equals(stopResult)) {
+                holdDesc = "当前设备已经被锁机";
+                Map mapTmp = new HashMap();
+                mapTmp.put("EquipStatus", "Idle");
+                equipModel.changeEquipPanel(mapTmp);
+                UiLogUtil.getInstance().appendLog2EventTab(equipModel.deviceCode, "锁机成功...");
+                mqMap.put("holdResult", "锁机成功");
+            } else {
+                mqMap.put("holdResult", "锁机失败");
+                holdDesc = stopResult;
+            }
+            mqMap.put("holdDesc", holdDesc);
+            GlobalConstants.C2SEqptLogQueue.sendMessage(mqMap);
+        }
+    }
 }

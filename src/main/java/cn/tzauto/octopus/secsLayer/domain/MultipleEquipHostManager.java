@@ -1672,4 +1672,31 @@ public class MultipleEquipHostManager {
         }
         return null;
     }
+    /**
+     *
+     * @param deviceId
+     * @param dataIdMap
+     * @return
+     */
+    public Map getSpecificDataTemp(String deviceId, Map<String, String> dataIdMap) {
+        if (equipHosts.get(deviceId) != null) {
+            EquipHost equipHost = equipHosts.get(deviceId);
+            if (equipHost.getEquipState().isCommOn()) {
+                try {
+                    return equipHost.getSpecificData(dataIdMap);
+                } catch (Exception e) {
+                    logger.error("getSpecificDataTemp  error", e);
+                }
+            }
+        } else if (equipModels.get(deviceId) != null) {
+            if (equipModels.get(deviceId).isConnect()) {
+                if (equipModels.get(deviceId).getPassport()) {
+                    Map resultMap = equipModels.get(deviceId).getSpecificDataTemp(dataIdMap);
+                    equipModels.get(deviceId).returnPassport();
+                    return resultMap;
+                }
+            }
+        }
+        return new HashMap();
+    }
 }

@@ -409,7 +409,7 @@ public class DFL7161Host extends EquipModel {
                     resultMap.put("uploadResult", "上传失败,上传Recipe:" + recipeName + " 时,FTP连接失败.");
                 }
             } catch (Exception e) {
-                logger.error("Get equip status error:" + e.getMessage());
+                logger.error("Get equip status error:" ,e);
 
             }
         }

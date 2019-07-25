@@ -51,7 +51,7 @@ public class UpdateVerNoHandler implements MessageHandler {
         }
         DeviceInfo deviceInfo = deviceService.selectDeviceInfoByDeviceCode(deviceCode);
         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
-        if (deviceInfo.getDeviceType().contains("DF")) {
+        if (deviceInfo.getDeviceType().contains("DF") || deviceInfo.getDeviceType().contains("ICOS")) {
             recipeName = deviceInfoExt.getRecipeName();
         }
         Recipe goldRecipe = recipeService.getGoldRecipe(recipeName, deviceCode, deviceInfo.getDeviceType());

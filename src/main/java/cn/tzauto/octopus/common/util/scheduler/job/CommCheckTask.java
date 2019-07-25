@@ -91,6 +91,8 @@ public class CommCheckTask implements Job {
                     continue;
                 }
                 currentHost.restartCnt = 0;
+                currentHost.setIsRestarting(false);
+                logger.info("设备:" + currentHost.getDeviceCode() + "重启超时,restartCnt=" + currentHost.restartCnt);
                 try {
                     checkNetAndDealer(deviceId, src);
                 } catch (Exception e) {
@@ -463,7 +465,7 @@ public class CommCheckTask implements Job {
                     }
                     GlobalConstants.stage.hostManager.sendStatus2Server(equipModel.deviceCode, "OFFLINE");
                 } else {
-                    if (!iSecsHost.iSecsConnection.getSocketClient().isConnected()) {
+                    if (!iSecsHost.iSecsConnection.getSocketClient().isConnected() || !equipModel.isConnect()) {
                         logger.info(equipModel.deviceCode + "Check equipModel: SocketClient.disConnected");
                         needInit = true;
                     }

@@ -48,7 +48,17 @@ public class MonitorAlarmTask implements Job {
                     List<String> alarmStrings = new ArrayList<>();
                     try {
                         alarmStrings = equipModel.getEquipAlarm();
-                        if (alarmStrings == null) {
+                        if (alarmStrings == null || alarmStrings.isEmpty()) {
+                            equipModel.returnPassport();
+                            continue;
+                        }
+                        boolean skip = false;
+                        for (String alarmString : alarmStrings) {
+                            if (alarmString.contains("Failed to ocr")) {
+                                skip = true;
+                            }
+                        }
+                        if (skip) {
                             continue;
                         }
                     } catch (Exception e) {
@@ -92,6 +102,9 @@ public class MonitorAlarmTask implements Job {
                         logger.info("Send alarmRecords to server..." + alarmRecordMap.toString());
                     }
                     equipModel.returnPassport();
+                    equipModel.notGetAlarmCount = 0;
+                } else {
+                    equipModel.notGetAlarmCount++;
                 }
             }
             if(temp ==null){

@@ -56,8 +56,9 @@ public class AxisUtility {
         DeviceInfoExt deviceInfoExt = getEqptStatus(userID, eqptId);
         if ("Y".equals(deviceInfoExt.getLockFlag())) {
             UiLogUtil.getInstance().appendLog2SeverTab(deviceInfoExt.getDeviceRowid(), "由于[" + deviceInfoExt.getRemarks() + "],设备将被锁机...");
+            return deviceInfoExt.getLockFlag();
         }
-        return deviceInfoExt.getLockFlag();
+        return "N";
     }
 
     //获取开机状态是否Lock
@@ -84,10 +85,14 @@ public class AxisUtility {
             call.setTargetEndpointAddress(new java.net.URL(endpoint));
             call.setOperationName("findEqptStatus");
             String jsonResult = String.valueOf(call.invoke(new Object[]{userId, eqptId}));
+            if (jsonResult.contains("服务端异常")) {
+                return deviceInfoExt;
+            }
             deviceInfoExt = (DeviceInfoExt) JsonMapper.fromJsonString(jsonResult, DeviceInfoExt.class);
             logger.debug("call web service url:[" + GlobalConstants.getProperty("ServerRecipeWSUrl") + "/eqptService/findEqptStatus]");
         } catch (Exception e) {
             logger.error("Exception:", e);
+            return deviceInfoExt;
         }
         return deviceInfoExt;
     }
@@ -308,7 +313,7 @@ public class AxisUtility {
         return resultMap;
     }
 
-    public static Map getBladeTypeByGroupFromServer(String bladeGroupId) {
+    public static Map getBladeTypeByGroupFromServer(String bladeGroupId, String deviceCode) {
         Map resultMap = new HashMap();
         if (!GlobalConstants.isLocalMode) {
             String endPoint = GlobalConstants.getProperty("ServerRecipeWSUrl") + "/edcService";
@@ -317,7 +322,7 @@ public class AxisUtility {
                 Call call = (Call) service.createCall();
                 call.setTargetEndpointAddress(new java.net.URL(endPoint));
                 call.setOperationName("contrastBlade");
-                String jsonResult = String.valueOf(call.invoke(new Object[]{bladeGroupId}));
+                String jsonResult = String.valueOf(call.invoke(new Object[]{bladeGroupId, deviceCode}));
                 resultMap = (Map) JsonMapper.fromJsonString(jsonResult, HashMap.class);
             } catch (Exception e) {
                 logger.error("Exception", e);

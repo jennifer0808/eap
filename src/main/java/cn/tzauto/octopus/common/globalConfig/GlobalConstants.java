@@ -137,6 +137,9 @@ public class GlobalConstants {
     public static String htFtpUser = "ftpuser1";
     public static String htFtpPwd = "ftp123456";
     public static String winRarPath = "C:/Program Files/WinRAR/WinRAR.exe";
+
+    public static String ISECS_STOP2RUN_CHECK = "";
+    public static String ISECS_PAUSE2RUN_CHECK = "";
     // 用于保存同模组下的EquipHost
     public static Map<String, EquipHost> hostMap = new HashMap<>();
     // 用于确认同模组下的设备中已建立连接的设备(即MsgListener监听的host)
@@ -207,6 +210,10 @@ public class GlobalConstants {
         GlobalConstants.ftpUser = getProperty("ftpUser");
         GlobalConstants.ftpPwd = getProperty("ftpPwd");
         GlobalConstants.ftpPath = getProperty("ftpPath");
+
+
+        ISECS_STOP2RUN_CHECK = getProperty("ISECS_STOP2RUN_CHECK");
+        ISECS_PAUSE2RUN_CHECK = getProperty("ISECS_PAUSE2RUN_CHECK");
 
         //读取华天FTP配置
         GlobalConstants.htFtpUrl = getProperty("htFtpUrl");

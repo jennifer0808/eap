@@ -64,6 +64,7 @@ public abstract class EquipModel extends Thread {
     private Map<String, String> candidates = new HashMap<>();
     public ConcurrentLinkedQueue<ISecsHost> iSecsHostList = new ConcurrentLinkedQueue<ISecsHost>();
     public String preAlarm = "";
+    public int notGetAlarmCount = 0;
 
     public EquipModel(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         this.deviceId = devId;
@@ -189,6 +190,16 @@ public abstract class EquipModel extends Thread {
     主要用于点检取值
      */
     public Map getSpecificData(Map<String, String> dataIdMap) {
+        //this.getEquipMonitorPara();
+        return this.getEquipMonitorPara();
+    }
+
+    /*
+    客户需求不定这里临时创建，
+    这里直接调用getEquipMonitorPara方法，如果子类有其他用处则重写getSpecificDataTemp方法
+    主要用于点检取值
+     */
+    public Map getSpecificDataTemp(Map<String, String> dataIdMap) {
         //this.getEquipMonitorPara();
         return this.getEquipMonitorPara();
     }
@@ -446,7 +457,6 @@ public abstract class EquipModel extends Thread {
                 pass = false;
             }
         }
-
         SqlSession sqlSession = MybatisSqlSession.getSqlSession();
         RecipeService recipeService = new RecipeService(sqlSession);
         DeviceService deviceService = new DeviceService(sqlSession);
@@ -474,7 +484,6 @@ public abstract class EquipModel extends Thread {
                 pass = false;
             }
         }
-
         Map mqMap = new HashMap();
         mqMap.put("msgName", "eqpt.StartCheckWI");
         mqMap.put("deviceCode", deviceCode);
@@ -517,7 +526,6 @@ public abstract class EquipModel extends Thread {
                     sqlSession.close();
                 }
             }
-
         } else {
             if (!"".equalsIgnoreCase(checkRecultDescEng)) {
                 sendMessage2Eqp(checkRecultDescEng);
@@ -562,8 +570,11 @@ public abstract class EquipModel extends Thread {
         boolean get = false;
         String currentUserLevel = passport.get("UserLevel");
 //        String passPortStatus = passport.get("Status");
-        logger.debug(deviceCode + "当前passport状态===>" + passport.get("Status"));
+        logger.debug(deviceCode + "当前passport状态===>" + passport.get("Status") + "当前UserLevel状态===>" + currentUserLevel);
         if (level >= Integer.valueOf(currentUserLevel)) {
+            Timer timer = new Timer();
+            // 1秒后开始执行，每隔5秒执行一次
+            timer.schedule(new PassportTimer(timer), 1000, 5000);
             if (candidates.size() > 4) {
                 //异常情况导致此candidates加入了多个等待者，在此重置
                 candidates.put("WaitTime", "");
@@ -767,7 +778,6 @@ public abstract class EquipModel extends Thread {
             logger.info("删除临时文件:" + GlobalConstants.localRecipePath + "/temp/" + deviceCode + recipeName + "temp/");
             FileUtil.delAllTempFile("D:\\" + deviceCode + recipeName + "temp/");
         }
-
     }
 
     public boolean uploadRcpFile2FTP(String localRcpPath, String remoteRcpPath, Recipe recipe) {
@@ -796,22 +806,9 @@ public abstract class EquipModel extends Thread {
         if (getPassport(1)) {
             return true;
         } else {
-            logger.debug("设备:" + deviceCode + "直接获取passport失败,尝试循环多次处理...");
-            for (int i = 0; i < 5; i++) {
-                logger.debug("第" + (i + 1) + "次尝试...");
-                boolean pass = getPassport(1);
-                if (!pass) {
-                    logger.debug("获取失败,等待1秒后再次获取");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (Exception e) {
-                    }
-                } else {
-                    logger.debug("获取成功,结束循环");
-                    return true;
-                }
-            }
-            logger.debug("设备:" + deviceCode + "获取passport失败,通讯资源正在被占用");
+            candidates.clear();
+            passport.put("UserLevel", "1");
+            passport.put("Status", "inUse");
             return true;
         }
     }
@@ -856,12 +853,17 @@ public abstract class EquipModel extends Thread {
         } catch (NullPointerException e) {
             logger.error("获取设备信息失败,检查通讯状况");
         }
-        Map map = new HashMap();
+        final Map map = new HashMap();
         map.put("PPExecName", ppExecName);
         map.put("EquipStatus", equipStatus);
         map.put("ControlState", controlState);
         map.put("CommState", 1);
-        changeEquipPanel(map);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                changeEquipPanel(map);
+            }
+        }).start();
         return map;
     }
 
@@ -921,7 +923,7 @@ public abstract class EquipModel extends Thread {
     }
 
     protected boolean isGetLegalRecipeName(String recipeName) {
-        if ("".equals(recipeName) || "--".equals(recipeName)) {
+        if ("".equals(recipeName.trim()) || "--".equals(recipeName) || recipeName.contains("rror")) {
             return false;
         }
         for (int i = 0; i < recipeName.length(); i++) {
@@ -931,6 +933,28 @@ public abstract class EquipModel extends Thread {
             }
         }
         return true;
+    }
+
+    class PassportTimer extends TimerTask {
+
+        private Timer timer;
+
+        public PassportTimer(Timer timer) {
+            this.timer = timer;
+        }
+
+        int timerCount = 1;
+
+        @Override
+        public void run() {
+            if ("idle".equals(passport.get("Status"))) {
+                this.timer.cancel();
+            }
+            if (timerCount++ == 10) {
+                this.timer.cancel();
+                returnPassport();
+            }
+        }
     }
 
     private ISecsHost initComm(String remoteIPAddress, int remoteTCPPort, String deviceType, String deviceCode) {

@@ -12,6 +12,7 @@ import org.quartz.JobExecutionException;
 /**
  *
  * @author gavin
+ * 没有用到的job
  */
 public class SyncConfigTask implements Job {
 

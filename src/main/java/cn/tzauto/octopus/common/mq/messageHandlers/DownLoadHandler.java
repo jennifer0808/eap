@@ -94,9 +94,11 @@ public class DownLoadHandler implements MessageHandler {
                 recipeService.deleteRcpParaBatch(recipeParaList);
                 recipeService.deleteRcpParaByRecipeId(recipe.getId());
                 logger.info("recipePara批量删除成功");
-
+                if (deviceInfo.getDeviceType().contains("HITACHIDB8") || deviceInfo.getDeviceType().contains("9212")) {
+                    recipeService.saveRcpParaBatchForDB800(recipeParaList);
+                } else {
                     recipeService.saveRcpParaBatch(recipeParaList);
-
+                }
                 logger.info("recipePara批量保存成功");
                 recipeService.deleteAttachByRcpRowId(recipe.getId());
                 for (Attach attach : attachs) {
@@ -113,7 +115,7 @@ public class DownLoadHandler implements MessageHandler {
                 recipeService.deleteRcpParaBatch(recipeParaListGold);
                 recipeService.deleteRcpParaByRecipeId(recipeGold.getId());
                 logger.info("recipeParaListGold批量删除成功");
-                if (deviceInfo.getDeviceType().contains("HITACHIDB8")) {
+                if (deviceInfo.getDeviceType().contains("HITACHIDB8") || deviceInfo.getDeviceType().contains("9212")) {
                     recipeService.saveRcpParaBatchForDB800(recipeParaListGold);
                 } else {
                     recipeService.saveRcpParaBatch(recipeParaListGold);

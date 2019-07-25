@@ -872,7 +872,7 @@ public class DFD6340Host extends EquipModel {
         getCurrentRecipeName();
         String bladeGroup = getBladeGroupCode(ppExecName);
         logger.info("当前程序名:" + ppExecName + " 获取到的刀片组id:" + bladeGroup);
-        Map serverMap = AxisUtility.getBladeTypeByGroupFromServer(bladeGroup);
+        Map serverMap = AxisUtility.getBladeTypeByGroupFromServer(bladeGroup, deviceCode);
         if (serverMap != null && !serverMap.isEmpty()) {
             logger.info("server 获取到的刀片信息:" + serverMap.toString());
             String serverZ1 = String.valueOf(serverMap.get("Z1"));

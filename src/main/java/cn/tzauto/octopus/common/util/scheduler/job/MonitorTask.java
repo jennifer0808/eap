@@ -413,10 +413,14 @@ public class MonitorTask implements Job {
                 if (equipModel.deviceType.contains("BTU") || equipModel.deviceType.contains("HELLER") || equipModel.deviceType.contains("HTM5022")) {
                     try {
                         String deviceCode = equipModel.deviceCode;
+                        if (AxisUtility.checkBusinessMode(deviceCode)) {
+                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为工程模式,跳过检查!");
+                            continue;
+                        }
                         if (equipModel.checkLockFlagFromServerByWS(deviceCode)) {
                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被设置为锁机，设备将被锁!");
                             equipModel.stopEquip();
-                            return;
+                            continue;
                         }
                         DeviceInfoExt deviceInfoExt = deviceService.getDeviceInfoExtByDeviceCode(deviceCode);
                         if (deviceInfoExt == null) {
@@ -424,11 +428,14 @@ public class MonitorTask implements Job {
                             continue;
                         }
                         equipModel.getCurrentRecipeName();
+                        if ("".equals(equipModel.ppExecName) || equipModel.ppExecName.contains("rror")) {
+                            equipModel.ppExecName = "--";
+                        }
                         if (!equipModel.ppExecName.equals("--") && !equipModel.ppExecName.equals(deviceInfoExt.getRecipeName())) {
                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "已选程序与领料程序不一致,设备被锁定！请联系ME处理！领料程序:" + deviceInfoExt.getRecipeName() + " 已选程序:" + equipModel.ppExecName);
                             equipModel.sendMessage2Eqp("The current recipe <" + equipModel.ppExecName + "> in equipment is different from CIM system <" + deviceInfoExt.getRecipeName() + ">,equipment will be locked.");
                             equipModel.stopEquip();
-                            return;
+                            continue;
                         }
                         String busniessMod = deviceInfoExt.getBusinessMod();
                         if ("Engineer".equals(busniessMod)) {
