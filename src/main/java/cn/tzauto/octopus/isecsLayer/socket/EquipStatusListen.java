@@ -51,6 +51,75 @@ public class EquipStatusListen {
         logger.info("开启alert状态监听...");
     }
 
+    public void start() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                EventLoopGroup workerGroup = new NioEventLoopGroup();
+                try {
+                    ServerBootstrap bootstrap = new ServerBootstrap();
+                    bootstrap.group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel.class)
+                            .childHandler(new ChildChannelHandler())
+                            .option(ChannelOption.SO_BACKLOG, 1024)
+                            .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    //绑定端口、同步等待
+                    //ISECS_EQUIPSTATUS_LISTEN_PORT 12002
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN_PORT"))).sync();
+
+                    //等待服务监听端口关闭  
+                    futrue.channel().closeFuture().sync();
+                } catch (Exception e) {
+                    bossGroup.shutdownGracefully();
+                    workerGroup.shutdownGracefully();
+                }
+            }
+        }).start();
+
+    }
+
+    public void startAlarm() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                EventLoopGroup workerGroup = new NioEventLoopGroup();
+                try {
+                    ServerBootstrap bootstrap = new ServerBootstrap();
+                    bootstrap.group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel.class)
+                            .childHandler(new FileChannelHandler())
+                            .option(ChannelOption.SO_BACKLOG, 1024)
+                            .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    //绑定端口、同步等待  
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN_PORT"))).sync();
+                    //等待服务监听端口关闭  
+                    futrue.channel().closeFuture().sync();
+                } catch (Exception e) {
+                    bossGroup.shutdownGracefully();
+                    workerGroup.shutdownGracefully();
+                }
+            }
+        }).start();
+
+    }
+
+    private class ChildChannelHandler extends ChannelInitializer<SocketChannel> {
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            ch.pipeline().addLast(new EquipStatusHandler());
+        }
+    }
+
+    private class FileChannelHandler extends ChannelInitializer<SocketChannel> {
+        @Override
+        protected void initChannel(SocketChannel ch) throws Exception {
+            ch.pipeline().addLast(new EquipAlarmHandler());
+        }
+    }
+
+
     public static void startAlarmListen() {
         new EquipStatusListen().startAlarm();
         logger.info("开启log报警监听...");
@@ -80,14 +149,14 @@ public class EquipStatusListen {
                 socket = server.accept();
                 socket.setKeepAlive(true);
 
-                //2、调用accept()方法开始监听，等待客户端的连接 
+                //2、调用accept()方法开始监听，等待客户端的连接
                 //使用accept()阻塞等待客户请求，有客户
                 //请求到来则产生一个Socket对象，并继续执行
             } catch (Exception e) {
                 logger.error("Error." + e);
                 //出错，打印出错信息
             }
-            //3、获取输入流，并读取客户端信息 
+            //3、获取输入流，并读取客户端信息
             String line;
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             //由Socket对象得到输入流，并构造相应的BufferedReader对象
@@ -103,7 +172,7 @@ public class EquipStatusListen {
             //在标准输出上打印从客户端读入的字符串
             line = br.readLine();
             //从标准输入读入一字符串
-            //4、获取输出流，响应客户端的请求 
+            //4、获取输出流，响应客户端的请求
             while (!line.equals("done")) {
                 //如果该字符串为 "bye"，则停止循环
                 writer.println(line);
@@ -118,7 +187,7 @@ public class EquipStatusListen {
                 //从系统标准输入读入一字符串
             } //继续循环
 
-            //5、关闭资源 
+            //5、关闭资源
 //            writer.close(); //关闭Socket输出流
 //            in.close(); //关闭Socket输入流
 //            socket.close(); //关闭Socket
@@ -171,7 +240,7 @@ public class EquipStatusListen {
                                 String prestatus = transferStatus(ipStatus[1]);
                                 String deviceCode = map.get(eqpIp);
                                 logger.debug("设备:" + deviceCode + "设备进入" + status + "状态.");
-                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入" + status + "状态...");
+                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入" + status + "状态...");
                                 Map statusmap = new HashMap();
                                 statusmap.put("EquipStatus", status);
                                 EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceCode);
@@ -184,15 +253,15 @@ public class EquipStatusListen {
                                     if ("pause".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) {
                                         if (equipModel.checkLockFlagFromServerByWS(deviceCode)) {
                                             String stopResult = equipModel.pauseEquip();
-                                           UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
+                                            UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "检测到设备被Server要求锁机,设备将被锁!");
                                         }
                                     }
                                     if (("Ready".equalsIgnoreCase(preEquipstatus) && "RUN".equalsIgnoreCase(equipstatus)) || "RUNning".equalsIgnoreCase(equipstatus)) {
                                         logger.info("设备:" + deviceCode + "开机作业.");
-                                       UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
+                                        UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备进入运行状态...");
                                         if (!GlobalConstants.stage.equipModels.get(deviceCode).startCheck()) {
                                             String stopResult = GlobalConstants.stage.equipModels.get(deviceCode).stopEquip();
-                                           UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将被锁机...");
+                                            UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "设备将被锁机...");
                                             String holdDesc = "";
                                             Map mqMap = new HashMap();
                                             if ("0".equals(stopResult)) {
@@ -200,7 +269,7 @@ public class EquipStatusListen {
                                                 Map mapTmp = new HashMap();
                                                 mapTmp.put("EquipStatus", "Idle");
                                                 equipModel.changeEquipPanel(mapTmp);
-                                               UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "锁机成功...");
+                                                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "锁机成功...");
                                                 mqMap.put("holdResult", "锁机成功");
                                             } else {
                                                 mqMap.put("holdResult", "锁机失败");
@@ -293,70 +362,4 @@ public class EquipStatusListen {
         return status;
     }
 
-    public void start() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-                EventLoopGroup workerGroup = new NioEventLoopGroup();
-                try {
-                    ServerBootstrap bootstrap = new ServerBootstrap();
-                    bootstrap.group(bossGroup, workerGroup)
-                            .channel(NioServerSocketChannel.class)
-                            .childHandler(new ChildChannelHandler())
-                            .option(ChannelOption.SO_BACKLOG, 1024)
-                            .childOption(ChannelOption.SO_KEEPALIVE, true);
-                    //绑定端口、同步等待  
-                    ChannelFuture futrue = bootstrap.bind(12002).sync();
-
-                    //等待服务监听端口关闭  
-                    futrue.channel().closeFuture().sync();
-                } catch (Exception e) {
-                    bossGroup.shutdownGracefully();
-                    workerGroup.shutdownGracefully();
-                }
-            }
-        }).start();
-
-    }
-
-    public void startAlarm() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-                EventLoopGroup workerGroup = new NioEventLoopGroup();
-                try {
-                    ServerBootstrap bootstrap = new ServerBootstrap();
-                    bootstrap.group(bossGroup, workerGroup)
-                            .channel(NioServerSocketChannel.class)
-                            .childHandler(new FileChannelHandler())
-                            .option(ChannelOption.SO_BACKLOG, 1024)
-                            .childOption(ChannelOption.SO_KEEPALIVE, true);
-                    //绑定端口、同步等待  
-                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN_PORT"))).sync();
-                    //等待服务监听端口关闭  
-                    futrue.channel().closeFuture().sync();
-                } catch (Exception e) {
-                    bossGroup.shutdownGracefully();
-                    workerGroup.shutdownGracefully();
-                }
-            }
-        }).start();
-
-    }
-
-    private class ChildChannelHandler extends ChannelInitializer<SocketChannel> {
-        @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
-            ch.pipeline().addLast(new EquipStatusHandler());
-        }
-    }
-
-    private class FileChannelHandler extends ChannelInitializer<SocketChannel> {
-        @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
-            ch.pipeline().addLast(new EquipAlarmHandler());
-        }
-    }
 }
