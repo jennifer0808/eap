@@ -40,6 +40,7 @@ import java.util.*;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.isDownload;
 import static cn.tzauto.octopus.common.globalConfig.GlobalConstants.onlyOnePageDownload;
 import static cn.tzauto.octopus.secsLayer.domain.EquipHost.COMMUNICATING;
+import static cn.tzauto.octopus.secsLayer.domain.EquipHost.NOT_COMMUNICATING;
 
 /**
  * Created by wj_co on 2019/2/15.
@@ -115,17 +116,23 @@ public class DownloadPaneController implements Initializable {
 
         List<DeviceInfo> deviceInfostmp = new ArrayList<>();
         for (DeviceInfo deviceInfo : GlobalConstants.stage.hostManager.deviceInfos) {
+            if(!deviceInfo.getDeviceCode().equals(deviceCode)){
+                continue;
+            }
             EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceInfo.getDeviceCode());
 //            if (equipHost != null && AxisUtility.isEngineerMode(deviceInfo.getDeviceCode()) && equipHost.getEquipState().isCommOn()) {
-            if (equipHost != null  && equipHost.getEquipState().isCommOn()  &&equipHost.commState==COMMUNICATING ) {
+            if (equipHost != null  && equipHost.getEquipState().isCommOn()  &&equipHost.commState==EquipHost.COMMUNICATING ) {
                 deviceInfostmp.add(deviceInfo);
-            }else{
+            }else if(equipHost != null && (!equipHost.getEquipState().isCommOn()  || equipHost.commState==EquipHost.NOT_COMMUNICATING)){
                 equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
-                CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+                CommonUiUtil.alert(Alert.AlertType.WARNING, deviceInfo.getDeviceCode()+"未正确收到回复，请检查设备通信状态！",stage);
             }
             EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceInfo.getDeviceCode());
-            if (equipModel != null) {
+            if (equipModel != null && equipModel.getEquipState().isCommOn()  &&equipModel.commState==EquipModel.COMMUNICATING) {
                 deviceInfostmp.add(deviceInfo);
+            }else if(equipModel != null && (!equipModel.getEquipState().isCommOn()  || equipModel.commState==EquipModel.NOT_COMMUNICATING)){
+                equipModel.setControlState(GlobalConstant.CONTROL_OFFLINE);
+                CommonUiUtil.alert(Alert.AlertType.WARNING, deviceInfo.getDeviceCode()+"未正确收到回复，请检查设备通信状态！",stage);
             }
         }
         sqlSession.close();
@@ -215,7 +222,7 @@ public class DownloadPaneController implements Initializable {
                             try{
                             String downloadResult = recipeService.downLoadRcp2DeviceByType(deviceInfo, recipe, "", deviceInfoExt.getRecipeDownloadMod());
 //                                String downloadResult ="0";
-                                if ("0".equals(downloadResult)) {
+                                if ("0".equals(downloadResult.replace(" ", ""))) {
                                 deviceInfoExt.setRecipeId(recipe.getId());
                                 deviceInfoExt.setRecipeName(recipe.getRecipeName());
                                 deviceInfoExt.setVerNo(recipe.getVersionNo());

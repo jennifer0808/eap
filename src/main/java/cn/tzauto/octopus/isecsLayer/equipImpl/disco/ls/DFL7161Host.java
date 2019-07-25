@@ -662,7 +662,8 @@ public class DFL7161Host extends EquipModel {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             List<String> result;
             try {
-                result = iSecsHost.executeCommand("dos \"dir " + equipRecipePath + " /ad/w\"");
+                String cmd ="dos \"dir " + equipRecipePath + " /ad/w\"";
+                result = iSecsHost.executeCommand(cmd,"GBK");
             } catch (Exception e) {
                 return eppd;
             }

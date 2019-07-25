@@ -1228,6 +1228,7 @@ public class MultipleEquipHostManager {
         equipModels = new ConcurrentHashMap<String, EquipModel>();
         boolean pass = false;
         pass = instanciateEquipModels(deviceInfos);
+        this.deviceInfos.addAll(deviceInfos);
         if (!pass) {
             logger.fatal("Error during loading host.xnl file - returned false. Exit!");
             return false;
@@ -1643,16 +1644,19 @@ public class MultipleEquipHostManager {
 
 
         Map resultMap = deleteRecipeFromDevice(deviceId, recipeName);
-        if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上删除成功!");
-            return "0";
-        } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上不存在，无需删除!");
-            return "0";
-        } else {
-            UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
-            return recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description"));
+        if(resultMap !=null && resultMap.size()>0){
+            if ("0".equals(String.valueOf(resultMap.get("ACKC7")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上删除成功!");
+                return "0";
+            } else if ("4".equals(String.valueOf(resultMap.get("ACKC7")))) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "在设备上不存在，无需删除!");
+                return "0";
+            } else {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceId, recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description")));
+                return recipeName + "删除失败,原因：" + String.valueOf(resultMap.get("Description"));
+            }
         }
+       return null;
     }
 
     public DeviceInfo getDeviceInfo(String deviceId, String deviceCode) {

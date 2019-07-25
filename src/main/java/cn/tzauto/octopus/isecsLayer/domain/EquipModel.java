@@ -1008,5 +1008,20 @@ public abstract class EquipModel extends Thread {
             sqlSession.close();
         }
     }
+    /**
+     * @return the controlState
+     */
+    public String getControlState() {
+        return controlState;
+    }
 
+    /**
+     * @param controlState the controlState to set
+     */
+    public synchronized void setControlState(String controlState) {
+        this.controlState = controlState;
+        Map resultMap = new HashMap();
+        resultMap.put("ControlState", controlState);
+        changeEquipPanel(resultMap);
+    }
 }
