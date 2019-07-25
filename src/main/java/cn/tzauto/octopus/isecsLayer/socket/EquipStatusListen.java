@@ -51,6 +51,12 @@ public class EquipStatusListen {
         logger.info("开启alert状态监听...");
     }
 
+    public static void startAlarmListen() {
+        new EquipStatusListen().startAlarm();
+        logger.info("开启log报警监听...");
+    }
+
+
     public void start() {
         new Thread(new Runnable() {
             @Override
@@ -66,7 +72,7 @@ public class EquipStatusListen {
                             .childOption(ChannelOption.SO_KEEPALIVE, true);
                     //绑定端口、同步等待
                     //ISECS_EQUIPSTATUS_LISTEN_PORT 12002
-                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPALARM_LISTEN_PORT"))).sync();
+                    ChannelFuture futrue = bootstrap.bind(Integer.parseInt(GlobalConstants.getProperty("ISECS_EQUIPSTATUS_LISTEN_PORT"))).sync();
 
                     //等待服务监听端口关闭  
                     futrue.channel().closeFuture().sync();
@@ -119,11 +125,6 @@ public class EquipStatusListen {
         }
     }
 
-
-    public static void startAlarmListen() {
-        new EquipStatusListen().startAlarm();
-        logger.info("开启log报警监听...");
-    }
 
     public static void main(String[] args) {
         monitorEquipStatus();
