@@ -115,16 +115,14 @@ public abstract class EquipModel extends Thread {
 
     @Override
     public void run() {
-        while (!this.isInterrupted()) {
-            if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
-                if (testOcrConnect()) {
-                    Map map = new HashMap();
-                    map.put("ControlState", controlState);
-                    changeEquipPanel(map);
-                    getEquipRealTimeState();
-                    iSecsHostList.remove(iSecsHost);
-                    iSecsHostList.add(iSecsHost);
-                }
+        if (iSecsHost != null && iSecsHost.isConnect && commState == NOT_COMMUNICATING) {
+            if (testOcrConnect()) {
+                Map map = new HashMap();
+                map.put("ControlState", controlState);
+                changeEquipPanel(map);
+                getEquipRealTimeState();
+                iSecsHostList.remove(iSecsHost);
+                iSecsHostList.add(iSecsHost);
             }
         }
     }
