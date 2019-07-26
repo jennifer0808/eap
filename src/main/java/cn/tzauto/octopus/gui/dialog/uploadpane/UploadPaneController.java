@@ -15,6 +15,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.util.language.languageUtil;
 import cn.tzauto.octopus.gui.guiUtil.CommonUiUtil;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
+import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.EquipNodeBean;
 import cn.tzauto.octopus.secsLayer.domain.MultipleEquipHostManager;
@@ -305,8 +306,14 @@ public class UploadPaneController implements Initializable {
             if (recipeMap == null) {
                 Platform.runLater(() -> {
                     EquipHost equipHost = GlobalConstants.stage.equipHosts.get(deviceId);
-                    equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
-                    CommonUiUtil.alert(Alert.AlertType.WARNING, "未正确收到回复，请检查设备通信状态！",stage);
+                    if(equipHost!=null){
+                        equipHost.setControlState(GlobalConstant.CONTROL_OFFLINE);
+                    }
+                    EquipModel equipModel = GlobalConstants.stage.equipModels.get(deviceId);
+                   if(equipModel!=null){
+                       equipModel.setControlState(GlobalConstant.CONTROL_OFFLINE);
+                   }
+                    CommonUiUtil.alert(Alert.AlertType.WARNING, "设备："+deviceId+"  未正确收到回复，请检查设备通信状态！",stage);
                 });
                 return;
 //                        JOptionPane.showMessageDialog(null, "未正确收到回复，请检查设备通信状态！");
