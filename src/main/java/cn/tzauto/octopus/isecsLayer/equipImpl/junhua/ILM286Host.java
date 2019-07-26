@@ -1,24 +1,17 @@
-package cn.tzauto.octopus.isecsLayer.equipImpl.htm;
+package cn.tzauto.octopus.isecsLayer.equipImpl.junhua;
 
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
-import cn.tzauto.octopus.common.util.tool.JsonMapper;
 import cn.tzauto.octopus.isecsLayer.domain.EquipModel;
-import cn.tzauto.octopus.secsLayer.util.GlobalConstant;
 import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class HTM3031Host extends EquipModel {
+public class ILM286Host extends EquipModel {
+    private static Logger logger = Logger.getLogger(ILM286Host.class.getName());
+    private Map<String, String> recipeNameMappingMap = new LinkedHashMap<>();
 
-    private Logger logger = Logger.getLogger(HTM3031Host.class.getName());
-
-    public HTM3031Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
+    public ILM286Host(String devId, String remoteIpAddress, int remoteTcpPort, String deviceType, String iconPath, String equipRecipePath) {
         super(devId, remoteIpAddress, remoteTcpPort, deviceType, iconPath, equipRecipePath);
-        MDC.put(GlobalConstant.WHICH_EQUIPHOST_CONTEXT, devId);
     }
 
     @Override
@@ -26,7 +19,7 @@ public class HTM3031Host extends EquipModel {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()){
             try{
                 List<String> result = iSecsHost.executeCommand("curscreen");
-                if (!result.isEmpty()&& null != result){
+                if (!result.isEmpty()&&null!=result){
                     if ("main".equals(result.get(0))){
                         ppExecName = iSecsHost.executeCommand("read recipename").get(0);
                     }
@@ -40,7 +33,6 @@ public class HTM3031Host extends EquipModel {
         changeEquipPanel(map);
         return ppExecName;
     }
-
 
     @Override
     public String startEquip() {
@@ -95,19 +87,18 @@ public class HTM3031Host extends EquipModel {
     @Override
     public String getEquipStatus() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()){
-            try{
-                List<String> result = iSecsHost.executeCommand("curscreen");
+            try {
+                List<String> result = this.iSecsHost.executeCommand("curscreen");
                 if (!result.isEmpty()&&null!=result){
-                    if ("main".equals(result.get(0))){
-                        List<String> result1 = iSecsHost.executeCommand("readrectcolor 1022 190 1083 210");  //自动运行
-                        logger.info("color read result : " + JsonMapper.toJsonString(result1));
-                            if ("0x8000".equals(result1)){
-                                equipStatus = "Run";
-                            }else if ("0xff".equals(result1)){
-                                equipStatus = "Idle";
-                            }
-                        }
-                    }
+                  if ("main".equals(result.get(0))){
+                      List<String> result1 = iSecsHost.executeCommand("read status");
+                      if ("運轉".equals(result1.get(0))){
+                          equipStatus = "Idle";
+                      }else if ("停止".equals(result1.get(0))){
+                          equipStatus = "Run";
+                      }
+                  }
+                }
             }catch (Exception e){
                 logger.error("Get equip status error:" + e.getMessage());
             }
@@ -118,22 +109,21 @@ public class HTM3031Host extends EquipModel {
         return equipStatus;
     }
 
+    @Override
+    public boolean startCheck() {
+        return true;
+    }
 
     @Override
     public Object clone() {
-        HTM3031Host newHost = new HTM3031Host(deviceId, remoteIPAddress,remoteTCPPort,deviceType,iconPath,equipRecipePath);
+        ILM286Host newHost = new ILM286Host(deviceId, remoteIPAddress,remoteTCPPort,deviceType,iconPath,equipRecipePath);
         newHost.startUp = startUp;
         this.clear();
-        return  newHost;
+        return newHost;
     }
 
     @Override
     public List<String> getEquipAlarm() {
-      return null;
-    }
-
-    @Override
-    public boolean startCheck() {
-        return true;
+        return null;
     }
 }

@@ -25,10 +25,23 @@ public class SPHost extends EquipModel {
     @Override
     public String getCurrentRecipeName() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
+            try {
+                List<String> result = iSecsHost.executeCommand("curscreen");
+                if (!result.isEmpty() && null != result) {
+                    if ("main".equals(result.get(0))) {
+                        ppExecName = iSecsHost.executeCommand("read recipename").get(0);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Get equip ExecName error:" + e.getMessage());
+            }
         }
+        Map map = new HashMap();
+        map.put("PPExecName", ppExecName);
+        changeEquipPanel(map);
         return ppExecName;
     }
+
 
     @Override
     public String startEquip() {
@@ -37,17 +50,11 @@ public class SPHost extends EquipModel {
 
     @Override
     public String pauseEquip() {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
     @Override
     public String stopEquip() {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
@@ -58,9 +65,6 @@ public class SPHost extends EquipModel {
 
     @Override
     public Map uploadRecipe(String recipeName) {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
@@ -71,25 +75,16 @@ public class SPHost extends EquipModel {
 
     @Override
     public String downloadRecipe(Recipe recipe) {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
     @Override
     public String deleteRecipe(String recipeName) {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
     @Override
     public String selectRecipe(String recipeName) {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
@@ -100,18 +95,36 @@ public class SPHost extends EquipModel {
 
     @Override
     public Map getEquipRecipeList() {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
     }
 
     @Override
     public String getEquipStatus() {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
+            try {
+                iSecsHost.executeCommand("playback openStatus.txt");
+                List<String> result = iSecsHost.executeCommand("readrectcolor 597 229 599 233");
+                if (!result.isEmpty()&&null!=result){
+                    if ("0xff00".equals(result.get(0))){
+                        equipStatus = "Idle";
+                    }else if ("0xff0000".equals(result.get(0))){
+                        equipStatus = "Run";
+                    }
+                }
+                iSecsHost.executeCommand("playback closeStatus.txt");
+            }catch (Exception e){
+                logger.error("Get equip status error:" + e.getMessage());
+            }
         }
+        Map map = new HashMap();
+        map.put("equipStatus",equipStatus);
+        changeEquipPanel(map);
         return equipStatus;
+    }
+
+    @Override
+    public boolean startCheck() {
+        return true;
     }
 
     @Override
@@ -124,34 +137,7 @@ public class SPHost extends EquipModel {
 
     @Override
     public List<String> getEquipAlarm() {
-        synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
-            iSecsHost.executeCommand("");
-        }
         return null;
-    }
-
-    @Override
-    public Map getEquipRealTimeState() {
-        equipStatus = getEquipStatus();
-        ppExecName = getCurrentRecipeName();
-        Map map = new HashMap();
-        map.put("PPExecName", ppExecName);
-        map.put("EquipStatus", equipStatus);
-        map.put("ControlState", controlState);
-        return map;
-    }
-
-    private String getClientFtpRecipeRelativePath(String recipeName) {
-        return GlobalConstants.ftpPath + deviceCode + recipeName.hashCode() + "temp/";
-    }
-
-    private String getClientFtpRecipeAbsolutePath(String recipeName) {
-        String filePath = GlobalConstants.localRecipePath + "RECIPE" + getClientFtpRecipeRelativePath(recipeName);
-        File recipeDir = new File(filePath);
-        if (!recipeDir.exists()) {
-            recipeDir.mkdirs();
-        }
-        return filePath;
     }
 
 }

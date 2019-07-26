@@ -155,6 +155,12 @@ public class EquipAlarmHandler extends ChannelInboundHandlerAdapter {
                             remark = splitStrs[3];
                         }
                         break;
+                    case "SPZ1":
+                        String[] splitStrs1  = str.split(",");
+                        alarm = splitStrs1[1];
+                        remark = splitStrs1[5];
+                        break;
+
                     default:
                         alarm = str;
                         break;
