@@ -475,22 +475,25 @@ public class DFD6560Host extends EquipModel {
     @Override
     public String selectRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
+            String isFlag ="0";
             try {
                 List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
                 for (String str : result) {
                     if ("done".equals(str)) {
                         ppExecName = recipeName;
-                        return "0";
+                        break;
                     }
                     if (str.contains("rror")) {
-                        return "选中失败";
+                        isFlag = "选中失败";
+                        break;
                     }
                 }
-                return "选中失败";
+
             } catch (Exception e) {
                 logger.error("Select recipe " + recipeName + " error:" + e.getMessage());
-                return "选中失败";
+                 isFlag= "选中失败";
             }
+            return isFlag;
         }
     }
 
