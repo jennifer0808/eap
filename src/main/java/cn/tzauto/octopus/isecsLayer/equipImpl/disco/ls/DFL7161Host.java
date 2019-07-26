@@ -576,11 +576,15 @@ public class DFL7161Host extends EquipModel {
     public String selectRecipe(String recipeName) {
         synchronized (iSecsHost.iSecsConnection.getSocketClient()) {
             try {
-                List<String> result = iSecsHost.executeCommand("playback selrecipe.txt");
+                List<String> result = iSecsHost.executeCommand("playback selrecipe1.txt");
                 for (String str : result) {
+
                     if ("done".equals(str)) {
                         ppExecName = recipeName;
                         return "0";
+                    }
+                    if (("rror").contains(str)) {
+                        return "选中失败";
                     }
                 }
                 return "选中失败";
