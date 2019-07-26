@@ -804,7 +804,7 @@ public class Asm1205Host extends EquipHost {
                     recipeList.add(recipeName);
                 }
             }
-            resultMap.put("eppd", list);
+            resultMap.put("eppd", recipeList);
 //            resultMap.put("EPPD", list);
         }
         return resultMap;

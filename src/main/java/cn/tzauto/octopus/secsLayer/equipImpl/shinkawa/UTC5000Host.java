@@ -16,6 +16,7 @@ import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
 import cn.tzauto.octopus.common.util.ftp.FtpUtil;
 import cn.tzauto.octopus.common.util.tool.JsonMapper;
+import cn.tzauto.octopus.common.ws.AxisUtility;
 import cn.tzauto.octopus.gui.guiUtil.UiLogUtil;
 import cn.tzauto.octopus.secsLayer.domain.EquipHost;
 import cn.tzauto.octopus.secsLayer.domain.remoteCommand.CommandDomain;
@@ -330,6 +331,22 @@ public class UTC5000Host extends EquipHost {
         }
     }
 
+    protected void sends2f41stripReply(boolean isOk) {
+        try {
+            Map cp = new HashMap();
+            cp.put("RESULT", isOk);
+            Map cpName = new HashMap();
+            cpName.put("RESULT", SecsFormatValue.SECS_ASCII);
+            Map cpValue = new HashMap();
+            cpValue.put(isOk, SecsFormatValue.SECS_BOOLEAN);
+            List list = new ArrayList();
+            list.add("RESULT");
+            activeWrapper.sendS2F41out("STRIP_LOAD_CONFIRM", list, cp, cpName, cpValue);
+        } catch (Exception ex) {
+            logger.error("Exception:", ex);
+        }
+    }
+
     // </editor-fold> 
     // <editor-fold defaultstate="collapsed" desc="S6FX Code">
 
@@ -354,8 +371,11 @@ public class UTC5000Host extends EquipHost {
                 processS6F11inStripMapUpload(data);
             } else if (ceid == 6 || ceid == 8 || ceid == 9 || ceid == 17
                     || ceid == 18 || ceid == 19 || ceid == 20 || ceid == 21
-                    || ceid == 22 || ceid == 45 || ceid == 46) {
+                    || ceid == 22 || ceid == 45 || ceid == 46 || ceid == 65) {
                 processS6F11EquipStatusChange(data);
+            } else if (ceid == 1111) {
+                // 2D扫码
+                processS6F11stripIdRead(data);
             }
 
             if (commState != 1) {
@@ -363,6 +383,75 @@ public class UTC5000Host extends EquipHost {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
+        }
+    }
+
+    protected void processS6F11stripIdRead(DataMsgMap data) {
+        //webserverice  校验
+        String stripId = "";
+        long ceid = 0L;
+        String funcType = "";
+        try {
+            ceid = (long) data.get("CEID");
+            ArrayList reportList = (ArrayList) data.get("REPORT");
+            List idList = (List) reportList.get(1);
+            stripId = (String) idList.get(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map msgMap = new HashMap();
+
+        if (ceid == 40101L) {
+            msgMap.put("msgName", "ceStripLoad");
+            funcType = "MesAolotLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+//        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+            String result = "";
+//        result = "Y";
+            try {
+                result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
+            }
+//        sendS2f41Cmd("REMOTE");
+            if (result.equalsIgnoreCase("Y")) {
+                //todo 测试 if(true){
+                holdFlag = false;
+                this.sends2f41stripReply(true);
+            } else {
+                holdFlag = true;
+                this.sends2f41stripReply(false);
+                sendS2f41Cmd("STOP");
+                if ("".equals(result)) {
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                }
+            }
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+//        sendS2f41Cmd("LOCAL");
+//        changeEqptControlStateAndShowDetailInfo("LOCAL");
+        }
+        if (ceid == 40102L) {
+            msgMap.put("msgName", "ceStripUnload");
+            funcType = "MesAolotUnLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+//            String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+            String result = "";
+            try {
+                if (!"".equals(stripId)) {
+                    result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+                }
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
+            }
         }
     }
 

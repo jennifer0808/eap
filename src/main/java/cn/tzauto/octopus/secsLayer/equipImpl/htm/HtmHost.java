@@ -107,7 +107,6 @@ public class HtmHost extends EquipHost {
     @Override
     public void initialize() {
         logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
-        activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         synchronized (GlobalConstants.connectHostMap) {
             if (null != GlobalConstants.connectHostMap.get("HTM")) {

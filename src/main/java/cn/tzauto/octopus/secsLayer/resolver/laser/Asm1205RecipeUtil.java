@@ -2,14 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cn.tzauto.octopus.secsLayer.resolver.tsk;
+package cn.tzauto.octopus.secsLayer.resolver.laser;
 
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
 import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.resolver.IOUtil;
-import cn.tzauto.octopus.secsLayer.domain.ppBodyItem.asm.ASMPPbody;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 
@@ -23,20 +22,20 @@ import java.util.zip.ZipInputStream;
 /**
  * @author njtz
  */
-public class AD3000TRecipeUtil {
+public class Asm1205RecipeUtil {
 
-    private static Logger logger = Logger.getLogger(AD3000TRecipeUtil.class.getName());
+    private static Logger logger = Logger.getLogger(Asm1205RecipeUtil.class.getName());
 
     // 解析recipe文件
     public static List<RecipePara> transferRCP(String recipeName, String recipePath, String deviceType) {
-        List<String> recipeParaListFromFile = unZipRecipeFileAndAnalysis(recipeName, recipePath);
-        Map paraMap = transferFromList(recipeParaListFromFile);
-        List<RecipePara> recipeParaList = transferFromDB(paraMap, deviceType);
-        return recipeParaList;
+//        List<String> recipeParaListFromFile = unZipRecipeFileAndAnalysis(recipeName, recipePath);
+//        Map paraMap = transferFromList(recipeParaListFromFile);
+//        List<RecipePara> recipeParaList = transferFromDB(paraMap, deviceType);
+        return null;
     }
 
     // 从recipe文件（zip）中获取参数文件并解析
-    public static List<String> unZipRecipeFileAndAnalysis(String recipeName, String zipfilepath) {
+    public static List<String> unZipRecipeFileAndAnalysis(String zipfilepath) {
         List<String> recipeParaList = new ArrayList<>();
         File source = new File(zipfilepath);
         ZipInputStream zis = null;
@@ -49,14 +48,15 @@ public class AD3000TRecipeUtil {
             zipFile = new ZipFile(zipfilepath);
             ZipEntry entry = null;
             while ((entry = zis.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String filename = entry.getName();
-                    if (filename.equals(recipeName + ".prm")) {
-                        is = zipFile.getInputStream(entry);
-                        br = new BufferedReader(new InputStreamReader(is));
-                        recipeParaList = getAllValue(br);
-                    }
+                if (entry.isDirectory() || entry.getName().endsWith(".ini") || entry.getName().endsWith(".svg")
+                        || entry.getName().endsWith(".bmp")) {
+                    continue;
                 }
+                String filename = entry.getName();
+                System.out.println(filename);
+//                is = zipFile.getInputStream(entry);
+//                br = new BufferedReader(new InputStreamReader(is));
+//                recipeParaList = getAllValue(br);
             }
         } catch (IOException e) {
             logger.error("Exception:", e);
@@ -155,8 +155,8 @@ public class AD3000TRecipeUtil {
 
 
     public static void main(String[] args) {
-        List<RecipePara> recipeParaList = transferRCP("MB4", "D:\\MB4_V0.txt", "ACCRETECHAD3000Z1");
-//        List<String> recipeParaListFromFile = unZipRecipeFileAndAnalysis("MB4", "D:\\MB4_V0.txt");
+//        List<RecipePara> recipeParaList = transferRCP("MB4", "D:\\MB4_V0.txt", "ACCRETECHAD3000Z1");
+        List<String> recipeParaListFromFile = unZipRecipeFileAndAnalysis("D:\\Production@Main@XR819-AW1698-GD06-12_V1.txt");
 //        Map paraMap = transferFromList(recipeParaListFromFile);
 //        Map nameMap = transferFromFile("D:\\AD3000T_recipe_para_name.txt");
 //        boolean flag = saveRecipeTemplateList(paraMap, nameMap);
@@ -164,9 +164,9 @@ public class AD3000TRecipeUtil {
 //            System.out.println("保存失败");
 //        }
 //        List<RecipePara> recipeParaList = transferFromDB(paraMap, "AD3000T");
-        for (int i = 0; i < recipeParaList.size(); i++) {
-            System.out.println(recipeParaList.get(i).getParaCode() + "=====" + recipeParaList.get(i).getParaName() + "=====" + recipeParaList.get(i).getSetValue());
-        }
+//        for (int i = 0; i < recipeParaList.size(); i++) {
+//            System.out.println(recipeParaList.get(i).getParaCode() + "=====" + recipeParaList.get(i).getParaName() + "=====" + recipeParaList.get(i).getSetValue());
+//        }
     }
 
     public static boolean saveRecipeTemplateList(Map paraMap, Map nameMap) {

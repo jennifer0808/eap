@@ -41,6 +41,7 @@ public class HtmWashHost extends EquipHost {
     private static Map<Object, String> ceidMap = new HashMap<>();
     private static Map<Object, String> alidMap = new HashMap<>();
     private static Map<Object, String> stripLoadCeidMap = new HashMap<>();
+    private static Map<Object, String> stripUnloadCeidMap = new HashMap<>();
 
     private static Map<String, String> machineMap = new HashMap<>();
     private static Map<String, String> stopCmdMap = new HashMap<>();
@@ -82,19 +83,19 @@ public class HtmWashHost extends EquipHost {
         for (long alid : alidsOfPLA027) alidMap.put(alid, "PLA-027");
 
         // 添加所有设备的需要用到的的ceid，用于转发事件
-        long[] ceidsOfPLA011 = {43, 54, 41, 42, 45, 46};
+        long[] ceidsOfPLA011 = {43, 54, 41, 42, 45, 46, 222, 223, 224, 225};
         for (long ceid : ceidsOfPLA011) ceidMap.put(ceid, "PLA-011");
-        long[] ceidsOfPLA012 = {84, 55, 47, 48, 49, 50};
+        long[] ceidsOfPLA012 = {84, 55, 47, 48, 49, 50, 226, 227, 228, 229};
         for (long ceid : ceidsOfPLA012) ceidMap.put(ceid, "PLA-012");
-        long[] ceidsOfPLA013 = {109, 56, 105, 106, 107, 108};
+        long[] ceidsOfPLA013 = {109, 56, 105, 106, 107, 108, 230, 231, 232, 233};
         for (long ceid : ceidsOfPLA013) ceidMap.put(ceid, "PLA-013");
-        long[] ceidsOfPLA014 = {137, 57, 133, 134, 135, 136};
+        long[] ceidsOfPLA014 = {137, 57, 133, 134, 135, 136, 234, 235, 236, 237};
         for (long ceid : ceidsOfPLA014) ceidMap.put(ceid, "PLA-014");
-        long[] ceidsOfPLA017 = {165, 58, 161, 162, 163, 164};
+        long[] ceidsOfPLA017 = {165, 58, 161, 162, 163, 164, 238, 239, 240, 241};
         for (long ceid : ceidsOfPLA017) ceidMap.put(ceid, "PLA-017");
-        long[] ceidsOfPLA018 = {193, 59, 189, 190, 191, 192};
+        long[] ceidsOfPLA018 = {193, 59, 189, 190, 191, 192, 242, 243, 244, 245};
         for (long ceid : ceidsOfPLA018) ceidMap.put(ceid, "PLA-018");
-        long[] ceidsOfPLA027 = {221, 60, 217, 218, 219, 220};
+        long[] ceidsOfPLA027 = {221, 60, 217, 218, 219, 220, 246, 247, 248, 249};
         for (long ceid : ceidsOfPLA027) ceidMap.put(ceid, "PLA-027");
         // 扫描二维码触发的事件报告的ceid
         long[] stripLoadCeidsOfPLA011 = {41, 42, 45, 46};
@@ -111,6 +112,23 @@ public class HtmWashHost extends EquipHost {
         for (long ceid : stripLoadCeidsOfPLA018) stripLoadCeidMap.put(ceid, "PLA-018");
         long[] stripLoadCeidsOfPLA027 = {217, 218, 219, 220};
         for (long ceid : stripLoadCeidsOfPLA027) stripLoadCeidMap.put(ceid, "PLA-027");
+
+//
+        // 清晰完成 ，二维码触发的事件报告的ceid
+        long[] stripUnloadCeidsOfPLA011 = {222, 223, 224, 225};
+        for (long ceid : stripUnloadCeidsOfPLA011) stripUnloadCeidMap.put(ceid, "PLA-011");
+        long[] stripUnloadCeidsOfPLA012 = {226, 227, 228, 229};
+        for (long ceid : stripUnloadCeidsOfPLA012) stripUnloadCeidMap.put(ceid, "PLA-012");
+        long[] stripUnloadCeidsOfPLA013 = {230, 231, 232, 233};
+        for (long ceid : stripUnloadCeidsOfPLA013) stripUnloadCeidMap.put(ceid, "PLA-013");
+        long[] stripUnloadCeidsOfPLA014 = {234, 235, 236, 237};
+        for (long ceid : stripUnloadCeidsOfPLA014) stripUnloadCeidMap.put(ceid, "PLA-014");
+        long[] stripUnloadCeidsOfPLA017 = {238, 239, 240, 241};
+        for (long ceid : stripUnloadCeidsOfPLA017) stripUnloadCeidMap.put(ceid, "PLA-017");
+        long[] stripUnloadCeidsOfPLA018 = {242, 243, 244, 245};
+        for (long ceid : stripUnloadCeidsOfPLA018) stripUnloadCeidMap.put(ceid, "PLA-018");
+        long[] stripUnloadCeidsOfPLA027 = {246, 247, 248, 249};
+        for (long ceid : stripUnloadCeidsOfPLA027) stripUnloadCeidMap.put(ceid, "PLA-027");
 
         // 添加所有设备的设备切换指令，用于在获取recipe列表，下载recipe文件等事件之前，用于模组确认向哪台设备进行操作
         machineMap.put("PLA-011", "MACHINE1");
@@ -196,7 +214,6 @@ public class HtmWashHost extends EquipHost {
     @Override
     public void initialize() {
         logger.info("Initializing SECS Protocol for " + this.deviceId + ".");
-        activeWrapper = (ActiveWrapper) SecsDriverFactory.getSecsDriverByReg(new ConnRegInfo(Integer.valueOf(this.deviceId), "active", this.iPAddress, this.tCPPort));
 //        ConnRegInfo.register(Integer.valueOf(this.deviceId), "active", this.remoteIPAddress, this.remoteTCPPort);
         synchronized (GlobalConstants.connectHostMap) {
             if (null != GlobalConstants.connectHostMap.get("htmWash")) {
@@ -227,8 +244,14 @@ public class HtmWashHost extends EquipHost {
         logger.info("SECS Protocol for " + this.deviceId + " is being started.");
         synchronized (this.activeWrapper) {
             if (this.activeWrapper.isInitialized()) {
+                try {
+                    this.sleep(200);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 //            this.activeWrapper = GlobalConstants.activeWrapperMap.get(eqpEventDealer.getDeviceType());
                 eqpEventDealer.execute();
+//                UiLogUtil.getInstance().appendLog2EventTab(getDeviceCode(),"SECS连接正常启动...");
 //                activeWrapper.addInputMessageListenerToAll(this);
             } else {
                 this.activeWrapper.connectByActiveMode(eqpEventDealer);
@@ -479,6 +502,34 @@ public class HtmWashHost extends EquipHost {
         }
     }
 
+    @Override
+    public Map sendS2f41Cmd(String rcmd) {
+        DataMsgMap msgdata = null;
+        Map resultMap = new HashMap();
+        resultMap.put("msgType", "s2f42");
+        resultMap.put("deviceCode", deviceCode);
+        resultMap.put("prevCmd", rcmd);
+        try {
+            msgdata = activeWrapper.sendS2F41out(rcmd, null, null, null, null);
+            for (Map.Entry<String, EquipHost> equipHost : GlobalConstants.hostMap.entrySet()) {
+                if (this.deviceCode.equals(equipHost.getKey()) || !this.deviceType.equals(equipHost.getValue().getDeviceType())) {
+                    continue;
+                }
+                GlobalConstants.hostMap.get(equipHost.getKey()).sleep(100);
+            }
+            logger.info("The equip " + deviceCode + " request to " + rcmd);
+            byte hcack = (byte) msgdata.get("HCACK");
+            logger.info("Receive s2f42in,the equip " + deviceCode + "'s requestion get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+            resultMap.put("HCACK", hcack);
+            resultMap.put("Description", "Remote cmd " + rcmd + " at equip " + deviceCode + " get a result with HCACK=" + hcack + " means " + ACKDescription.description(hcack, "HCACK"));
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            resultMap.put("HCACK", 9);
+            resultMap.put("Description", "Remote cmd " + rcmd + " at equip " + deviceCode + " get a result with HCACK=" + 9 + " means " + e.getMessage());
+        }
+        return resultMap;
+    }
+
     /**
      * hold设备，并且显示具体的hold设备具体信息
      *
@@ -492,11 +543,6 @@ public class HtmWashHost extends EquipHost {
         if (resultMap != null) {
             if ("0".equals(String.valueOf(resultMap.get("HCACK")))) {
                 UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "当前设备已经被锁机");
-                try {
-                    Thread.sleep(200);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
                 sendTerminalMsg2EqpSingle("StartCheck not pass, equipment locked!");
                 return true;
             } else if ("4".equals(String.valueOf(resultMap.get("HCACK")))) {
@@ -525,9 +571,26 @@ public class HtmWashHost extends EquipHost {
             List list = new ArrayList();
             list.add("RESULT");
             activeWrapper.sendS2F41out(confirnStr, list, cp, cpName, cpValue);
+            try {
+                for (Map.Entry<String, EquipHost> equipHost : GlobalConstants.hostMap.entrySet()) {
+                    if (this.deviceCode.equals(equipHost.getKey()) || !this.deviceType.equals(equipHost.getValue().getDeviceType())) {
+                        continue;
+                    }
+                    GlobalConstants.hostMap.get(equipHost.getKey()).sleep(100);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } catch (Exception ex) {
             logger.error("Exception:", ex);
         }
+    }
+
+    //释放机台
+    @Override
+    public Map releaseDevice() {
+        this.setAlarmState(0);
+        return null;
     }
 
     // </editor-fold>
@@ -552,7 +615,7 @@ public class HtmWashHost extends EquipHost {
                         GlobalConstants.hostMap.get(equipHost.getKey()).findDeviceRecipe();
                     }
                 }
-            } else if (null != stripLoadCeidMap.get(ceid)) {
+            } else if (null != stripLoadCeidMap.get(ceid) || null != stripUnloadCeidMap.get(ceid)) {
                 processS6F11stripIdRead(data);
             }
             if (commState != 1) {
@@ -578,57 +641,55 @@ public class HtmWashHost extends EquipHost {
             e.printStackTrace();
         }
         Map msgMap = new HashMap();
-        msgMap.put("msgName", "ceStripLoad");
-        funcType = "MesAolotLoadCheck";
-        logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+        if (null != stripLoadCeidMap.get(ceid)) {
+            msgMap.put("msgName", "ceStripLoad");
+            funcType = "MesAolotLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
 //        String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
 
-        msgMap.put("deviceCode", deviceCode);
-        msgMap.put("stripId", stripId);
-        String result = "";
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+
+            String result = "";
 //            result = "N";
-        try {
-            result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
-        } catch (Exception ex) {
-            logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
-        }
-        if (result.equalsIgnoreCase("Y")) {
-            //todo 测试 if(true){
-            holdFlag = false;
-            this.sends2f41stripReply(true);
-        } else {
-            holdFlag = true;
-            this.sends2f41stripReply(false);
             try {
-                Thread.sleep(200);
-            } catch (Exception e) {
-                e.printStackTrace();
+                result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
             }
-            sendS2f41Cmd(stopCmdMap.get(deviceCode));
-            if ("".equals(result)) {
-                UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+            if (result.equalsIgnoreCase("Y")) {
+                //todo 测试 if(true){
+                holdFlag = false;
+                this.sends2f41stripReply(true);
+            } else {
+                holdFlag = true;
+                this.sends2f41stripReply(false);
+                sendS2f41Cmd(stopCmdMap.get(deviceCode));
+                if ("".equals(result)) {
+                    UiLogUtil.getInstance().appendLog2SeverTab(deviceCode, "等待Server回复超时,请检查网络设置!");
+                }
             }
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
+        } else if (null != stripUnloadCeidMap.get(ceid)) {
+            msgMap.put("msgName", "ceStripUnload");
+            funcType = "MesAolotUnLoadCheck";
+            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
+//            String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
+
+            msgMap.put("deviceCode", deviceCode);
+            msgMap.put("stripId", stripId);
+            String result = "";
+            try {
+                if (!"".equals(stripId)) {
+                    result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
+                }
+            } catch (Exception ex) {
+                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
+            }
+            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],清洗结束");
         }
-        UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "StripId:[" + stripId + "]检查结果:[" + result + "]");
-//        if (ceid == 41111L || ceid == 421111L) {
-//            msgMap.put("msgName", "ceStripUnload");
-//            funcType = "MesAolotUnLoadCheck";
-//            logger.info("get stripid:[" + stripId + "]ceid:" + ceid + "[" + funcType + "]");
-//            UiLogUtil.getInstance().appendLog2SecsTab(deviceCode, "读取到StripId:[" + stripId + "],进行检查...");
-////            String result = AxisUtility.findMesAoLotService(deviceCode, stripId, funcType);
-//
-//            msgMap.put("deviceCode", deviceCode);
-//            msgMap.put("stripId", stripId);
-//            String result = "";
-//            try {
-//                if (!"".equals(stripId)) {
-//                    result = AxisUtility.plasma88DService(deviceCode, stripId, funcType);
-//                }
-//            } catch (Exception ex) {
-//                logger.error("WebService sendMessageWithReplay error!" + ex.getMessage());
-//            }
-//        }
     }
 
     // </editor-fold>
@@ -659,8 +720,10 @@ public class HtmWashHost extends EquipHost {
 
         try {
             // 华天锡化设备需要发送远程指令确认给什么设备进行动作
+//            String cmd = machineMap.get(deviceCode);
+//            DataMsgMap msgdata = activeWrapper.sendS2F41out(cmd, null, null, null, null);
             String cmd = machineMap.get(deviceCode);
-            DataMsgMap msgdata = activeWrapper.sendS2F41out(cmd, null, null, null, null);
+            Map msgdata = sendS2f41Cmd(cmd);
             byte hcack = (byte) msgdata.get("HCACK");
             if (hcack != 0) {
                 resultMap.put("ppgnt", 9);
@@ -685,6 +748,8 @@ public class HtmWashHost extends EquipHost {
     public Map sendS7F5out(String recipeName) throws UploadRecipeErrorException {
         Recipe recipe = setRecipe(recipeName);
         recipePath = getRecipePathByConfig(recipe);
+        // 切换设备
+        Map msgdata = sendS2f41Cmd(machineMap.get(deviceCode));
         byte[] ppbody = (byte[]) getPPBODY(recipeName);
         TransferUtil.setPPBody(ppbody, 1, recipePath);
         logger.debug("Recive S7F6, and the recipe " + recipeName + " has been saved at " + recipePath);
