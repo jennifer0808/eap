@@ -11,8 +11,10 @@ import cn.tzauto.generalDriver.exceptions.*;
 import cn.tzauto.generalDriver.wrapper.ActiveWrapper;
 import cn.tzauto.octopus.biz.device.domain.DeviceInfoExt;
 import cn.tzauto.octopus.biz.device.service.DeviceService;
+import cn.tzauto.octopus.biz.monitor.service.MonitorService;
 import cn.tzauto.octopus.biz.recipe.domain.Recipe;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
+import cn.tzauto.octopus.biz.recipe.service.RecipeService;
 import cn.tzauto.octopus.common.dataAccess.base.mybatisutil.MybatisSqlSession;
 import cn.tzauto.octopus.common.globalConfig.GlobalConstants;
 import cn.tzauto.octopus.common.resolver.TransferUtil;
@@ -692,6 +694,72 @@ public class HtmWashHost extends EquipHost {
         }
     }
 
+    /**
+     * 开机check recipe参数
+     *
+     * @param checkRecipe
+     * @param type
+     */
+    @Override
+    public void startCheckRecipePara(Recipe checkRecipe, String type) {
+        logger.info("START CHECK: BEGIN" + new Date());
+        SqlSession sqlSession = MybatisSqlSession.getSqlSession();
+        RecipeService recipeService = new RecipeService(sqlSession);
+        MonitorService monitorService = new MonitorService(sqlSession);
+        logger.info("START CHECK: ready to upload recipe:" + new Date());
+        List<RecipePara> equipRecipeParas = null;
+        try {
+            equipRecipeParas = (List<RecipePara>) GlobalConstants.stage.hostManager.getRecipeParaFromDevice(this.deviceCode, checkRecipe.getRecipeName()).get("recipeParaList");
+        } catch (UploadRecipeErrorException upe) {
+            logger.error("Get recipe info from device " + deviceCode + " failed,recipeName= " + checkRecipe.getRecipeName());
+        }
+        logger.info("START CHECK: transfer recipe over :" + new Date());
+        logger.info("START CHECK: ready to check recipe para:" + new Date());
+        List<RecipePara> recipeParasdiff = recipeService.checkRcpPara(checkRecipe.getId(), deviceCode, equipRecipeParas, type);
+        logger.info("START CHECK: check recipe para over :" + new Date());
+        try {
+            Map mqMap = new HashMap();
+            mqMap.put("msgName", "eqpt.StartCheckWI");
+            mqMap.put("deviceCode", deviceCode);
+            mqMap.put("recipeName", ppExecName);
+            mqMap.put("EquipStatus", equipStatus);
+            mqMap.put("lotId", lotId);
+            String eventDesc = "";
+            String checkRecultDesc = "";
+            String eventDescEng = "";
+            if (recipeParasdiff != null && recipeParasdiff.size() > 0) {
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机检查未通过!");
+//                RealTimeParaMonitor realTimePara = new RealTimeParaMonitor(null, true, deviceCode, ppExecName, recipeParasdiff, 1);
+//                realTimePara.setSize(1000, 650);
+//                SwingUtil.setWindowCenter(realTimePara);
+//                realTimePara.setVisible(true);
+                for (RecipePara recipePara : recipeParasdiff) {
+                    eventDesc = "开机Check参数异常参数编码为[" + recipePara.getParaCode() + "],参数名:[" + recipePara.getParaName() + "]其异常设定值为[" + recipePara.getSetValue() + "],默认值为[" + recipePara.getDefValue() + "]"
+                            + "其最小设定值为[" + recipePara.getMinValue() + "],其最大设定值为[" + recipePara.getMaxValue() + "]";
+                    UiLogUtil.getInstance().appendLog2EventTab(deviceCode, eventDesc);
+                    checkRecultDesc = checkRecultDesc + eventDesc;
+                    String eventDescEngtmp = " Para_Code:" + recipePara.getParaCode() + ",Para_name:" + recipePara.getParaName() + ",Set_value:" + recipePara.getSetValue() + ",MIN_value:" + recipePara.getMinValue() + ",MAX_value:" + recipePara.getMaxValue() + "/r/n";
+                    eventDescEng = eventDescEng + eventDescEngtmp;
+                }
+                this.holdDeviceAndShowDetailInfo("Recipe parameter error,start check failed!The equipment has been stopped!");
+                //monitorService.saveStartCheckErroPara2DeviceRealtimePara(recipeParasdiff, deviceCode);//保存开机check异常参数
+            } else {
+                this.releaseDevice();
+                UiLogUtil.getInstance().appendLog2EventTab(deviceCode, "开机Check通过！");
+                eventDesc = "设备：" + deviceCode + " 开机Check参数没有异常";
+                logger.info("设备：" + deviceCode + " 开机Check成功");
+                checkRecultDesc = eventDesc;
+            }
+            mqMap.put("eventDesc", checkRecultDesc);
+            GlobalConstants.C2SLogQueue.sendMessage(mqMap);
+            sqlSession.commit();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+        } finally {
+            sqlSession.close();
+        }
+    }
+
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="S7FX Code">
@@ -822,6 +890,9 @@ public class HtmWashHost extends EquipHost {
             DataMsgMap msgdata = activeWrapper.sendS2F41out(cmd, null, null, null, null);
             byte hcack = (byte) msgdata.get("HCACK");
             if (hcack == 0) {
+                if (msg.length() > 60) {
+                    msg = msg.substring(0, 60);
+                }
                 sendS10F3((byte) 0, msg);
             }
         } catch (Exception e) {
