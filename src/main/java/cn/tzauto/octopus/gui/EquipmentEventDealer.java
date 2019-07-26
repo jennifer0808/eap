@@ -167,18 +167,18 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 
     @Override
     public void notificationOfT3Timeout(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfT3Timeout Invoked at device id " + deviceId + " " + msgTagName
+        logger.info("notificationOfT3Timeout Invoked at device id " + deviceId + " transaction id : "+transId+" tag name :" + msgTagName
                 + " at equip " + equipNodeBean.getDeviceCode());
     }
 
     @Override
     public void notificationOfSentMessage(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentMessage Invoked at device id " + deviceId + " " + msgTagName);
+        logger.info("notificationOfSentMessage Invoked at device id " + deviceId + " transaction id : "+transId+" tag name :" + msgTagName);
     }
 
     @Override
     public void notificationOfRespondMessage(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfRespondMessage Invoked at device id " + deviceId + " " + msgTagName);
+        logger.info("notificationOfRespondMessage Invoked at device id " + deviceId + " transaction id : "+transId+" tag name :" + msgTagName);
     }
 
     @Override
@@ -199,19 +199,19 @@ public class EquipmentEventDealer extends SwingWorker<Object, EquipState>
 
     @Override
     public void notificationOfSentMessageFailed(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentMessageFailed Invoked at device id " + deviceId + " "
+        logger.info("notificationOfSentMessageFailed Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
     @Override
     public void notificationOfSentMessageFailedCommFailure(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfSentMessageFailedCommFailure Invoked at device id " + deviceId + " "
+        logger.info("notificationOfSentMessageFailedCommFailure Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
     @Override
     public void notificationOfRespondMessageFailed(int deviceId, long transId, String msgTagName) {
-        logger.debug("notificationOfRespondMessageFailed Invoked at device id " + deviceId + " "
+        logger.info("notificationOfRespondMessageFailed Invoked at device id " + deviceId + " "
                 + msgTagName + " with transId = " + transId);
     }
 
