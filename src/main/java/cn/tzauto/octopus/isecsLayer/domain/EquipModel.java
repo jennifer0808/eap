@@ -60,6 +60,7 @@ public abstract class EquipModel extends Thread {
     protected int remoteTCPPort;
     protected boolean isInitState;
     protected String equipRecipePath;
+    protected String visionRecipePath;
     private Map<String, String> passport = new HashMap<>();
     private Map<String, String> candidates = new HashMap<>();
     public ConcurrentLinkedQueue<ISecsHost> iSecsHostList = new ConcurrentLinkedQueue<ISecsHost>();

@@ -1,6 +1,5 @@
 package cn.tzauto.octopus.isecsLayer.resolver.hta;
 
-
 import cn.tzauto.octopus.biz.recipe.dao.RecipeTemplateMapper;
 import cn.tzauto.octopus.biz.recipe.domain.RecipePara;
 import cn.tzauto.octopus.biz.recipe.domain.RecipeTemplate;
@@ -13,7 +12,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -21,6 +20,7 @@ import java.util.*;
  */
 public class FI7300Resolver {
     private static Logger logger = Logger.getLogger(FI7300Resolver.class);
+    private static  Map<String, Object> mapPara = new HashMap<>();
 
     public static List<RecipePara> transferFromDB(Map paraMap, String deviceType){
         SqlSession sqlSession= MybatisSqlSession.getSqlSession();
@@ -46,15 +46,52 @@ public class FI7300Resolver {
         return recipeParaList;
     }
 
+    public static Map<String, Object> transferFrom2Xml(String handlerPath ,String visionPath , String recipeName) {
 
-public static Map<String, Object> transferFrom2Xml(String filePath,String recipeName) {
+        transferFrom2Handler(handlerPath,recipeName);
+        transferFrom2Vision(visionPath,recipeName);
+        return mapPara;
+
+    }
+
+    public static Map<String, Object> transferFrom2Handler(String filePath,String recipeName) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            logger.error("您的handler路径："+filePath+"中该"+recipeName+"卡控文件不存在!");
+            return null;
+        }
+        Map<String, Object> map = new HashMap<>();
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                    String[] nAv = line.split("=");
+                    mapPara.put(nAv[0] , nAv[1]);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (br != null) {
+                    br.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return mapPara;
+        }
+
+    }
+
+
+   public static Map<String, Object> transferFrom2Vision(String filePath,String recipeName) {
     File file = new File(filePath);
     if (!file.exists()) {
-        logger.error("您的路径："+filePath+"中该"+recipeName+"卡控文件不存在!");
+        logger.error("您的vision路径："+filePath+"中该"+recipeName+"卡控文件不存在!");
         return null;
     }
-    System.out.println(filePath);
-    Map<String, Object> map = new HashMap<>();
     try {
         /**
          * xml文件解析：通过SAXReader去读整个文件
@@ -63,7 +100,6 @@ public static Map<String, Object> transferFrom2Xml(String filePath,String recipe
         SAXReader reader = new SAXReader();
         //读取文件 转换成Document
         Document document = reader.read(file);
-        System.out.println("document:"+document);
         //获取根节点元素对象
         Element root = document.getRootElement();
         for ( Iterator iterInner = root.elementIterator(); iterInner.hasNext(); ) {
@@ -71,25 +107,25 @@ public static Map<String, Object> transferFrom2Xml(String filePath,String recipe
 
             switch (elementInner.getName()){
                 case "BottomLeadPitch":
-                    map.putAll(listNodes(elementInner,"BottomLeadPitch"));
+                    mapPara.putAll(listNodes(elementInner,"BottomLeadPitch"));
                     break;
                 case "BottomSpacing":
-                    map.putAll(listNodes(elementInner,"BottomSpacing"));
+                    mapPara.putAll(listNodes(elementInner,"BottomSpacing"));
                     break;
                 case "BottomLeadLength":
-                    map.putAll(listNodes(elementInner,"BottomLeadLength"));
+                    mapPara.putAll(listNodes(elementInner,"BottomLeadLength"));
                     break;
                 case "BottomLeadWidth":
-                    map.putAll(listNodes(elementInner,"BottomLeadWidth"));
+                    mapPara.putAll(listNodes(elementInner,"BottomLeadWidth"));
                     break;
                 case "DimensionX":
-                    map.putAll(listNodes(elementInner,"DimensionX"));
+                    mapPara.putAll(listNodes(elementInner,"DimensionX"));
                     break;
                 case "DimensionY":
-                    map.putAll(listNodes(elementInner,"DimensionY"));
+                    mapPara.putAll(listNodes(elementInner,"DimensionY"));
                     break;
                 case "Spacing":
-                    map.putAll(listNodes(elementInner,"Spacing"));
+                    mapPara.putAll(listNodes(elementInner,"Spacing"));
                     break;
                 default:
                     break;
@@ -99,15 +135,13 @@ public static Map<String, Object> transferFrom2Xml(String filePath,String recipe
     } catch (DocumentException e) {
         e.printStackTrace();
     }
-    System.out.println(map);
-    return map;
+    return mapPara;
 }
 
     public static Map<String, Object> listNodes(Element elementInner,String elementParent){
         Map<String,Object> map=new HashMap<>();
         for(Iterator iterator= elementInner.elementIterator();iterator.hasNext(); ){
             Element element = (Element) iterator.next();
-            System.out.println(element);
             map.put(elementParent+"_"+element.getName(),element.getData());
         }
         return map;
@@ -115,9 +149,11 @@ public static Map<String, Object> transferFrom2Xml(String filePath,String recipe
 
 
     public static void main(String[] args) {
-        Map<String, Object> map= FI7300Resolver.transferFrom2Xml("D:\\autotz\\hta\\Recipe\\FI7300 AutoRecipe\\JCET-A-FCQFN-4X4-26L-T0.85.xml","");
-        System.out.println(map.size());
-        Set<String> StringKey= map.keySet();
+        Map<String, Object> visionMap= FI7300Resolver.transferFrom2Vision("D:/RECIPE/RECIPE/FI7300_0001QFN-JCET-A-WBQFN-5X5-40L-T0.75temp/vision/QFN-JCET-A-WBQFN-5X5-40L-T0.75/5sSpec.xml","");
+        Map<String, Object> handlerMap = FI7300Resolver.transferFrom2Handler("D://RECIPE/RECIPE/FI7300_0001QFN-JCET-A-WBQFN-5X5-40L-T0.75temp/handler/QFN-JCET-A-WBQFN-5X5-40L-T0.75/JCET-A-WBQFN-5X5-40L-T0.75.dat","");
+        System.out.println(visionMap.size()+handlerMap.size());
+        handlerMap.putAll(visionMap);
+        Set<String> StringKey= handlerMap.keySet();
         SqlSession session = MybatisSqlSession.getSqlSession();
         RecipeTemplateMapper recipeTemplateMapper = session.getMapper(RecipeTemplateMapper.class);
         int n=1;
@@ -139,7 +175,7 @@ public static Map<String, Object> transferFrom2Xml(String filePath,String recipe
             System.out.println(s);
         }
 
-        List<RecipePara> list = FI7300Resolver.transferFromDB(map, "FI7300" );
+        List<RecipePara> list = FI7300Resolver.transferFromDB(handlerMap, "FI7300" );
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).getParaCode() + "=====" + list.get(i).getParaName() + "=====" + list.get(i).getSetValue());
         }
