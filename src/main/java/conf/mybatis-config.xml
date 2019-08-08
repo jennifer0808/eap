@@ -16,12 +16,11 @@
                 <!--           16 <dataSource type="POOLED">  -->
                 <property name="driver" value="com.mysql.jdbc.Driver" />
                 <property name="url" value="jdbc:mysql://localhost:3306/autofi7300?characterEncoding=utf-8&amp;autoReconnect=true" />
-
                 <!--<property name="url" value="jdbc:mysql://172.17.37.4:3306/octopus?characterEncoding=utf-8" />-->
 <!--                <property name="url" value="jdbc:mysql://localhost:3306/octopus?characterEncoding=utf-8&amp;autoReconnect=true" />-->
                 <property name="username" value="root" />
                 <property name="password" value="root" />
-                <!--                <property name="initialSize" value="1" />
+                <!--  <property name="initialSize" value="1" />
                 <property name="minIdle" value="1" />
                 <property name="maxActive" value="20" />
                 <property name="maxWait" value="60000" />
